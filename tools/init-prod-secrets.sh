@@ -24,7 +24,9 @@ gen_if_missing() {
         echo "  [skip] $file already exists"
     else
         eval "$generator" > "$file"
-        chmod 600 "$file"
+        # 0644：容器里非 root 的 bfm 用户需要读 bind-mount 过来的 secret 文件；
+        # 真实的边界由父目录 secrets/ (mode 0700) 把守，外部用户进不了目录
+        chmod 644 "$file"
         echo "  [ok] generated $file"
     fi
 }

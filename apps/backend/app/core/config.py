@@ -1,22 +1,19 @@
-"""应用配置：从环境变量与 .env 文件加载"""
+"""应用配置：从环境变量、.env 文件、Docker secrets 加载"""
 
 from __future__ import annotations
 
 import os
 from functools import lru_cache
-from pathlib import Path
 from typing import ClassVar
 
-from pydantic import Field, field_validator
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
-def _read_secret_file(path_env: str) -> str | None:
-    """读取 Docker secret 文件（生产环境用 secrets:/run/secrets/<name>）"""
-    p = os.getenv(path_env)
-    if p and Path(p).exists():
-        return Path(p).read_text(encoding="utf-8").strip()
-    return None
+# 生产环境 Docker secrets 挂载点。dev/本地无此目录时传 None，让 pydantic-settings 跳过此 source。
+# 字段名 → /run/secrets/<field_name>：
+#   database_url, ea_cred_encryption_key, jwt_secret_key
+# pydantic-settings 会自动把文件内容做 strip 后填入字段。
+_SECRETS_DIR = "/run/secrets" if os.path.isdir("/run/secrets") else None
 
 
 class Settings(BaseSettings):
@@ -25,6 +22,7 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
         case_sensitive=False,
+        secrets_dir=_SECRETS_DIR,
     )
 
     # ===== 应用基础 =====
@@ -37,15 +35,12 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     # ===== 数据库 =====
-    # 生产环境通过 DATABASE_URL_FILE 指向 Docker secret，开发环境直接用 DATABASE_URL
     database_url: str = "postgresql+asyncpg://bf:bf@postgres:5432/bf_manager"
 
     # ===== Redis =====
     redis_url: str = "redis://redis:6379/0"
 
     # ===== EA 凭据加密密钥 =====
-    # 优先从 EA_CRED_ENCRYPTION_KEY_FILE 读 Docker secret
-    # 退回到环境变量 EA_CRED_ENCRYPTION_KEY
     ea_cred_encryption_key: str = ""
 
     # ===== JWT =====
@@ -63,33 +58,6 @@ class Settings(BaseSettings):
 
     # ===== 启用的游戏 =====
     enabled_games: str = "bf1"
-
-    @field_validator("database_url", mode="before")
-    @classmethod
-    def _load_database_url(cls, v: str | None) -> str:
-        # 优先使用显式环境变量；若未设置或为空，回退到 Docker secret 文件
-        if v:
-            return v
-        from_secret = _read_secret_file("DATABASE_URL_FILE")
-        if from_secret:
-            return from_secret
-        return "postgresql+asyncpg://bf:bf@postgres:5432/bf_manager"
-
-    @field_validator("ea_cred_encryption_key", mode="before")
-    @classmethod
-    def _load_ea_key(cls, v: str | None) -> str:
-        if v:
-            return v
-        from_secret = _read_secret_file("EA_CRED_ENCRYPTION_KEY_FILE")
-        return from_secret or ""
-
-    @field_validator("jwt_secret_key", mode="before")
-    @classmethod
-    def _load_jwt_secret(cls, v: str | None) -> str:
-        if v:
-            return v
-        from_secret = _read_secret_file("JWT_SECRET_KEY_FILE")
-        return from_secret or ""
 
     @property
     def cors_origins(self) -> list[str]:

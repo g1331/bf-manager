@@ -40,16 +40,12 @@ services:
     image: ghcr.io/g1331/bf-manager-backend:${IMAGE_TAG:-latest}
     restart: "no"
     environment:
-      DATABASE_URL_FILE: /run/secrets/database_url
-      EA_CRED_ENCRYPTION_KEY_FILE: /run/secrets/ea_cred_encryption_key
-      JWT_SECRET_KEY_FILE: /run/secrets/jwt_secret_key
       ENVIRONMENT: production
+    # Settings 通过 secrets_dir=/run/secrets 自动按字段名读取这 3 个 secret 文件
     secrets:
       - database_url
       - ea_cred_encryption_key
       - jwt_secret_key
-    # alembic/env.py 通过 Settings 自动读取 DATABASE_URL_FILE secret，
-    # 不需要 shell 包装显式 cat（compose 还会把 $(...) 里的 $ 当成变量插值）
     command: ["alembic", "upgrade", "head"]
     depends_on:
       postgres:
@@ -60,14 +56,12 @@ services:
     image: ghcr.io/g1331/bf-manager-backend:${IMAGE_TAG:-latest}
     restart: unless-stopped
     environment:
-      DATABASE_URL_FILE: /run/secrets/database_url
       REDIS_URL: redis://redis:6379/0
-      EA_CRED_ENCRYPTION_KEY_FILE: /run/secrets/ea_cred_encryption_key
-      JWT_SECRET_KEY_FILE: /run/secrets/jwt_secret_key
       ALLOWED_ORIGINS: https://${DOMAIN:?DOMAIN required}
       ENVIRONMENT: production
       LOG_LEVEL: INFO
       ENABLED_GAMES: bf1
+    # Settings 通过 secrets_dir=/run/secrets 自动按字段名读取这 3 个 secret 文件
     secrets:
       - database_url
       - ea_cred_encryption_key

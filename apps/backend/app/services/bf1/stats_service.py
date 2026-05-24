@@ -74,13 +74,18 @@ class BF1StatsService:
                 cat_name = category.get("name") or category.get("category")
                 for w in category.get("weapons") or []:
                     stats = w.get("stats", {}).get("values", {}) or {}
+                    hits = float(_safe(stats.get("hits"), 0))
+                    shots = float(_safe(stats.get("shots"), 0))
+                    # EA 上游会把 accuracy 截到 100；霰弹枪 / 投掷物的多弹丸命中应当 > 100，
+                    # 因此用 hits/shots 自己算，绕开 EA 端的截断。
+                    accuracy = (hits / shots * 100) if shots > 0 else None
                     weapons.append(
                         WeaponStat(
                             name=w.get("name"),
                             category=cat_name,
                             kills=int(_safe(stats.get("kills"), 0)) or None,
                             headshots=int(_safe(stats.get("headshots"), 0)) or None,
-                            accuracy=float(_safe(stats.get("accuracy"), 0)) or None,
+                            accuracy=accuracy,
                             time_seconds=float(_safe(stats.get("seconds"), 0)) or None,
                             image=w.get("imageUrl"),
                         )

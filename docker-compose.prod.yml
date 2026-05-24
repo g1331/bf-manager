@@ -48,8 +48,9 @@ services:
       - database_url
       - ea_cred_encryption_key
       - jwt_secret_key
-    # 运行时镜像没有 uv，只把 .venv/bin 加到了 PATH；直接调 alembic 即可
-    command: ["sh", "-c", "DATABASE_URL=$(cat /run/secrets/database_url) alembic upgrade head"]
+    # alembic/env.py 通过 Settings 自动读取 DATABASE_URL_FILE secret，
+    # 不需要 shell 包装显式 cat（compose 还会把 $(...) 里的 $ 当成变量插值）
+    command: ["alembic", "upgrade", "head"]
     depends_on:
       postgres:
         condition: service_healthy

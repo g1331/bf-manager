@@ -26,6 +26,47 @@ def _safe(v: Any, default: Any = None) -> Any:
     return v
 
 
+# BF1 每个 rank 对应的累计经验阈值（index = rank，最高 150）。
+# EA basicStats.rank 长期不可靠（多数玩家返回 None），通过 spm * 游玩秒数 / 60
+# 算出总经验，再在表里二分找区间得到等级。
+_BF1_RANK_THRESHOLDS: tuple[int, ...] = (
+    0, 1000, 5000, 15000, 25000, 40000, 55000, 75000, 95000, 120000,
+    145000, 175000, 205000, 235000, 265000, 295000, 325000, 355000, 395000, 435000,
+    475000, 515000, 555000, 595000, 635000, 675000, 715000, 755000, 795000, 845000,
+    895000, 945000, 995000, 1045000, 1095000, 1145000, 1195000, 1245000, 1295000, 1345000,
+    1405000, 1465000, 1525000, 1585000, 1645000, 1705000, 1765000, 1825000, 1885000, 1945000,
+    2015000, 2085000, 2155000, 2225000, 2295000, 2365000, 2435000, 2505000, 2575000, 2645000,
+    2745000, 2845000, 2945000, 3045000, 3145000, 3245000, 3345000, 3445000, 3545000, 3645000,
+    3750000, 3870000, 4000000, 4140000, 4290000, 4450000, 4630000, 4830000, 5040000, 5260000,
+    5510000, 5780000, 6070000, 6390000, 6730000, 7110000, 7510000, 7960000, 8430000, 8960000,
+    9520000, 10130000, 10800000, 11530000, 12310000, 13170000, 14090000, 15100000, 16190000, 17380000,
+    20000000, 20500000, 21000000, 21500000, 22000000, 22500000, 23000000, 23500000, 24000000, 24500000,
+    25000000, 25500000, 26000000, 26500000, 27000000, 27500000, 28000000, 28500000, 29000000, 29500000,
+    30000000, 30500000, 31000000, 31500000, 32000000, 32500000, 33000000, 33500000, 34000000, 34500000,
+    35000000, 35500000, 36000000, 36500000, 37000000, 37500000, 38000000, 38500000, 39000000, 39500000,
+    40000000, 41000000, 42000000, 43000000, 44000000, 45000000, 46000000, 47000000, 48000000, 49000000,
+    50000000,
+)  # fmt: skip
+
+
+def _calc_rank_from_exp(spm: Any, time_played_seconds: Any) -> int | None:
+    """根据 spm 和总游玩秒数推算 BF1 等级。spm/时间任一为空时返回 None。"""
+    if not spm or not time_played_seconds:
+        return None
+    try:
+        exp = float(spm) * float(time_played_seconds) / 60.0
+    except (TypeError, ValueError):
+        return None
+    if exp <= 0:
+        return 0
+    if exp >= _BF1_RANK_THRESHOLDS[-1]:
+        return len(_BF1_RANK_THRESHOLDS) - 1
+    for i, threshold in enumerate(_BF1_RANK_THRESHOLDS):
+        if exp <= threshold:
+            return max(i - 1, 0)
+    return 0
+
+
 class BF1StatsService:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
@@ -46,9 +87,11 @@ class BF1StatsService:
             losses = int(_safe(basic.get("losses"), 0))
             time_played = int(_safe(basic.get("timePlayed"), 0))
             spm = basic.get("spm")
+            ea_rank = int(_safe(basic.get("rank"), 0)) or None
+            rank = ea_rank if ea_rank else _calc_rank_from_exp(spm, time_played)
             summary = PlayerStatsSummary(
                 persona_id=persona_id,
-                rank=int(_safe(basic.get("rank"), 0)) or None,
+                rank=rank,
                 sps=float(spm) / 60.0 if spm else None,
                 kpm=float(_safe(basic.get("kpm"), 0)) or None,
                 kd=(kills / deaths) if deaths > 0 else None,

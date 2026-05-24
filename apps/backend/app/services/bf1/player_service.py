@@ -41,12 +41,13 @@ class BF1PlayerService:
                     code="EA_PERSONA_FETCH_FAILED",
                     message=f"EA Gateway 查询失败: {res}",
                 )
-            personas_map = res.get("result", {}).get("personas", {}) or {}
-            info = personas_map.get(str(persona_id))
+            result = res.get("result", {}) or {}
+            info = result.get(str(persona_id)) or result.get("personas", {}).get(str(persona_id))
             if not info:
                 raise NotFoundError(resource=f"persona {persona_id}")
+            avatar = info.get("avatar") or None
             return PersonaBrief(
                 persona_id=persona_id,
                 display_name=info.get("displayName", ""),
-                avatar_url=info.get("avatar"),
+                avatar_url=avatar,
             )

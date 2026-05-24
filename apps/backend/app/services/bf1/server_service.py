@@ -66,8 +66,7 @@ class BF1ServerService:
     ) -> ServerListResponse:
         async with get_bf1_client(self.db) as client:
             res = await client.searchServers(
-                name=keyword or "",
-                serverFilter=client.filter_dict,
+                server_name=keyword or "",
                 limit=limit,
             )
             if not isinstance(res, dict):

@@ -42,13 +42,11 @@ async def get_a_uuid() -> str:
     return str(uuid.uuid4())
 
 
-class BF1GatewayClient:
-    """BF1 EA Gateway 客户端。
+class _BF1GatewayBase:
+    """BF1 EA Gateway 客户端基类：实例字段、登录、JSON-RPC 调度等通用骨架。
 
-    用法：
-        client = BF1GatewayClient(pid=<persona_id>, remid=..., sid=..., session=...)
-        await client.login(remid, sid)
-        servers = await client.searchServers(...)
+    所有按业务域拆分的子类（Stats / GameServer / RSP / ...）都继承本类。
+    对外使用 `BF1GatewayClient`（位于文件末尾，多重继承所有业务子类）。
     """
 
     def __init__(
@@ -981,7 +979,7 @@ class BF1GatewayClient:
             return error_msg
 
 
-class Game(BF1GatewayClient):
+class Game(_BF1GatewayBase):
     """进出服务器"""
 
     async def reserveSlot(self, gameId: int | str) -> dict:
@@ -1029,7 +1027,7 @@ class Game(BF1GatewayClient):
         )
 
 
-class Progression(BF1GatewayClient):
+class Progression(_BF1GatewayBase):
     async def getDogtagsByPersonaId(self, personaId: int | str) -> dict:
         """
         获取狗牌
@@ -1219,7 +1217,7 @@ class Progression(BF1GatewayClient):
         )
 
 
-class ScrapExchange(BF1GatewayClient):
+class ScrapExchange(_BF1GatewayBase):
     async def getOffers(self) -> dict:
         """
         获取交换信息
@@ -1237,7 +1235,7 @@ class ScrapExchange(BF1GatewayClient):
         )
 
 
-class CampaignOperations(BF1GatewayClient):
+class CampaignOperations(_BF1GatewayBase):
     async def getPlayerCampaignStatus(self) -> dict:
         """
                 获取战役信息
@@ -1322,7 +1320,7 @@ class CampaignOperations(BF1GatewayClient):
         )
 
 
-class Stats(BF1GatewayClient):
+class Stats(_BF1GatewayBase):
     async def detailedStatsByPersonaId(self, personaId: int | str) -> dict:
         """
         获取战绩
@@ -1365,7 +1363,7 @@ class Stats(BF1GatewayClient):
         )
 
 
-class ServerHistory(BF1GatewayClient):
+class ServerHistory(_BF1GatewayBase):
     async def mostRecentServers(self, personaId: int | str) -> dict:
         """
         最近游玩
@@ -1390,7 +1388,7 @@ class ServerHistory(BF1GatewayClient):
         )
 
 
-class Gamedata(BF1GatewayClient):
+class Gamedata(_BF1GatewayBase):
     async def getGameData(self) -> dict:
         """
         获取游戏信息
@@ -1430,7 +1428,7 @@ class Gamedata(BF1GatewayClient):
         )
 
 
-class GameServer(BF1GatewayClient):
+class GameServer(_BF1GatewayBase):
     async def searchServers(self, server_name: str, limit: int = 200, filter_dict=None) -> dict:
         """
         搜索服务器
@@ -1569,7 +1567,7 @@ class GameServer(BF1GatewayClient):
         )
 
 
-class RSP(BF1GatewayClient):
+class RSP(_BF1GatewayBase):
     """服管相关"""
 
     async def RSPgetServerDetails(self, serverId: int | str) -> dict:
@@ -2043,7 +2041,7 @@ class RSP(BF1GatewayClient):
         )
 
 
-class CloudBanBy22(BF1GatewayClient):
+class CloudBanBy22(_BF1GatewayBase):
     """22的云封禁"""
 
     async def cb_listServerBan(self, serverId: int | str) -> dict:
@@ -2114,7 +2112,7 @@ class CloudBanBy22(BF1GatewayClient):
         )
 
 
-class Platoons(BF1GatewayClient):
+class Platoons(_BF1GatewayBase):
     """
     战队相关
     """
@@ -2490,7 +2488,7 @@ class Platoons(BF1GatewayClient):
         )
 
 
-class Emblems(BF1GatewayClient):
+class Emblems(_BF1GatewayBase):
     """
     图章
     """
@@ -2519,7 +2517,7 @@ class Emblems(BF1GatewayClient):
         )
 
 
-class Loadout(BF1GatewayClient):
+class Loadout(_BF1GatewayBase):
     """
     装备
     """
@@ -2545,13 +2543,7 @@ class Loadout(BF1GatewayClient):
         )
 
 
-class InstanceExistsError(Exception):
-    """Raised when an instance already exists for the given pid."""
-
-    pass
-
-
-class api_instance(
+class BF1GatewayClient(
     Game,
     Progression,
     Stats,
@@ -2566,40 +2558,10 @@ class api_instance(
     Loadout,
     CloudBanBy22,
 ):
-    # 存储所有实例的字典
-    instances = {}
+    """对外的 BF1 客户端，多重继承所有业务子类以聚合方法表。
 
-    def __init__(self, pid, remid: str = None, sid: str = None, session: str = None):
-        # 如果实例已经存在，则抛出异常，否则创建一个新实例
-        if pid in api_instance.instances:
-            raise InstanceExistsError(f"api_instance already exists for pid: {pid}")
-        super().__init__(pid=pid, remid=remid, sid=sid, session=session)
+    生命周期由 `services/bf1/gateway_factory.get_bf1_client` 管理：每次请求新建
+    实例并在退出时关闭 `http_session`，因此不再使用单例缓存。
+    """
 
-        # 将实例添加到字典中
-        api_instance.instances[pid] = self
-
-    # 使用单例模式，让每个pid只有一个实例
-    @staticmethod
-    def get_api_instance(pid, remid=None, sid=None, session=None) -> "api_instance":
-        # 如果实例已经存在，则返回它，否则创建一个新实例
-        if pid not in api_instance.instances:
-            api_instance.instances[pid] = api_instance(pid, remid, sid, session)
-        return api_instance.instances[pid]
-
-
-"""
-使用示例:
-
-1.获取一个账号实例
-    account = api_instance.get_api_instance(pid)
-2.使用cookie登录,登录后会自动刷新session
-    await account.login(remid="xxx", sid="xxx")
-3.调用功能
-    data = await account.xxx...
-4.如果返回结果不是dict类型说明有错,否则处理获得的数据
-    if not isinstance(data, dict):
-        logger.error(data)
-        return data
-    处理获得的数据:
-        ...
-"""
+    pass

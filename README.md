@@ -87,6 +87,11 @@ make dev
 
 # 跑数据库迁移
 make migrate
+
+# Seed 一个 EA 代查询账号到 ea_accounts 表（玩家查询 / 服管功能需要）
+# remid / sid 从 accounts.ea.com 的浏览器 Cookies 拿到
+docker compose exec backend uv run python tools/seed_ea_account.py \
+    --persona-id <PERSONA_ID> --remid <REMID> --sid <SID>
 ```
 
 启动后访问：
@@ -127,9 +132,16 @@ make prod-up
 
 # 5. 跑数据库迁移（首次部署需要）
 docker compose -f docker-compose.prod.yml run --rm migrate
+
+# 6. Seed 一个 EA 代查询账号
+docker compose -f docker-compose.prod.yml exec backend \
+    uv run python tools/seed_ea_account.py \
+    --persona-id <PERSONA_ID> --remid <REMID> --sid <SID>
 ```
 
 Caddy 自动从 Let's Encrypt 申请 TLS 证书，无需额外配置。
+
+镜像由 GitHub Actions `release.yml` workflow 在打 tag（`v*`）时构建并推送到 `ghcr.io/g1331/bf-manager-{backend,web}`。也可以手动触发 workflow 用 main 分支最新 commit 构建。
 
 ## 多游戏支持
 

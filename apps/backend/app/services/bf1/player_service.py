@@ -21,7 +21,7 @@ class BF1PlayerService:
                     code="EA_PERSONA_SEARCH_FAILED",
                     message=f"EA Gateway 查询失败: {res}",
                 )
-            personas_raw = res.get("result", {}).get("personas", []) or []
+            personas_raw = res.get("personas", []) or []
             personas = [
                 PersonaBrief(
                     persona_id=int(p.get("personaId") or p.get("pidId") or 0),

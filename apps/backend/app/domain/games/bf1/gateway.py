@@ -635,44 +635,63 @@ class BF1GatewayClient:
         )
 
     async def getPersonasByName(self, player_name: str) -> dict | str:
-        """
-        根据名字获取Personas
-        :param player_name:
-        :return:{'personas': {'persona': [{'personaId': 1004198901469, 'pidId': 1000331701469, 'displayName': 'SHlSAN13', 'name': 'shlsan13', 'namespaceName': 'cem_ea_id', 'isVisible': True, 'status': 'ACTIVE', 'statusReasonCode': '', 'showPersona': 'EVERYONE', 'dateCreated': '2018-11-15T2:19Z', 'lastAuthenticated': '2023-11-07T7:9Z'}]}}
-        """
-        # 检查access_token是否存在
-        if not self.access_token:
-            logger.error("access_token为空，无法调用EA API")
-            return "账号未登录或access_token无效"
+        """根据玩家昵称解析 persona 基本信息。
 
-        url = f"https://gateway.ea.com/proxy/identity/personas?namespaceName=cem_ea_id&displayName={player_name}"
-        # 头部信息
-        header = {
-            "Host": "gateway.ea.com",
-            "Connection": "keep-alive",
-            "Accept": "application/json",
-            "X-Expand-Results": "true",
-            "Authorization": f"Bearer {self.access_token}",
-            "Accept-Encoding": "deflate",
-        }
+        EA 自 2024 年起对 `gateway.ea.com/proxy/identity/personas` 这条公网
+        入口要求 `dp.server.default` scope，PUBLIC client_id 申请到的
+        access_token 没有该 scope（返回 403 insufficient_scope）。因此改走
+        社区维护的 gametools 镜像，无需 EA token 即可按昵称解析出 personaId。
+
+        返回归一化扁平结构（与 EA 原始嵌套结构不同）：
+            {
+                "personas": [
+                    {
+                        "personaId": int,
+                        "pidId": int | None,
+                        "displayName": str,
+                        "name": str,
+                        "avatar": str | None,
+                    }
+                ]
+            }
+        无匹配时 personas 为空列表；请求失败返回字符串错误描述。
+        """
+        url = (
+            f"https://api.gametools.network/bf1/player/"
+            f"?name={player_name}&platform=pc&skip_battlelog=false"
+        )
         try:
-            response = await self.http_session.get(
-                url=url, headers=header, timeout=10, ssl=False, proxy=_get_proxy()
-            )
-            # 检查Content-Type是否为JSON
-            content_type = response.headers.get("content-type", "").lower()
-            if "application/json" not in content_type:
-                logger.error(f"EA API返回非JSON响应，Content-Type: {content_type}")
-                response_text = await response.text()
-                logger.debug(f"响应内容: {response_text[:500]}...")
-                return "EA API返回格式错误"
-
-            return await response.json()
+            async with self.http_session.get(
+                url=url,
+                headers={"accept": "application/json"},
+                timeout=15,
+                ssl=False,
+                proxy=_get_proxy(),
+            ) as response:
+                data = await response.json(content_type=None)
         except asyncio.exceptions.TimeoutError:
             return "网络超时!"
         except Exception as e:
-            logger.error(f"EA API请求异常: {e}")
-            return f"EA API请求异常: {str(e)}"
+            logger.exception(f"按昵称查询玩家异常: {e}")
+            return f"按昵称查询失败: {e}"
+
+        if isinstance(data, dict) and data.get("errors"):
+            logger.warning(f"按昵称查询返回错误: {data['errors']}")
+            return {"personas": []}
+        persona_id = data.get("id") if isinstance(data, dict) else None
+        if not persona_id:
+            return {"personas": []}
+        return {
+            "personas": [
+                {
+                    "personaId": int(persona_id),
+                    "pidId": data.get("userId"),
+                    "displayName": data.get("userName") or player_name,
+                    "name": (data.get("userName") or player_name).lower(),
+                    "avatar": data.get("avatar"),
+                }
+            ]
+        }
 
     async def getPersonasByIds(self, personaIds: list[int | str]) -> dict:
         """

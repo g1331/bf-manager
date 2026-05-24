@@ -166,7 +166,7 @@ function WeaponsTab({ personaId }: { personaId: number }) {
     {
       key: "accuracy",
       header: "命中率",
-      cell: (w) => (w.accuracy != null ? `${(w.accuracy * 100).toFixed(1)}%` : "—"),
+      cell: (w) => (w.accuracy != null ? `${w.accuracy.toFixed(1)}%` : "—"),
     },
   ];
 
@@ -218,18 +218,13 @@ function ServersTab({ personaId }: { personaId: number }) {
     { key: "name", header: "服务器", cell: (s) => s.name, isCardTitle: true },
     { key: "map", header: "地图", cell: (s) => s.map_name ?? "—" },
     { key: "mode", header: "模式", cell: (s) => s.game_mode ?? "—" },
-    {
-      key: "last_played",
-      header: "上次游玩",
-      cell: (s) => (s.last_played_at ? new Date(s.last_played_at).toLocaleString("zh-CN") : "—"),
-    },
   ];
 
   return (
     <ResponsiveTable
       data={q.data.servers}
       columns={columns}
-      rowKey={(s) => `${s.server_id}-${s.last_played_at}`}
+      rowKey={(s) => `${s.server_id ?? s.persisted_game_id ?? s.name}`}
       emptyState="暂无最近游玩记录"
     />
   );

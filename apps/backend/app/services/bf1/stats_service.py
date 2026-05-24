@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -46,11 +45,12 @@ class BF1StatsService:
             wins = int(_safe(basic.get("wins"), 0))
             losses = int(_safe(basic.get("losses"), 0))
             time_played = int(_safe(basic.get("timePlayed"), 0))
+            spm = basic.get("spm")
             summary = PlayerStatsSummary(
                 persona_id=persona_id,
-                rank=int(_safe(raw.get("rank"), 0)) or None,
-                sps=float(_safe(raw.get("spm"), 0)) / 60.0 if raw.get("spm") else None,
-                kpm=float(_safe(raw.get("kpm"), 0)) or None,
+                rank=int(_safe(basic.get("rank"), 0)) or None,
+                sps=float(spm) / 60.0 if spm else None,
+                kpm=float(_safe(basic.get("kpm"), 0)) or None,
                 kd=(kills / deaths) if deaths > 0 else None,
                 wins=wins,
                 losses=losses,
@@ -71,7 +71,7 @@ class BF1StatsService:
             raw = res.get("result") or []
             weapons: list[WeaponStat] = []
             for category in raw:
-                cat_name = category.get("category")
+                cat_name = category.get("name") or category.get("category")
                 for w in category.get("weapons") or []:
                     stats = w.get("stats", {}).get("values", {}) or {}
                     weapons.append(
@@ -98,7 +98,7 @@ class BF1StatsService:
             raw = res.get("result") or []
             vehicles: list[VehicleStat] = []
             for category in raw:
-                cat_name = category.get("category")
+                cat_name = category.get("name") or category.get("category")
                 for v in category.get("vehicles") or []:
                     stats = v.get("stats", {}).get("values", {}) or {}
                     vehicles.append(
@@ -124,21 +124,19 @@ class BF1StatsService:
             raw = res.get("result") or []
             servers: list[RecentServer] = []
             for entry in raw:
-                last_played: str | None = None
-                if entry.get("lastPlayedOn"):
-                    try:
-                        ts = int(entry["lastPlayedOn"]) / 1000
-                        last_played = datetime.fromtimestamp(ts, tz=UTC).isoformat()
-                    except (TypeError, ValueError):
-                        last_played = None
+                game_id_raw = entry.get("gameId")
+                try:
+                    server_id = int(game_id_raw) if game_id_raw is not None else None
+                except (TypeError, ValueError):
+                    server_id = None
                 servers.append(
                     RecentServer(
                         name=entry.get("name", ""),
-                        map_name=entry.get("mapName"),
-                        game_mode=entry.get("mode"),
-                        last_played_at=last_played,
-                        server_id=int(entry["serverId"]) if entry.get("serverId") else None,
-                        persisted_game_id=entry.get("persistedGameId"),
+                        map_name=entry.get("mapNamePretty") or entry.get("mapName"),
+                        game_mode=entry.get("mapModePretty") or entry.get("mapMode"),
+                        last_played_at=None,
+                        server_id=server_id,
+                        persisted_game_id=entry.get("guid"),
                     )
                 )
             return RecentServers(persona_id=persona_id, servers=servers)

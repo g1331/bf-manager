@@ -35,20 +35,21 @@ dev-clean: ## 停止开发环境并清理数据卷
 	docker compose down -v
 
 # ===== 生产环境（prod） =====
+# 所有 prod 命令都需要 .env.prod（DOMAIN 等变量由 compose 文件强制要求）
 prod-pull: ## 拉取生产镜像
-	docker compose -f docker-compose.prod.yml pull
+	docker compose -f docker-compose.prod.yml --env-file .env.prod pull
 
 prod-up: ## 启动生产环境
 	docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
 
 prod-down: ## 停止生产环境
-	docker compose -f docker-compose.prod.yml down
+	docker compose -f docker-compose.prod.yml --env-file .env.prod down
 
 prod-logs: ## 跟踪生产环境日志
-	docker compose -f docker-compose.prod.yml logs -f
+	docker compose -f docker-compose.prod.yml --env-file .env.prod logs -f
 
 prod-restart: ## 重启生产环境
-	docker compose -f docker-compose.prod.yml restart
+	docker compose -f docker-compose.prod.yml --env-file .env.prod restart
 
 # ===== 数据库 =====
 migrate: ## 跑数据库迁移到最新版本

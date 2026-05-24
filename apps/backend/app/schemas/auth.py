@@ -9,8 +9,10 @@ from pydantic import BaseModel, Field
 
 
 class LoginRequest(BaseModel):
-    remid: str = Field(..., min_length=10, description="EA 长效 cookie")
-    sid: str = Field(..., min_length=10, description="EA 短期 cookie")
+    remid: str = Field(..., min_length=10, description="EA 长效 cookie（必填）")
+    # sid 可留空：EA 在 /connect/auth 响应里会 Set-Cookie 一个新 sid，
+    # 只要 remid 有效就能完成登录
+    sid: str = Field(default="", description="EA 短期 cookie（可选）")
 
 
 class SessionUser(BaseModel):

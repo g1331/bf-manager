@@ -17,7 +17,8 @@ export interface SessionResponse {
 
 export interface LoginRequest {
   remid: string;
-  sid: string;
+  // sid 留空时 EA 会在登录响应里自动签发新 sid，因此设为可选
+  sid?: string;
 }
 
 export interface LoginResponse {

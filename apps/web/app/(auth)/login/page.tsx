@@ -23,7 +23,11 @@ import { ApiException } from "@/lib/api-client";
 
 const loginSchema = z.object({
   remid: z.string().min(10, "remid 看上去不是合法 cookie 值"),
-  sid: z.string().min(10, "sid 看上去不是合法 cookie 值"),
+  // sid 留空时由 EA 在登录响应里自动 Set-Cookie 出新值，所以前端也设为可选
+  sid: z
+    .string()
+    .optional()
+    .refine((v) => !v || v.length >= 10, "sid 如填写需是合法 cookie 值"),
 });
 
 type LoginValues = z.infer<typeof loginSchema>;
@@ -69,7 +73,8 @@ function LoginForm() {
         <CardHeader>
           <CardTitle>登录 BF-Manager</CardTitle>
           <CardDescription>
-            使用 EA 账号的 Cookie（remid + sid）登录。两个 Cookie 可以在浏览器中访问{" "}
+            使用 EA 账号的 Cookie 登录。一般只需要填 <strong>remid</strong>，sid 留空即可—— EA
+            会在登录过程里自动签发新的 sid。两个 Cookie 都能在浏览器中访问{" "}
             <a
               href="https://accounts.ea.com"
               target="_blank"
@@ -107,13 +112,14 @@ function LoginForm() {
                 name="sid"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>sid</FormLabel>
+                    <FormLabel>sid（可选）</FormLabel>
                     <FormControl>
                       <Input
                         autoComplete="off"
                         spellCheck={false}
-                        placeholder="EA 短期 Cookie，会在登录后自动刷新"
+                        placeholder="留空即可，EA 会自动签发新的 sid"
                         {...field}
+                        value={field.value ?? ""}
                       />
                     </FormControl>
                     <FormDescription>

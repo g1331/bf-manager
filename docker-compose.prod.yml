@@ -3,7 +3,8 @@
 # - 数据库与 redis 不暴露端口，只在内网通信
 # - 所有敏感字段走 Docker secrets，不出现在 environment
 # - migrate 服务作为独立 job，启动后跑一次 alembic upgrade head
-# - Caddy 作为唯一对外服务，自动从 Let's Encrypt 签发 TLS
+# - backend / web 端口 bind 到 host 127.0.0.1，由 host 上的 openresty / nginx
+#   做 TLS 终止 + path-based 反代（/api/v1/* → backend，其它 → web）
 
 services:
   postgres:
@@ -61,6 +62,9 @@ services:
       ENVIRONMENT: production
       LOG_LEVEL: INFO
       ENABLED_GAMES: bf1
+    # 仅绑 127.0.0.1，杜绝外网直连绕过 openresty
+    ports:
+      - "127.0.0.1:${BACKEND_HOST_PORT:-8000}:8000"
     # Settings 通过 secrets_dir=/run/secrets 自动按字段名读取这 3 个 secret 文件
     secrets:
       - database_url
@@ -82,26 +86,11 @@ services:
       NODE_ENV: production
       BACKEND_API_URL: http://backend:8000
       NEXT_PUBLIC_DEFAULT_GAME: bf1
-    depends_on:
-      - backend
-    networks: [internal]
-
-  caddy:
-    image: caddy:2-alpine
-    restart: unless-stopped
+    # 仅绑 127.0.0.1，由 host openresty 反代
     ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
-    environment:
-      DOMAIN: ${DOMAIN:?DOMAIN required}
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy-data:/data
-      - caddy-config:/config
+      - "127.0.0.1:${WEB_HOST_PORT:-3000}:3000"
     depends_on:
       - backend
-      - web
     networks: [internal]
 
 networks:
@@ -111,8 +100,6 @@ networks:
 volumes:
   pgdata:
   redis-data:
-  caddy-data:
-  caddy-config:
 
 secrets:
   postgres_password:

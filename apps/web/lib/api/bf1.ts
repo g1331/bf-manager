@@ -76,6 +76,53 @@ export interface RecentServers {
   servers: RecentServer[];
 }
 
+export interface ServerSummary {
+  server_id: number;
+  game_id: number | null;
+  persisted_game_id: string | null;
+  name: string;
+  map_name: string | null;
+  game_mode: string | null;
+  player_count: number;
+  max_player_count: number;
+  queue_count: number;
+  spectator_count: number;
+  region: string | null;
+  is_official: boolean;
+  is_ranked: boolean;
+  has_password: boolean;
+  description: string | null;
+}
+
+export interface ServerListResponse {
+  total: number;
+  items: ServerSummary[];
+}
+
+export interface MapRotationItem {
+  map_name: string | null;
+  game_mode: string | null;
+  map_image_url: string | null;
+  is_current: boolean;
+}
+
+export interface ServerPlayer {
+  persona_id: number;
+  display_name: string;
+  team_id: number | null;
+  rank: number | null;
+  is_spectator: boolean;
+}
+
+export interface ServerDetail {
+  summary: ServerSummary;
+  description: string | null;
+  settings: Record<string, unknown>;
+  map_rotation: MapRotationItem[];
+  players: ServerPlayer[];
+  raw: Record<string, unknown>;
+}
+
 export const bf1Api = {
   searchPlayers: (name: string) =>
     api.get<PersonaSearchResult>(`/bf1/players/search?name=${encodeURIComponent(name)}`),
@@ -90,4 +137,13 @@ export const bf1Api = {
 
   getRecentServers: (personaId: number) =>
     api.get<RecentServers>(`/bf1/stats/${personaId}/recent-servers`),
+
+  listServers: (name?: string, limit = 50) => {
+    const params = new URLSearchParams();
+    if (name) params.set("name", name);
+    params.set("limit", String(limit));
+    return api.get<ServerListResponse>(`/bf1/servers?${params.toString()}`);
+  },
+
+  getServer: (gameId: number) => api.get<ServerDetail>(`/bf1/servers/${gameId}`),
 };

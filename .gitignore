@@ -75,11 +75,13 @@ secrets/
 *.pem
 *.crt
 
-# ===== IDE / 编辑器 =====
+# ===== IDE / 编辑器 / AI 工具 =====
 .idea/
 .vscode/
 !.vscode/settings.json.example
 !.vscode/extensions.json.example
+.claude/
+!.claude/*.example
 *.swp
 *.swo
 *~

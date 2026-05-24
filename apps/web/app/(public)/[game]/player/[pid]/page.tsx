@@ -28,13 +28,30 @@ export default function PlayerDetailPage() {
     return <main className="text-destructive p-6 text-center">无效的 persona ID</main>;
   }
 
+  const displayName =
+    persona.data?.display_name ?? (persona.isLoading ? "加载中…" : `Persona ${personaId}`);
+  const avatarUrl = persona.data?.avatar_url ?? null;
+
   return (
     <main className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold sm:text-3xl">
-          {persona.data?.display_name ?? `Persona ${personaId}`}
-        </h1>
-        <p className="text-muted-foreground text-sm">ID: {personaId}</p>
+      <header className="flex items-center gap-4">
+        {avatarUrl ? (
+          // EA 头像域不在 next/image remotePatterns 内，用原生 img 避免额外配置
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={avatarUrl}
+            alt={displayName}
+            className="border-border size-16 shrink-0 rounded-full border object-cover"
+          />
+        ) : (
+          <div className="bg-muted text-muted-foreground border-border flex size-16 shrink-0 items-center justify-center rounded-full border text-xl font-semibold">
+            {displayName.slice(0, 1).toUpperCase()}
+          </div>
+        )}
+        <div className="flex min-w-0 flex-col gap-1">
+          <h1 className="truncate text-2xl font-bold sm:text-3xl">{displayName}</h1>
+          <p className="text-muted-foreground text-sm">PID: {personaId}</p>
+        </div>
       </header>
 
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">

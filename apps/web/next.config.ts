@@ -1,8 +1,15 @@
+import path from "node:path";
 import type { NextConfig } from "next";
+
+// monorepo 下 Next.js standalone 需要显式声明 trace 根目录，否则会按当前
+// app 目录推断 root 并漏掉 workspace 共享的 node_modules。
+// next build 的 cwd 是 apps/web，向上两层即为仓库根。
+const monorepoRoot = path.resolve(process.cwd(), "..", "..");
 
 const nextConfig: NextConfig = {
   // 多阶段 Docker 镜像最小化产物
   output: "standalone",
+  outputFileTracingRoot: monorepoRoot,
   // 严格模式
   reactStrictMode: true,
   // 类型与 lint 错误必须先修复

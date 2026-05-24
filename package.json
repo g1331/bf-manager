@@ -1,0 +1,22 @@
+{
+  "name": "bf-manager",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Battlefield server management & stats platform",
+  "license": "MIT",
+  "author": "g1331",
+  "packageManager": "pnpm@9.12.0",
+  "engines": {
+    "node": ">=20.11.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "dev:web": "pnpm --filter @bf-manager/web dev",
+    "build:web": "pnpm --filter @bf-manager/web build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "lefthook": "^1.7.22"
+  }
+}

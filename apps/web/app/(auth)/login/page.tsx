@@ -1,0 +1,127 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { toast } from "sonner";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { login } from "@/lib/auth";
+import { ApiException } from "@/lib/api-client";
+
+const loginSchema = z.object({
+  remid: z.string().min(10, "remid 看上去不是合法 cookie 值"),
+  sid: z.string().min(10, "sid 看上去不是合法 cookie 值"),
+});
+
+type LoginValues = z.infer<typeof loginSchema>;
+
+export default function LoginPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") ?? "/";
+  const [submitting, setSubmitting] = useState(false);
+
+  const form = useForm<LoginValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { remid: "", sid: "" },
+  });
+
+  const onSubmit = async (values: LoginValues) => {
+    setSubmitting(true);
+    try {
+      const user = await login(values);
+      toast.success(`欢迎回来，${user.display_name ?? user.persona_id}`);
+      router.push(next);
+      router.refresh();
+    } catch (err) {
+      const msg =
+        err instanceof ApiException ? err.message : "登录失败，请检查 remid / sid 是否正确";
+      toast.error(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <main className="flex min-h-screen items-start justify-center px-4 py-8 sm:items-center sm:py-16">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>登录 BF-Manager</CardTitle>
+          <CardDescription>
+            使用 EA 账号的 Cookie（remid + sid）登录。两个 Cookie 可以在浏览器中访问{" "}
+            <a
+              href="https://accounts.ea.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary underline-offset-4 hover:underline"
+            >
+              accounts.ea.com
+            </a>{" "}
+            后从开发者工具的 Cookies 面板获取。
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+              <FormField
+                control={form.control}
+                name="remid"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>remid</FormLabel>
+                    <FormControl>
+                      <Input
+                        autoComplete="off"
+                        spellCheck={false}
+                        placeholder="EA 长效 Cookie，通常 2 年有效"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="sid"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>sid</FormLabel>
+                    <FormControl>
+                      <Input
+                        autoComplete="off"
+                        spellCheck={false}
+                        placeholder="EA 短期 Cookie，会在登录后自动刷新"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      凭据通过 AES-256-GCM 加密存储，永远不会出现在任何 API 响应中。
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" size="lg" className="w-full" disabled={submitting}>
+                {submitting ? "登录中…" : "登录"}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </main>
+  );
+}

@@ -1,0 +1,84 @@
+# 开发环境 compose（dev）
+# - postgres / redis 暴露端口供本地连接调试
+# - backend 与 web 挂载源码 + --reload，热重载生效
+# - 不引入 Caddy / TLS / secrets（这些都在 prod compose 里）
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: bfm-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-bf}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bf}
+      POSTGRES_DB: ${POSTGRES_DB:-bf_manager}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bf} -d ${POSTGRES_DB:-bf_manager}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: bfm-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+      target: builder    # dev 用 builder stage 保留 uv 与构建工具
+    container_name: bfm-backend
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-bf}:${POSTGRES_PASSWORD:-bf}@postgres:5432/${POSTGRES_DB:-bf_manager}
+      REDIS_URL: redis://redis:6379/0
+      ENVIRONMENT: development
+      LOG_LEVEL: DEBUG
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./apps/backend/app:/app/app
+      - ./apps/backend/alembic:/app/alembic
+      - ./apps/backend/alembic.ini:/app/alembic.ini
+    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  web:
+    image: node:20-alpine
+    container_name: bfm-web
+    working_dir: /app
+    environment:
+      NODE_ENV: development
+      BACKEND_API_URL: http://backend:8000
+      NEXT_PUBLIC_DEFAULT_GAME: bf1
+      NEXT_TELEMETRY_DISABLED: "1"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./apps/web:/app
+      - /app/node_modules
+      - /app/.next
+    command: sh -c "corepack enable && corepack prepare pnpm@9.12.0 --activate && pnpm install && pnpm dev"
+
+volumes:
+  pgdata:
+  redis-data:

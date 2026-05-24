@@ -1,0 +1,108 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend · ruff + tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/backend
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: bf
+          POSTGRES_PASSWORD: bf
+          POSTGRES_DB: bf_manager_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U bf"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.5.5"
+          enable-cache: true
+          cache-dependency-glob: apps/backend/uv.lock
+
+      - name: Setup Python
+        run: uv python install 3.12
+
+      - name: Sync dependencies
+        run: uv sync --frozen || uv sync
+
+      - name: Ruff check
+        run: uv run ruff check .
+
+      - name: Ruff format check
+        run: uv run ruff format --check .
+
+      - name: Pytest
+        env:
+          DATABASE_URL: postgresql+asyncpg://bf:bf@localhost:5432/bf_manager_test
+          REDIS_URL: redis://localhost:6379/0
+          EA_CRED_ENCRYPTION_KEY: ZGV2LW9ubHktY2hhbmdlLW1lLWluLXByb2QtMzJieXRlc2tleQ==
+          JWT_SECRET_KEY: ci-jwt-secret-for-tests-only-not-secure
+          ENVIRONMENT: ci
+        run: uv run pytest -q
+
+  frontend:
+    name: Frontend · prettier + typecheck + build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install
+        working-directory: .
+        run: pnpm install --frozen-lockfile
+
+      - name: Prettier check
+        run: pnpm prettier --check "**/*.{ts,tsx,js,jsx,json,css,md}" --ignore-path ../../.gitignore
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build
+        env:
+          BACKEND_API_URL: http://localhost:8000
+        run: pnpm build

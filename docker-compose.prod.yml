@@ -1,0 +1,129 @@
+# 生产环境 compose（prod）
+# - 使用 ghcr.io 上预构建的镜像（IMAGE_TAG 控制版本）
+# - 数据库与 redis 不暴露端口，只在内网通信
+# - 所有敏感字段走 Docker secrets，不出现在 environment
+# - migrate 服务作为独立 job，启动后跑一次 alembic upgrade head
+# - Caddy 作为唯一对外服务，自动从 Let's Encrypt 签发 TLS
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-bf}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      POSTGRES_DB: ${POSTGRES_DB:-bf_manager}
+    secrets:
+      - postgres_password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bf} -d ${POSTGRES_DB:-bf_manager}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    networks: [internal]
+
+  migrate:
+    image: ghcr.io/g1331/bf-manager-backend:${IMAGE_TAG:-latest}
+    restart: "no"
+    environment:
+      DATABASE_URL_FILE: /run/secrets/database_url
+      EA_CRED_ENCRYPTION_KEY_FILE: /run/secrets/ea_cred_encryption_key
+      JWT_SECRET_KEY_FILE: /run/secrets/jwt_secret_key
+      ENVIRONMENT: production
+    secrets:
+      - database_url
+      - ea_cred_encryption_key
+      - jwt_secret_key
+    command: ["sh", "-c", "DATABASE_URL=$(cat /run/secrets/database_url) uv run alembic upgrade head"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [internal]
+
+  backend:
+    image: ghcr.io/g1331/bf-manager-backend:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      DATABASE_URL_FILE: /run/secrets/database_url
+      REDIS_URL: redis://redis:6379/0
+      EA_CRED_ENCRYPTION_KEY_FILE: /run/secrets/ea_cred_encryption_key
+      JWT_SECRET_KEY_FILE: /run/secrets/jwt_secret_key
+      ALLOWED_ORIGINS: https://${DOMAIN:?DOMAIN required}
+      ENVIRONMENT: production
+      LOG_LEVEL: INFO
+      ENABLED_GAMES: bf1
+    secrets:
+      - database_url
+      - ea_cred_encryption_key
+      - jwt_secret_key
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks: [internal]
+
+  web:
+    image: ghcr.io/g1331/bf-manager-web:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      BACKEND_API_URL: http://backend:8000
+      NEXT_PUBLIC_DEFAULT_GAME: bf1
+    depends_on:
+      - backend
+    networks: [internal]
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:?DOMAIN required}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - backend
+      - web
+    networks: [internal]
+
+networks:
+  internal:
+    driver: bridge
+
+volumes:
+  pgdata:
+  redis-data:
+  caddy-data:
+  caddy-config:
+
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password
+  database_url:
+    file: ./secrets/database_url
+  ea_cred_encryption_key:
+    file: ./secrets/ea_cred_encryption_key
+  jwt_secret_key:
+    file: ./secrets/jwt_secret_key

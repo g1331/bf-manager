@@ -1,0 +1,110 @@
+# ===== Node / pnpm / Next.js =====
+node_modules/
+.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# Next.js
+.next/
+out/
+build/
+.vercel
+next-env.d.ts
+
+# 测试覆盖率
+coverage/
+*.lcov
+
+# 调试
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.pnpm-store/
+
+# ===== Python / uv / FastAPI =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.installed.cfg
+*.egg
+.eggs/
+
+# 虚拟环境
+.venv/
+venv/
+env/
+ENV/
+
+# uv
+.uv-cache/
+
+# pytest / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+
+# mypy / ruff / type stubs
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.ruff_cache/
+.pyre/
+.pytype/
+
+# ===== 环境变量与密钥 =====
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.prod
+!.env.example
+
+# 容器化 secrets（绝不可入库）
+secrets/
+*.key
+*.pem
+*.crt
+
+# ===== IDE / 编辑器 =====
+.idea/
+.vscode/
+!.vscode/settings.json.example
+!.vscode/extensions.json.example
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== 数据库与备份 =====
+*.sqlite
+*.sqlite3
+*.db
+backups/
+pgdata/
+redis-data/
+
+# ===== 日志 =====
+*.log
+logs/
+
+# ===== 构建产物 =====
+dist/
+*.tsbuildinfo
+
+# ===== 类型生成产物（CI 自动生成） =====
+packages/shared-types/src/api.d.ts
+
+# ===== Docker =====
+.docker/

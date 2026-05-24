@@ -1,0 +1,30 @@
+# lefthook 配置：本地 pre-commit / pre-push 钩子
+# 在提交前自动跑代码质量检查，与 CI 保持一致
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: backend-ruff-check
+      glob: "apps/backend/**/*.py"
+      run: cd apps/backend && uv run ruff check {staged_files}
+      stage_fixed: true
+
+    - name: backend-ruff-format
+      glob: "apps/backend/**/*.py"
+      run: cd apps/backend && uv run ruff format --check {staged_files}
+
+    - name: frontend-prettier
+      glob: "apps/web/**/*.{ts,tsx,js,jsx,json,css,md}"
+      run: cd apps/web && pnpm prettier --check {staged_files}
+
+    - name: frontend-typecheck
+      glob: "apps/web/**/*.{ts,tsx}"
+      run: cd apps/web && pnpm typecheck
+
+pre-push:
+  jobs:
+    - name: backend-ruff
+      run: cd apps/backend && uv run ruff check . && uv run ruff format --check .
+
+    - name: frontend-typecheck
+      run: cd apps/web && pnpm typecheck

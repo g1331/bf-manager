@@ -1,0 +1,52 @@
+# Caddy 配置：单域名反向代理 + 自动 TLS
+#
+# - 所有 /api/* 请求转发到 backend:8000
+# - 其余请求转发到 web:3000（Next.js standalone）
+# - HTTPS 由 Caddy 自动从 Let's Encrypt 签发并续期
+# - 启用 zstd + gzip 压缩
+
+{$DOMAIN} {
+    encode zstd gzip
+
+    # 后端 API 反向代理
+    handle /api/* {
+        reverse_proxy backend:8000 {
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-Host {host}
+        }
+    }
+
+    # 后端 OpenAPI / docs（生产环境如不需要可注释掉）
+    handle /docs {
+        reverse_proxy backend:8000
+    }
+    handle /redoc {
+        reverse_proxy backend:8000
+    }
+
+    # 其余请求走 Next.js
+    handle {
+        reverse_proxy web:3000 {
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-Host {host}
+        }
+    }
+
+    # 安全响应头
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        Referrer-Policy strict-origin-when-cross-origin
+        Permissions-Policy "geolocation=(), microphone=(), camera=()"
+        -Server
+    }
+
+    log {
+        output stdout
+        format console
+        level INFO
+    }
+}

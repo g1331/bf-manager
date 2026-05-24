@@ -7,19 +7,19 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript)](https://www.typescriptlang.org/)
 
-面向开放注册的 Battlefield 系列玩家与服主平台。当前已上线 BF1 的完整战绩查询与服管能力，架构层面预留 BFV / BF2042 接入空间。前端移动优先响应式设计，桌面与手机浏览器均获得良好体验。
+面向开放注册的 Battlefield 系列玩家与服主平台。架构以共享的 EA 身份层 + 游戏特定实现层组合，原生支持多游戏接入。前端移动优先响应式设计，桌面与手机浏览器均获得良好体验。
 
 ## 功能范围
 
 | 模块 | 功能 |
 |---|---|
-| M1 · 用户认证 | EA Cookie (remid / sid) 登录，persona 自动绑定，JWT 签发，AES-256-GCM 加密存储凭据，AppHeader 用户菜单 + 登出 |
-| M2 · 游戏入口 | 首页游戏选择，GameSwitcher 切换器，per-game 主题切换 |
-| M3 · BF1 战绩查询 | 头像（SAL 反查，gametools 兜底）、生涯数据、武器统计、载具统计、最近对局 |
-| M4 · BF1 服务器列表 | 服务器搜索、客户端分批渲染（每批 50，最多拉 200）、详情页（地图轮换、当前对局、玩家列表） |
-| M5 · BF1 服管操作 | 踢人、VBAN 增删、换图，二次确认（移动 BottomSheet / 桌面 Dialog）+ 审计日志 |
-| M6 · 操作日志 | 跨游戏审计日志：普通用户只看自己，平台 admin 看全部，按 game / server / action 筛选 |
-| 平台后台 | `/admin/memberships`：仅平台 admin 可见，授予 / 撤销服管权限（viewer / moderator / admin / owner） |
+| 用户认证 | EA Cookie (remid / sid) 登录，persona 自动绑定，JWT 签发，AES-256-GCM 加密存储凭据，AppHeader 用户菜单 + 登出 |
+| 游戏入口 | 首页游戏选择，GameSwitcher 切换器，per-game 主题切换 |
+| BF1 战绩查询 | 头像（SAL 反查，gametools 兜底）、生涯数据、武器统计、载具统计、最近对局 |
+| BF1 服务器列表 | 服务器搜索、客户端分批渲染（每批 50，最多拉 200）、详情页（地图轮换、当前对局、玩家列表） |
+| BF1 服管操作 | 踢人、VBAN 增删、换图，二次确认（移动 BottomSheet / 桌面 Dialog）+ 审计日志 |
+| 操作日志 | 跨游戏审计日志：普通用户只看自己，平台 admin 看全部，按 game / server / action 筛选 |
+| 服管权限授予 | `/admin/memberships`：仅平台 admin 可见，授予 / 撤销服管权限（viewer / moderator / admin / owner） |
 
 ## 技术栈
 
@@ -32,7 +32,7 @@
 | 包管理 | 后端 uv，前端 pnpm |
 | 容器化 | Docker Compose + 多阶段 Dockerfile，TLS 与反代由 host 上的 openresty / nginx 处理 |
 | 镜像 | ghcr.io（GitHub Container Registry），由 `release.yml` workflow 自动构建并推送 |
-| PWA | manifest + SVG 图标 + apple-touch-icon，installable PWA（service worker / 离线缓存留待后续） |
+| PWA | manifest + SVG 图标 + apple-touch-icon meta，支持"添加到主屏幕"安装 |
 
 ## 目录结构
 
@@ -65,7 +65,7 @@ apps/backend/app/
 └── api/v1/              # 路由（auth / memberships / audit-logs / games/<game_id>/）
 ```
 
-测试覆盖：`apps/backend/tests/` 包含 health / auth / audit / memberships 的接口级集成测试，使用 in-memory sqlite，不依赖 postgres / redis。
+接口级集成测试位于 `apps/backend/tests/`（health / auth / audit / memberships），运行于 in-memory sqlite，不依赖 postgres / redis。
 
 ## 快速开始
 
@@ -186,7 +186,7 @@ make dev
 bash tools/generate-types.sh
 ```
 
-生成结果不进 git（被 `.gitignore` 忽略），每次后端 schema 改动后前端需要重新生成。当前阶段前端 `lib/api/*.ts` 仍是手写类型，后续会逐步切到生成类型。
+生成结果不进 git（被 `.gitignore` 忽略），后端 schema 改动后前端需要重新生成。前端可通过 `@bf-manager/shared-types/api` 引用 `paths` / `components`，获得与后端 OpenAPI 一致的类型。
 
 ## 贡献
 

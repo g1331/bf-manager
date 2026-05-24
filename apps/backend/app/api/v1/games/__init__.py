@@ -1,4 +1,8 @@
-"""游戏列表 API"""
+"""游戏相关路由聚合
+
+- /api/v1/games          通用游戏列表
+- /api/v1/bf1/...        BF1 特定路由（players / stats / servers / ...）
+"""
 
 from __future__ import annotations
 

@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GameSwitcher } from "@/components/layout/GameSwitcher";
+import { UserMenu } from "@/components/layout/UserMenu";
 import type { GameId } from "@/lib/game-registry";
 
 export function AppHeader({ game }: { game: GameId }) {
@@ -30,8 +31,9 @@ export function AppHeader({ game }: { game: GameId }) {
             <span>返回</span>
           </Button>
         )}
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
           <GameSwitcher current={game} />
+          <UserMenu />
         </div>
       </div>
     </header>

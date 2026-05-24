@@ -15,8 +15,9 @@ router = APIRouter()
 async def list_servers(
     db: DbDep,
     name: str | None = Query(None, max_length=64, description="按服务器名关键字过滤"),
-    limit: int = Query(50, ge=1, le=200),
+    limit: int = Query(200, ge=1, le=200),
 ) -> ServerListResponse:
+    # EA searchServers 只接受 limit，没有 offset。前端走客户端分批渲染。
     return await BF1ServerService(db).search(keyword=name, limit=limit)
 
 

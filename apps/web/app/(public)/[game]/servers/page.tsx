@@ -9,21 +9,29 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { bf1Api, type ServerSummary } from "@/lib/api/bf1";
 
+const PAGE_SIZE = 50;
+
 export default function ServerListPage() {
   const params = useParams<{ game: string }>();
   const router = useRouter();
   const [keyword, setKeyword] = useState("");
   const [activeQuery, setActiveQuery] = useState("");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const servers = useQuery({
     queryKey: ["bf1-servers", activeQuery],
-    queryFn: () => bf1Api.listServers(activeQuery || undefined, 80),
+    queryFn: () => bf1Api.listServers(activeQuery || undefined, 200),
   });
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     setActiveQuery(keyword.trim());
+    setVisibleCount(PAGE_SIZE);
   };
+
+  const allItems = servers.data?.items ?? [];
+  const visibleItems = allItems.slice(0, visibleCount);
+  const hasMore = visibleCount < allItems.length;
 
   return (
     <main className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6">
@@ -47,16 +55,32 @@ export default function ServerListPage() {
 
       {servers.isLoading ? (
         <div className="text-muted-foreground p-12 text-center">加载中…</div>
-      ) : servers.data && servers.data.items.length > 0 ? (
-        <section className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-          {servers.data.items.map((s) => (
-            <ServerCard
-              key={s.server_id}
-              server={s}
-              onClick={() => s.game_id && router.push(`/${params.game}/server/${s.game_id}`)}
-            />
-          ))}
-        </section>
+      ) : allItems.length > 0 ? (
+        <>
+          <section className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            {visibleItems.map((s) => (
+              <ServerCard
+                key={s.server_id}
+                server={s}
+                onClick={() => s.game_id && router.push(`/${params.game}/server/${s.game_id}`)}
+              />
+            ))}
+          </section>
+          <div className="text-muted-foreground flex flex-col items-center gap-2 pt-2 text-sm">
+            <span className="tabular-nums">
+              已显示 {visibleItems.length} / {allItems.length} 条
+            </span>
+            {hasMore ? (
+              <Button
+                variant="outline"
+                onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+                className="px-8"
+              >
+                加载更多
+              </Button>
+            ) : null}
+          </div>
+        </>
       ) : (
         <div className="text-muted-foreground rounded-lg border border-dashed p-12 text-center">
           {servers.data ? "未找到匹配的服务器" : "请先发起搜索"}

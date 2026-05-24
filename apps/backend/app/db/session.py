@@ -21,13 +21,12 @@ def get_engine() -> AsyncEngine:
     global _engine  # noqa: PLW0603
     if _engine is None:
         settings = get_settings()
-        _engine = create_async_engine(
-            settings.database_url,
-            echo=settings.debug,
-            pool_pre_ping=True,
-            pool_size=10,
-            max_overflow=20,
-        )
+        # sqlite (aiosqlite) 走默认 StaticPool，不接受 pool_size / max_overflow
+        kwargs: dict = {"echo": settings.debug, "pool_pre_ping": True}
+        if not settings.database_url.startswith("sqlite"):
+            kwargs["pool_size"] = 10
+            kwargs["max_overflow"] = 20
+        _engine = create_async_engine(settings.database_url, **kwargs)
     return _engine
 
 

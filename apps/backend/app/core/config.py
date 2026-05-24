@@ -59,6 +59,12 @@ class Settings(BaseSettings):
     # ===== 启用的游戏 =====
     enabled_games: str = "bf1"
 
+    # ===== 平台 admin 名单 =====
+    # 逗号分隔的 persona_id。这些用户每次登录都会被强制赋予 role="admin"，
+    # 用于服管权限授予、跨用户审计等管理操作。声明式管理：env 改了重启生效，
+    # 不在此名单内的用户每次登录会被降回 role="user"。
+    admin_persona_ids: str = ""
+
     @property
     def cors_origins(self) -> list[str]:
         return [o.strip() for o in self.allowed_origins.split(",") if o.strip()]
@@ -66,6 +72,19 @@ class Settings(BaseSettings):
     @property
     def games(self) -> list[str]:
         return [g.strip() for g in self.enabled_games.split(",") if g.strip()]
+
+    @property
+    def admin_persona_id_set(self) -> set[int]:
+        out: set[int] = set()
+        for raw in self.admin_persona_ids.split(","):
+            token = raw.strip()
+            if not token:
+                continue
+            try:
+                out.add(int(token))
+            except ValueError:
+                continue
+        return out
 
     @property
     def is_production(self) -> bool:

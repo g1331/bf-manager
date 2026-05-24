@@ -7,8 +7,14 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
 from app.core.security import get_cipher
 from app.models import User
+
+
+def _role_for_persona(persona_id: int) -> str:
+    """按 env 声明的 admin_persona_ids 决定 role。声明式管理，每次登录都重算。"""
+    return "admin" if persona_id in get_settings().admin_persona_id_set else "user"
 
 
 class UserService:
@@ -36,6 +42,7 @@ class UserService:
         cipher = get_cipher()
         user = await self.get_by_persona_id(persona_id)
         now = datetime.now(UTC)
+        role = _role_for_persona(persona_id)
         if user is None:
             user = User(
                 persona_id=persona_id,
@@ -45,6 +52,7 @@ class UserService:
                 encrypted_sid=cipher.encrypt(sid),
                 encrypted_session=cipher.encrypt(session) if session else None,
                 encrypted_access_token=cipher.encrypt(access_token) if access_token else None,
+                role=role,
                 last_login_at=now,
             )
             self.db.add(user)
@@ -57,6 +65,7 @@ class UserService:
                 user.encrypted_session = cipher.encrypt(session)
             if access_token:
                 user.encrypted_access_token = cipher.encrypt(access_token)
+            user.role = role
             user.last_login_at = now
         await self.db.commit()
         await self.db.refresh(user)

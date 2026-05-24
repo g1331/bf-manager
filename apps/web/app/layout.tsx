@@ -21,6 +21,13 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "BF-Manager",
+    // iOS Safari 不支持 SVG 作为 apple-touch-icon，但平台主流 (Android / Chrome / Edge)
+    // 都识别 manifest 里的 SVG，所以 SVG 单图就够覆盖 MVP；iOS PWA 安装后会 fallback
+    // 到首字母圆形图。后续 UI 出图时把 PNG 192/512 补上即可。
+  },
+  icons: {
+    icon: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
   },
 };
 

@@ -1,9 +1,15 @@
 """向 ea_accounts 表写入一个 EA 代查询账号
 
-用法（在 backend 目录下）：
+本地开发用法（apps/backend 目录下）：
 
     uv run python tools/seed_ea_account.py \
         --persona-id 1234567890 \
+        --remid <REMID> --sid <SID>
+
+生产容器用法：
+
+    docker compose -f docker-compose.prod.yml --env-file .env.prod exec backend \
+        python tools/seed_ea_account.py --persona-id 1234567890 \
         --remid <REMID> --sid <SID>
 
 会自动 AES-GCM 加密入库，已存在则更新 remid/sid。
@@ -13,6 +19,12 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import sys
+from pathlib import Path
+
+# 脚本被 `python tools/xxx.py` 启动时，sys.path[0] 是 tools/ 自身，
+# 需要把仓库根（含 app/ 包的目录）显式加进去才能 import app.*
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.core.security import get_cipher
 from app.db.session import get_sessionmaker

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { isValidGame, getGame } from "@/lib/game-registry";
+import { isValidGame, getGame, type GameId } from "@/lib/game-registry";
+import { AppHeader } from "@/components/layout/AppHeader";
 
 interface GameLayoutProps {
   children: React.ReactNode;
@@ -14,6 +15,7 @@ export default async function GameLayout({ children, params }: GameLayoutProps) 
 
   return (
     <div data-theme={meta.themeToken} className="bg-background text-foreground min-h-screen">
+      <AppHeader game={game as GameId} />
       {children}
     </div>
   );

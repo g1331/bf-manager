@@ -15,6 +15,7 @@ from __future__ import annotations
 import asyncio
 import json
 import time
+import urllib.parse
 import uuid
 from collections.abc import Awaitable, Callable
 from typing import Any
@@ -69,6 +70,9 @@ class BF1GatewayClient:
         self.access_token_time = time.time()
         # token 过期的时间
         self.access_token_expires_time = 0
+        # EA Desktop (Juno) 通道使用的独立 access_token；面向 SAL GraphQL
+        self.desktop_access_token: str | None = None
+        self.desktop_access_token_expires_at: float = 0.0
         # 凭据刷新回调，由 service 层注入以持久化到 EAAccount / User 表
         self._on_session_refreshed = on_session_refreshed
 
@@ -634,41 +638,214 @@ class BF1GatewayClient:
             }
         )
 
+    async def _ensure_desktop_token(self) -> str | None:
+        """确保 EA Desktop 通道的 access_token 有效，必要时刷新。
+
+        EA Desktop (pc.ea.com / juno) 走 `EAX-JUNO-SPA` 这个 SPA client，
+        与传统 `ORIGIN_JS_SDK` 是完全独立的两条 OAuth 链，签发的 token 不可互换：
+        ORIGIN_JS_SDK 的 Bearer 调 SAL GraphQL 会被拒，反之亦然。
+
+        流程：
+            GET accounts.ea.com/connect/auth
+                ?client_id=EAX-JUNO-SPA&response_type=token
+                &redirect_uri=https://pc.ea.com&prompt=none&release_type=prod
+            （带 remid/sid cookie，不跟随 302）
+            → 302 Location 的 fragment 携带 access_token / expires_in。
+        """
+        now = time.time()
+        if self.desktop_access_token and now < self.desktop_access_token_expires_at - 60:
+            return self.desktop_access_token
+        if not self.remid:
+            logger.warning(f"BF1账号{self.pid}未设置 remid，无法获取 desktop_access_token")
+            return None
+        url = (
+            "https://accounts.ea.com/connect/auth"
+            "?client_id=EAX-JUNO-SPA&response_type=token"
+            "&redirect_uri=https://pc.ea.com&prompt=none&release_type=prod"
+        )
+        header = {
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36"
+            ),
+            "Cookie": f"sid={self.sid or ''}; remid={self.remid}",
+            "Upgrade-Insecure-Requests": "1",
+        }
+        try:
+            async with self.http_session.get(
+                url=url,
+                headers=header,
+                timeout=15,
+                ssl=False,
+                allow_redirects=False,
+                proxy=_get_proxy(),
+            ) as response:
+                location = response.headers.get("Location") or response.headers.get("location")
+                if response.status != 302 or not location:
+                    body = await response.text()
+                    logger.error(
+                        f"BF1账号{self.pid}获取 desktop_access_token 失败: "
+                        f"status={response.status} body={body[:300]}"
+                    )
+                    return None
+        except Exception as e:
+            logger.exception(f"BF1账号{self.pid}获取 desktop_access_token 异常: {e}")
+            return None
+
+        fragment = location.split("#", 1)[1] if "#" in location else location.split("?", 1)[-1]
+        params = urllib.parse.parse_qs(fragment)
+        token_values = params.get("access_token") or []
+        token = token_values[0] if token_values else None
+        expires_in_str = (params.get("expires_in") or ["0"])[0]
+        if not token:
+            logger.error(
+                f"BF1账号{self.pid}desktop_access_token 解析失败，location={location[:300]}"
+            )
+            return None
+        try:
+            expires_in = int(expires_in_str)
+        except ValueError:
+            expires_in = 14400  # EAX-JUNO-SPA 默认 4 小时
+        self.desktop_access_token = token
+        self.desktop_access_token_expires_at = now + expires_in
+        logger.success(f"BF1账号{self.pid}desktop_access_token 已更新，有效期 {expires_in}s")
+        return token
+
     async def getPersonasByName(self, player_name: str) -> dict | str:
         """根据玩家昵称解析 persona 基本信息。
 
-        EA 自 2024 年起对 `gateway.ea.com/proxy/identity/personas` 这条公网
-        入口要求 `dp.server.default` scope，PUBLIC client_id 申请到的
-        access_token 没有该 scope（返回 403 insufficient_scope）。因此改走
-        社区维护的 gametools 镜像，无需 EA token 即可按昵称解析出 personaId。
+        通过 EA Desktop 的 Service Aggregation Layer (SAL) GraphQL `SearchPlayer`
+        持久化查询完成。该通道使用 `EAX-JUNO-SPA` 客户端签发的 access_token，
+        与传统 `gateway.ea.com/proxy/identity/personas` 走的链路完全独立。
 
         返回归一化扁平结构（与 EA 原始嵌套结构不同）：
             {
                 "personas": [
                     {
-                        "personaId": int,
-                        "pidId": int | None,
+                        "personaId": int,        # SAL 的 psd 字段
+                        "pidId": int | None,     # SAL 的 pd 字段（EA 账号 pid）
                         "displayName": str,
-                        "name": str,
+                        "name": str,             # displayName.lower()
                         "avatar": str | None,
                     }
                 ]
             }
         无匹配时 personas 为空列表；请求失败返回字符串错误描述。
         """
-        url = (
-            f"https://api.gametools.network/bf1/player/"
-            f"?name={player_name}&platform=pc&skip_battlelog=false"
+        token = await self._ensure_desktop_token()
+        if not token:
+            return "EA Desktop 通道未获取到 access_token"
+
+        graphql_query = (
+            "query SearchPlayer($searchText: String!, $pageNumber: Int!, $pageSize: Int!) {\n"
+            "  players(searchText: $searchText, paging: {pageNumber: $pageNumber, pageSize: $pageSize}) {\n"
+            "    items {\n"
+            "      ...PlayerWithMutualFriendsCount\n"
+            "      __typename\n"
+            "    }\n"
+            "    __typename\n"
+            "  }\n"
+            "}\n\n"
+            "fragment PlayerWithMutualFriendsCount on Player {\n"
+            "  ...Player\n"
+            "  mutualFriends {\n"
+            "    totalCount\n"
+            "    __typename\n"
+            "  }\n"
+            "  __typename\n"
+            "}\n\n"
+            "fragment Player on Player {\n"
+            "  id: pd\n"
+            "  pd\n"
+            "  psd\n"
+            "  displayName\n"
+            "  uniqueName\n"
+            "  nickname\n"
+            "  avatar {\n"
+            "    ...Avatar\n"
+            "    __typename\n"
+            "  }\n"
+            "  relationship\n"
+            "  __typename\n"
+            "}\n\n"
+            "fragment Avatar on AvatarList {\n"
+            "  large {\n"
+            "    ...image\n"
+            "    __typename\n"
+            "  }\n"
+            "  medium {\n"
+            "    ...image\n"
+            "    __typename\n"
+            "  }\n"
+            "  small {\n"
+            "    ...image\n"
+            "    __typename\n"
+            "  }\n"
+            "  __typename\n"
+            "}\n\n"
+            "fragment image on Image {\n"
+            "  height\n"
+            "  width\n"
+            "  path\n"
+            "  __typename\n"
+            "}\n"
         )
+        payload = {
+            "operationName": "SearchPlayer",
+            "variables": {
+                "searchText": player_name,
+                "pageNumber": 1,
+                "pageSize": 20,
+                "locale": "zh-hans",
+            },
+            "extensions": {
+                "persistedQuery": {
+                    "version": 1,
+                    "sha256Hash": (
+                        "83da6f3045ee524f6cb62a1c23eea908c9432f15e87b30dd33b89974ff83c657"
+                    ),
+                }
+            },
+            "query": graphql_query,
+        }
+        url = "https://service-aggregation-layer.juno.ea.com/graphql"
+        header = {
+            "Host": "service-aggregation-layer.juno.ea.com",
+            "accept": "*/*",
+            "authorization": f"Bearer {token}",
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) QtWebEngine/5.15.2 Chrome/83.0.4103.122 Safari/537.36"
+            ),
+            "content-type": "application/json",
+            "Origin": "https://pc.ea.com",
+            "Referer": "https://pc.ea.com/zh-hans",
+            "Accept-Encoding": "gzip, deflate, br",
+        }
         try:
-            async with self.http_session.get(
+            async with self.http_session.post(
                 url=url,
-                headers={"accept": "application/json"},
+                headers=header,
+                data=json.dumps(payload),
                 timeout=15,
                 ssl=False,
                 proxy=_get_proxy(),
             ) as response:
-                data = await response.json(content_type=None)
+                body_text = await response.text()
+                if response.status == 401:
+                    # token 可能被 EA 提前作废，清空缓存以便下一次重新获取
+                    self.desktop_access_token = None
+                    self.desktop_access_token_expires_at = 0.0
+                    logger.warning(
+                        f"SAL GraphQL 返回 401，已重置 desktop_access_token: {body_text[:200]}"
+                    )
+                    return "EA Desktop token 已失效"
+                if response.status != 200:
+                    logger.error(
+                        f"SAL GraphQL 请求失败 status={response.status} body={body_text[:300]}"
+                    )
+                    return f"按昵称查询失败: HTTP {response.status}"
+                data = json.loads(body_text)
         except asyncio.exceptions.TimeoutError:
             return "网络超时!"
         except Exception as e:
@@ -678,20 +855,33 @@ class BF1GatewayClient:
         if isinstance(data, dict) and data.get("errors"):
             logger.warning(f"按昵称查询返回错误: {data['errors']}")
             return {"personas": []}
-        persona_id = data.get("id") if isinstance(data, dict) else None
-        if not persona_id:
-            return {"personas": []}
-        return {
-            "personas": [
+        items = (
+            data.get("data", {}).get("players", {}).get("items", [])
+            if isinstance(data, dict)
+            else []
+        )
+        personas: list[dict[str, Any]] = []
+        for item in items or []:
+            psd = item.get("psd")
+            pd = item.get("pd")
+            if not psd:
+                continue
+            display_name = item.get("displayName") or player_name
+            avatar_url = (
+                (item.get("avatar") or {}).get("medium", {}).get("path")
+                if isinstance(item.get("avatar"), dict)
+                else None
+            )
+            personas.append(
                 {
-                    "personaId": int(persona_id),
-                    "pidId": data.get("userId"),
-                    "displayName": data.get("userName") or player_name,
-                    "name": (data.get("userName") or player_name).lower(),
-                    "avatar": data.get("avatar"),
+                    "personaId": int(psd),
+                    "pidId": int(pd) if pd else None,
+                    "displayName": display_name,
+                    "name": display_name.lower(),
+                    "avatar": avatar_url,
                 }
-            ]
-        }
+            )
+        return {"personas": personas}
 
     async def getPersonasByIds(self, personaIds: list[int | str]) -> dict:
         """

@@ -37,6 +37,7 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     # ===== 数据库 =====
+    # 生产环境通过 DATABASE_URL_FILE 指向 Docker secret，开发环境直接用 DATABASE_URL
     database_url: str = "postgresql+asyncpg://bf:bf@postgres:5432/bf_manager"
 
     # ===== Redis =====
@@ -62,6 +63,17 @@ class Settings(BaseSettings):
 
     # ===== 启用的游戏 =====
     enabled_games: str = "bf1"
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def _load_database_url(cls, v: str | None) -> str:
+        # 优先使用显式环境变量；若未设置或为空，回退到 Docker secret 文件
+        if v:
+            return v
+        from_secret = _read_secret_file("DATABASE_URL_FILE")
+        if from_secret:
+            return from_secret
+        return "postgresql+asyncpg://bf:bf@postgres:5432/bf_manager"
 
     @field_validator("ea_cred_encryption_key", mode="before")
     @classmethod

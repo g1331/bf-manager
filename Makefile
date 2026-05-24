@@ -51,6 +51,9 @@ prod-logs: ## 跟踪生产环境日志
 prod-restart: ## 重启生产环境
 	docker compose -f docker-compose.prod.yml --env-file .env.prod restart
 
+prod-migrate: ## 在生产环境单独触发一次数据库迁移（compose up 时也会自动跑一次）
+	docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm migrate
+
 # ===== 数据库 =====
 migrate: ## 跑数据库迁移到最新版本
 	docker compose exec backend uv run alembic upgrade head

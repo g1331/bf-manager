@@ -22,6 +22,8 @@ RUN uv sync --frozen --no-dev --no-install-project || uv sync --no-dev --no-inst
 COPY app /app/app
 COPY alembic /app/alembic
 COPY alembic.ini /app/
+# 运维脚本（如 seed_ea_account.py）也需要随镜像分发，便于生产 exec 调用
+COPY tools /app/tools
 
 # ===== 运行时阶段 =====
 FROM python:3.12-slim AS runtime

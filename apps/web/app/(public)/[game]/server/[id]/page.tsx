@@ -7,6 +7,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResponsiveTable, type Column } from "@/components/common/ResponsiveTable";
+import { AdminPanel } from "@/components/bf1/AdminPanel";
+import { useSession } from "@/hooks/useSession";
 import { bf1Api, type ServerPlayer, type MapRotationItem } from "@/lib/api/bf1";
 
 export default function ServerDetailPage() {
@@ -28,13 +30,45 @@ export default function ServerDetailPage() {
   }
 
   const { summary, map_rotation, players } = detail.data;
+  return (
+    <ServerDetailView
+      gameId={gameId}
+      game={game}
+      summary={summary}
+      map_rotation={map_rotation}
+      players={players}
+      detail={detail.data}
+      routerPush={router.push}
+    />
+  );
+}
+
+function ServerDetailView({
+  gameId,
+  game,
+  summary,
+  map_rotation,
+  players,
+  detail,
+  routerPush,
+}: {
+  gameId: number;
+  game: string;
+  summary: import("@/lib/api/bf1").ServerSummary;
+  map_rotation: MapRotationItem[];
+  players: ServerPlayer[];
+  detail: import("@/lib/api/bf1").ServerDetail;
+  routerPush: (path: string) => void;
+}) {
+  const session = useSession();
+  const isLoggedIn = !!session.data;
 
   return (
     <main className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6">
       <Button
         variant="ghost"
         size="sm"
-        onClick={() => router.push(`/${game}/servers`)}
+        onClick={() => routerPush(`/${game}/servers`)}
         className="-ml-2 self-start"
       >
         <ArrowLeft className="size-4" />
@@ -68,9 +102,10 @@ export default function ServerDetailPage() {
       </header>
 
       <Tabs defaultValue="players" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className={isLoggedIn ? "grid w-full grid-cols-3" : "grid w-full grid-cols-2"}>
           <TabsTrigger value="players">玩家列表（{players.length}）</TabsTrigger>
           <TabsTrigger value="rotation">地图轮换（{map_rotation.length}）</TabsTrigger>
+          {isLoggedIn ? <TabsTrigger value="admin">管理</TabsTrigger> : null}
         </TabsList>
         <TabsContent value="players">
           <PlayersList players={players} />
@@ -78,6 +113,11 @@ export default function ServerDetailPage() {
         <TabsContent value="rotation">
           <RotationList items={map_rotation} />
         </TabsContent>
+        {isLoggedIn ? (
+          <TabsContent value="admin">
+            <AdminPanel gameId={gameId} detail={detail} />
+          </TabsContent>
+        ) : null}
       </Tabs>
     </main>
   );

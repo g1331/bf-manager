@@ -146,4 +146,27 @@ export const bf1Api = {
   },
 
   getServer: (gameId: number) => api.get<ServerDetail>(`/bf1/servers/${gameId}`),
+
+  // ===== 服管操作（需登录 + 权限）=====
+  adminKick: (gameId: number, personaId: number, reason: string) =>
+    api.post<{ success: boolean; message: string | null }>(`/bf1/server-admin/${gameId}/kick`, {
+      persona_id: personaId,
+      reason,
+    }),
+
+  adminBan: (gameId: number, personaId: number) =>
+    api.post<{ success: boolean; message: string | null }>(`/bf1/server-admin/${gameId}/ban`, {
+      persona_id: personaId,
+    }),
+
+  adminUnban: (gameId: number, personaId: number) =>
+    api.delete<{ success: boolean; message: string | null }>(
+      `/bf1/server-admin/${gameId}/ban/${personaId}`,
+    ),
+
+  adminChooseLevel: (gameId: number, persistedGameId: string, levelIndex: number) =>
+    api.post<{ success: boolean; message: string | null }>(`/bf1/server-admin/${gameId}/level`, {
+      persisted_game_id: persistedGameId,
+      level_index: levelIndex,
+    }),
 };

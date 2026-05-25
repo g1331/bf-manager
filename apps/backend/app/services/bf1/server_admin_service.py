@@ -11,7 +11,6 @@ from app.domain.games.bf1.client_provider import BF1ClientProvider, PooledBF1Cli
 from app.models import User
 from app.services.audit_service import AuditService
 from app.services.authz_service import ServerAuthzService
-from app.services.ea_binding_service import EaBindingService
 
 
 def _ensure_dict_or_raise(data: Any, error_code: str) -> dict[str, Any]:
@@ -43,25 +42,25 @@ class BF1ServerAdminService:
         self.game_id = game_id
         self.audit = AuditService(db)
         self.authz = ServerAuthzService(db)
-        self.bindings = EaBindingService(db)
         # 默认走后台账号池；未来引入按发起者 / 群组路由的 provider 时由路由层注入替换。
         # 详见 https://github.com/g1331/bf-manager/issues/1
         self.client_provider: BF1ClientProvider = client_provider or PooledBF1ClientProvider(db)
         meta = request_meta or {}
         self.ip = meta.get("ip")
         self.user_agent = meta.get("user_agent")
-
-    async def _acting_persona_id(self) -> int:
-        """审计 acting_persona_id 来源：当前用户的 primary 未冻结 binding；无则 0。"""
-        binding = await self.bindings.get_primary_for_user(self.user.id)
-        return binding.persona_id if binding is not None else 0
+        # 审计 acting_persona_id 取自当前用户的 primary 未冻结 binding（已被 get_current_user
+        # 通过 selectinload eager-load 到 user.ea_bindings 上），无可用 binding 时写 0
+        self._acting_persona_id = next(
+            (b.persona_id for b in user.ea_bindings if b.is_primary and not b.is_frozen),
+            0,
+        )
 
     async def _audit_success(
         self, action: str, payload: dict[str, Any], target_persona_id: int | None = None
     ) -> None:
         await self.audit.record(
             user_id=self.user.id,
-            acting_persona_id=await self._acting_persona_id(),
+            acting_persona_id=self._acting_persona_id,
             game="bf1",
             action=action,
             server_id=self.game_id,
@@ -81,7 +80,7 @@ class BF1ServerAdminService:
     ) -> None:
         await self.audit.record(
             user_id=self.user.id,
-            acting_persona_id=await self._acting_persona_id(),
+            acting_persona_id=self._acting_persona_id,
             game="bf1",
             action=action,
             server_id=self.game_id,

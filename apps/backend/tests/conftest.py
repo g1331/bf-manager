@@ -28,7 +28,19 @@ from app.db.session import get_db
 from app.main import create_app
 from app.models import Base, EaBinding, User
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.orm import selectinload
+
+
+async def _reload_with_bindings(session, user_id: int) -> User:
+    """Eager-load ea_bindings 模拟真实 get_current_user 的依赖注入行为，
+    避免 sqlite async + lazy load 在 fixture-injected user 上抛 MissingGreenlet"""
+    user = await session.scalar(
+        select(User).options(selectinload(User.ea_bindings)).where(User.id == user_id)
+    )
+    assert user is not None
+    return user
 
 
 def _make_user(*, user_id: int = 1, username: str = "test_user", role: str = "user") -> User:
@@ -105,7 +117,7 @@ async def user_client(test_session):
         _make_binding(user_id=user.id, persona_id=1003517866915, display_name="TestUser")
     )
     await test_session.commit()
-    await test_session.refresh(user)
+    user = await _reload_with_bindings(test_session, user.id)
 
     app = create_app()
 
@@ -134,7 +146,7 @@ async def admin_client(test_session):
         _make_binding(user_id=admin.id, persona_id=1004198901469, display_name="AdminUser")
     )
     await test_session.commit()
-    await test_session.refresh(admin)
+    admin = await _reload_with_bindings(test_session, admin.id)
 
     app = create_app()
 
@@ -167,7 +179,7 @@ async def local_admin_client(test_session):
     )
     test_session.add(admin)
     await test_session.commit()
-    await test_session.refresh(admin)
+    admin = await _reload_with_bindings(test_session, admin.id)
 
     app = create_app()
 

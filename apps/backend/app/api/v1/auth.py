@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.api.deps import CurrentUser, CurrentUserOptional, DbDep
+from app.api.errors import UnauthorizedError
 from app.core.config import get_settings
 from app.core.security import create_access_token
 from app.models import EaBinding, User
@@ -99,7 +100,9 @@ async def login(
     )
 
     full_user = await _load_user_with_bindings(db, user.id)
-    assert full_user is not None
+    if full_user is None:
+        # 仅在 user 刚刚 commit 后被另一个事务删除时可达；此时整次登录视为失效
+        raise UnauthorizedError("会话建立失败")
     return LoginResponse(user=_build_session_user(full_user))
 
 
@@ -124,18 +127,17 @@ async def local_login(
     )
 
     full_user = await _load_user_with_bindings(db, user.id)
-    assert full_user is not None
+    if full_user is None:
+        raise UnauthorizedError("会话建立失败")
     return LoginResponse(user=_build_session_user(full_user))
 
 
 @router.get("/session", response_model=SessionResponse)
-async def session(user: CurrentUserOptional, db: DbDep) -> SessionResponse:
+async def session(user: CurrentUserOptional) -> SessionResponse:
+    # get_current_user 已经 eager-load 了 ea_bindings，无需再查
     if user is None:
         return SessionResponse(user=None)
-    full_user = await _load_user_with_bindings(db, user.id)
-    if full_user is None:
-        return SessionResponse(user=None)
-    return SessionResponse(user=_build_session_user(full_user))
+    return SessionResponse(user=_build_session_user(user))
 
 
 @router.post("/logout", status_code=204)

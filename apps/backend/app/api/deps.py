@@ -42,7 +42,7 @@ async def get_current_user(
     user = await db.scalar(
         select(User).options(selectinload(User.ea_bindings)).where(User.id == user_id)
     )
-    if user is None or not user.is_active:
+    if user is None or not user.is_active or user.is_frozen:
         raise UnauthorizedError()
     return user
 

@@ -85,8 +85,12 @@ class EaBindingService:
         else:
             binding.display_name = display_name or binding.display_name
             binding.avatar_url = avatar_url or binding.avatar_url
-            binding.encrypted_remid = cipher.encrypt(remid)
-            binding.encrypted_sid = cipher.encrypt(sid)
+            # 仅在新值非空时覆写。EA 登录链路在某些状态下 remid/sid 可能回传空串，
+            # 无差别覆写会把上次成功登录留下的有效密文抹成 encrypt("")，导致下次失效。
+            if remid:
+                binding.encrypted_remid = cipher.encrypt(remid)
+            if sid:
+                binding.encrypted_sid = cipher.encrypt(sid)
             if session:
                 binding.encrypted_session = cipher.encrypt(session)
             if access_token:

@@ -30,8 +30,18 @@ def _resolve_password(args: argparse.Namespace, prompt_label: str = "Password") 
         data = sys.stdin.read()
         # 允许 stdin 末尾有换行
         return data.rstrip("\r\n")
-    pw1 = getpass.getpass(f"{prompt_label}: ")
-    pw2 = getpass.getpass(f"{prompt_label} (confirm): ")
+    try:
+        pw1 = getpass.getpass(f"{prompt_label}: ")
+        pw2 = getpass.getpass(f"{prompt_label} (confirm): ")
+    except EOFError:
+        # 非 TTY 环境（如 docker compose exec -T）下 getpass 立即 EOF。
+        # 给出明确的下一步提示而非抛 Python traceback。
+        print(
+            "无法从交互式 prompt 读取密码（当前环境无 TTY）。"
+            "请改用 --password-stdin 或 --password 参数。",
+            file=sys.stderr,
+        )
+        sys.exit(2)
     if pw1 != pw2:
         print("两次输入的密码不一致", file=sys.stderr)
         sys.exit(2)

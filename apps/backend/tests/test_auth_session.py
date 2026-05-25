@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from app.core.passwords import hash_password
 from app.core.security import create_access_token
 from app.models import User
 
@@ -58,3 +59,27 @@ async def test_frozen_user_cannot_use_session(client, test_session) -> None:
     # /memberships 是强制鉴权：被 is_frozen 卡掉返回 401
     resp = await ac.get("/api/v1/memberships")
     assert resp.status_code == 401
+
+
+async def test_local_login_rejects_frozen_admin(client, test_session) -> None:
+    """is_frozen=true 的本地 admin 走 local-login 应被 401 拒绝，
+    避免颁发出来的 JWT 在后续请求被 get_current_user 拒绝、前端陷入死循环"""
+    admin = User(
+        id=201,
+        username="frozen_admin",
+        local_password_hash=hash_password("correct-pw"),
+        email=None,
+        role="admin",
+        is_active=True,
+        is_frozen=True,
+    )
+    test_session.add(admin)
+    await test_session.commit()
+
+    resp = await client.post(
+        "/api/v1/auth/local-login",
+        json={"username": "frozen_admin", "password": "correct-pw"},
+    )
+    assert resp.status_code == 401
+    # 不应携带 set-cookie
+    assert "bfm_access_token" not in resp.cookies

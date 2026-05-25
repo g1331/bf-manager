@@ -14,7 +14,14 @@ from app.services.ea_account_service import EAAccountService
 
 @asynccontextmanager
 async def get_bf1_client(db: AsyncSession) -> AsyncIterator[BF1GatewayClient]:
-    """异步上下文：取账号池中可用账号构造 client，使用后清理 http session"""
+    """异步上下文：取账号池中可用账号构造 client，使用后清理 http session。
+
+    注意：此工厂只服务于 `ea_accounts` 后台账号池。on_session_refreshed 回调把刷新的 sid
+    写回 EAAccountService，传入 pid 必须命中池中行。
+    issue #1 的 per-user-binding provider 必须实现自己的工厂，把回调改为
+    `EaBindingService(db).update_session(binding_id, sid=..., session=...)`，
+    否则刷新出的新 sid 会被 EAAccountService 因 pid 不在池中静默丢弃。
+    """
     account_service = EAAccountService(db)
     creds = await account_service.pick_available()
 

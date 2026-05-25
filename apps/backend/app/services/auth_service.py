@@ -77,9 +77,13 @@ class AuthService:
                     await http_session.close()
 
     async def login_with_local_password(self, username: str, password: str) -> User:
-        """本地账号 username + password 登录。失败统一 401，不区分原因。"""
+        """本地账号 username + password 登录。失败统一 401，不区分原因。
+
+        同步对齐 deps.get_current_user 的拒绝条件（is_active=false 或 is_frozen=true），
+        避免登录颁发出来的 JWT 在所有后续请求被中间件拒绝、前端陷入死循环。
+        """
         user = await self.users.verify_local_password(username, password)
-        if user is None or not user.is_active:
+        if user is None or not user.is_active or user.is_frozen:
             raise UnauthorizedError("用户名或密码错误")
         await self.users.mark_login(user)
         return user

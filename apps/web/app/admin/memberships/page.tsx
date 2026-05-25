@@ -129,7 +129,10 @@ export default function MembershipsAdminPage() {
       key: "user",
       header: "授权对象",
       cell: (m) => (
-        <span className="font-medium">{m.user_display_name ?? `Persona ${m.user_persona_id}`}</span>
+        <span className="font-medium">
+          {m.user_display_name ??
+            (m.user_persona_id !== null ? `Persona ${m.user_persona_id}` : m.user_username)}
+        </span>
       ),
       isCardTitle: true,
     },
@@ -287,7 +290,7 @@ export default function MembershipsAdminPage() {
           onOpenChange={(open) => !open && setPendingDelete(null)}
           title={
             pendingDelete
-              ? `删除 ${pendingDelete.user_display_name ?? pendingDelete.user_persona_id} 在 ${pendingDelete.server_name ?? `#${pendingDelete.server_id}`} 的权限？`
+              ? `删除 ${pendingDelete.user_display_name ?? pendingDelete.user_persona_id ?? pendingDelete.user_username} 在 ${pendingDelete.server_name ?? `#${pendingDelete.server_id}`} 的权限？`
               : "确认删除"
           }
           description="删除后该用户立即失去对此服务器的服管能力"

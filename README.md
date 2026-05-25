@@ -140,6 +140,8 @@ docker compose exec backend python -m app.cli revoke-admin --persona 10035178669
 
 **从旧版升级**：原 `ADMIN_PERSONA_IDS` 环境变量已停用。升级时跑完 alembic 迁移后，把原名单内的 persona 一次性通过 `grant-admin` 写入 DB；env 中的 `ADMIN_PERSONA_IDS` 行可删除。
 
+> `grant-admin --persona <id>` 要求该 persona 已经在本平台至少登录过一次（即 `users` 表里有对应行）。旧版 `ADMIN_PERSONA_IDS` 允许预登记尚未登录过的 persona，本版本不再支持。若原名单中存在从未登录的预备管理员，请改用 `create-admin --username <name>` 先创建本地账号供其使用，或等其首次 EA 登录后再 `grant-admin`。
+
 服管授权流程：平台 admin 在 `/admin/memberships` 录入 `(persona_id, game, server_id, role)` 即可。被授权用户必须先在本平台登录过一次（users 表里有记录）。
 
 启动后访问：

@@ -81,14 +81,17 @@ jobs:
           # 独立 DB，避免与 pytest 用例产生的 schema 冲突
           psql -h localhost -U bf -d postgres -c "DROP DATABASE IF EXISTS bf_manager_migration_test;"
           psql -h localhost -U bf -d postgres -c "CREATE DATABASE bf_manager_migration_test;"
+          # 用 -m 形式而非脚本路径：python script.py 模式下 sys.path[0] 是脚本目录
+          # （tests/），找不到顶层 `app` 包；-m 模式下 sys.path[0] 是 cwd（apps/backend），
+          # 与 pytest 行为一致
           uv run alembic upgrade 20260524_0001
-          uv run python tests/migration_seed.py
+          uv run python -m tests.migration_seed
           uv run alembic upgrade head
-          uv run python tests/migration_assert.py upgraded
+          uv run python -m tests.migration_assert upgraded
           uv run alembic downgrade -1
-          uv run python tests/migration_assert.py downgraded
+          uv run python -m tests.migration_assert downgraded
           uv run alembic upgrade head
-          uv run python tests/migration_assert.py upgraded
+          uv run python -m tests.migration_assert upgraded
 
   frontend:
     name: Frontend · prettier + typecheck + build

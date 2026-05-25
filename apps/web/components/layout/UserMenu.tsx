@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { LogIn, LogOut, ScrollText, ShieldCheck } from "lucide-react";
+import { LogIn, LogOut, ScrollText, ShieldCheck, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -39,7 +39,10 @@ export function UserMenu() {
     );
   }
 
-  const initial = (user.display_name ?? `#${user.persona_id}`).slice(0, 1).toUpperCase();
+  const primary = user.primary_binding;
+  const displayLabel = primary?.display_name ?? user.username;
+  const subtitleLabel = primary ? `Persona ${primary.persona_id}` : "本地账号（无 EA 绑定）";
+  const initial = displayLabel.slice(0, 1).toUpperCase();
   const isAdmin = user.role === "admin";
 
   const onLogout = async () => {
@@ -62,14 +65,10 @@ export function UserMenu() {
           aria-label="用户菜单"
           className="border-border focus-visible:ring-ring bg-muted relative inline-flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full border text-sm font-semibold transition focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
         >
-          {user.avatar_url ? (
+          {primary?.avatar_url ? (
             // EA 头像域不在 next/image remotePatterns 内，用原生 img
             // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={user.avatar_url}
-              alt={user.display_name ?? "avatar"}
-              className="size-full object-cover"
-            />
+            <img src={primary.avatar_url} alt={displayLabel} className="size-full object-cover" />
           ) : (
             <span>{initial}</span>
           )}
@@ -77,10 +76,16 @@ export function UserMenu() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="flex flex-col gap-0.5">
-          <span className="truncate">{user.display_name ?? `Persona ${user.persona_id}`}</span>
-          <span className="text-muted-foreground text-xs font-normal">ID {user.persona_id}</span>
+          <span className="truncate">{displayLabel}</span>
+          <span className="text-muted-foreground text-xs font-normal">{subtitleLabel}</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/account">
+            <UserCog className="size-4" />
+            账号设置
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/audit-logs">
             <ScrollText className="size-4" />

@@ -27,7 +27,7 @@
 
 `User.role` 仍保留为单值 string（`admin / user`），不切换为 JSON 数组。服务器级角色仍由 `server_memberships` 表承担。`role` 字段的写入路径变为：本地 admin 在 CLI 创建时显式设置；其余用户登录时一律为 `user`，与 EA persona 完全无关。
 
-`env ADMIN_PERSONA_IDS` 在升级到本版本时执行一次 Alembic data migration，把名单内的 persona 对应 user 的 `role` 设为 `admin`；之后 backend 代码不再读取该环境变量，下一个主版本可删除字段。
+`env ADMIN_PERSONA_IDS` 在本版本里不再被任何运行时代码读取。升级路径要求部署者在跑完 schema 迁移之后，手工执行一次 `python -m app.cli grant-admin --persona <id>` 把原名单内的 persona 一次性写入 DB（迁移脚本本身不读 env，避免把运行时配置固化进版本历史）。下一个主版本可从 Settings 字段中彻底删除。
 
 凭据生命周期：`ea_bindings` 新增 `is_frozen` 标志，由用户在「账号设置」手动解绑或后台检测到连续刷新失败时置 true；冻结的 binding 不参与「当前活跃 EA 操作身份」选择，但记录保留。用户失去所有可用 binding 后，账号本身不被禁用，仅在尝试执行任何需要 EA API 的操作时返回 `EA_BINDING_REQUIRED` 错误码。
 
@@ -48,7 +48,7 @@
 
 ## Impact
 
-**数据库**：新增 `ea_bindings` 表；`users` 表移除 `persona_id`、`encrypted_*`、`avatar_url`、`display_name`，新增 `username`、`local_password_hash`、`email`、`is_frozen`。需要 Alembic data migration 把现有 users 的 EA 字段搬到 ea_bindings，并 seed admin 名单。
+**数据库**：新增 `ea_bindings` 表（含 `persona_id UNIQUE` 与 partial unique index `(user_id) WHERE is_primary=true`）；`users` 表移除 `persona_id`、`encrypted_*`、`avatar_url`、`display_name`，新增 `username`、`local_password_hash`、`email`、`is_frozen`。需要 Alembic data migration 把现有 users 的 EA 字段搬到 ea_bindings。admin 名单不在迁移里 seed，由部署者升级后手工跑 CLI 完成。
 
 **后端代码**：`app/models/user.py` 拆分新增 `ea_binding.py`；`app/services/user_service.py` 大幅改写（不再 upsert 凭据，改为定位/创建 user + 写入 binding）；新增 `app/services/ea_binding_service.py`；新增 `app/services/auth_service.py` 内 `local_login` 分支；新增 `app/cli/admin.py`；`app/core/config.py` 移除 `admin_persona_ids` 与相关 property；所有读 `user.persona_id` / `user.encrypted_*` 的位点改为读 binding。
 

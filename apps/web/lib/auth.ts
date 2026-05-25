@@ -3,12 +3,22 @@
  */
 import { api, ApiException } from "./api-client";
 
-export interface SessionUser {
+export interface SessionBinding {
   id: number;
   persona_id: number;
   display_name: string | null;
   avatar_url: string | null;
+  is_primary: boolean;
+  is_frozen: boolean;
+}
+
+export interface SessionUser {
+  id: number;
+  username: string;
   role: "user" | "admin";
+  is_frozen: boolean;
+  last_login_at: string | null;
+  primary_binding: SessionBinding | null;
 }
 
 export interface SessionResponse {
@@ -21,8 +31,27 @@ export interface LoginRequest {
   sid?: string;
 }
 
+export interface LocalLoginRequest {
+  username: string;
+  password: string;
+}
+
 export interface LoginResponse {
   user: SessionUser;
+}
+
+export interface BindingListItem {
+  id: number;
+  persona_id: number;
+  display_name: string | null;
+  avatar_url: string | null;
+  is_primary: boolean;
+  is_frozen: boolean;
+  last_verified_at: string | null;
+}
+
+export interface BindingListResponse {
+  items: BindingListItem[];
 }
 
 export async function getSession(): Promise<SessionUser | null> {
@@ -40,6 +69,20 @@ export async function login(payload: LoginRequest): Promise<SessionUser> {
   return res.user;
 }
 
+export async function localLogin(payload: LocalLoginRequest): Promise<SessionUser> {
+  const res = await api.post<LoginResponse>("/auth/local-login", payload);
+  return res.user;
+}
+
 export async function logout(): Promise<void> {
   await api.post("/auth/logout");
+}
+
+export async function listMyBindings(): Promise<BindingListItem[]> {
+  const res = await api.get<BindingListResponse>("/me/ea-bindings");
+  return res.items;
+}
+
+export async function unbindEa(bindingId: number): Promise<void> {
+  await api.post(`/me/ea-bindings/${bindingId}/unbind`);
 }

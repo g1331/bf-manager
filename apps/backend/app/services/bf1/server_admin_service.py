@@ -7,10 +7,11 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.errors import EAApiError
+from app.domain.games.bf1.client_provider import BF1ClientProvider, PooledBF1ClientProvider
 from app.models import User
 from app.services.audit_service import AuditService
 from app.services.authz_service import ServerAuthzService
-from app.services.bf1.gateway_factory import get_bf1_client
+from app.services.ea_binding_service import EaBindingService
 
 
 def _ensure_dict_or_raise(data: Any, error_code: str) -> dict[str, Any]:
@@ -35,22 +36,32 @@ class BF1ServerAdminService:
         user: User,
         game_id: int,
         request_meta: dict[str, str | None] | None = None,
+        client_provider: BF1ClientProvider | None = None,
     ) -> None:
         self.db = db
         self.user = user
         self.game_id = game_id
         self.audit = AuditService(db)
         self.authz = ServerAuthzService(db)
+        self.bindings = EaBindingService(db)
+        # 默认走后台账号池；未来引入按发起者 / 群组路由的 provider 时由路由层注入替换。
+        # 详见 https://github.com/g1331/bf-manager/issues/1
+        self.client_provider: BF1ClientProvider = client_provider or PooledBF1ClientProvider(db)
         meta = request_meta or {}
         self.ip = meta.get("ip")
         self.user_agent = meta.get("user_agent")
+
+    async def _acting_persona_id(self) -> int:
+        """审计 acting_persona_id 来源：当前用户的 primary 未冻结 binding；无则 0。"""
+        binding = await self.bindings.get_primary_for_user(self.user.id)
+        return binding.persona_id if binding is not None else 0
 
     async def _audit_success(
         self, action: str, payload: dict[str, Any], target_persona_id: int | None = None
     ) -> None:
         await self.audit.record(
             user_id=self.user.id,
-            acting_persona_id=self.user.persona_id,
+            acting_persona_id=await self._acting_persona_id(),
             game="bf1",
             action=action,
             server_id=self.game_id,
@@ -70,7 +81,7 @@ class BF1ServerAdminService:
     ) -> None:
         await self.audit.record(
             user_id=self.user.id,
-            acting_persona_id=self.user.persona_id,
+            acting_persona_id=await self._acting_persona_id(),
             game="bf1",
             action=action,
             server_id=self.game_id,
@@ -86,7 +97,7 @@ class BF1ServerAdminService:
     async def kick_player(self, persona_id: int, reason: str) -> dict[str, Any]:
         payload = {"persona_id": persona_id, "reason": reason}
         try:
-            async with get_bf1_client(self.db) as client:
+            async with self.client_provider.acquire() as client:
                 res = await client.kickPlayer(self.game_id, persona_id, reason)
                 data = _ensure_dict_or_raise(res, "EA_KICK_FAILED")
             await self._audit_success("kick_player", payload, target_persona_id=persona_id)
@@ -99,7 +110,7 @@ class BF1ServerAdminService:
         """添加 ban（用 EA serverId，不是 game_id）"""
         payload = {"persona_id": persona_id, "server_id": ea_server_id}
         try:
-            async with get_bf1_client(self.db) as client:
+            async with self.client_provider.acquire() as client:
                 res = await client.addServerBan(persona_id, ea_server_id)
                 data = _ensure_dict_or_raise(res, "EA_ADD_BAN_FAILED")
             await self._audit_success("add_ban", payload, target_persona_id=persona_id)
@@ -111,7 +122,7 @@ class BF1ServerAdminService:
     async def remove_ban(self, persona_id: int, ea_server_id: int) -> dict[str, Any]:
         payload = {"persona_id": persona_id, "server_id": ea_server_id}
         try:
-            async with get_bf1_client(self.db) as client:
+            async with self.client_provider.acquire() as client:
                 res = await client.removeServerBan(persona_id, ea_server_id)
                 data = _ensure_dict_or_raise(res, "EA_REMOVE_BAN_FAILED")
             await self._audit_success("remove_ban", payload, target_persona_id=persona_id)
@@ -123,7 +134,7 @@ class BF1ServerAdminService:
     async def choose_level(self, persisted_game_id: str, level_index: int) -> dict[str, Any]:
         payload = {"persisted_game_id": persisted_game_id, "level_index": level_index}
         try:
-            async with get_bf1_client(self.db) as client:
+            async with self.client_provider.acquire() as client:
                 res = await client.chooseLevel(persisted_game_id, level_index)
                 data = _ensure_dict_or_raise(res, "EA_CHOOSE_LEVEL_FAILED")
             await self._audit_success("choose_level", payload)

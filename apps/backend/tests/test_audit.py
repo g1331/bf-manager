@@ -18,7 +18,7 @@ async def test_audit_logs_user_only_sees_own(user_client, test_session) -> None:
     svc = AuditService(test_session)
     await svc.record(
         user_id=user.id,
-        acting_persona_id=user.persona_id,
+        acting_persona_id=1003517866915,  # 来自 user_client fixture 注入的 binding
         action="kick_player",
         game="bf1",
         server_id=12345,
@@ -54,7 +54,7 @@ async def test_audit_logs_admin_sees_all(admin_client, test_session) -> None:
     svc = AuditService(test_session)
     await svc.record(
         user_id=admin.id,
-        acting_persona_id=admin.persona_id,
+        acting_persona_id=1004198901469,  # 来自 admin_client fixture 注入的 binding
         action="kick_player",
         game="bf1",
         server_id=1,

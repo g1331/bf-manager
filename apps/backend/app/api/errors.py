@@ -48,3 +48,13 @@ class EAApiError(AppError):
 class ValidationError(AppError):
     def __init__(self, message: str, details: dict[str, Any] | None = None) -> None:
         super().__init__(status.HTTP_400_BAD_REQUEST, "VALIDATION_ERROR", message, details)
+
+
+class EaBindingRequiredError(AppError):
+    """前置条件不满足：当前用户无可用 EA binding，无法执行需要 EA 凭据的操作"""
+
+    def __init__(
+        self,
+        message: str = "此操作需要绑定一个可用的 EA 账号，请前往账号设置完成绑定或重新登录",
+    ) -> None:
+        super().__init__(status.HTTP_412_PRECONDITION_FAILED, "EA_BINDING_REQUIRED", message)

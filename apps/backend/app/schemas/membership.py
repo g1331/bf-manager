@@ -13,8 +13,9 @@ MembershipRole = Literal["viewer", "moderator", "admin", "owner"]
 class MembershipItem(BaseModel):
     id: int
     user_id: int
-    user_persona_id: int
-    user_display_name: str | None
+    user_username: str
+    user_persona_id: int | None = None
+    user_display_name: str | None = None
     server_pk: int
     game: str
     server_id: int

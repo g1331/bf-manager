@@ -8,6 +8,7 @@ from fastapi import Cookie, Depends, Path
 from jose import JWTError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.api.errors import NotFoundError, UnauthorizedError
 from app.core.security import decode_access_token
@@ -38,7 +39,9 @@ async def get_current_user(
     except ValueError as e:
         raise UnauthorizedError() from e
 
-    user = await db.scalar(select(User).where(User.id == user_id))
+    user = await db.scalar(
+        select(User).options(selectinload(User.ea_bindings)).where(User.id == user_id)
+    )
     if user is None or not user.is_active:
         raise UnauthorizedError()
     return user

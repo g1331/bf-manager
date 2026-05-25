@@ -61,32 +61,34 @@ Users MUST be able to unbind their own bindings via `POST /api/v1/me/ea-bindings
 - **WHEN** 一个 user 有两条 binding A（primary, 较旧）与 B（非 primary, 较新）均未冻结，用户解绑 A
 - **THEN** B 自动被提升为 primary（`is_primary=true`）
 
-### Requirement: EA API 操作的身份选择
+### Requirement: EA API 操作的凭据路由与审计身份
 
-Any service that calls EA APIs on behalf of a user MUST source credentials from that user's primary, non-frozen binding, and MUST reject the operation with error code `EA_BINDING_REQUIRED` when no such binding exists.
+EA API 调用必须通过一个可替换的 credential provider 获取凭据；当 provider 无可用凭据源时，操作 MUST 以错误码 `EA_BINDING_REQUIRED` 拒绝。审计日志的 `acting_persona_id` MUST 取自当前用户的 primary 且未冻结 binding，无 binding 时取 0。
 
-所有需要以用户身份调用 EA API 的服务（服管命令、用户面 BF 数据查询等）必须从「当前 user 的 primary 且未冻结 binding」取加密凭据。
+所有需要调用 EA API 的服务（BF1 服管命令、用户面 BF 数据查询等）必须通过一个抽象的 `BF1ClientProvider`（或等价接口）获取已登录的 EA 客户端。该接口负责封装「按何种策略选择凭据」的决策，service 与路由层不直接感知凭据来源。
 
-若该 user 没有满足条件的 binding，操作必须拒绝并返回错误码 `EA_BINDING_REQUIRED`，错误信息提示用户去「账号设置」绑定或重新登录 EA 账号。
+本 change 提供一个 `PooledBF1ClientProvider` 实现：从全局 `ea_accounts` 后台账号池取凭据，任何登录用户都可调用（无需个人 binding）。未来引入「群组与按发起者 EA 身份路由」的 change 时，将新增其他 provider 实现替换或扩展，service 与路由签名不变。
 
-不允许任何路径使用「最近活跃的 binding」「任意一条 binding」之类的隐式选择策略。
+当 provider 判断没有任何可用凭据源（既无后台账号、无用户 binding、无群组绑定）时，必须抛出错误码 `EA_BINDING_REQUIRED`，HTTP 状态 4xx，错误信息提示发起者绑定 EA 或联系管理员配置账号。
 
-#### Scenario: 本地 admin 无 binding 时调用 EA 操作
+审计身份语义与凭据来源解耦：无论 EA API 实际使用哪条凭据，`AuditLog.acting_persona_id` 始终取自「当前操作发起者 user 的 primary 且未冻结 binding 的 persona_id」；若发起者无可用 binding（如 CLI 创建的本地 admin），写 0 表示「以平台身份执行」。
 
-- **WHEN** 一个由 CLI 创建的本地 admin（`local_password_hash` 非空，无任何 ea_bindings）调用需要 EA 凭据的服管路由
-- **THEN** 路由返回 4xx 错误，错误码 `EA_BINDING_REQUIRED`，HTTP body 包含引导信息
+#### Scenario: provider 无可用凭据源时的拒绝
 
-#### Scenario: 所有 binding 都冻结时调用 EA 操作
+- **WHEN** credential provider 在执行 EA API 调用前判定当前上下文（user、目标 server、群组绑定）没有任何可用凭据源
+- **THEN** 操作以 HTTP 412 拒绝，错误码 `EA_BINDING_REQUIRED`，body 包含引导信息
 
-- **WHEN** 一个 user 的所有 binding 都是 `is_frozen=true`
-- **THEN** EA 操作返回 `EA_BINDING_REQUIRED`，与「无 binding」表现一致
+#### Scenario: 后台账号池可用时本地 admin 可执行服管
+
+- **WHEN** 一个由 CLI 创建的本地 admin（无任何 ea_bindings）通过 `PooledBF1ClientProvider` 调用服管路由，且 `ea_accounts` 池中存在可用账号
+- **THEN** 操作成功执行，因为账号池兜底；`AuditLog.acting_persona_id` 写 0 表示「以平台身份执行」
 
 #### Scenario: 审计日志记录 acting_persona_id
 
-- **WHEN** 一个用户通过 primary binding 成功执行了一次 EA API 服管操作
-- **THEN** AuditLog 记录的 `acting_persona_id` 等于该 binding 的 `persona_id`，`user_id` 等于操作发起者 user 的 id
+- **WHEN** 一个拥有 primary binding 的用户成功执行了一次 EA API 服管操作
+- **THEN** `AuditLog.acting_persona_id` 等于该用户 primary binding 的 `persona_id`，`user_id` 等于操作发起者 user 的 id；与实际 EA 调用使用的凭据来源无关
 
 #### Scenario: 本地 admin 平台操作的 acting_persona_id
 
 - **WHEN** 一个本地 admin 执行不涉及 EA API 的纯平台操作（例如查审计日志）
-- **THEN** AuditLog 记录的 `acting_persona_id=0`，`user_id` 为该 admin 的 id
+- **THEN** `AuditLog.acting_persona_id=0`，`user_id` 为该 admin 的 id

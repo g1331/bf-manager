@@ -13,6 +13,7 @@ from app.models.bf1 import (
     Bf1ServerVip,
 )
 from app.models.ea_account import EAAccount
+from app.models.ea_binding import EaBinding
 from app.models.server import Server, ServerMembership
 from app.models.user import User
 
@@ -28,6 +29,7 @@ __all__ = [
     "Bf1ServerPlayerCount",
     "Bf1ServerVip",
     "EAAccount",
+    "EaBinding",
     "Server",
     "ServerMembership",
     "User",

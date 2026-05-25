@@ -18,7 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { login } from "@/lib/auth";
+import { localLogin, login } from "@/lib/auth";
 import { ApiException } from "@/lib/api-client";
 
 const loginSchema = z.object({
@@ -30,7 +30,13 @@ const loginSchema = z.object({
     .refine((v) => !v || v.length >= 10, "sid 如填写需是合法 cookie 值"),
 });
 
+const localLoginSchema = z.object({
+  username: z.string().min(1, "请输入 username"),
+  password: z.string().min(1, "请输入密码"),
+});
+
 type LoginValues = z.infer<typeof loginSchema>;
+type LocalLoginValues = z.infer<typeof localLoginSchema>;
 
 export default function LoginPage() {
   return (
@@ -45,22 +51,44 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? "/";
   const [submitting, setSubmitting] = useState(false);
+  const [showLocal, setShowLocal] = useState(false);
 
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { remid: "", sid: "" },
   });
 
+  const localForm = useForm<LocalLoginValues>({
+    resolver: zodResolver(localLoginSchema),
+    defaultValues: { username: "", password: "" },
+  });
+
   const onSubmit = async (values: LoginValues) => {
     setSubmitting(true);
     try {
       const user = await login(values);
-      toast.success(`欢迎回来，${user.display_name ?? user.persona_id}`);
+      const greet = user.primary_binding?.display_name ?? user.username;
+      toast.success(`欢迎回来，${greet}`);
       router.push(next);
       router.refresh();
     } catch (err) {
       const msg =
         err instanceof ApiException ? err.message : "登录失败，请检查 remid / sid 是否正确";
+      toast.error(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const onLocalSubmit = async (values: LocalLoginValues) => {
+    setSubmitting(true);
+    try {
+      const user = await localLogin(values);
+      toast.success(`欢迎回来，${user.username}`);
+      router.push(next);
+      router.refresh();
+    } catch (err) {
+      const msg = err instanceof ApiException ? err.message : "本地登录失败";
       toast.error(msg);
     } finally {
       setSubmitting(false);
@@ -134,6 +162,63 @@ function LoginForm() {
               </Button>
             </form>
           </Form>
+
+          <div className="mt-6 border-t pt-4">
+            <button
+              type="button"
+              onClick={() => setShowLocal((v) => !v)}
+              className="text-muted-foreground hover:text-foreground text-sm underline-offset-4 hover:underline"
+            >
+              {showLocal ? "收起本地账号登录" : "使用本地账号登录（仅平台管理员）"}
+            </button>
+            {showLocal ? (
+              <Form {...localForm}>
+                <form onSubmit={localForm.handleSubmit(onLocalSubmit)} className="mt-4 space-y-4">
+                  <FormField
+                    control={localForm.control}
+                    name="username"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>username</FormLabel>
+                        <FormControl>
+                          <Input autoComplete="username" spellCheck={false} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={localForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>密码</FormLabel>
+                        <FormControl>
+                          <Input type="password" autoComplete="current-password" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          本地账号由部署者通过 CLI 创建：
+                          <code className="bg-muted ml-1 rounded px-1 py-0.5 text-xs">
+                            python -m app.cli create-admin
+                          </code>
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    type="submit"
+                    variant="secondary"
+                    size="lg"
+                    className="w-full"
+                    disabled={submitting}
+                  >
+                    {submitting ? "登录中…" : "使用本地账号登录"}
+                  </Button>
+                </form>
+              </Form>
+            ) : null}
+          </div>
         </CardContent>
       </Card>
     </main>

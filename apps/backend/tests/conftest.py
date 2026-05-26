@@ -26,20 +26,55 @@ import pytest_asyncio
 from app.api.deps import get_current_user, get_current_user_optional
 from app.db.session import get_db
 from app.main import create_app
-from app.models import Base, User
+from app.models import Base, EaBinding, User
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.orm import selectinload
 
 
-def _fake_user(*, user_id: int = 1, persona_id: int = 1003517866915, role: str = "user") -> User:
+async def _reload_with_bindings(session, user_id: int) -> User:
+    """Eager-load ea_bindings 模拟真实 get_current_user 的依赖注入行为，
+    避免 sqlite async + lazy load 在 fixture-injected user 上抛 MissingGreenlet"""
+    user = await session.scalar(
+        select(User).options(selectinload(User.ea_bindings)).where(User.id == user_id)
+    )
+    assert user is not None
+    return user
+
+
+def _make_user(*, user_id: int = 1, username: str = "test_user", role: str = "user") -> User:
     return User(
         id=user_id,
-        persona_id=persona_id,
-        display_name=f"TestUser_{persona_id}",
-        avatar_url=None,
+        username=username,
+        local_password_hash=None,
+        email=None,
         role=role,
         is_active=True,
+        is_frozen=False,
         last_login_at=datetime.now(UTC),
+    )
+
+
+def _make_binding(
+    *,
+    user_id: int,
+    persona_id: int,
+    display_name: str | None = None,
+    is_primary: bool = True,
+) -> EaBinding:
+    return EaBinding(
+        user_id=user_id,
+        persona_id=persona_id,
+        display_name=display_name or f"TestPersona_{persona_id}",
+        avatar_url=None,
+        encrypted_remid=None,
+        encrypted_sid=None,
+        encrypted_session=None,
+        encrypted_access_token=None,
+        is_primary=is_primary,
+        is_frozen=False,
+        last_verified_at=datetime.now(UTC),
     )
 
 
@@ -71,11 +106,18 @@ async def client(test_session):
 
 @pytest_asyncio.fixture
 async def user_client(test_session):
-    """普通用户登录态客户端，返回 (client, user)"""
-    user = _fake_user(role="user")
+    """普通用户登录态客户端，返回 (client, user)。
+
+    user 自带一条 primary binding（persona_id=1003517866915），覆盖「EA 登录用户」常态。
+    """
+    user = _make_user(user_id=1, username="persona_1003517866915", role="user")
     test_session.add(user)
+    await test_session.flush()
+    test_session.add(
+        _make_binding(user_id=user.id, persona_id=1003517866915, display_name="TestUser")
+    )
     await test_session.commit()
-    await test_session.refresh(user)
+    user = await _reload_with_bindings(test_session, user.id)
 
     app = create_app()
 
@@ -93,11 +135,51 @@ async def user_client(test_session):
 
 @pytest_asyncio.fixture
 async def admin_client(test_session):
-    """平台 admin 登录态客户端，返回 (client, admin)"""
-    admin = _fake_user(user_id=99, persona_id=1004198901469, role="admin")
+    """平台 admin 登录态客户端，返回 (client, admin)。
+
+    admin 自带一条 primary binding（persona_id=1004198901469），覆盖「EA 登录的 admin」常态。
+    """
+    admin = _make_user(user_id=99, username="persona_1004198901469", role="admin")
+    test_session.add(admin)
+    await test_session.flush()
+    test_session.add(
+        _make_binding(user_id=admin.id, persona_id=1004198901469, display_name="AdminUser")
+    )
+    await test_session.commit()
+    admin = await _reload_with_bindings(test_session, admin.id)
+
+    app = create_app()
+
+    async def _override_get_db():
+        yield test_session
+
+    app.dependency_overrides[get_db] = _override_get_db
+    app.dependency_overrides[get_current_user] = lambda: admin
+    app.dependency_overrides[get_current_user_optional] = lambda: admin
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
+        yield ac, admin
+    app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture
+async def local_admin_client(test_session):
+    """CLI 创建的本地 admin 登录态客户端（无任何 ea_binding），返回 (client, admin)"""
+    from app.core.passwords import hash_password
+
+    admin = User(
+        id=100,
+        username="root",
+        local_password_hash=hash_password("test-pw"),
+        email=None,
+        role="admin",
+        is_active=True,
+        is_frozen=False,
+        last_login_at=datetime.now(UTC),
+    )
     test_session.add(admin)
     await test_session.commit()
-    await test_session.refresh(admin)
+    admin = await _reload_with_bindings(test_session, admin.id)
 
     app = create_app()
 

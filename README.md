@@ -13,7 +13,8 @@
 
 | 模块 | 功能 |
 |---|---|
-| 用户认证 | EA Cookie (remid / sid) 登录，persona 自动绑定，JWT 签发，AES-256-GCM 加密存储凭据，AppHeader 用户菜单 + 登出 |
+| 用户认证 | 双登录入口：EA Cookie (remid / sid) 自动开户，本地账号 (username + password) 由 CLI 创建供平台 admin 使用；JWT 签发，AES-256-GCM 加密存储 EA 凭据，AppHeader 用户菜单 + 登出 |
+| 账号设置 | `/account` 查看当前账号信息与 EA 绑定列表，支持解绑（保留行作为历史记录，清空加密凭据） |
 | 游戏入口 | 首页游戏选择，GameSwitcher 切换器，per-game 主题切换 |
 | BF1 战绩查询 | 头像（SAL 反查，gametools 兜底）、生涯数据、武器统计、载具统计、最近对局 |
 | BF1 服务器列表 | 服务器搜索、客户端分批渲染（每批 50，最多拉 200）、详情页（地图轮换、当前对局、玩家列表） |
@@ -97,16 +98,49 @@ docker compose exec backend uv run python tools/seed_ea_account.py \
     --persona-id <PERSONA_ID> --remid <REMID> --sid <SID>
 ```
 
-### 平台 admin 配置
+### 身份模型
 
-`ADMIN_PERSONA_IDS` 环境变量（逗号分隔的 persona_id 列表）决定哪些用户登录后自动获得 `role=admin`，可访问 `/admin/memberships` 与全量审计日志。
+平台账号 (`users`) 与 EA 绑定 (`ea_bindings`) 是两张独立的表：
+
+- `users` 只承担身份层职责：`id / username / local_password_hash / email / role / is_active / is_frozen`。一个 user 是 bf-manager 内的稳定身份单元，其生命周期独立于任何 EA 账号的可用性。
+- `ea_bindings` 承担凭据层职责：N:1 关联到 `users`，存储 `persona_id` 与加密的 EA cookie 凭据，标记 `is_primary` / `is_frozen`。`persona_id` 全局唯一。
+
+两类身份来源：
+
+1. **EA Cookie 登录** (`POST /api/v1/auth/login`)：玩家用户主入口。首次登录自动开户（username 自动生成为 `persona_<persona_id>`），同时写入首条 binding 标为 primary。
+2. **本地账号登录** (`POST /api/v1/auth/local-login`)：仅供 CLI 创建的本地管理员使用。`username + password` 校验通过即颁发同名 cookie。前端登录页提供折叠入口。
+
+两条入口颁发的 JWT 结构完全一致，下游鉴权中间件不区分入口来源。
+
+本地 admin 可以执行任何不依赖发起者个人 EA 身份的操作（含 BF1 服管命令，凭据走全局后台账号池 `ea_accounts`），无需绑定 EA。需要以个人 EA 身份执行的操作（未来 change）则要求 binding 存在，否则返回 `EA_BINDING_REQUIRED`。
+
+### 初始管理员配置
+
+平台 admin 名单不通过环境变量维护，改由 CLI 在 DB 中显式管理：
 
 ```bash
-# .env / .env.prod
-ADMIN_PERSONA_IDS=1003517866915,1004198901469
+# 1. 首次部署：创建一个本地管理员账号（无需 EA 绑定即可登录后台）
+docker compose exec backend python -m app.cli create-admin --username root
+#    输入密码时不回显；不带 --password 推荐 prompt 模式以避免进入 shell history
+
+# 2. 把已存在的 EA 用户提权为 admin（该 persona 必须先在本平台登录过一次）
+docker compose exec backend python -m app.cli grant-admin --persona 1003517866915
+
+# 3. 查看当前所有 admin
+docker compose exec backend python -m app.cli list-admins
+
+# 4. 重置本地密码
+docker compose exec backend python -m app.cli reset-password --username root
+
+# 5. 撤销 admin
+docker compose exec backend python -m app.cli revoke-admin --persona 1003517866915
 ```
 
-声明式管理：每次登录按 env 重新计算 role，不在名单内的用户会被降回 `user`。env 改了重启 backend 即生效。
+所有接受密码的子命令均支持三种密码输入：`--password <pw>`（不安全，便于自动化）、`--password-stdin`（推荐脚本场景）、不带参数时进入 `getpass` 交互式 prompt（推荐人工场景）。
+
+**从旧版升级**：原 `ADMIN_PERSONA_IDS` 环境变量已停用。升级时跑完 alembic 迁移后，把原名单内的 persona 一次性通过 `grant-admin` 写入 DB；env 中的 `ADMIN_PERSONA_IDS` 行可删除。
+
+> `grant-admin --persona <id>` 要求该 persona 已经在本平台至少登录过一次（即 `users` 表里有对应行）。旧版 `ADMIN_PERSONA_IDS` 允许预登记尚未登录过的 persona，本版本不再支持。若原名单中存在从未登录的预备管理员，请改用 `create-admin --username <name>` 先创建本地账号供其使用，或等其首次 EA 登录后再 `grant-admin`。
 
 服管授权流程：平台 admin 在 `/admin/memberships` 录入 `(persona_id, game, server_id, role)` 即可。被授权用户必须先在本平台登录过一次（users 表里有记录）。
 
@@ -138,9 +172,9 @@ cd bf-manager
 # 2. 初始化密钥（生成 secrets/ 下的 postgres_password / database_url / ea_cred_encryption_key / jwt_secret_key）
 bash tools/init-prod-secrets.sh
 
-# 3. 编辑 .env.prod 填入域名、admin persona 名单等参数
+# 3. 编辑 .env.prod 填入域名等参数（admin 名单不再通过 env 配置，见下方 CLI 步骤）
 cp .env.example .env.prod
-$EDITOR .env.prod   # 至少设置 DOMAIN 与 ADMIN_PERSONA_IDS
+$EDITOR .env.prod   # 至少设置 DOMAIN
 
 # 4. 拉镜像 + 启动
 docker compose --env-file .env.prod -f docker-compose.prod.yml pull
@@ -154,6 +188,10 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm migrate
 docker compose --env-file .env.prod -f docker-compose.prod.yml exec backend \
     python tools/seed_ea_account.py \
     --persona-id <PERSONA_ID> --remid <REMID> --sid <SID>
+
+# 7. 创建初始管理员账号
+docker compose --env-file .env.prod -f docker-compose.prod.yml exec backend \
+    python -m app.cli create-admin --username root
 ```
 
 TLS 与反代由 host 上的 openresty / nginx 处理，backend 与 web 容器只把 `127.0.0.1:8000` 与 `127.0.0.1:3000` 暴露给 host，杜绝外网直连绕过反代。

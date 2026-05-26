@@ -6,7 +6,9 @@ export type MembershipRole = "viewer" | "moderator" | "admin" | "owner";
 export interface MembershipItem {
   id: number;
   user_id: number;
-  user_persona_id: number;
+  user_username: string;
+  // 本地 admin（无 EA 绑定）被授予服管时，下面两个字段为 null
+  user_persona_id: number | null;
   user_display_name: string | null;
   server_pk: number;
   game: string;

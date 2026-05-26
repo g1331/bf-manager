@@ -62,10 +62,6 @@ services:
       ENVIRONMENT: production
       LOG_LEVEL: INFO
       ENABLED_GAMES: bf1
-      # 平台 admin 名单（逗号分隔 persona_id），从 host env / .env.prod 注入。
-      # 这些用户每次登录都会被赋予 role="admin"，可访问 /admin/memberships
-      # 与全量审计日志。改了之后重启 backend 即生效。
-      ADMIN_PERSONA_IDS: ${ADMIN_PERSONA_IDS:-}
     # 仅绑 127.0.0.1，杜绝外网直连绕过 openresty
     ports:
       - "127.0.0.1:${BACKEND_HOST_PORT:-8000}:8000"

@@ -2,8 +2,41 @@
 
 from __future__ import annotations
 
-from app.models import Server, User
+from datetime import UTC, datetime
+
+from app.models import EaBinding, Server, User
 from sqlalchemy import select
+
+
+async def _create_target_user(session, *, user_id: int, persona_id: int, username: str) -> User:
+    user = User(
+        id=user_id,
+        username=username,
+        local_password_hash=None,
+        email=None,
+        role="user",
+        is_active=True,
+        is_frozen=False,
+    )
+    session.add(user)
+    await session.flush()
+    session.add(
+        EaBinding(
+            user_id=user.id,
+            persona_id=persona_id,
+            display_name=f"Target_{persona_id}",
+            avatar_url=None,
+            encrypted_remid=None,
+            encrypted_sid=None,
+            encrypted_session=None,
+            encrypted_access_token=None,
+            is_primary=True,
+            is_frozen=False,
+            last_verified_at=datetime.now(UTC),
+        )
+    )
+    await session.commit()
+    return user
 
 
 async def test_memberships_requires_login(client) -> None:
@@ -30,18 +63,12 @@ async def test_memberships_admin_empty_list(admin_client) -> None:
 async def test_memberships_admin_upsert_and_delete(admin_client, test_session) -> None:
     ac, _admin = admin_client
 
-    target = User(
-        id=42,
-        persona_id=1003517866915,
-        display_name="XMMXML",
-        role="user",
-        is_active=True,
+    target = await _create_target_user(
+        test_session, user_id=42, persona_id=1003517866915, username="persona_1003517866915"
     )
-    test_session.add(target)
-    await test_session.commit()
 
     payload = {
-        "target_persona_id": target.persona_id,
+        "target_persona_id": 1003517866915,
         "game": "bf1",
         "server_id": 13110853,
         "role": "moderator",
@@ -50,7 +77,8 @@ async def test_memberships_admin_upsert_and_delete(admin_client, test_session) -
     resp = await ac.post("/api/v1/memberships", json=payload)
     assert resp.status_code == 200, resp.text
     body = resp.json()
-    assert body["user_persona_id"] == target.persona_id
+    assert body["user_persona_id"] == 1003517866915
+    assert body["user_username"] == target.username
     assert body["role"] == "moderator"
     membership_id = body["id"]
 
@@ -93,9 +121,7 @@ async def test_memberships_creates_server_record_on_first_upsert(
 ) -> None:
     """upsert 时若 (game, server_id) 对应的 Server 不存在，应自动注册一条"""
     ac, _admin = admin_client
-    target = User(id=2, persona_id=2, display_name="x", role="user", is_active=True)
-    test_session.add(target)
-    await test_session.commit()
+    await _create_target_user(test_session, user_id=2, persona_id=2, username="persona_2")
 
     resp = await ac.post(
         "/api/v1/memberships",

@@ -1,4 +1,7 @@
-"""用户读写服务"""
+"""平台用户服务：身份层读写
+
+身份层不感知 EA 凭据。EA 相关字段由 EaBindingService 管理。
+"""
 
 from __future__ import annotations
 
@@ -7,87 +10,114 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import get_settings
-from app.core.security import get_cipher
-from app.models import User
-
-
-def _role_for_persona(persona_id: int) -> str:
-    """按 env 声明的 admin_persona_ids 决定 role。声明式管理，每次登录都重算。"""
-    return "admin" if persona_id in get_settings().admin_persona_id_set else "user"
+from app.core.passwords import hash_password, verify_password
+from app.models import EaBinding, User
 
 
 class UserService:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
-    async def get_by_persona_id(self, persona_id: int) -> User | None:
-        return await self.db.scalar(select(User).where(User.persona_id == persona_id))
-
     async def get_by_id(self, user_id: int) -> User | None:
         return await self.db.scalar(select(User).where(User.id == user_id))
 
-    async def upsert_after_login(
+    async def get_by_username(self, username: str) -> User | None:
+        return await self.db.scalar(select(User).where(User.username == username))
+
+    async def get_by_persona_id(self, persona_id: int) -> User | None:
+        """通过 binding 反查 user。无 binding 或无对应 user 返回 None。"""
+        return await self.db.scalar(
+            select(User)
+            .join(EaBinding, EaBinding.user_id == User.id)
+            .where(EaBinding.persona_id == persona_id)
+        )
+
+    async def get_or_create_by_ea_login(self, persona_id: int) -> tuple[User, bool]:
+        """根据 persona_id 找 user；找不到则自动开户。
+
+        返回 (user, created)。created=True 表示本次新建。
+        新建用户：username=`persona_<id>`、role='user'、local_password_hash=NULL。
+        """
+        user = await self.get_by_persona_id(persona_id)
+        if user is not None:
+            user.last_login_at = datetime.now(UTC)
+            await self.db.commit()
+            await self.db.refresh(user)
+            return user, False
+
+        user = User(
+            username=f"persona_{persona_id}",
+            local_password_hash=None,
+            email=None,
+            role="user",
+            is_active=True,
+            is_frozen=False,
+            last_login_at=datetime.now(UTC),
+        )
+        self.db.add(user)
+        await self.db.commit()
+        await self.db.refresh(user)
+        return user, True
+
+    async def create_local_admin(
         self,
         *,
-        persona_id: int,
-        display_name: str | None,
-        remid: str,
-        sid: str,
-        session: str | None,
-        access_token: str | None,
-        avatar_url: str | None = None,
+        username: str,
+        password: str,
+        email: str | None = None,
     ) -> User:
-        """登录成功后写入或更新用户记录，凭据 AES-GCM 加密"""
-        cipher = get_cipher()
-        user = await self.get_by_persona_id(persona_id)
-        now = datetime.now(UTC)
-        role = _role_for_persona(persona_id)
-        if user is None:
-            user = User(
-                persona_id=persona_id,
-                display_name=display_name,
-                avatar_url=avatar_url,
-                encrypted_remid=cipher.encrypt(remid),
-                encrypted_sid=cipher.encrypt(sid),
-                encrypted_session=cipher.encrypt(session) if session else None,
-                encrypted_access_token=cipher.encrypt(access_token) if access_token else None,
-                role=role,
-                last_login_at=now,
-            )
-            self.db.add(user)
-        else:
-            user.display_name = display_name or user.display_name
-            user.avatar_url = avatar_url or user.avatar_url
-            user.encrypted_remid = cipher.encrypt(remid)
-            user.encrypted_sid = cipher.encrypt(sid)
-            if session:
-                user.encrypted_session = cipher.encrypt(session)
-            if access_token:
-                user.encrypted_access_token = cipher.encrypt(access_token)
-            user.role = role
-            user.last_login_at = now
+        """CLI 创建本地 admin。同名 username 已存在时抛 ValueError。"""
+        existing = await self.get_by_username(username)
+        if existing is not None:
+            raise ValueError(f"username '{username}' 已存在")
+        user = User(
+            username=username,
+            local_password_hash=hash_password(password),
+            email=email,
+            role="admin",
+            is_active=True,
+            is_frozen=False,
+        )
+        self.db.add(user)
         await self.db.commit()
         await self.db.refresh(user)
         return user
 
-    async def update_session(
-        self,
-        user_id: int,
-        *,
-        sid: str | None = None,
-        session: str | None = None,
-        access_token: str | None = None,
-    ) -> None:
-        """凭据刷新后更新字段"""
-        cipher = get_cipher()
-        user = await self.get_by_id(user_id)
-        if user is None:
-            return
-        if sid is not None:
-            user.encrypted_sid = cipher.encrypt(sid)
-        if session is not None:
-            user.encrypted_session = cipher.encrypt(session)
-        if access_token is not None:
-            user.encrypted_access_token = cipher.encrypt(access_token)
+    async def set_local_password(self, user: User, new_password: str) -> None:
+        user.local_password_hash = hash_password(new_password)
         await self.db.commit()
+
+    async def verify_local_password(self, username: str, password: str) -> User | None:
+        """本地登录校验。username 不存在或密码错误或无本地密码时返回 None。"""
+        user = await self.get_by_username(username)
+        if user is None or user.local_password_hash is None:
+            return None
+        if not verify_password(password, user.local_password_hash):
+            return None
+        return user
+
+    async def mark_login(self, user: User) -> None:
+        user.last_login_at = datetime.now(UTC)
+        await self.db.commit()
+
+    async def grant_admin(self, persona_id: int) -> User:
+        """CLI grant-admin：把指定 persona 对应 user 的 role 升为 admin。
+
+        要求 user 必须已存在（即该 persona 至少登录过一次）。
+        """
+        user = await self.get_by_persona_id(persona_id)
+        if user is None:
+            raise ValueError(f"persona_id={persona_id} 对应的 user 不存在，请先让该用户登录一次")
+        user.role = "admin"
+        await self.db.commit()
+        await self.db.refresh(user)
+        return user
+
+    async def revoke_admin(self, persona_id: int) -> User:
+        user = await self.get_by_persona_id(persona_id)
+        if user is None:
+            raise ValueError(f"persona_id={persona_id} 对应的 user 不存在")
+        user.role = "user"
+        await self.db.commit()
+        await self.db.refresh(user)
+        return user

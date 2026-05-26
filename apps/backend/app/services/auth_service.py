@@ -1,4 +1,4 @@
-"""用户认证服务：EA Cookie 登录链路"""
+"""用户认证服务：EA Cookie 登录链路 + 本地账号登录链路"""
 
 from __future__ import annotations
 
@@ -9,35 +9,35 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.errors import AppError, EAApiError, UnauthorizedError
 from app.domain.games.bf1.gateway import BF1GatewayClient
-from app.models import User
+from app.models import EaBinding, User
+from app.services.ea_binding_service import EaBindingService
 from app.services.user_service import UserService
 
 
 class AuthService:
-    """EA Cookie → persona → JWT 的登录编排"""
+    """EA Cookie → persona → user + binding → JWT 的登录编排"""
 
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
         self.users = UserService(db)
+        self.bindings = EaBindingService(db)
 
-    async def login_with_cookie(self, remid: str, sid: str) -> User:
+    async def login_with_cookie(self, remid: str, sid: str) -> tuple[User, EaBinding]:
         """
         1. 用 remid/sid 调 EA accounts.ea.com 拿 access_token + 刷新后的 sid
         2. 调 EA Gateway 拿 persona_id + displayName
-        3. AES-GCM 加密凭据，upsert users 表
-        4. 返回 User
+        3. 用 persona_id 找/创建 user
+        4. AES-GCM 加密凭据，写入或更新对应 ea_bindings 记录
+        5. 返回 (user, binding)
         """
-        # 临时构造一个 client，pid=0 表示尚未知晓 persona
         client = BF1GatewayClient(pid=0, remid=remid, sid=sid)
         try:
-            # gateway.login 内部完成 cookie → token → authcode → session 全流程
             session = await client.login(remid, sid)
             if session is None or not isinstance(session, str) or not client.check_login:
                 raise UnauthorizedError("EA 凭据无效，请检查 remid / sid")
 
             persona_id = int(client.pid)
 
-            # 取 persona 详情。拿不到不影响登录，下次刷新。
             display_name: str | None = None
             avatar_url: str | None = None
             try:
@@ -50,7 +50,9 @@ class AuthService:
             except Exception as e:
                 logger.debug("fetch persona detail failed: {}", e)
 
-            return await self.users.upsert_after_login(
+            user, _created = await self.users.get_or_create_by_ea_login(persona_id)
+            binding = await self.bindings.upsert_after_ea_login(
+                user_id=user.id,
                 persona_id=persona_id,
                 display_name=display_name,
                 avatar_url=avatar_url,
@@ -59,6 +61,7 @@ class AuthService:
                 session=session,
                 access_token=client.access_token,
             )
+            return user, binding
         except AppError:
             raise
         except Exception as e:
@@ -72,3 +75,15 @@ class AuthService:
                 http_session = getattr(client, "http_session", None)
                 if http_session is not None:
                     await http_session.close()
+
+    async def login_with_local_password(self, username: str, password: str) -> User:
+        """本地账号 username + password 登录。失败统一 401，不区分原因。
+
+        同步对齐 deps.get_current_user 的拒绝条件（is_active=false 或 is_frozen=true），
+        避免登录颁发出来的 JWT 在所有后续请求被中间件拒绝、前端陷入死循环。
+        """
+        user = await self.users.verify_local_password(username, password)
+        if user is None or not user.is_active or user.is_frozen:
+            raise UnauthorizedError("用户名或密码错误")
+        await self.users.mark_login(user)
+        return user

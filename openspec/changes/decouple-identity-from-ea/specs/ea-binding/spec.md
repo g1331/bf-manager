@@ -29,7 +29,7 @@ The EA cookie login path MUST upsert the corresponding `ea_bindings` record, and
 
 EA cookie 登录路径必须负责 `ea_bindings` 记录的创建与维护。
 
-对于 persona 首次出现的情况：插入新 binding，`is_primary=true`，`is_frozen=false`，加密凭据写入，`last_verified_at` 取当前时间。
+对于 persona 首次出现的情况：插入新 binding，`is_frozen=false`，加密凭据写入，`last_verified_at` 取当前时间。`is_primary` 取决于该 user 当前是否已有未冻结的 primary binding：若该 user 在 `ea_bindings` 中无任何 `is_primary=true and is_frozen=false` 的记录，新 binding 置 `is_primary=true`；若已有一条 primary（典型见于同一 user 主动绑定多个 persona 的链路，或解绑路径的中间态），新 binding 置 `is_primary=false`，避免与已有 primary 冲突触发 partial unique index。
 
 对于 persona 已存在 binding 的情况：更新该 binding 的所有加密凭据字段、`display_name`、`avatar_url`、`last_verified_at`；若该 binding 之前为 `is_frozen=true`，自动置 false 视为「重新激活」；不修改 `is_primary` 状态。
 
@@ -37,6 +37,11 @@ EA cookie 登录路径必须负责 `ea_bindings` 记录的创建与维护。
 
 - **WHEN** 一条 `is_frozen=true` 的 binding 对应 persona 再次走 EA cookie 登录
 - **THEN** binding 的 `is_frozen` 被置为 false，加密凭据被更新
+
+#### Scenario: user 已有 primary binding 时再绑新 persona
+
+- **WHEN** 一个 user 已存在一条 `is_primary=true and is_frozen=false` 的 binding（持有 persona A），现在通过 EA cookie 登录一个全新的 persona B（在 `ea_bindings` 中不存在）
+- **THEN** 服务为 persona B 插入一条新 binding，`is_primary=false`，已有的 persona A binding 仍保持 primary；两条 binding 不冲突
 
 ### Requirement: 用户主动解绑
 

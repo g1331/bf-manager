@@ -24,7 +24,7 @@ The system MUST expose exactly two login entry points, each producing JWTs with 
 
 系统必须支持两种登录入口，分别对应两类身份来源。
 
-第一种是 EA cookie 登录（`POST /api/v1/auth/ea-login`），面向所有 BF 玩家用户。该路径根据 EA cookie 校验得到 persona_id，通过 `ea_bindings.persona_id` 查找归属 user；找不到时自动创建 user（username 自动生成为 `persona_<persona_id>`，role 为 `user`）并写入首条 binding。
+第一种是 EA cookie 登录（`POST /api/v1/auth/login`），面向所有 BF 玩家用户。该路径根据 EA cookie 校验得到 persona_id，通过 `ea_bindings.persona_id` 查找归属 user；找不到时自动创建 user（username 自动生成为 `persona_<persona_id>`，role 为 `user`）并写入首条 binding。
 
 第二种是本地账号登录（`POST /api/v1/auth/local-login`），面向通过 CLI 创建的本地管理员。该路径凭 `username + password` 校验通过 `users.local_password_hash`，颁发与 EA 登录同名的 `bfm_access_token` cookie。
 

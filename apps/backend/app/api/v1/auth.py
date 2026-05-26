@@ -114,7 +114,7 @@ async def local_login(
 ) -> LoginResponse:
     """本地账号 username + password 登录（CLI 创建的本地 admin 专用）。
 
-    与 ea-login 颁发同名 `bfm_access_token` cookie，下游鉴权中间件不区分入口来源。
+    与 EA cookie 登录颁发同名 `bfm_access_token` cookie，下游鉴权中间件不区分入口来源。
     校验失败统一返回 401，不区分「用户不存在」与「密码错误」。
     """
     settings = get_settings()

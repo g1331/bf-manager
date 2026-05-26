@@ -18,7 +18,7 @@
 
 登录入口拆分为两条：
 
-- **Web 主入口 `POST /api/v1/auth/ea-login`**：保留现有 EA cookie 登录流程。首次登录时：若该 persona 已存在 `ea_bindings` 记录，定位到对应 user 完成登录；若不存在，自动创建一个 user（`username` 自动生成为 `persona_<id>`），并写入首条 `ea_bindings` 标记为 primary。
+- **Web 主入口 `POST /api/v1/auth/login`**：保留现有 EA cookie 登录流程。首次登录时：若该 persona 已存在 `ea_bindings` 记录，定位到对应 user 完成登录；若不存在，自动创建一个 user（`username` 自动生成为 `persona_<id>`），并写入首条 `ea_bindings` 标记为 primary。
 - **二级入口 `POST /api/v1/auth/local-login`**：仅供 CLI 创建的本地 admin 使用。`username + password` 校验通过即颁发同名 `bfm_access_token` cookie。前端登录页提供折叠链接「使用本地账号登录」进入。
 
 引入 CLI 子命令 `python -m app.cli create-admin --username <name> --password <pw>`，用于首次部署时创建无 EA 绑定的初始管理员。

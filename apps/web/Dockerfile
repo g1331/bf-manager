@@ -54,8 +54,11 @@ COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
 USER nextjs
 EXPOSE 3000
 
+# BusyBox wget 解析 localhost 时优先走 IPv6 (::1)，但 Next.js standalone
+# 仅监听 HOSTNAME=0.0.0.0 的 IPv4，会拿到 Connection refused 误判 unhealthy。
+# 显式用 127.0.0.1 强制走 IPv4。
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-    CMD wget --quiet --tries=1 --spider http://localhost:3000/ || exit 1
+    CMD wget --quiet --tries=1 --spider http://127.0.0.1:3000/ || exit 1
 
 # standalone 模式入口位于 apps/web/server.js（monorepo 路径会保留）
 CMD ["node", "apps/web/server.js"]

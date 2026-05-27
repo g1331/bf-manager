@@ -143,6 +143,9 @@ def _make_full_detail() -> dict:
                 "personaId": "1005880910785",
                 "displayName": "B_bili33",
                 "avatar": "https://avatar.example/a.png",
+                "platform": "pc",
+                "platformId": "1011592110785",
+                "nucleusId": "1011592110785",
             },
             "server": {
                 "serverId": "10667817",
@@ -155,6 +158,9 @@ def _make_full_detail() -> dict:
                     "personaId": "1001",
                     "displayName": "AdminOne",
                     "avatar": "https://avatar.example/1.png",
+                    "platform": "pc",
+                    "platformId": "1101",
+                    "nucleusId": "1101",
                 },
                 {"personaId": "1002", "displayName": "AdminTwo"},
                 {"personaId": None, "displayName": "Broken"},
@@ -162,7 +168,18 @@ def _make_full_detail() -> dict:
             "vipList": [
                 {"personaId": "2001", "displayName": "VipOne"},
             ],
-            "bannedList": [{"personaId": str(i)} for i in range(7)],
+            "bannedList": [
+                {
+                    "personaId": "9001",
+                    "displayName": "BannedOne",
+                    "avatar": "https://avatar.example/b1.png",
+                    "platform": "pc",
+                    "platformId": "9101",
+                    "nucleusId": "9101",
+                },
+                {"personaId": "9002", "displayName": "BannedTwo"},
+                {"personaId": "not-a-number", "displayName": "Garbage"},
+            ],
         },
         "platoonInfo": {
             "tag": "ABC",
@@ -183,13 +200,21 @@ def test_to_extras_full_payload() -> None:
     assert extras.owner.persona_id == 1005880910785
     assert extras.owner.display_name == "B_bili33"
     assert extras.owner.avatar_url == "https://avatar.example/a.png"
+    assert extras.owner.platform == "pc"
+    assert extras.owner.platform_id == "1011592110785"
+    assert extras.owner.nucleus_id == "1011592110785"
     assert extras.lifecycle.created_at == datetime.fromtimestamp(1708228215, tz=UTC)
     assert extras.lifecycle.expires_at == datetime.fromtimestamp(1739764215, tz=UTC)
     assert extras.lifecycle.updated_at == datetime.fromtimestamp(1738228215, tz=UTC)
     assert [a.persona_id for a in extras.admins] == [1001, 1002]
     assert extras.admins[0].avatar_url == "https://avatar.example/1.png"
+    assert extras.admins[0].platform == "pc"
+    assert extras.admins[0].platform_id == "1101"
+    assert extras.admins[0].nucleus_id == "1101"
     assert [v.persona_id for v in extras.vips] == [2001]
-    assert extras.banned_count == 7
+    assert [b.persona_id for b in extras.banned] == [9001, 9002]
+    assert extras.banned[0].avatar_url == "https://avatar.example/b1.png"
+    assert extras.banned[0].platform == "pc"
     assert extras.platoon is not None
     assert extras.platoon.tag == "ABC"
     assert extras.platoon.size == 20
@@ -215,7 +240,7 @@ def test_to_extras_without_rsp_and_platoon() -> None:
     assert extras.lifecycle.updated_at is None
     assert extras.admins == []
     assert extras.vips == []
-    assert extras.banned_count == 0
+    assert extras.banned == []
     assert extras.platoon is None
 
 

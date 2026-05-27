@@ -124,12 +124,18 @@ export interface ServerOwner {
   persona_id: number | null;
   display_name: string | null;
   avatar_url: string | null;
+  platform: string | null;
+  platform_id: string | null;
+  nucleus_id: string | null;
 }
 
 export interface ServerMember {
   persona_id: number;
   display_name: string | null;
   avatar_url: string | null;
+  platform: string | null;
+  platform_id: string | null;
+  nucleus_id: string | null;
 }
 
 export interface ServerLifecycle {
@@ -155,7 +161,7 @@ export interface ServerExtras {
   lifecycle: ServerLifecycle;
   admins: ServerMember[];
   vips: ServerMember[];
-  banned_count: number;
+  banned: ServerMember[];
   platoon: PlatoonBrief | null;
 }
 

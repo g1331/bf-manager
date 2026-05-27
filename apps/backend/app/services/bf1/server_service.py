@@ -108,9 +108,10 @@ def _to_rotation(raw: dict[str, Any]) -> list[MapRotationItem]:
 
 
 def _to_member(item: dict[str, Any]) -> ServerMember | None:
-    """rspInfo.adminList / vipList 中单项 → ServerMember（简表）
+    """rspInfo.adminList / vipList / bannedList 中单项 → ServerMember
 
     EA 字段名为 personaId（字符串）。无法解析 persona_id 时返回 None，由调用方过滤。
+    accountId 一般为占位 "0"，不进 schema。
     """
     raw_pid = item.get("personaId") or item.get("personaID")
     try:
@@ -123,6 +124,9 @@ def _to_member(item: dict[str, Any]) -> ServerMember | None:
         persona_id=persona_id,
         display_name=item.get("displayName") or item.get("name"),
         avatar_url=item.get("avatar"),
+        platform=item.get("platform"),
+        platform_id=item.get("platformId"),
+        nucleus_id=item.get("nucleusId"),
     )
 
 
@@ -170,6 +174,9 @@ def _to_extras(raw: dict[str, Any]) -> ServerExtras:
             persona_id=owner_pid,
             display_name=owner_raw.get("displayName"),
             avatar_url=owner_raw.get("avatar"),
+            platform=owner_raw.get("platform"),
+            platform_id=owner_raw.get("platformId"),
+            nucleus_id=owner_raw.get("nucleusId"),
         )
 
     lifecycle = ServerLifecycle(
@@ -180,7 +187,7 @@ def _to_extras(raw: dict[str, Any]) -> ServerExtras:
 
     admins = [m for m in (_to_member(a) for a in rsp_info.get("adminList") or []) if m]
     vips = [m for m in (_to_member(v) for v in rsp_info.get("vipList") or []) if m]
-    banned_count = len(rsp_info.get("bannedList") or [])
+    banned = [m for m in (_to_member(b) for b in rsp_info.get("bannedList") or []) if m]
 
     platoon: PlatoonBrief | None = None
     if platoon_info:
@@ -205,7 +212,7 @@ def _to_extras(raw: dict[str, Any]) -> ServerExtras:
         lifecycle=lifecycle,
         admins=admins,
         vips=vips,
-        banned_count=banned_count,
+        banned=banned,
         platoon=platoon,
     )
 

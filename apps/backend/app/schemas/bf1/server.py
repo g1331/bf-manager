@@ -57,19 +57,34 @@ class ServerPlayer(BaseModel):
 
 
 class ServerOwner(BaseModel):
-    """RSP 服主"""
+    """RSP 服主
+
+    字段直接对应 EA rspInfo.owner 的公开字段：persona 标识三件套
+    （persona_id / platform_id / nucleus_id）+ display_name + avatar + platform。
+    accountId 一般为占位字符串 "0"，无业务价值，不进 schema。
+    """
 
     persona_id: int | None = None
     display_name: str | None = None
     avatar_url: str | None = None
+    platform: str | None = None
+    platform_id: str | None = None
+    nucleus_id: str | None = None
 
 
 class ServerMember(BaseModel):
-    """admin / vip 列表项（简表，仅暴露 persona 基本信息）"""
+    """admin / vip / banned 列表项
+
+    与 ServerOwner 同字段集，复用于 rspInfo.adminList / vipList / bannedList。
+    persona_id 解析失败的项由 _to_member 过滤掉，不进列表。
+    """
 
     persona_id: int
     display_name: str | None = None
     avatar_url: str | None = None
+    platform: str | None = None
+    platform_id: str | None = None
+    nucleus_id: str | None = None
 
 
 class ServerLifecycle(BaseModel):
@@ -120,7 +135,7 @@ class ServerExtras(BaseModel):
     lifecycle: ServerLifecycle = ServerLifecycle()
     admins: list[ServerMember] = []
     vips: list[ServerMember] = []
-    banned_count: int = 0
+    banned: list[ServerMember] = []
     platoon: PlatoonBrief | None = None
 
 

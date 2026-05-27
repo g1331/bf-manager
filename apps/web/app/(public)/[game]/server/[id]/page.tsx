@@ -71,7 +71,7 @@ function ServerDetailView({
 }) {
   const session = useSession();
   const isLoggedIn = !!session.data;
-  const memberCount = extras.admins.length + extras.vips.length;
+  const memberCount = extras.admins.length + extras.vips.length + extras.banned.length;
 
   return (
     <main className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6">
@@ -167,6 +167,11 @@ function ServerInfoCard({ extras }: { extras: ServerExtras }) {
                   #{extras.owner.persona_id}
                 </span>
               ) : null}
+              {extras.owner.platform ? (
+                <span className="bg-muted ml-2 rounded px-1.5 py-0.5 text-xs">
+                  {extras.owner.platform.toUpperCase()}
+                </span>
+              ) : null}
             </InfoRow>
           ) : null}
           {extras.bookmark_count != null ? (
@@ -251,9 +256,7 @@ function MembersPanel({ extras }: { extras: ServerExtras }) {
     <div className="space-y-4">
       <MemberSection title="管理员" hint="/ 50" members={extras.admins} />
       <MemberSection title="VIP" hint="/ 50" members={extras.vips} />
-      <div className="text-muted-foreground rounded-md border border-dashed p-3 text-xs">
-        Ban 列表：{extras.banned_count} 人（出于隐私考虑只展示数量）
-      </div>
+      <MemberSection title="封禁名单" hint="/ 200" members={extras.banned} />
     </div>
   );
 }
@@ -273,6 +276,11 @@ function MemberSection({
       header: title,
       cell: (m) => m.display_name ?? "—",
       isCardTitle: true,
+    },
+    {
+      key: "platform",
+      header: "平台",
+      cell: (m) => (m.platform ? m.platform.toUpperCase() : "—"),
     },
     { key: "id", header: "Persona ID", cell: (m) => m.persona_id },
   ];

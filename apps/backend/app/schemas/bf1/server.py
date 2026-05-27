@@ -59,8 +59,10 @@ class ServerPlayer(BaseModel):
 class ServerOwner(BaseModel):
     """RSP 服主
 
-    字段照 EA rspInfo.owner 原样透传：persona_id / platform_id / nucleus_id /
-    account_id 四个 ID + display_name + avatar + platform。
+    字段照 EA rspInfo.owner 原样透传：persona_id / platform_id / nucleus_id
+    三个 ID + display_name + avatar + platform。
+    EA persona DTO 的 accountId 字段是 Origin → Nucleus 账号统一前的历史遗留
+    字段位，跨平台、跨独立社区实现采样全部为 "0"，不进 schema。
     """
 
     persona_id: int | None = None
@@ -69,7 +71,6 @@ class ServerOwner(BaseModel):
     platform: str | None = None
     platform_id: str | None = None
     nucleus_id: str | None = None
-    account_id: str | None = None
 
 
 class ServerMember(BaseModel):
@@ -85,7 +86,6 @@ class ServerMember(BaseModel):
     platform: str | None = None
     platform_id: str | None = None
     nucleus_id: str | None = None
-    account_id: str | None = None
 
 
 class ServerLifecycle(BaseModel):

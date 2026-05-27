@@ -884,6 +884,15 @@ class _BF1GatewayBase:
     async def getPersonasByIds(self, personaIds: list[int | str]) -> dict:
         """
         根据pid获取Personas
+
+        EA persona DTO 字段说明（同结构复用在 rspInfo.owner / adminList / vipList
+        / bannedList 等位置）：
+        - personaId: 游戏内身份 ID，BF1 整个体系用这个串起来。
+        - nucleusId: EA Nucleus 全局账号 ID（2011 年统一账号系统后的唯一全局 ID）。
+        - platformId: 平台账号 ID，PC 上 = nucleusId；PSN / Xbox 上为各自平台 ID。
+        - accountId: Origin → Nucleus 账号统一前的历史遗留字段位，跨平台、跨独立
+          社区实现采样全部为 "0"，不要解析或透出到 API。
+
         :param personaIds: PID列表
         :return:
         example:

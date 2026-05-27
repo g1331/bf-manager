@@ -126,7 +126,6 @@ def _to_member(item: dict[str, Any]) -> ServerMember | None:
         platform=item.get("platform"),
         platform_id=item.get("platformId"),
         nucleus_id=item.get("nucleusId"),
-        account_id=item.get("accountId"),
     )
 
 
@@ -177,7 +176,6 @@ def _to_extras(raw: dict[str, Any]) -> ServerExtras:
             platform=owner_raw.get("platform"),
             platform_id=owner_raw.get("platformId"),
             nucleus_id=owner_raw.get("nucleusId"),
-            account_id=owner_raw.get("accountId"),
         )
 
     lifecycle = ServerLifecycle(

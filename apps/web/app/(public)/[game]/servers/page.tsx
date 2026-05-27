@@ -106,6 +106,9 @@ function ServerCard({ server, onClick }: { server: ServerSummary; onClick: () =>
       <CardContent className="flex gap-3 p-4">
         {server.map_image_url ? (
           <div className="bg-muted relative h-20 w-32 shrink-0 overflow-hidden rounded">
+            {/* EA CDN（eaassets-a.akamaihd.net）已自带缩放与缓存，不走 next/image
+                以避免多套一层 Next 优化代理；如未来开启 next/image，需要在
+                next.config.js 的 images.remotePatterns 加 EA CDN 白名单。 */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={server.map_image_url}

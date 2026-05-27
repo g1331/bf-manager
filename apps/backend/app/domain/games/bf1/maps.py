@@ -80,36 +80,48 @@ class MapData:
 _BB_PREFIX = "[BB_PREFIX]"
 _BB_CDN = "https://eaassets-a.akamaihd.net/battlelog/battlebinary"
 
+# 每个未知代号在进程生命周期内只 warn 一次，避免高频接口刷屏。
+_warned_unknown_maps: set[str] = set()
+_warned_unknown_modes: set[str] = set()
+_warned_unknown_regions: set[str] = set()
+
+
+def _warn_once(seen: set[str], code: str, kind: str) -> None:
+    if code in seen:
+        return
+    seen.add(code)
+    logger.warning("BF1 %s代号无中文映射: %s", kind, code)
+
 
 def translate_map_name(raw: str | None) -> str | None:
-    """把 `MP_*` 内部代号翻译为中文地图名；命中失败回退原值并记录 warning"""
+    """把 `MP_*` 内部代号翻译为中文地图名；命中失败回退原值并 warn 一次"""
     if not raw:
         return None
     entry = MapData.MapTeamDict.get(raw)
     if entry is None:
-        logger.warning("BF1 地图代号无中文映射: %s", raw)
+        _warn_once(_warned_unknown_maps, raw, "地图")
         return raw
     return entry["Chinese"]
 
 
 def translate_mode_name(raw: str | None) -> str | None:
-    """把英文模式代号翻译为中文模式名；命中失败回退原值"""
+    """把英文模式代号翻译为中文模式名；命中失败回退原值并 warn 一次"""
     if not raw:
         return None
     mapped = MapData.ModeDict.get(raw)
     if mapped is None:
-        logger.warning("BF1 模式代号无中文映射: %s", raw)
+        _warn_once(_warned_unknown_modes, raw, "模式")
         return raw
     return mapped
 
 
 def translate_region(raw: str | None) -> str | None:
-    """把上游地区代号翻译为中文；命中失败回退原值"""
+    """把上游地区代号翻译为中文；命中失败回退原值并 warn 一次"""
     if not raw:
         return None
     mapped = MapData.RegionDict.get(raw)
     if mapped is None:
-        logger.warning("BF1 地区代号无中文映射: %s", raw)
+        _warn_once(_warned_unknown_regions, raw, "地区")
         return raw
     return mapped
 

@@ -168,6 +168,8 @@ function RotationList({ items }: { items: MapRotationItem[] }) {
             <Card className={`overflow-hidden ${m.is_current ? "border-primary" : ""}`}>
               {m.map_image_url ? (
                 <div className="bg-muted relative aspect-[16/9] w-full">
+                  {/* EA CDN 自带缩放与缓存，故不走 next/image；
+                      如未来切换需要在 next.config.js 的 images.remotePatterns 加白名单。 */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={m.map_image_url}

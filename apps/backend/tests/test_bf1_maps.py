@@ -5,7 +5,9 @@ from __future__ import annotations
 import logging
 
 from app.domain.games.bf1.maps import (
-    MapData,
+    _warned_unknown_maps,
+    _warned_unknown_modes,
+    _warned_unknown_regions,
     normalize_map_image_url,
     translate_map_name,
     translate_mode_name,
@@ -13,20 +15,38 @@ from app.domain.games.bf1.maps import (
 )
 
 
+def _reset_warn_caches() -> None:
+    """每条用例独立验证 warn-once，避免上一条用例污染"""
+    _warned_unknown_maps.clear()
+    _warned_unknown_modes.clear()
+    _warned_unknown_regions.clear()
+
+
 def test_translate_map_name_known_code_returns_chinese() -> None:
     assert translate_map_name("MP_Alps") == "剃刀边缘"
-    assert (
-        translate_map_name("MP_MountainFort") == MapData.MapTeamDict["MP_MountainFort"]["Chinese"]
-    )
+    assert translate_map_name("MP_MountainFort") == "格拉巴山"
 
 
 def test_translate_map_name_unknown_falls_back_and_warns(
     caplog: logging.LogCaptureFixture,
 ) -> None:
+    _reset_warn_caches()
     with caplog.at_level(logging.WARNING):
         result = translate_map_name("MP_FutureDLC_X")
     assert result == "MP_FutureDLC_X"
     assert any("MP_FutureDLC_X" in record.message for record in caplog.records)
+
+
+def test_translate_map_name_unknown_warns_only_once(
+    caplog: logging.LogCaptureFixture,
+) -> None:
+    _reset_warn_caches()
+    with caplog.at_level(logging.WARNING):
+        translate_map_name("MP_RepeatDLC_X")
+        translate_map_name("MP_RepeatDLC_X")
+        translate_map_name("MP_RepeatDLC_X")
+    matched = [r for r in caplog.records if "MP_RepeatDLC_X" in r.message]
+    assert len(matched) == 1
 
 
 def test_translate_map_name_none() -> None:

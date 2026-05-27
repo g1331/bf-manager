@@ -73,6 +73,35 @@ def _to_summary(raw: dict[str, Any]) -> ServerSummary:
     )
 
 
+def _to_rotation(raw: dict[str, Any]) -> list[MapRotationItem]:
+    """从详情接口 raw 字典里拼装地图轮换列表。
+
+    is_current 判定显式比较「内部代号」字段（serverInfo.mapName vs item.mapName），
+    不依赖 summary.map_name 这种可能混入 prettyName 的字段，避免代号与
+    prettyName 错位导致整局都不命中。current_code 为空时跳过判定。
+    """
+    rotation_raw = raw.get("rotation") or raw.get("serverInfo", {}).get("rotation") or []
+    server_info = raw.get("serverInfo") or {}
+    current_map_code = server_info.get("mapName") or raw.get("mapName")
+    rotation: list[MapRotationItem] = []
+    for item in rotation_raw:
+        item_code = item.get("mapName")
+        item_map_name = item_code or item.get("mapPrettyName")
+        item_mode_name = item.get("modeName") or item.get("modePrettyName")
+        rotation.append(
+            MapRotationItem(
+                map_name=item_map_name,
+                map_display_name=translate_map_name(item_code) or item.get("mapPrettyName"),
+                game_mode=item_mode_name,
+                mode_display_name=translate_mode_name(item.get("modeName"))
+                or item.get("modePrettyName"),
+                map_image_url=normalize_map_image_url(item.get("mapImage")),
+                is_current=bool(current_map_code) and item_code == current_map_code,
+            )
+        )
+    return rotation
+
+
 class BF1ServerService:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
@@ -114,26 +143,7 @@ class BF1ServerService:
                 raise NotFoundError(resource=f"服务器 gameId={game_id}")
 
             summary = _to_summary(raw)
-
-            # 地图轮换
-            rotation_raw = raw.get("rotation") or raw.get("serverInfo", {}).get("rotation") or []
-            current_map = summary.map_name
-            rotation: list[MapRotationItem] = []
-            for item in rotation_raw:
-                item_map_name = item.get("mapName") or item.get("mapPrettyName")
-                item_mode_name = item.get("modeName") or item.get("modePrettyName")
-                rotation.append(
-                    MapRotationItem(
-                        map_name=item_map_name,
-                        map_display_name=translate_map_name(item.get("mapName"))
-                        or item.get("mapPrettyName"),
-                        game_mode=item_mode_name,
-                        mode_display_name=translate_mode_name(item.get("modeName"))
-                        or item.get("modePrettyName"),
-                        map_image_url=normalize_map_image_url(item.get("mapImage")),
-                        is_current=item_map_name == current_map,
-                    )
-                )
+            rotation = _to_rotation(raw)
 
             # 玩家列表（从 servers detail 的 teams 拼出）
             teams = raw.get("teams") or []

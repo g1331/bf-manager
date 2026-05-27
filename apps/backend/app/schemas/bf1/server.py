@@ -15,12 +15,16 @@ class ServerSummary(BaseModel):
     persisted_game_id: str | None = None
     name: str
     map_name: str | None = None
+    map_display_name: str | None = None
+    map_image_url: str | None = None
     game_mode: str | None = None
+    mode_display_name: str | None = None
     player_count: int = 0
     max_player_count: int = 0
     queue_count: int = 0
     spectator_count: int = 0
     region: str | None = None
+    region_display_name: str | None = None
     is_official: bool = False
     is_ranked: bool = False
     has_password: bool = False
@@ -36,7 +40,9 @@ class ServerListResponse(BaseModel):
 
 class MapRotationItem(BaseModel):
     map_name: str | None = None
+    map_display_name: str | None = None
     game_mode: str | None = None
+    mode_display_name: str | None = None
     map_image_url: str | None = None
     is_current: bool = False
 

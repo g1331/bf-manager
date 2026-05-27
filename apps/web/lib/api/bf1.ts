@@ -82,12 +82,16 @@ export interface ServerSummary {
   persisted_game_id: string | null;
   name: string;
   map_name: string | null;
+  map_display_name: string | null;
+  map_image_url: string | null;
   game_mode: string | null;
+  mode_display_name: string | null;
   player_count: number;
   max_player_count: number;
   queue_count: number;
   spectator_count: number;
   region: string | null;
+  region_display_name: string | null;
   is_official: boolean;
   is_ranked: boolean;
   has_password: boolean;
@@ -101,7 +105,9 @@ export interface ServerListResponse {
 
 export interface MapRotationItem {
   map_name: string | null;
+  map_display_name: string | null;
   game_mode: string | null;
+  mode_display_name: string | null;
   map_image_url: string | null;
   is_current: boolean;
 }

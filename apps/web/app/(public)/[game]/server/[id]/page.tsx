@@ -88,9 +88,15 @@ function ServerDetailView({
               {summary.queue_count > 0 ? ` (+${summary.queue_count})` : null}
             </span>
           </span>
-          {summary.map_name ? <span>地图: {summary.map_name}</span> : null}
-          {summary.game_mode ? <span>模式: {summary.game_mode}</span> : null}
-          {summary.region ? <span>区域: {summary.region}</span> : null}
+          {summary.map_display_name || summary.map_name ? (
+            <span>地图: {summary.map_display_name ?? summary.map_name}</span>
+          ) : null}
+          {summary.mode_display_name || summary.game_mode ? (
+            <span>模式: {summary.mode_display_name ?? summary.game_mode}</span>
+          ) : null}
+          {summary.region_display_name || summary.region ? (
+            <span>区域: {summary.region_display_name ?? summary.region}</span>
+          ) : null}
         </div>
         {summary.description ? (
           <Card>
@@ -154,25 +160,42 @@ function RotationList({ items }: { items: MapRotationItem[] }) {
   }
   return (
     <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-      {items.map((m, i) => (
-        <li key={`${m.map_name}-${i}`}>
-          <Card className={m.is_current ? "border-primary" : ""}>
-            <CardContent className="space-y-1 p-4">
-              <div className="flex items-center justify-between">
-                <span className="font-medium">{m.map_name ?? "未知地图"}</span>
-                {m.is_current ? (
-                  <span className="bg-primary text-primary-foreground rounded px-2 py-0.5 text-xs">
-                    当前
-                  </span>
-                ) : null}
-              </div>
-              {m.game_mode ? (
-                <div className="text-muted-foreground text-xs">{m.game_mode}</div>
+      {items.map((m, i) => {
+        const mapLabel = m.map_display_name ?? m.map_name ?? "未知地图";
+        const modeLabel = m.mode_display_name ?? m.game_mode;
+        return (
+          <li key={`${m.map_name}-${i}`}>
+            <Card className={`overflow-hidden ${m.is_current ? "border-primary" : ""}`}>
+              {m.map_image_url ? (
+                <div className="bg-muted relative aspect-[16/9] w-full">
+                  {/* EA CDN 自带缩放与缓存，故不走 next/image；
+                      如未来切换需要在 next.config.js 的 images.remotePatterns 加白名单。 */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={m.map_image_url}
+                    alt={mapLabel}
+                    loading="lazy"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
               ) : null}
-            </CardContent>
-          </Card>
-        </li>
-      ))}
+              <CardContent className="space-y-1 p-4">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">{mapLabel}</span>
+                  {m.is_current ? (
+                    <span className="bg-primary text-primary-foreground rounded px-2 py-0.5 text-xs">
+                      当前
+                    </span>
+                  ) : null}
+                </div>
+                {modeLabel ? (
+                  <div className="text-muted-foreground text-xs">{modeLabel}</div>
+                ) : null}
+              </CardContent>
+            </Card>
+          </li>
+        );
+      })}
     </ul>
   );
 }

@@ -52,7 +52,7 @@ export default function PlayerSearchPage() {
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="输入 EA 昵称（区分大小写）"
+          placeholder="输入 EA 昵称（不区分大小写）"
           autoComplete="off"
           autoCapitalize="off"
           spellCheck={false}

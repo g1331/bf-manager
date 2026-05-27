@@ -1,3 +1,10 @@
+from __future__ import annotations
+
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 class MapData:
     AHU = "奥匈帝国"
     GER = "德意志帝国"
@@ -58,3 +65,59 @@ class MapData:
         "ZoneControl": "空降补给",
         "AirAssault": "空中突击",
     }
+
+    RegionDict = {
+        "Asia": "亚洲",
+        "NAm": "北美",
+        "SAm": "南美",
+        "EU": "欧洲",
+        "OC": "大洋洲",
+        "Afr": "非洲",
+        "AC": "南极洲",
+    }
+
+
+_BB_PREFIX = "[BB_PREFIX]"
+_BB_CDN = "https://eaassets-a.akamaihd.net/battlelog/battlebinary"
+
+
+def translate_map_name(raw: str | None) -> str | None:
+    """把 `MP_*` 内部代号翻译为中文地图名；命中失败回退原值并记录 warning"""
+    if not raw:
+        return None
+    entry = MapData.MapTeamDict.get(raw)
+    if entry is None:
+        logger.warning("BF1 地图代号无中文映射: %s", raw)
+        return raw
+    return entry["Chinese"]
+
+
+def translate_mode_name(raw: str | None) -> str | None:
+    """把英文模式代号翻译为中文模式名；命中失败回退原值"""
+    if not raw:
+        return None
+    mapped = MapData.ModeDict.get(raw)
+    if mapped is None:
+        logger.warning("BF1 模式代号无中文映射: %s", raw)
+        return raw
+    return mapped
+
+
+def translate_region(raw: str | None) -> str | None:
+    """把上游地区代号翻译为中文；命中失败回退原值"""
+    if not raw:
+        return None
+    mapped = MapData.RegionDict.get(raw)
+    if mapped is None:
+        logger.warning("BF1 地区代号无中文映射: %s", raw)
+        return raw
+    return mapped
+
+
+def normalize_map_image_url(raw: str | None) -> str | None:
+    """把上游 `[BB_PREFIX]/...` 占位符 URL 展开为 EA CDN 完整 URL"""
+    if not raw:
+        return None
+    if raw.startswith(_BB_PREFIX):
+        return _BB_CDN + raw[len(_BB_PREFIX) :]
+    return raw

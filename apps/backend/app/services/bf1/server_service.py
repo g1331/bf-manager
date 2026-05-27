@@ -7,6 +7,12 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.errors import EAApiError, NotFoundError
+from app.domain.games.bf1.maps import (
+    normalize_map_image_url,
+    translate_map_name,
+    translate_mode_name,
+    translate_region,
+)
 from app.schemas.bf1.server import (
     MapRotationItem,
     ServerDetail,
@@ -19,13 +25,25 @@ from app.services.bf1.gateway_factory import get_bf1_client
 
 def _to_summary(raw: dict[str, Any]) -> ServerSummary:
     server_info = raw.get("serverInfo") or raw
+    map_name = server_info.get("mapName") or raw.get("mapName")
+    game_mode = server_info.get("mode") or raw.get("gameMode") or raw.get("mode")
+    region = server_info.get("region") or raw.get("region")
+    map_image_url = (
+        server_info.get("mapImageUrl")
+        or raw.get("mapImageUrl")
+        or server_info.get("mapImage")
+        or raw.get("mapImage")
+    )
     return ServerSummary(
         server_id=int(server_info.get("serverId") or raw.get("serverId") or 0),
         game_id=int(server_info.get("gameId")) if server_info.get("gameId") else None,
         persisted_game_id=server_info.get("persistedGameId") or raw.get("persistedGameId"),
         name=server_info.get("name") or raw.get("name") or "",
-        map_name=server_info.get("mapName") or raw.get("mapName"),
-        game_mode=server_info.get("mode") or raw.get("gameMode") or raw.get("mode"),
+        map_name=map_name,
+        map_display_name=translate_map_name(map_name),
+        map_image_url=normalize_map_image_url(map_image_url),
+        game_mode=game_mode,
+        mode_display_name=translate_mode_name(game_mode),
         player_count=int(
             server_info.get("slots", {}).get("Soldier", {}).get("current")
             or raw.get("slots", {}).get("Soldier", {}).get("current")
@@ -46,7 +64,8 @@ def _to_summary(raw: dict[str, Any]) -> ServerSummary:
             or raw.get("slots", {}).get("Spectator", {}).get("current")
             or 0
         ),
-        region=server_info.get("region") or raw.get("region"),
+        region=region,
+        region_display_name=translate_region(region),
         is_official=bool(server_info.get("official") or raw.get("official") or False),
         is_ranked=bool(server_info.get("ranked") or raw.get("ranked") or False),
         has_password=bool(server_info.get("hasPassword") or raw.get("hasPassword") or False),
@@ -99,15 +118,22 @@ class BF1ServerService:
             # 地图轮换
             rotation_raw = raw.get("rotation") or raw.get("serverInfo", {}).get("rotation") or []
             current_map = summary.map_name
-            rotation = [
-                MapRotationItem(
-                    map_name=item.get("mapPrettyName") or item.get("mapName"),
-                    game_mode=item.get("modePrettyName") or item.get("modeName"),
-                    map_image_url=item.get("mapImage"),
-                    is_current=(item.get("mapPrettyName") or item.get("mapName")) == current_map,
+            rotation: list[MapRotationItem] = []
+            for item in rotation_raw:
+                item_map_name = item.get("mapName") or item.get("mapPrettyName")
+                item_mode_name = item.get("modeName") or item.get("modePrettyName")
+                rotation.append(
+                    MapRotationItem(
+                        map_name=item_map_name,
+                        map_display_name=translate_map_name(item.get("mapName"))
+                        or item.get("mapPrettyName"),
+                        game_mode=item_mode_name,
+                        mode_display_name=translate_mode_name(item.get("modeName"))
+                        or item.get("modePrettyName"),
+                        map_image_url=normalize_map_image_url(item.get("mapImage")),
+                        is_current=item_map_name == current_map,
+                    )
                 )
-                for item in rotation_raw
-            ]
 
             # 玩家列表（从 servers detail 的 teams 拼出）
             teams = raw.get("teams") or []

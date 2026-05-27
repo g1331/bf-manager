@@ -15,8 +15,13 @@ from app.domain.games.bf1.maps import (
 )
 from app.schemas.bf1.server import (
     MapRotationItem,
+    PlatoonBrief,
     ServerDetail,
+    ServerExtras,
+    ServerLifecycle,
     ServerListResponse,
+    ServerMember,
+    ServerOwner,
     ServerPlayer,
     ServerSummary,
 )
@@ -102,6 +107,115 @@ def _to_rotation(raw: dict[str, Any]) -> list[MapRotationItem]:
     return rotation
 
 
+def _to_member(item: dict[str, Any]) -> ServerMember | None:
+    """rspInfo.adminList / vipList / bannedList 中单项 → ServerMember
+
+    EA 字段名为 personaId（字符串）。无法解析 persona_id 时返回 None，由调用方过滤。
+    """
+    raw_pid = item.get("personaId") or item.get("personaID")
+    try:
+        persona_id = int(raw_pid) if raw_pid is not None else 0
+    except (TypeError, ValueError):
+        return None
+    if persona_id == 0:
+        return None
+    return ServerMember(
+        persona_id=persona_id,
+        display_name=item.get("displayName") or item.get("name"),
+        avatar_url=item.get("avatar"),
+        platform=item.get("platform"),
+        platform_id=item.get("platformId"),
+        nucleus_id=item.get("nucleusId"),
+    )
+
+
+def _to_extras(raw: dict[str, Any]) -> ServerExtras:
+    """从 getFullServerDetails.result 拼装扩展信息。
+
+    rspInfo 缺失时只回填 serverInfo 已有的 game_id / persisted_game_id / 收藏数；
+    时间戳由 ServerLifecycle 的 field_validator 统一转换，非法值降为 None。
+    """
+    server_info = raw.get("serverInfo") or {}
+    rsp_info = raw.get("rspInfo") or {}
+    platoon_info = raw.get("platoonInfo") or None
+
+    rsp_server = rsp_info.get("server") or {}
+    owner_raw = rsp_info.get("owner") or None
+
+    game_id_raw = server_info.get("gameId") or raw.get("gameId")
+    try:
+        game_id = int(game_id_raw) if game_id_raw is not None else None
+    except (TypeError, ValueError):
+        game_id = None
+    server_id_raw = rsp_server.get("serverId") or server_info.get("serverId")
+    try:
+        server_id = int(server_id_raw) if server_id_raw is not None else None
+    except (TypeError, ValueError):
+        server_id = None
+    persisted_game_id = (
+        server_info.get("persistedGameId") or raw.get("persistedGameId") or server_info.get("guid")
+    )
+
+    bookmark_count_raw = server_info.get("serverBookmarkCount")
+    try:
+        bookmark_count = int(bookmark_count_raw) if bookmark_count_raw is not None else None
+    except (TypeError, ValueError):
+        bookmark_count = None
+
+    owner: ServerOwner | None = None
+    if owner_raw:
+        owner_pid_raw = owner_raw.get("personaId")
+        try:
+            owner_pid = int(owner_pid_raw) if owner_pid_raw is not None else None
+        except (TypeError, ValueError):
+            owner_pid = None
+        owner = ServerOwner(
+            persona_id=owner_pid,
+            display_name=owner_raw.get("displayName"),
+            avatar_url=owner_raw.get("avatar"),
+            platform=owner_raw.get("platform"),
+            platform_id=owner_raw.get("platformId"),
+            nucleus_id=owner_raw.get("nucleusId"),
+        )
+
+    lifecycle = ServerLifecycle(
+        created_at=rsp_server.get("createdDate"),
+        expires_at=rsp_server.get("expirationDate"),
+        updated_at=rsp_server.get("updatedDate"),
+    )
+
+    admins = [m for m in (_to_member(a) for a in rsp_info.get("adminList") or []) if m]
+    vips = [m for m in (_to_member(v) for v in rsp_info.get("vipList") or []) if m]
+    banned = [m for m in (_to_member(b) for b in rsp_info.get("bannedList") or []) if m]
+
+    platoon: PlatoonBrief | None = None
+    if platoon_info:
+        size_raw = platoon_info.get("size")
+        try:
+            size = int(size_raw) if size_raw is not None else None
+        except (TypeError, ValueError):
+            size = None
+        platoon = PlatoonBrief(
+            tag=platoon_info.get("tag"),
+            name=platoon_info.get("name"),
+            size=size,
+            description=platoon_info.get("description"),
+        )
+
+    return ServerExtras(
+        game_id=game_id,
+        server_id=server_id,
+        persisted_game_id=persisted_game_id,
+        bookmark_count=bookmark_count,
+        owner=owner,
+        lifecycle=lifecycle,
+        admins=admins,
+        vips=vips,
+        banned=banned,
+        platoon=platoon,
+    )
+
+
 class BF1ServerService:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
@@ -177,11 +291,19 @@ class BF1ServerService:
                     )
                 )
 
+            settings = (
+                raw.get("settings")
+                or raw.get("serverSettings")
+                or raw.get("serverInfo", {}).get("settings")
+                or {}
+            )
+            extras = _to_extras(raw)
             return ServerDetail(
                 summary=summary,
                 description=summary.description,
-                settings=raw.get("settings") or raw.get("serverSettings") or {},
+                settings=settings,
                 map_rotation=rotation,
                 players=players,
+                extras=extras,
                 raw=raw,
             )

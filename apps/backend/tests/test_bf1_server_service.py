@@ -1,11 +1,15 @@
 """BF1 服务器查询服务的纯函数单测
 
-只覆盖 _to_summary / _to_rotation 两个不依赖 EA 网络与数据库的纯转换函数。
+覆盖 _to_summary / _to_rotation / _to_extras 三个不依赖 EA 网络与数据库的纯转换函数，
+以及 ServerLifecycle 的时间戳 validator 边界。
 """
 
 from __future__ import annotations
 
-from app.services.bf1.server_service import _to_rotation, _to_summary
+from datetime import UTC, datetime
+
+from app.schemas.bf1.server import ServerLifecycle
+from app.services.bf1.server_service import _to_extras, _to_rotation, _to_summary
 
 
 def _make_search_item() -> dict:
@@ -114,3 +118,156 @@ def test_to_rotation_returns_no_current_when_server_map_code_missing() -> None:
 def test_to_rotation_empty_when_raw_has_no_rotation() -> None:
     assert _to_rotation({}) == []
     assert _to_rotation({"serverInfo": {}}) == []
+
+
+def _make_full_detail() -> dict:
+    """模拟 getFullServerDetails(gameId).result 的典型结构"""
+    return {
+        "serverInfo": {
+            "name": "FULL Server",
+            "gameId": "8460032230118",
+            "guid": "1a9f5032-0cc0-4c0a-a83b-f229463ea39e",
+            "serverBookmarkCount": "123",
+            "mapName": "MP_Alps",
+            "mode": "Conquest",
+            "region": "Asia",
+            "slots": {
+                "Soldier": {"current": 42, "max": 64},
+                "Queue": {"current": 0, "max": 10},
+                "Spectator": {"current": 0, "max": 4},
+            },
+            "settings": {"customGame": False},
+        },
+        "rspInfo": {
+            "owner": {
+                "personaId": "1005880910785",
+                "displayName": "B_bili33",
+                "avatar": "https://avatar.example/a.png",
+                "platform": "pc",
+                "platformId": "1011592110785",
+                "nucleusId": "1011592110785",
+                "accountId": "0",  # 历史占位字段，service 不暴露，留在 fixture 验证不会泄漏到 schema
+            },
+            "server": {
+                "serverId": "10667817",
+                "createdDate": "1708228215000",
+                "expirationDate": "1739764215000",
+                "updatedDate": "1738228215000",
+            },
+            "adminList": [
+                {
+                    "personaId": "1001",
+                    "displayName": "AdminOne",
+                    "avatar": "https://avatar.example/1.png",
+                    "platform": "pc",
+                    "platformId": "1101",
+                    "nucleusId": "1101",
+                    "accountId": "0",
+                },
+                {"personaId": "1002", "displayName": "AdminTwo"},
+                {"personaId": None, "displayName": "Broken"},
+            ],
+            "vipList": [
+                {"personaId": "2001", "displayName": "VipOne"},
+            ],
+            "bannedList": [
+                {
+                    "personaId": "9001",
+                    "displayName": "BannedOne",
+                    "avatar": "https://avatar.example/b1.png",
+                    "platform": "pc",
+                    "platformId": "9101",
+                    "nucleusId": "9101",
+                },
+                {"personaId": "9002", "displayName": "BannedTwo"},
+                {"personaId": "not-a-number", "displayName": "Garbage"},
+            ],
+        },
+        "platoonInfo": {
+            "tag": "ABC",
+            "name": "Alpha Bravo",
+            "size": "20",
+            "description": "战队简介",
+        },
+    }
+
+
+def test_to_extras_full_payload() -> None:
+    extras = _to_extras(_make_full_detail())
+    assert extras.game_id == 8460032230118
+    assert extras.server_id == 10667817
+    assert extras.persisted_game_id == "1a9f5032-0cc0-4c0a-a83b-f229463ea39e"
+    assert extras.bookmark_count == 123
+    assert extras.owner is not None
+    assert extras.owner.persona_id == 1005880910785
+    assert extras.owner.display_name == "B_bili33"
+    assert extras.owner.avatar_url == "https://avatar.example/a.png"
+    assert extras.owner.platform == "pc"
+    assert extras.owner.platform_id == "1011592110785"
+    assert extras.owner.nucleus_id == "1011592110785"
+    assert not hasattr(extras.owner, "account_id")
+    assert extras.lifecycle.created_at == datetime.fromtimestamp(1708228215, tz=UTC)
+    assert extras.lifecycle.expires_at == datetime.fromtimestamp(1739764215, tz=UTC)
+    assert extras.lifecycle.updated_at == datetime.fromtimestamp(1738228215, tz=UTC)
+    assert [a.persona_id for a in extras.admins] == [1001, 1002]
+    assert extras.admins[0].avatar_url == "https://avatar.example/1.png"
+    assert extras.admins[0].platform == "pc"
+    assert extras.admins[0].platform_id == "1101"
+    assert extras.admins[0].nucleus_id == "1101"
+    assert not hasattr(extras.admins[0], "account_id")
+    assert [v.persona_id for v in extras.vips] == [2001]
+    assert [b.persona_id for b in extras.banned] == [9001, 9002]
+    assert extras.banned[0].avatar_url == "https://avatar.example/b1.png"
+    assert extras.banned[0].platform == "pc"
+    assert extras.platoon is not None
+    assert extras.platoon.tag == "ABC"
+    assert extras.platoon.size == 20
+
+
+def test_to_extras_without_rsp_and_platoon() -> None:
+    """无 rspInfo / platoonInfo 时，只能从 serverInfo 回填 game_id / persisted_game_id / 收藏数"""
+    raw = {
+        "serverInfo": {
+            "gameId": "999",
+            "guid": "guid-xyz",
+            "serverBookmarkCount": "0",
+        }
+    }
+    extras = _to_extras(raw)
+    assert extras.game_id == 999
+    assert extras.server_id is None
+    assert extras.persisted_game_id == "guid-xyz"
+    assert extras.bookmark_count == 0
+    assert extras.owner is None
+    assert extras.lifecycle.created_at is None
+    assert extras.lifecycle.expires_at is None
+    assert extras.lifecycle.updated_at is None
+    assert extras.admins == []
+    assert extras.vips == []
+    assert extras.banned == []
+    assert extras.platoon is None
+
+
+def test_to_extras_drops_admin_with_invalid_persona_id() -> None:
+    raw = _make_full_detail()
+    raw["rspInfo"]["adminList"] = [
+        {"personaId": "not-a-number", "displayName": "X"},
+        {"personaId": "", "displayName": "Y"},
+        {"personaId": 0, "displayName": "Z"},
+        {"personaId": "3003", "displayName": "Valid"},
+    ]
+    extras = _to_extras(raw)
+    assert [a.persona_id for a in extras.admins] == [3003]
+
+
+def test_server_lifecycle_validator_handles_garbage() -> None:
+    """非法时间戳（空 / 非数值 / None）必须降为 None，而不是抛异常"""
+    lc = ServerLifecycle(created_at="", expires_at="not-a-ts", updated_at=None)  # type: ignore[arg-type]
+    assert lc.created_at is None
+    assert lc.expires_at is None
+    assert lc.updated_at is None
+
+
+def test_server_lifecycle_validator_accepts_integer_ms() -> None:
+    lc = ServerLifecycle(created_at=1708228215000)  # type: ignore[arg-type]
+    assert lc.created_at == datetime.fromtimestamp(1708228215, tz=UTC)

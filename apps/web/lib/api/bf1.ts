@@ -120,12 +120,58 @@ export interface ServerPlayer {
   is_spectator: boolean;
 }
 
+export interface ServerOwner {
+  persona_id: number | null;
+  display_name: string | null;
+  avatar_url: string | null;
+  platform: string | null;
+  platform_id: string | null;
+  nucleus_id: string | null;
+}
+
+export interface ServerMember {
+  persona_id: number;
+  display_name: string | null;
+  avatar_url: string | null;
+  platform: string | null;
+  platform_id: string | null;
+  nucleus_id: string | null;
+}
+
+export interface ServerLifecycle {
+  /** ISO-8601 UTC，例如 "2024-02-18T05:50:15Z" */
+  created_at: string | null;
+  expires_at: string | null;
+  updated_at: string | null;
+}
+
+export interface PlatoonBrief {
+  tag: string | null;
+  name: string | null;
+  size: number | null;
+  description: string | null;
+}
+
+export interface ServerExtras {
+  game_id: number | null;
+  server_id: number | null;
+  persisted_game_id: string | null;
+  bookmark_count: number | null;
+  owner: ServerOwner | null;
+  lifecycle: ServerLifecycle;
+  admins: ServerMember[];
+  vips: ServerMember[];
+  banned: ServerMember[];
+  platoon: PlatoonBrief | null;
+}
+
 export interface ServerDetail {
   summary: ServerSummary;
   description: string | null;
   settings: Record<string, unknown>;
   map_rotation: MapRotationItem[];
   players: ServerPlayer[];
+  extras: ServerExtras;
   raw: Record<string, unknown>;
 }
 

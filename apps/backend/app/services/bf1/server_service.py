@@ -111,7 +111,6 @@ def _to_member(item: dict[str, Any]) -> ServerMember | None:
     """rspInfo.adminList / vipList / bannedList 中单项 → ServerMember
 
     EA 字段名为 personaId（字符串）。无法解析 persona_id 时返回 None，由调用方过滤。
-    accountId 一般为占位 "0"，不进 schema。
     """
     raw_pid = item.get("personaId") or item.get("personaID")
     try:
@@ -127,6 +126,7 @@ def _to_member(item: dict[str, Any]) -> ServerMember | None:
         platform=item.get("platform"),
         platform_id=item.get("platformId"),
         nucleus_id=item.get("nucleusId"),
+        account_id=item.get("accountId"),
     )
 
 
@@ -177,6 +177,7 @@ def _to_extras(raw: dict[str, Any]) -> ServerExtras:
             platform=owner_raw.get("platform"),
             platform_id=owner_raw.get("platformId"),
             nucleus_id=owner_raw.get("nucleusId"),
+            account_id=owner_raw.get("accountId"),
         )
 
     lifecycle = ServerLifecycle(

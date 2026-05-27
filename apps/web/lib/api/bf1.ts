@@ -127,6 +127,7 @@ export interface ServerOwner {
   platform: string | null;
   platform_id: string | null;
   nucleus_id: string | null;
+  account_id: string | null;
 }
 
 export interface ServerMember {
@@ -136,6 +137,7 @@ export interface ServerMember {
   platform: string | null;
   platform_id: string | null;
   nucleus_id: string | null;
+  account_id: string | null;
 }
 
 export interface ServerLifecycle {

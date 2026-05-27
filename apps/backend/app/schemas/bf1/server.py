@@ -59,9 +59,8 @@ class ServerPlayer(BaseModel):
 class ServerOwner(BaseModel):
     """RSP 服主
 
-    字段直接对应 EA rspInfo.owner 的公开字段：persona 标识三件套
-    （persona_id / platform_id / nucleus_id）+ display_name + avatar + platform。
-    accountId 一般为占位字符串 "0"，无业务价值，不进 schema。
+    字段照 EA rspInfo.owner 原样透传：persona_id / platform_id / nucleus_id /
+    account_id 四个 ID + display_name + avatar + platform。
     """
 
     persona_id: int | None = None
@@ -70,6 +69,7 @@ class ServerOwner(BaseModel):
     platform: str | None = None
     platform_id: str | None = None
     nucleus_id: str | None = None
+    account_id: str | None = None
 
 
 class ServerMember(BaseModel):
@@ -85,6 +85,7 @@ class ServerMember(BaseModel):
     platform: str | None = None
     platform_id: str | None = None
     nucleus_id: str | None = None
+    account_id: str | None = None
 
 
 class ServerLifecycle(BaseModel):

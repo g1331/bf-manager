@@ -146,6 +146,7 @@ def _make_full_detail() -> dict:
                 "platform": "pc",
                 "platformId": "1011592110785",
                 "nucleusId": "1011592110785",
+                "accountId": "0",
             },
             "server": {
                 "serverId": "10667817",
@@ -161,6 +162,7 @@ def _make_full_detail() -> dict:
                     "platform": "pc",
                     "platformId": "1101",
                     "nucleusId": "1101",
+                    "accountId": "0",
                 },
                 {"personaId": "1002", "displayName": "AdminTwo"},
                 {"personaId": None, "displayName": "Broken"},
@@ -203,6 +205,7 @@ def test_to_extras_full_payload() -> None:
     assert extras.owner.platform == "pc"
     assert extras.owner.platform_id == "1011592110785"
     assert extras.owner.nucleus_id == "1011592110785"
+    assert extras.owner.account_id == "0"
     assert extras.lifecycle.created_at == datetime.fromtimestamp(1708228215, tz=UTC)
     assert extras.lifecycle.expires_at == datetime.fromtimestamp(1739764215, tz=UTC)
     assert extras.lifecycle.updated_at == datetime.fromtimestamp(1738228215, tz=UTC)
@@ -211,6 +214,7 @@ def test_to_extras_full_payload() -> None:
     assert extras.admins[0].platform == "pc"
     assert extras.admins[0].platform_id == "1101"
     assert extras.admins[0].nucleus_id == "1101"
+    assert extras.admins[0].account_id == "0"
     assert [v.persona_id for v in extras.vips] == [2001]
     assert [b.persona_id for b in extras.banned] == [9001, 9002]
     assert extras.banned[0].avatar_url == "https://avatar.example/b1.png"

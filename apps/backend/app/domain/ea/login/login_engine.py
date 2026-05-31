@@ -411,9 +411,15 @@ class EALoginEngine:
             ssl_ctx.check_hostname = False
             ssl_ctx.verify_mode = ssl.CERT_NONE
             connector = aiohttp.TCPConnector(ssl=ssl_ctx)
+            # trust_env=True 让 aiohttp 读取 HTTP_PROXY / HTTPS_PROXY / NO_PROXY 环境变量，
+            # 与 app.core.config.Settings 的 http_proxy / https_proxy / no_proxy 同源（都来自
+            # 容器注入的同名环境变量）。部分网络环境必须经代理才能访问 accounts.ea.com；
+            # 没有这一项，.env 里配的代理对本登录链路不生效。BF1GatewayClient 走的是显式
+            # proxy=_get_proxy()，这里改用 trust_env 是因为它额外尊重 NO_PROXY 白名单。
             self._session = aiohttp.ClientSession(
                 connector=connector,
                 headers=_DEFAULT_HEADERS,
+                trust_env=True,
             )
         return self._session
 

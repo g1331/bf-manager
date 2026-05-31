@@ -11,6 +11,7 @@ from app.cli.admin import (
     cmd_list_admins,
     cmd_reset_password,
     cmd_revoke_admin,
+    cmd_upsert_ea_account,
 )
 
 
@@ -39,6 +40,23 @@ def build_parser() -> argparse.ArgumentParser:
     p_revoke = sub.add_parser("revoke-admin", help="把指定 persona 对应的 user 降为 user")
     p_revoke.add_argument("--persona", type=int, required=True)
     p_revoke.set_defaults(handler=cmd_revoke_admin)
+
+    p_ea = sub.add_parser(
+        "upsert-ea-account", help="创建或更新账号池中的 EA 服管账号（按 persona_id）"
+    )
+    p_ea.add_argument("--persona-id", type=int, required=True, help="EA persona_id")
+    p_ea.add_argument("--display-name", default=None)
+    p_ea.add_argument("--disable", action="store_true", help="写入后置为停用")
+    p_ea.add_argument(
+        "--stdin-json",
+        action="store_true",
+        help="从 stdin 读取凭据 JSON（键 remid/sid/session/access_token，不进 history，推荐）",
+    )
+    p_ea.add_argument("--remid", default=None, help="不安全：会进入 shell history")
+    p_ea.add_argument("--sid", default=None, help="不安全：会进入 shell history")
+    p_ea.add_argument("--session", default=None, help="不安全：会进入 shell history")
+    p_ea.add_argument("--access-token", default=None, help="不安全：会进入 shell history")
+    p_ea.set_defaults(handler=cmd_upsert_ea_account)
 
     return parser
 

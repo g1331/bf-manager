@@ -8,12 +8,14 @@ from __future__ import annotations
 import argparse
 import asyncio
 import getpass
+import json
 import sys
 
 from sqlalchemy import select
 
 from app.db.session import close_engine, get_sessionmaker
 from app.models import User
+from app.services.ea_account_service import EAAccountService
 from app.services.user_service import UserService
 
 
@@ -151,6 +153,79 @@ async def _run_revoke_admin(persona_id: int) -> int:
             return 0
     except ValueError as e:
         print(f"降权失败: {e}", file=sys.stderr)
+        return 1
+    finally:
+        await close_engine()
+
+
+def _resolve_ea_credentials(args: argparse.Namespace) -> dict[str, str | None]:
+    """解析 EA 凭据来源。
+
+    优先 --stdin-json：从 stdin 读取一个 JSON 对象，键为 remid/sid/session/access_token，
+    凭据不进入 shell history，是推荐方式。否则回落到各自的命令行参数（便于自动化，但会
+    进入 history）。两种方式都允许部分字段缺省：新建账号时 remid/sid 必填由服务层校验。
+    """
+    if args.stdin_json:
+        try:
+            data = json.loads(sys.stdin.read())
+        except json.JSONDecodeError as e:
+            print(f"--stdin-json 解析失败：{e}", file=sys.stderr)
+            sys.exit(2)
+        if not isinstance(data, dict):
+            print("--stdin-json 的内容必须是 JSON 对象", file=sys.stderr)
+            sys.exit(2)
+        return {
+            "remid": data.get("remid"),
+            "sid": data.get("sid"),
+            "session": data.get("session"),
+            "access_token": data.get("access_token"),
+        }
+    return {
+        "remid": args.remid,
+        "sid": args.sid,
+        "session": args.session,
+        "access_token": args.access_token,
+    }
+
+
+def cmd_upsert_ea_account(args: argparse.Namespace) -> int:
+    creds = _resolve_ea_credentials(args)
+    return asyncio.run(
+        _run_upsert_ea_account(
+            persona_id=args.persona_id,
+            display_name=args.display_name,
+            enabled=not args.disable,
+            creds=creds,
+        )
+    )
+
+
+async def _run_upsert_ea_account(
+    *,
+    persona_id: int,
+    display_name: str | None,
+    enabled: bool,
+    creds: dict[str, str | None],
+) -> int:
+    try:
+        async with get_sessionmaker()() as session:
+            service = EAAccountService(session)
+            item = await service.upsert(
+                persona_id=persona_id,
+                display_name=display_name,
+                remid=creds["remid"],
+                sid=creds["sid"],
+                session=creds["session"],
+                access_token=creds["access_token"],
+                enabled=enabled,
+            )
+            print(
+                f"已写入 EA 账号: id={item.id} persona_id={item.persona_id} "
+                f"enabled={item.enabled} has_session={item.has_session}"
+            )
+            return 0
+    except Exception as e:
+        print(f"写入失败: {e}", file=sys.stderr)
         return 1
     finally:
         await close_engine()

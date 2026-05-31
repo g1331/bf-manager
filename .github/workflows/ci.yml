@@ -65,7 +65,7 @@ jobs:
         env:
           DATABASE_URL: postgresql+asyncpg://bf:bf@localhost:5432/bf_manager_test
           REDIS_URL: redis://localhost:6379/0
-          EA_CRED_ENCRYPTION_KEY: ZGV2LW9ubHktY2hhbmdlLW1lLWluLXByb2QtMzJieXRlc2tleQ==
+          EA_CRED_ENCRYPTION_KEY: ZGV2LW9ubHktY2hhbmdlLW1lLWluLXByb2QtMzJieXQ=
           JWT_SECRET_KEY: ci-jwt-secret-for-tests-only-not-secure
           ENVIRONMENT: ci
         run: uv run pytest -q
@@ -73,7 +73,7 @@ jobs:
       - name: Alembic migration roundtrip (upgrade → seed → upgrade head → assert → downgrade -1 → assert)
         env:
           DATABASE_URL: postgresql+asyncpg://bf:bf@localhost:5432/bf_manager_migration_test
-          EA_CRED_ENCRYPTION_KEY: ZGV2LW9ubHktY2hhbmdlLW1lLWluLXByb2QtMzJieXRlc2tleQ==
+          EA_CRED_ENCRYPTION_KEY: ZGV2LW9ubHktY2hhbmdlLW1lLWluLXByb2QtMzJieXQ=
           JWT_SECRET_KEY: ci-jwt-secret-for-tests-only-not-secure
           ENVIRONMENT: ci
           PGPASSWORD: bf

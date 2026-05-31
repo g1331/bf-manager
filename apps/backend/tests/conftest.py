@@ -16,9 +16,7 @@ from datetime import UTC, datetime
 # 在 import app 之前先把测试用的密钥与 DB URL 注入环境
 os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 os.environ.setdefault("REDIS_URL", "redis://localhost:6379/15")
-os.environ.setdefault(
-    "EA_CRED_ENCRYPTION_KEY", "ZGV2LW9ubHktY2hhbmdlLW1lLWluLXByb2QtMzJieXRlc2tleQ=="
-)
+os.environ.setdefault("EA_CRED_ENCRYPTION_KEY", "ZGV2LW9ubHktY2hhbmdlLW1lLWluLXByb2QtMzJieXQ=")
 os.environ.setdefault("JWT_SECRET_KEY", "test-jwt-secret-not-secure-but-deterministic")
 os.environ.setdefault("ENVIRONMENT", "test")
 

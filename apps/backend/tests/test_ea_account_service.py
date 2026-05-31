@@ -132,13 +132,35 @@ class _FakeGatewayOk:
     async def getServersByPersonaIds(self, ids):  # noqa: N802
         return {"result": {str(ids[0]): None}}
 
+    async def _ensure_desktop_token(self) -> str:
+        return "fake-access-token"
+
 
 class _FakeGatewayFail:
+    """session 链路就失败：直接返回错误串"""
+
     def __init__(self, **kwargs) -> None:
         pass
 
     async def getServersByPersonaIds(self, ids):  # noqa: N802
         return "login_required"
+
+    async def _ensure_desktop_token(self) -> str | None:
+        # 不会被走到，但避免后续重构时遗漏；保持 stub 完整
+        return None
+
+
+class _FakeGatewaySessionOnly:
+    """session 通过、但 remid/sid 已失效换不出 access_token"""
+
+    def __init__(self, **kwargs) -> None:
+        pass
+
+    async def getServersByPersonaIds(self, ids):  # noqa: N802
+        return {"result": {str(ids[0]): None}}
+
+    async def _ensure_desktop_token(self) -> str | None:
+        return None
 
 
 async def test_verify_success_marks_used(test_session, monkeypatch) -> None:
@@ -159,7 +181,20 @@ async def test_verify_failure_marks_failure(test_session, monkeypatch) -> None:
     service = EAAccountService(test_session)
     result = await service.verify(account.id)
     assert result.success is False
-    assert result.message == "login_required"
+    assert "login_required" in (result.message or "")
+    refreshed = await _reload(test_session, account.id)
+    assert refreshed.failure_count == 1
+
+
+async def test_verify_session_ok_but_access_token_fail(test_session, monkeypatch) -> None:
+    """session 通而 remid/sid 已失效时 verify 必须判失败，避免「verify 通过、按
+    昵称查询 502」的设计盲区。错误消息要明确指向 access_token 链路。"""
+    account = await _seed(test_session, failure_count=0)
+    monkeypatch.setattr("app.domain.games.bf1.gateway.BF1GatewayClient", _FakeGatewaySessionOnly)
+    service = EAAccountService(test_session)
+    result = await service.verify(account.id)
+    assert result.success is False
+    assert "access_token" in (result.message or "")
     refreshed = await _reload(test_session, account.id)
     assert refreshed.failure_count == 1
 

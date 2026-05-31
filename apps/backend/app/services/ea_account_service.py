@@ -226,6 +226,13 @@ class EAAccountService:
     async def verify(self, account_id: int) -> EAAccountVerifyResult:
         """用账号当前凭据触发一次真实 EA 调用，返回连通性结果。
 
+        校验覆盖两条独立链路，二者均通过才判 success：
+        1. session 链路：getServersByPersonaIds 走经典 gateway，仅需有效 session。
+        2. access_token 链路：_ensure_desktop_token 用 remid/sid 换 EA Desktop SAL
+           access_token，按昵称搜索等接口必须走它。session 可能未过期但 remid/sid
+           已失效，因此第 1 步通过不代表按昵称查询能用，必须再检 access_token，
+           否则会留下「verify 通过、按昵称查询 502」的盲区。
+
         复用各战绩接口共用的判定约定：gateway 认证类方法成功返回 dict，失败返回
         错误字符串。结果只反映调用时刻 EA 服务器的响应，不保证与并发写入原子一致。
         """
@@ -249,18 +256,35 @@ class EAAccountService:
             on_session_refreshed=_on_refresh,
         )
         try:
-            res = await client.getServersByPersonaIds([persona_id])
+            servers_res = await client.getServersByPersonaIds([persona_id])
+            if not isinstance(servers_res, dict):
+                await self.mark_failure(persona_id)
+                return EAAccountVerifyResult(
+                    success=False,
+                    persona_id=persona_id,
+                    message=f"session 链路失败：{str(servers_res)[:200]}",
+                )
+
+            access_token = await client._ensure_desktop_token()
+            if not access_token:
+                await self.mark_failure(persona_id)
+                return EAAccountVerifyResult(
+                    success=False,
+                    persona_id=persona_id,
+                    message=(
+                        "session 链路通过，但 remid/sid 换 access_token 失败，"
+                        "按昵称查询等需要 EA Desktop 通道的接口无法使用，"
+                        "请从 EA 官网重新登录后用新的 remid/sid 更新凭据"
+                    ),
+                )
         finally:
             with contextlib.suppress(Exception):
                 http_session = getattr(client, "http_session", None)
                 if http_session is not None:
                     await http_session.close()
 
-        if isinstance(res, dict):
-            await self.mark_used(persona_id)
-            return EAAccountVerifyResult(success=True, persona_id=persona_id)
-        await self.mark_failure(persona_id)
-        return EAAccountVerifyResult(success=False, persona_id=persona_id, message=str(res)[:256])
+        await self.mark_used(persona_id)
+        return EAAccountVerifyResult(success=True, persona_id=persona_id)
 
     async def _get(self, persona_id: int) -> EAAccount | None:
         return await self.db.scalar(select(EAAccount).where(EAAccount.persona_id == persona_id))

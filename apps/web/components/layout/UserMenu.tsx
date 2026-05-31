@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { LogIn, LogOut, ScrollText, ShieldCheck, UserCog } from "lucide-react";
+import { KeyRound, LogIn, LogOut, ScrollText, ShieldCheck, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -93,12 +93,20 @@ export function UserMenu() {
           </Link>
         </DropdownMenuItem>
         {isAdmin ? (
-          <DropdownMenuItem asChild>
-            <Link href="/admin/memberships">
-              <ShieldCheck className="size-4" />
-              服管权限授予
-            </Link>
-          </DropdownMenuItem>
+          <>
+            <DropdownMenuItem asChild>
+              <Link href="/admin/memberships">
+                <ShieldCheck className="size-4" />
+                服管权限授予
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/admin/ea-accounts">
+                <KeyRound className="size-4" />
+                EA 账号管理
+              </Link>
+            </DropdownMenuItem>
+          </>
         ) : null}
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onLogout} className="text-destructive focus:text-destructive">

@@ -13,7 +13,6 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import StrEnum
-from typing import Literal
 
 from pydantic import BaseModel, EmailStr, Field, SecretStr
 
@@ -61,10 +60,20 @@ class EALoginTaskCreateRequest(BaseModel):
 
 
 class EALoginTaskSelectMethodRequest(BaseModel):
-    """选择 2FA 方式的请求体。"""
+    """选择 2FA 方式的请求体。
 
-    method: Literal["EMAIL", "APP", "SMS"] = Field(
-        ..., description="EA 返回的可选方式之一，必须在 task.available_methods 中"
+    EA 实际下发的 2FA method 不仅有 EMAIL / APP / SMS，还会出现 SECOND_EMAIL（备用邮箱）、
+    BACKUP_CODE、TRUSTED_DEVICE 等账号配置相关的扩展值。前端按钮直接渲染
+    ``task.available_methods``，故请求侧也对称放宽为 ``str``；具体合法值由
+    ``task_manager.submit_method`` 用 ``method ∈ state.available_methods`` 做白名单校验，
+    避免任意字符串被透传给 EA。
+    """
+
+    method: str = Field(
+        ...,
+        min_length=1,
+        max_length=64,
+        description="EA 返回的可选方式之一，必须在 task.available_methods 中",
     )
 
 

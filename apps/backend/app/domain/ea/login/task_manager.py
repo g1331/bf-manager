@@ -189,6 +189,12 @@ class EALoginTaskManager:
         state = self._require_owned(task_id, actor_kind, actor_id)
         if state.status != EALoginTaskStatus.AWAITING_2FA_METHOD:
             raise _InvalidStateTaskError(f"当前状态 {state.status.value} 不可提交 2FA 方式")
+        # schema 层放宽 method 为任意字符串以兼容 EA 的 SECOND_EMAIL 等扩展值；
+        # 真正的白名单校验放在这里，避免前端被攻击成把任意值透传到 EA 表单字段。
+        if method not in state.available_methods:
+            raise _InvalidStateTaskError(
+                f"2FA 方式 {method!r} 不在 EA 返回的可选范围内：{state.available_methods}"
+            )
         try:
             state.method_input.put_nowait(method)
         except asyncio.QueueFull as e:

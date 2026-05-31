@@ -26,7 +26,15 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/web ./apps/web
 
 ARG NEXT_PUBLIC_DEFAULT_GAME=bf1
+# next.config.ts 的 rewrites() 在构建阶段被调用一次，结果会被烘焙到
+# .next/routes-manifest.json / required-server-files.json / server.js 里，
+# 运行时不会再重新求值。默认指向 compose 服务名 backend，让任何 docker-compose
+# 形态（含没有外部反代的 dev 栈）都能正常代理 /api/v1/* → backend:8000。
+# prod 走 host openresty 在 web 容器前面拦截 /api/v1/*，Next.js 的 rewrite
+# 实际是死代码，这个默认值对其无影响。
+ARG BACKEND_API_URL=http://backend:8000
 ENV NEXT_PUBLIC_DEFAULT_GAME=$NEXT_PUBLIC_DEFAULT_GAME \
+    BACKEND_API_URL=$BACKEND_API_URL \
     NEXT_TELEMETRY_DISABLED=1 \
     NODE_ENV=production
 

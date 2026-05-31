@@ -69,10 +69,18 @@ export const eaLoginTasksApi = {
    * 状态查询。提供 ``sinceVersion`` 时启用长轮询：服务端 hold 住直到 ``current >
    * sinceVersion`` 或到达 ``ea_login_long_poll_seconds``，到点返回当前快照由客户端
    * 自行续轮询。不提供时立即返回当前状态。
+   *
+   * 可选 ``signal`` 传入 ``AbortController.signal``：组件卸载或自定义超时触发时
+   * abort 进行中的 fetch，避免连接堆积。
    */
-  get: (actor: EALoginTaskActor, taskId: string, sinceVersion?: number) => {
+  get: (
+    actor: EALoginTaskActor,
+    taskId: string,
+    sinceVersion?: number,
+    options?: { signal?: AbortSignal },
+  ) => {
     const qs = sinceVersion !== undefined ? `?since_version=${sinceVersion}` : "";
-    return api.get<EALoginTaskResponse>(`${basePath(actor)}/${taskId}${qs}`);
+    return api.get<EALoginTaskResponse>(`${basePath(actor)}/${taskId}${qs}`, options);
   },
 
   submitMethod: (actor: EALoginTaskActor, taskId: string, method: string) =>

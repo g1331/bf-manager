@@ -93,6 +93,11 @@ function fmtNum(value: number | null | undefined): string {
   return value == null ? "—" : formatCount(value);
 }
 
+// 生涯数据区使用完整数字（带千分位），避免「87.5k」这类失真简写
+function fmtNumFull(value: number | null | undefined): string {
+  return value == null ? "—" : value.toLocaleString("en-US");
+}
+
 function computeWinRate(
   wins: number | null | undefined,
   losses: number | null | undefined,
@@ -432,7 +437,7 @@ function BanWarning({ ban }: { ban: BanStatus | undefined }) {
 
 function TabNav({ tab, onTab }: { tab: TabKey; onTab: (t: TabKey) => void }) {
   return (
-    <div className="mt-6 flex gap-1 overflow-x-auto border-b border-white/10">
+    <div className="mt-6 flex gap-1 border-b border-white/10">
       {TABS.map((t) => (
         <button
           key={t.key}
@@ -498,14 +503,14 @@ function OverviewTab({
   // 按列语义分组（每列 3 项，配合下方 grid 的列优先填充）：
   //   击杀类 | 兵种/距离 | 胜负 | 节奏/技巧
   const items: ReadonlyArray<[string, string, StatIcon]> = [
-    ["击杀", fmtNum(s.kills), Crosshair],
-    ["死亡", fmtNum(s.deaths), Skull],
+    ["击杀", fmtNumFull(s.kills), Crosshair],
+    ["死亡", fmtNumFull(s.deaths), Skull],
     ["KD", s.kd?.toFixed(2) ?? "—", Scale],
-    ["步战击杀", fmtNum(s.infantry_kills), PersonStanding],
-    ["载具击杀", fmtNum(s.vehicle_kills), Truck],
+    ["步战击杀", fmtNumFull(s.infantry_kills), PersonStanding],
+    ["载具击杀", fmtNumFull(s.vehicle_kills), Truck],
     ["最远爆头", s.longest_headshot_meters != null ? `${s.longest_headshot_meters}m` : "—", Target],
-    ["胜局", fmtNum(s.wins), Trophy],
-    ["败局", fmtNum(s.losses), TrophyCrack],
+    ["胜局", fmtNumFull(s.wins), Trophy],
+    ["败局", fmtNumFull(s.losses), TrophyCrack],
     ["胜率", computeWinRate(s.wins, s.losses), Percent],
     ["KPM", s.kpm?.toFixed(2) ?? "—", Zap],
     ["SPM", s.sps != null ? String(Math.round(s.sps)) : "—", Gauge],

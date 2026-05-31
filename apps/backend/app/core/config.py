@@ -59,6 +59,12 @@ class Settings(BaseSettings):
     # ===== 启用的游戏 =====
     enabled_games: str = "bf1"
 
+    # ===== 外部封禁查询 =====
+    # BFEAC 案件查询按 EA 昵称发起，需要 API key；BFBAN（gametools）按 persona id
+    # 查询，无需 key。未配置 bfeac_api_key 时，BFEAC 一律降级为 unknown，不影响
+    # BFBAN 查询与主战绩展示。
+    bfeac_api_key: str = ""
+
     @property
     def cors_origins(self) -> list[str]:
         return [o.strip() for o in self.allowed_origins.split(",") if o.strip()]

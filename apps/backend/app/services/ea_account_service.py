@@ -217,22 +217,102 @@ class EAAccountService:
                     enabled=enabled,
                 )
             )
-        cipher = get_cipher()
         if display_name is not None:
             existing.display_name = display_name
-        if remid is not None:
-            existing.encrypted_remid = cipher.encrypt(remid)
-        if sid is not None:
-            existing.encrypted_sid = cipher.encrypt(sid)
-        if session is not None:
-            existing.encrypted_session = cipher.encrypt(session)
-        if access_token is not None:
-            existing.encrypted_access_token = cipher.encrypt(access_token)
+        self._apply_credentials(
+            existing,
+            remid=remid,
+            sid=sid,
+            session=session,
+            access_token=access_token,
+        )
         existing.enabled = enabled
         existing.failure_count = 0
         await self.db.commit()
         await self.db.refresh(existing)
         return _to_item(existing)
+
+    async def upsert_after_ea_login(
+        self,
+        *,
+        persona_id: int,
+        display_name: str | None,
+        remid: str,
+        sid: str,
+        session: str | None,
+        access_token: str | None,
+    ) -> EAAccount:
+        """EA 邮箱密码登录链路成功后写入或更新后台账号池。
+
+        与 :meth:`EaBindingService.upsert_after_ea_login` 语义对齐：
+
+        - 新建：``persona_id`` 不存在时新增，必须提供 ``remid`` 与 ``sid``，``enabled=True``。
+        - 更新：``persona_id`` 已存在时仅覆盖本次提供的非空字段，``enabled`` 复位为
+          True、``failure_count`` 清零，相当于「用真人新登录的凭据修复了池子里的旧账号」。
+
+        返回 ORM 实例供调用方取 ``id``；前端永远不会拿到任何明文凭据，落库前由
+        :class:`CredentialCipher` 加密。
+        """
+        if not remid or not sid:
+            # EALoginEngine 在拿不到 cookies 时已经抛 CookieExtractionFailed，本检查
+            # 仅做最后兜底，避免任何后续调用方误传空串。
+            raise ValidationError(message="登录链路缺失 remid / sid，无法回填账号池")
+
+        existing = await self._get(persona_id)
+        if existing is None:
+            cipher = get_cipher()
+            account = EAAccount(
+                persona_id=persona_id,
+                display_name=display_name,
+                encrypted_remid=cipher.encrypt(remid),
+                encrypted_sid=cipher.encrypt(sid),
+                encrypted_session=cipher.encrypt(session) if session else None,
+                encrypted_access_token=(cipher.encrypt(access_token) if access_token else None),
+                enabled=True,
+                failure_count=0,
+            )
+            self.db.add(account)
+            await self.db.commit()
+            await self.db.refresh(account)
+            return account
+
+        if display_name is not None:
+            existing.display_name = display_name
+        self._apply_credentials(
+            existing,
+            remid=remid,
+            sid=sid,
+            session=session,
+            access_token=access_token,
+        )
+        existing.enabled = True
+        existing.failure_count = 0
+        await self.db.commit()
+        await self.db.refresh(existing)
+        return existing
+
+    @staticmethod
+    def _apply_credentials(
+        account: EAAccount,
+        *,
+        remid: str | None,
+        sid: str | None,
+        session: str | None,
+        access_token: str | None,
+    ) -> None:
+        """仅在新值非空时加密覆写，避免空串把上次有效密文抹成 encrypt("")。
+
+        语义参见 :meth:`EaBindingService.upsert_after_ea_login` 同名段落。
+        """
+        cipher = get_cipher()
+        if remid:
+            account.encrypted_remid = cipher.encrypt(remid)
+        if sid:
+            account.encrypted_sid = cipher.encrypt(sid)
+        if session:
+            account.encrypted_session = cipher.encrypt(session)
+        if access_token:
+            account.encrypted_access_token = cipher.encrypt(access_token)
 
     async def verify(self, account_id: int) -> EAAccountVerifyResult:
         """用账号当前凭据触发一次真实 EA 调用，返回连通性结果。

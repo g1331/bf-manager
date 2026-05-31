@@ -26,11 +26,62 @@ export interface PlayerStatsSummary {
   time_played_seconds: number | null;
   kills: number | null;
   deaths: number | null;
+  // 扩展字段（后端从 EA detailedStats result 提取，缺失为 null）
+  skill: number | null;
+  infantry_kills: number | null;
+  vehicle_kills: number | null;
+  assists: number | null;
+  revives: number | null;
+  heals: number | null;
+  repairs: number | null;
+  dogtags: number | null;
+  max_killstreak: number | null;
+  longest_headshot_meters: number | null;
+  best_class: string | null;
+}
+
+/** 单兵种击杀分布，class 为小写兵种代号（assault/medic/support/scout/tanker/pilot/cavalry） */
+export interface SoldierClassStat {
+  class: string;
+  kills: number;
+  score: number;
+  time_seconds: number;
 }
 
 export interface PlayerStatsDetail {
   summary: PlayerStatsSummary;
+  soldiers: SoldierClassStat[];
   raw: Record<string, unknown>;
+}
+
+/** 在线状态。is_online 为 null 表示上游查询失败、无法判定 */
+export interface OnlineStatus {
+  persona_id: number;
+  is_online: boolean | null;
+  server_name: string | null;
+}
+
+/** 玩家当前所属战队（无战队时接口返回 null）。emblem_url 占位符已展开 */
+export interface PlayerPlatoon {
+  guid: string | null;
+  tag: string | null;
+  name: string | null;
+  size: number | null;
+  description: string | null;
+  emblem_url: string | null;
+  verified: boolean;
+}
+
+/** 单一封禁来源三态：clean 无记录 / hit 命中 / unknown 无法判定 */
+export type BanSourceState = "clean" | "hit" | "unknown";
+
+/** 外部封禁状态（BFBAN / BFEAC），各来源独立取三态 */
+export interface BanStatus {
+  persona_id: number;
+  bfban: BanSourceState;
+  bfeac: BanSourceState;
+  bfban_url: string | null;
+  bfeac_url: string | null;
 }
 
 export interface WeaponStat {
@@ -189,6 +240,16 @@ export const bf1Api = {
 
   getRecentServers: (personaId: number) =>
     api.get<RecentServers>(`/bf1/stats/${personaId}/recent-servers`),
+
+  getOnline: (personaId: number) => api.get<OnlineStatus>(`/bf1/stats/${personaId}/online`),
+
+  getPlatoon: (personaId: number) =>
+    api.get<PlayerPlatoon | null>(`/bf1/stats/${personaId}/platoon`),
+
+  getBan: (personaId: number, name?: string) =>
+    api.get<BanStatus>(
+      `/bf1/stats/${personaId}/ban${name ? `?name=${encodeURIComponent(name)}` : ""}`,
+    ),
 
   listServers: (name?: string, limit = 50) => {
     const params = new URLSearchParams();

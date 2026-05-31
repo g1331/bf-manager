@@ -133,3 +133,16 @@ def normalize_map_image_url(raw: str | None) -> str | None:
     if raw.startswith(_BB_PREFIX):
         return _BB_CDN + raw[len(_BB_PREFIX) :]
     return raw
+
+
+def normalize_emblem_url(raw: str | None) -> str | None:
+    """把战队徽章 URL 中的 `[SIZE]` / `[FORMAT]` 占位符替换为可加载的实际取值。
+
+    EA 战队 emblem URL 有两种形态：官方徽章 `.../exclusive/[SIZE]/EA.[FORMAT]`、
+    自定义徽章 `.../ugc/.../[SIZE].[FORMAT]?v=...`，两者都带 `[SIZE]`/`[FORMAT]`
+    占位符。统一取 512 尺寸与 png 格式（EA CDN 支持的常见组合），无占位符的 URL
+    原样返回。空值返回 None。
+    """
+    if not raw:
+        return None
+    return raw.replace("[SIZE]", "512").replace("[FORMAT]", "png")

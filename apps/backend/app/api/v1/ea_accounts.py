@@ -13,6 +13,7 @@ from app.models import User
 from app.schemas.ea_account import (
     EAAccountCreate,
     EAAccountCredentialsUpdate,
+    EAAccountDisplayNameUpdate,
     EAAccountEnabledUpdate,
     EAAccountItem,
     EAAccountVerifyResult,
@@ -63,6 +64,17 @@ async def set_ea_account_enabled(
 ) -> EAAccountItem:
     _require_admin(user)
     return await EAAccountService(db).set_enabled(account_id, payload.enabled)
+
+
+@router.patch("/{account_id}/display-name", response_model=EAAccountItem)
+async def update_ea_account_display_name(
+    account_id: int,
+    payload: EAAccountDisplayNameUpdate,
+    db: DbDep,
+    user: CurrentUser,
+) -> EAAccountItem:
+    _require_admin(user)
+    return await EAAccountService(db).update_display_name(account_id, payload)
 
 
 @router.delete("/{account_id}", status_code=204)

@@ -38,6 +38,16 @@ class EAAccountEnabledUpdate(BaseModel):
     enabled: bool
 
 
+class EAAccountDisplayNameUpdate(BaseModel):
+    """仅更新备注名的请求体：传 null 显式清空，传字符串覆盖原值。
+
+    备注名不属于凭据，单独走子资源端点，避免与 /credentials 端点共享
+    「凭据已修复 → 清零失败计数」之类的副作用。
+    """
+
+    display_name: str | None = Field(None, max_length=64, description="账号备注名，null 表示清空")
+
+
 class EAAccountItem(BaseModel):
     """EA 账号读取模型：只暴露健康状态，绝不回显任何明文凭据。"""
 

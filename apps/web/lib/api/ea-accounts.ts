@@ -30,6 +30,11 @@ export interface EAAccountCredentialsUpdateRequest {
   access_token?: string | null;
 }
 
+export interface EAAccountDisplayNameUpdateRequest {
+  /** 传 null 显式清空备注；传字符串覆盖。 */
+  display_name: string | null;
+}
+
 export interface EAAccountVerifyResult {
   success: boolean;
   persona_id: number;
@@ -43,6 +48,9 @@ export const eaAccountsApi = {
 
   updateCredentials: (id: number, payload: EAAccountCredentialsUpdateRequest) =>
     api.patch<EAAccountItem>(`/ea-accounts/${id}/credentials`, payload),
+
+  updateDisplayName: (id: number, payload: EAAccountDisplayNameUpdateRequest) =>
+    api.patch<EAAccountItem>(`/ea-accounts/${id}/display-name`, payload),
 
   setEnabled: (id: number, enabled: boolean) =>
     api.patch<EAAccountItem>(`/ea-accounts/${id}/enabled`, { enabled }),

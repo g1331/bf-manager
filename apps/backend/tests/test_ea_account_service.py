@@ -6,7 +6,11 @@ import pytest
 from app.api.errors import NotFoundError, ValidationError
 from app.core.security import get_cipher
 from app.models import EAAccount
-from app.schemas.ea_account import EAAccountCreate, EAAccountCredentialsUpdate
+from app.schemas.ea_account import (
+    EAAccountCreate,
+    EAAccountCredentialsUpdate,
+    EAAccountDisplayNameUpdate,
+)
 from app.services.ea_account_service import EAAccountService
 from sqlalchemy import select
 
@@ -94,6 +98,37 @@ async def test_update_credentials_partial_and_resets_failure(test_session) -> No
     assert cipher.decrypt(refreshed.encrypted_remid) == "remid-value"
     assert cipher.decrypt(refreshed.encrypted_sid) == "s-new"
     assert cipher.decrypt(refreshed.encrypted_session) == "sess-new"
+
+
+async def test_update_display_name_changes_name(test_session) -> None:
+    """改备注是展示层操作，不应触碰失败计数等凭据相关副作用。"""
+    account = await _seed(test_session, failure_count=4)
+    service = EAAccountService(test_session)
+    item = await service.update_display_name(
+        account.id, EAAccountDisplayNameUpdate(display_name="renamed")
+    )
+    assert item.display_name == "renamed"
+    assert item.failure_count == 4
+    refreshed = await _reload(test_session, account.id)
+    assert refreshed.display_name == "renamed"
+    assert refreshed.failure_count == 4
+
+
+async def test_update_display_name_to_none_clears(test_session) -> None:
+    account = await _seed(test_session)
+    service = EAAccountService(test_session)
+    item = await service.update_display_name(
+        account.id, EAAccountDisplayNameUpdate(display_name=None)
+    )
+    assert item.display_name is None
+    refreshed = await _reload(test_session, account.id)
+    assert refreshed.display_name is None
+
+
+async def test_update_display_name_missing_raises_not_found(test_session) -> None:
+    service = EAAccountService(test_session)
+    with pytest.raises(NotFoundError):
+        await service.update_display_name(9999, EAAccountDisplayNameUpdate(display_name="x"))
 
 
 async def test_set_enabled_reenable_resets_failure(test_session) -> None:

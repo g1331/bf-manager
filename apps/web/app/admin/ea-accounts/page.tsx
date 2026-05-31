@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { KeyRound, PlugZap, Power, Trash2 } from "lucide-react";
+import { KeyRound, Pencil, PlugZap, Power, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -71,6 +71,14 @@ const CREDENTIALS_DEFAULTS: CredentialsValues = {
   access_token: "",
 };
 
+const renameSchema = z.object({
+  display_name: z.string().max(64, "备注名最长 64 字符").optional(),
+});
+
+type RenameValues = z.infer<typeof renameSchema>;
+
+const RENAME_DEFAULTS: RenameValues = { display_name: "" };
+
 function errMsg(err: unknown, fallback: string): string {
   return err instanceof ApiException ? err.message : fallback;
 }
@@ -101,6 +109,82 @@ function nonEmpty(values: CredentialsValues): Record<string, string> {
     if (typeof value === "string" && value.trim() !== "") out[key] = value.trim();
   }
   return out;
+}
+
+function RenameSheet({ account, onClose }: { account: EAAccountItem | null; onClose: () => void }) {
+  const qc = useQueryClient();
+  const form = useForm<RenameValues>({
+    resolver: zodResolver(renameSchema),
+    defaultValues: RENAME_DEFAULTS,
+  });
+
+  // Sheet 打开时预填当前备注，便于在原值上微调
+  useEffect(() => {
+    if (account) form.reset({ display_name: account.display_name ?? "" });
+  }, [account, form]);
+
+  const rename = useMutation({
+    mutationFn: (values: RenameValues) => {
+      if (!account) throw new Error("no account");
+      const trimmed = values.display_name?.trim() ?? "";
+      // 空字符串视为「清空备注」→ 后端约定传 null 显式清空
+      return eaAccountsApi.updateDisplayName(account.id, {
+        display_name: trimmed === "" ? null : trimmed,
+      });
+    },
+    onSuccess: () => {
+      toast.success("已更新备注名");
+      qc.invalidateQueries({ queryKey: ["ea-accounts"] });
+      form.reset(RENAME_DEFAULTS);
+      onClose();
+    },
+    onError: (err) => toast.error(errMsg(err, "更新备注名失败")),
+  });
+
+  return (
+    <Sheet
+      open={account !== null}
+      onOpenChange={(open) => {
+        if (!open) {
+          form.reset(RENAME_DEFAULTS);
+          onClose();
+        }
+      }}
+    >
+      <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
+        <SheetHeader>
+          <SheetTitle>修改备注名</SheetTitle>
+          <SheetDescription>
+            {account
+              ? `账号 Persona ${account.persona_id}：备注名仅用于后台辨识，留空将清除当前备注。`
+              : ""}
+          </SheetDescription>
+        </SheetHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit((v) => rename.mutate(v))} className="space-y-4 p-4">
+            <FormField
+              control={form.control}
+              name="display_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>备注名</FormLabel>
+                  <FormControl>
+                    <Input autoComplete="off" placeholder="留空表示清除备注" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <SheetFooter>
+              <Button type="submit" disabled={rename.isPending}>
+                {rename.isPending ? "保存中…" : "保存备注"}
+              </Button>
+            </SheetFooter>
+          </form>
+        </Form>
+      </SheetContent>
+    </Sheet>
+  );
 }
 
 function CredentialsSheet({
@@ -221,6 +305,7 @@ export default function EAAccountsAdminPage() {
   const qc = useQueryClient();
   const [pendingDelete, setPendingDelete] = useState<EAAccountItem | null>(null);
   const [editing, setEditing] = useState<EAAccountItem | null>(null);
+  const [renaming, setRenaming] = useState<EAAccountItem | null>(null);
 
   const isAdmin = session.data?.role === "admin";
 
@@ -387,6 +472,15 @@ export default function EAAccountsAdminPage() {
             variant="ghost"
             size="sm"
             className="compact-action"
+            onClick={() => setRenaming(a)}
+          >
+            <Pencil className="size-3.5" />
+            改备注
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="compact-action"
             onClick={() => setEditing(a)}
           >
             <KeyRound className="size-3.5" />
@@ -537,6 +631,8 @@ export default function EAAccountsAdminPage() {
             />
           )}
         </section>
+
+        <RenameSheet account={renaming} onClose={() => setRenaming(null)} />
 
         <CredentialsSheet account={editing} onClose={() => setEditing(null)} />
 

@@ -15,6 +15,7 @@ from app.models import EAAccount
 from app.schemas.ea_account import (
     EAAccountCreate,
     EAAccountCredentialsUpdate,
+    EAAccountDisplayNameUpdate,
     EAAccountItem,
     EAAccountVerifyResult,
 )
@@ -153,6 +154,16 @@ class EAAccountService:
         if payload.access_token is not None:
             account.encrypted_access_token = cipher.encrypt(payload.access_token)
         account.failure_count = 0
+        await self.db.commit()
+        await self.db.refresh(account)
+        return _to_item(account)
+
+    async def update_display_name(
+        self, account_id: int, payload: EAAccountDisplayNameUpdate
+    ) -> EAAccountItem:
+        """仅更新备注名。备注属于展示层，故不触发任何凭据相关副作用。"""
+        account = await self._get_by_id(account_id)
+        account.display_name = payload.display_name
         await self.db.commit()
         await self.db.refresh(account)
         return _to_item(account)

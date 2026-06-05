@@ -491,10 +491,16 @@ function labelOfMethod(method: string | null): string {
   switch (method) {
     case "EMAIL":
       return "邮箱";
+    case "SECOND_EMAIL":
+      return "备用邮箱";
     case "APP":
       return "EA App";
     case "SMS":
       return "短信";
+    case "BACKUP_CODE":
+      return "备用验证码";
+    case "TRUSTED_DEVICE":
+      return "受信任设备";
     default:
       return method ?? "";
   }

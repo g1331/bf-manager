@@ -65,6 +65,17 @@ class Settings(BaseSettings):
     # BFBAN 查询与主战绩展示。
     bfeac_api_key: str = ""
 
+    # ===== EA 邮箱密码登录链路 =====
+    # 任务整体生命周期上限：从创建到终态的最长时间，超过则自动作废，避免内存中残留 aiohttp
+    # session 与未消费 asyncio.Queue。默认 600 秒（10 分钟），覆盖一次正常的人工 2FA。
+    ea_login_task_ttl_seconds: int = 600
+    # 等待用户输入（选择 2FA 方式或填写验证码）的单步超时。EA 的 2FA 验证码自带 5 分钟
+    # 有效期，沿用该值；超时即视为任务失败，需用户重新发起。
+    ea_login_2fa_wait_seconds: int = 300
+    # HTTP 长轮询的单次窗口。必须明显小于反向代理（nginx / Caddy）默认 60 秒空闲超时，
+    # 到点后服务端返回当前状态而非继续 hold 连接；前端基于 since_version 自行续轮询。
+    ea_login_long_poll_seconds: int = 25
+
     @property
     def cors_origins(self) -> list[str]:
         return [o.strip() for o in self.allowed_origins.split(",") if o.strip()]

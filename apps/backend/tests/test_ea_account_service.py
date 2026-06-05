@@ -249,6 +249,69 @@ async def test_upsert_create_requires_remid_sid(test_session) -> None:
         await service.upsert(persona_id=3004, remid="only-remid")
 
 
+async def test_upsert_after_ea_login_creates_with_encryption(test_session) -> None:
+    """新建路径：persona 不存在时按密文落库，明文不出现在 ORM 字段中。"""
+    service = EAAccountService(test_session)
+    account = await service.upsert_after_ea_login(
+        persona_id=3003,
+        display_name="from_login",
+        remid="r-from-login",
+        sid="s-from-login",
+        session="sess-from-login",
+        access_token="atk-from-login",
+    )
+    assert account.id > 0
+    assert account.persona_id == 3003
+    assert account.display_name == "from_login"
+    assert account.enabled is True
+    assert account.failure_count == 0
+    # 密文落库
+    assert account.encrypted_remid != "r-from-login"
+    cipher = get_cipher()
+    assert cipher.decrypt(account.encrypted_remid) == "r-from-login"
+    assert cipher.decrypt(account.encrypted_sid) == "s-from-login"
+    assert cipher.decrypt(account.encrypted_session) == "sess-from-login"
+    assert cipher.decrypt(account.encrypted_access_token) == "atk-from-login"
+
+
+async def test_upsert_after_ea_login_updates_existing_and_resets_state(test_session) -> None:
+    """更新路径：已存在 persona 仅覆盖非空字段、清零 failure_count、重新启用。"""
+    seeded = await _seed(test_session, persona_id=4004, enabled=False, failure_count=7)
+    service = EAAccountService(test_session)
+    updated = await service.upsert_after_ea_login(
+        persona_id=4004,
+        display_name="renamed",
+        remid="r-new",
+        sid="s-new",
+        session=None,  # 不覆盖原 session
+        access_token="atk-new",
+    )
+    assert updated.id == seeded.id
+    assert updated.display_name == "renamed"
+    assert updated.enabled is True
+    assert updated.failure_count == 0
+    cipher = get_cipher()
+    assert cipher.decrypt(updated.encrypted_remid) == "r-new"
+    assert cipher.decrypt(updated.encrypted_sid) == "s-new"
+    # session 字段未提供，应保留原值（seed 没设 session 时为 None）
+    assert updated.encrypted_session is None
+    assert cipher.decrypt(updated.encrypted_access_token) == "atk-new"
+
+
+async def test_upsert_after_ea_login_rejects_missing_remid_or_sid(test_session) -> None:
+    """登录链路不应传入空 remid/sid；如真发生应立刻报 ValidationError。"""
+    service = EAAccountService(test_session)
+    with pytest.raises(ValidationError):
+        await service.upsert_after_ea_login(
+            persona_id=5005,
+            display_name=None,
+            remid="",
+            sid="some",
+            session=None,
+            access_token=None,
+        )
+
+
 async def test_upsert_updates_existing_and_resets_failure(test_session) -> None:
     account = await _seed(test_session, persona_id=3005, failure_count=7)
     service = EAAccountService(test_session)

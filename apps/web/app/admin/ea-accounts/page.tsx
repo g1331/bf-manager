@@ -29,6 +29,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { ConfirmSheet } from "@/components/common/ConfirmSheet";
+import { EaLoginFlow } from "@/components/common/EaLoginFlow";
 import { ResponsiveTable, type Column } from "@/components/common/ResponsiveTable";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { useSession } from "@/hooks/useSession";
@@ -306,6 +307,7 @@ export default function EAAccountsAdminPage() {
   const [pendingDelete, setPendingDelete] = useState<EAAccountItem | null>(null);
   const [editing, setEditing] = useState<EAAccountItem | null>(null);
   const [renaming, setRenaming] = useState<EAAccountItem | null>(null);
+  const [loginFlowOpen, setLoginFlowOpen] = useState(false);
 
   const isAdmin = session.data?.role === "admin";
 
@@ -505,7 +507,12 @@ export default function EAAccountsAdminPage() {
       <SiteHeader />
       <main className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6">
         <header className="space-y-2">
-          <h1 className="text-2xl font-bold sm:text-3xl">EA 服管账号管理</h1>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h1 className="text-2xl font-bold sm:text-3xl">EA 服管账号管理</h1>
+            <Button onClick={() => setLoginFlowOpen(true)} size="sm">
+              邮箱密码登录添加
+            </Button>
+          </div>
           <p className="text-muted-foreground text-sm">
             维护平台代查询用的 EA 账号池。凭据写入后即加密存储，列表只展示健康状态，
             任何明文都不会回显。同一个 persona_id 只能存在一条记录。
@@ -652,6 +659,13 @@ export default function EAAccountsAdminPage() {
           onConfirm={() => {
             if (pendingDelete) remove.mutate(pendingDelete.id);
           }}
+        />
+
+        <EaLoginFlow
+          actor="admin"
+          open={loginFlowOpen}
+          onOpenChange={setLoginFlowOpen}
+          onSucceeded={() => qc.invalidateQueries({ queryKey: ["ea-accounts"] })}
         />
       </main>
     </>

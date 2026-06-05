@@ -17,9 +17,11 @@ from app.core.cache import close_redis, get_redis
 from app.core.config import get_settings
 from app.core.logging import setup_logging
 from app.db.session import close_engine
+from app.domain.ea.login.task_manager import close_task_manager, init_task_manager
 
 # 触发游戏 profile 注册
 from app.domain.games import GameRegistry  # noqa: F401
+from app.services.ea_login_finalizer import EALoginFinalizer
 
 
 @asynccontextmanager
@@ -41,9 +43,13 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     except Exception as e:
         logger.warning("Redis init failed: {}", e)
 
+    # EA 邮箱密码登录任务管理器：注入 finalizer 后纳入进程级单例
+    init_task_manager(EALoginFinalizer().finalize)
+
     yield
 
     logger.info("Shutting down")
+    await close_task_manager()
     await close_redis()
     await close_engine()
 

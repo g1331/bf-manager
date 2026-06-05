@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.api.errors import NotFoundError, UnauthorizedError
+from app.api.errors import ForbiddenError, NotFoundError, UnauthorizedError
 from app.core.security import decode_access_token
 from app.db.session import get_db
 from app.domain.games.base import GameProfile
@@ -61,6 +61,20 @@ async def get_current_user_optional(
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
 CurrentUserOptional = Annotated[User | None, Depends(get_current_user_optional)]
+
+
+async def get_current_admin(user: CurrentUser) -> User:
+    """与 ``get_current_user`` 链路一致，再额外要求 ``role == 'admin'``。
+
+    保持与 ``ea_accounts.py::_require_admin`` 相同的 403 文案，方便前端按错误码与
+    文案统一处理。
+    """
+    if user.role != "admin":
+        raise ForbiddenError(message="仅平台管理员可执行此操作")
+    return user
+
+
+CurrentAdmin = Annotated[User, Depends(get_current_admin)]
 
 
 def get_game_profile(game: Annotated[str, Path()]) -> GameProfile:

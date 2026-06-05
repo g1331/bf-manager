@@ -1,11 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { EaLoginFlow } from "@/components/common/EaLoginFlow";
 import { type BindingListItem, listMyBindings, unbindEa } from "@/lib/auth";
 import { useSession } from "@/hooks/useSession";
 
@@ -13,6 +14,7 @@ export default function AccountPage() {
   const router = useRouter();
   const session = useSession();
   const qc = useQueryClient();
+  const [loginFlowOpen, setLoginFlowOpen] = useState(false);
 
   useEffect(() => {
     if (!session.isLoading && !session.data) {
@@ -77,10 +79,15 @@ export default function AccountPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>EA 绑定</CardTitle>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <CardTitle>EA 绑定</CardTitle>
+            <Button size="sm" onClick={() => setLoginFlowOpen(true)}>
+              用邮箱密码绑定
+            </Button>
+          </div>
           <CardDescription>
             管理当前账号下的 EA persona 绑定。解绑后该 binding 的加密凭据会被立即清除，
-            行记录保留作为历史。重新走 EA Cookie 登录会自动恢复绑定。
+            行记录保留作为历史。可重新走 EA Cookie 登录或邮箱密码绑定恢复关联。
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -149,6 +156,16 @@ export default function AccountPage() {
           )}
         </CardContent>
       </Card>
+
+      <EaLoginFlow
+        actor="user"
+        open={loginFlowOpen}
+        onOpenChange={setLoginFlowOpen}
+        onSucceeded={() => {
+          qc.invalidateQueries({ queryKey: ["my-ea-bindings"] });
+          qc.invalidateQueries({ queryKey: ["session"] });
+        }}
+      />
     </main>
   );
 }

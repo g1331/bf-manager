@@ -49,7 +49,7 @@ export default function LoginPage() {
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") ?? "/";
+  const next = searchParams.get("next") ?? "/dashboard";
   const [submitting, setSubmitting] = useState(false);
   const [showLocal, setShowLocal] = useState(false);
 

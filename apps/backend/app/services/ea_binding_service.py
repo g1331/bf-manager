@@ -83,10 +83,12 @@ class EaBindingService:
             )
             self.db.add(binding)
         else:
+            if binding.user_id != user_id:
+                binding.user_id = user_id
+                existing_primary = await self.get_primary_for_user(user_id)
+                binding.is_primary = existing_primary is None
             binding.display_name = display_name or binding.display_name
             binding.avatar_url = avatar_url or binding.avatar_url
-            # 仅在新值非空时覆写。EA 登录链路在某些状态下 remid/sid 可能回传空串，
-            # 无差别覆写会把上次成功登录留下的有效密文抹成 encrypt("")，导致下次失效。
             if remid:
                 binding.encrypted_remid = cipher.encrypt(remid)
             if sid:

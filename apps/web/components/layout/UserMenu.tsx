@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { KeyRound, LogIn, LogOut, ScrollText, ShieldCheck, UserCog } from "lucide-react";
+import { LogIn, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -43,7 +43,6 @@ export function UserMenu() {
   const displayLabel = primary?.display_name ?? user.username;
   const subtitleLabel = primary ? `Persona ${primary.persona_id}` : "本地账号（无 EA 绑定）";
   const initial = displayLabel.slice(0, 1).toUpperCase();
-  const isAdmin = user.role === "admin";
 
   const onLogout = async () => {
     try {
@@ -66,7 +65,6 @@ export function UserMenu() {
           className="border-border focus-visible:ring-ring bg-muted relative inline-flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full border text-sm font-semibold transition focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
         >
           {primary?.avatar_url ? (
-            // EA 头像域不在 next/image remotePatterns 内，用原生 img
             // eslint-disable-next-line @next/next/no-img-element
             <img src={primary.avatar_url} alt={displayLabel} className="size-full object-cover" />
           ) : (
@@ -79,35 +77,6 @@ export function UserMenu() {
           <span className="truncate">{displayLabel}</span>
           <span className="text-muted-foreground text-xs font-normal">{subtitleLabel}</span>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link href="/account">
-            <UserCog className="size-4" />
-            账号设置
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/audit-logs">
-            <ScrollText className="size-4" />
-            操作日志
-          </Link>
-        </DropdownMenuItem>
-        {isAdmin ? (
-          <>
-            <DropdownMenuItem asChild>
-              <Link href="/admin/memberships">
-                <ShieldCheck className="size-4" />
-                服管权限授予
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/admin/ea-accounts">
-                <KeyRound className="size-4" />
-                EA 账号管理
-              </Link>
-            </DropdownMenuItem>
-          </>
-        ) : null}
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onLogout} className="text-destructive focus:text-destructive">
           <LogOut className="size-4" />

@@ -31,7 +31,7 @@ import {
 import { ConfirmSheet } from "@/components/common/ConfirmSheet";
 import { EaLoginFlow } from "@/components/common/EaLoginFlow";
 import { ResponsiveTable, type Column } from "@/components/common/ResponsiveTable";
-import { SiteHeader } from "@/components/layout/SiteHeader";
+
 import { useSession } from "@/hooks/useSession";
 import { ApiException } from "@/lib/api-client";
 import { eaAccountsApi, type EAAccountItem } from "@/lib/api/ea-accounts";
@@ -371,38 +371,27 @@ export default function EAAccountsAdminPage() {
   });
 
   if (session.isLoading) {
-    return (
-      <>
-        <SiteHeader />
-        <main className="text-muted-foreground p-12 text-center">加载中…</main>
-      </>
-    );
+    return <main className="text-muted-foreground p-12 text-center">加载中…</main>;
   }
   if (!session.data) {
     return (
-      <>
-        <SiteHeader />
-        <main className="mx-auto max-w-md space-y-4 px-4 py-12 text-center">
-          <h1 className="text-xl font-semibold">EA 服管账号管理</h1>
-          <p className="text-muted-foreground text-sm">需要先登录</p>
-          <Button
-            onClick={() => router.push(`/login?next=${encodeURIComponent("/admin/ea-accounts")}`)}
-          >
-            去登录
-          </Button>
-        </main>
-      </>
+      <main className="mx-auto max-w-md space-y-4 px-4 py-12 text-center">
+        <h1 className="text-xl font-semibold">EA 服管账号管理</h1>
+        <p className="text-muted-foreground text-sm">需要先登录</p>
+        <Button
+          onClick={() => router.push(`/login?next=${encodeURIComponent("/admin/ea-accounts")}`)}
+        >
+          去登录
+        </Button>
+      </main>
     );
   }
   if (!isAdmin) {
     return (
-      <>
-        <SiteHeader />
-        <main className="mx-auto max-w-md space-y-4 px-4 py-12 text-center">
-          <h1 className="text-xl font-semibold">无权访问</h1>
-          <p className="text-muted-foreground text-sm">EA 账号管理仅平台管理员可见。</p>
-        </main>
-      </>
+      <main className="mx-auto max-w-md space-y-4 px-4 py-12 text-center">
+        <h1 className="text-xl font-semibold">无权访问</h1>
+        <p className="text-muted-foreground text-sm">EA 账号管理仅平台管理员可见。</p>
+      </main>
     );
   }
 
@@ -504,7 +493,6 @@ export default function EAAccountsAdminPage() {
 
   return (
     <>
-      <SiteHeader />
       <main className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6">
         <header className="space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-3">

@@ -22,7 +22,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { ConfirmSheet } from "@/components/common/ConfirmSheet";
 import { ResponsiveTable, type Column } from "@/components/common/ResponsiveTable";
-import { SiteHeader } from "@/components/layout/SiteHeader";
+
 import { useSession } from "@/hooks/useSession";
 import { membershipsApi, type MembershipItem, type MembershipRole } from "@/lib/api/memberships";
 import { ApiException } from "@/lib/api-client";
@@ -87,40 +87,29 @@ export default function MembershipsAdminPage() {
   });
 
   if (session.isLoading) {
-    return (
-      <>
-        <SiteHeader />
-        <main className="text-muted-foreground p-12 text-center">加载中…</main>
-      </>
-    );
+    return <main className="text-muted-foreground p-12 text-center">加载中…</main>;
   }
   if (!session.data) {
     return (
-      <>
-        <SiteHeader />
-        <main className="mx-auto max-w-md space-y-4 px-4 py-12 text-center">
-          <h1 className="text-xl font-semibold">服管权限授予</h1>
-          <p className="text-muted-foreground text-sm">需要先登录</p>
-          <Button
-            onClick={() => router.push(`/login?next=${encodeURIComponent("/admin/memberships")}`)}
-          >
-            去登录
-          </Button>
-        </main>
-      </>
+      <main className="mx-auto max-w-md space-y-4 px-4 py-12 text-center">
+        <h1 className="text-xl font-semibold">服管权限授予</h1>
+        <p className="text-muted-foreground text-sm">需要先登录</p>
+        <Button
+          onClick={() => router.push(`/login?next=${encodeURIComponent("/admin/memberships")}`)}
+        >
+          去登录
+        </Button>
+      </main>
     );
   }
   if (session.data.role !== "admin") {
     return (
-      <>
-        <SiteHeader />
-        <main className="mx-auto max-w-md space-y-4 px-4 py-12 text-center">
-          <h1 className="text-xl font-semibold">无权访问</h1>
-          <p className="text-muted-foreground text-sm">
-            服管权限授予仅平台管理员可见。如需协管权限，请联系平台 admin。
-          </p>
-        </main>
-      </>
+      <main className="mx-auto max-w-md space-y-4 px-4 py-12 text-center">
+        <h1 className="text-xl font-semibold">无权访问</h1>
+        <p className="text-muted-foreground text-sm">
+          服管权限授予仅平台管理员可见。如需协管权限，请联系平台 admin。
+        </p>
+      </main>
     );
   }
 
@@ -174,7 +163,6 @@ export default function MembershipsAdminPage() {
 
   return (
     <>
-      <SiteHeader />
       <main className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6">
         <header className="space-y-2">
           <h1 className="text-2xl font-bold sm:text-3xl">服管权限授予</h1>

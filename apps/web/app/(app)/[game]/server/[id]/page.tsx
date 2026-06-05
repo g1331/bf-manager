@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Users, Lock } from "lucide-react";
@@ -303,8 +304,18 @@ function MemberSection({
 }
 
 function PlayersList({ players }: { players: ServerPlayer[] }) {
+  const { game } = useParams<{ game: string }>();
   const columns: Column<ServerPlayer>[] = [
-    { key: "name", header: "玩家", cell: (p) => p.display_name, isCardTitle: true },
+    {
+      key: "name",
+      header: "玩家",
+      cell: (p) => (
+        <Link href={`/${game}/player/${p.persona_id}`} className="text-primary hover:underline">
+          {p.display_name}
+        </Link>
+      ),
+      isCardTitle: true,
+    },
     {
       key: "team",
       header: "队伍",

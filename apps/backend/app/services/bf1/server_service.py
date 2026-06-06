@@ -31,7 +31,10 @@ from app.services.bf1.gateway_factory import get_bf1_client
 def _to_summary(raw: dict[str, Any]) -> ServerSummary:
     server_info = raw.get("serverInfo") or raw
     map_name = server_info.get("mapName") or raw.get("mapName")
-    game_mode = server_info.get("mode") or raw.get("gameMode") or raw.get("mode")
+    # searchServers 与 getFullServerDetails 均把模式代号放在 mapMode（实测形态：
+    # mapName=MP_River / mapMode=Possession），不存在 mode / gameMode 字段，取法与
+    # map_name 对称，再交 translate_mode_name 经 ModeDict 译为中文。
+    game_mode = server_info.get("mapMode") or raw.get("mapMode")
     region = server_info.get("region") or raw.get("region")
     map_image_url = (
         server_info.get("mapImageUrl")

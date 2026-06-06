@@ -201,6 +201,7 @@ export interface PlatoonBrief {
   name: string | null;
   size: number | null;
   description: string | null;
+  emblem_url: string | null;
 }
 
 export interface ServerExtras {

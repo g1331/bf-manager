@@ -25,10 +25,30 @@ from app.services.bf1.gateway_factory import get_bf1_client
 from app.services.bf1.server_service import _to_summary
 
 # searchServers 单次最多约 200 条，并发多次再按 guid 去重以逼近全量。
-SEARCH_CONCURRENCY = 30
+SEARCH_CONCURRENCY = 50
 SEARCH_LIMIT = 200
 # 热门地图模式展示条数
 TOP_MAP_MODE_LIMIT = 8
+
+# 全站统计专用筛选条件：只按服务器类型与人数档位过滤，与上游 bf1 信息查询完全一致。
+# 网关默认 filter_dict 额外带 maps / gameModes 等维度的白名单，会改变 EA 返回的服务器
+# 集合，使总数偏离游戏内实际口径，故全站统计改走这份精简条件。
+OVERVIEW_FILTER = {
+    "name": "",
+    "serverType": {
+        "OFFICIAL": "on",
+        "RANKED": "on",
+        "UNRANKED": "on",
+        "PRIVATE": "on",
+    },
+    "slots": {
+        "oneToFive": "on",
+        "sixToTen": "on",
+        "none": "on",
+        "tenPlus": "on",
+        "spectator": "on",
+    },
+}
 
 # 缓存键与过期时间：TTL 远大于轮询周期，容忍连续数次拉取失败而不丢失上一次快照。
 OVERVIEW_CACHE_KEY = "bf1:overview"
@@ -129,7 +149,10 @@ async def fetch_overview(db: AsyncSession) -> BF1Overview:
     异常即由工厂的 except 分支记为 mark_failure，与 server_service 等既有服务范式一致。
     """
     async with get_bf1_client(db) as client:
-        tasks = [client.searchServers("", limit=SEARCH_LIMIT) for _ in range(SEARCH_CONCURRENCY)]
+        tasks = [
+            client.searchServers("", limit=SEARCH_LIMIT, filter_dict=OVERVIEW_FILTER)
+            for _ in range(SEARCH_CONCURRENCY)
+        ]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         deduped: dict[str, dict] = {}

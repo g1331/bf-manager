@@ -375,27 +375,22 @@ function PlatoonLine({ platoon }: { platoon: PlayerPlatoon | null }) {
   // 玩家未加入战队（接口返回 null）时不渲染该行
   if (!platoon || (!platoon.name && !platoon.tag)) return null;
   return (
-    <div className="mt-1.5 flex items-center gap-2 text-xs text-white/55">
+    <div className="mt-2 inline-flex items-center gap-2 rounded-sm border border-white/10 bg-white/[0.03] px-2.5 py-1">
       {platoon.emblem_url ? (
         // EA 徽章域不在 next/image remotePatterns 内，用原生 img 避免额外配置
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={platoon.emblem_url}
           alt={platoon.name ?? platoon.tag ?? "战队徽章"}
-          className="size-5 shrink-0 object-contain"
+          className="size-7 shrink-0 rounded-sm object-contain"
           loading="lazy"
         />
       ) : null}
-      <span>
-        战队 <span className="text-white/75">{platoon.name ?? platoon.tag}</span>
+      <span className="text-xs text-white/55">
+        战队 <span className="text-white/80">{platoon.name ?? platoon.tag}</span>
+        {platoon.size != null ? <span className="text-white/45"> · {platoon.size} 人</span> : null}
+        {platoon.verified ? <span className="text-amber-300/80"> · 已认证</span> : null}
       </span>
-      {platoon.size != null ? (
-        <>
-          <span className="text-white/25">·</span>
-          <span>{platoon.size} 人</span>
-        </>
-      ) : null}
-      {platoon.verified ? <span className="text-amber-300/80">已认证</span> : null}
     </div>
   );
 }

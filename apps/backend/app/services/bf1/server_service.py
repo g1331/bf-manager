@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.errors import EAApiError, NotFoundError
 from app.domain.games.bf1.maps import (
+    normalize_emblem_url,
     normalize_map_image_url,
     translate_map_name,
     translate_mode_name,
@@ -36,6 +37,10 @@ def _to_summary(raw: dict[str, Any]) -> ServerSummary:
     # map_name 对称，再交 translate_mode_name 经 ModeDict 译为中文。
     game_mode = server_info.get("mapMode") or raw.get("mapMode")
     region = server_info.get("region") or raw.get("region")
+    # 官服判定取 serverType == "OFFICIAL"：EA 用 serverType 标记服务器类型（OFFICIAL /
+    # RANKED / UNRANKED / PRIVATE），返回项不含 official 字段，此前误读 official 导致
+    # 官服恒为 False，与 mapMode 同属字段名假设错误。
+    server_type = server_info.get("serverType") or raw.get("serverType")
     map_image_url = (
         server_info.get("mapImageUrl")
         or raw.get("mapImageUrl")
@@ -74,7 +79,7 @@ def _to_summary(raw: dict[str, Any]) -> ServerSummary:
         ),
         region=region,
         region_display_name=translate_region(region),
-        is_official=bool(server_info.get("official") or raw.get("official") or False),
+        is_official=server_type == "OFFICIAL",
         is_ranked=bool(server_info.get("ranked") or raw.get("ranked") or False),
         has_password=bool(server_info.get("hasPassword") or raw.get("hasPassword") or False),
         description=server_info.get("description") or raw.get("description"),
@@ -203,6 +208,7 @@ def _to_extras(raw: dict[str, Any]) -> ServerExtras:
             name=platoon_info.get("name"),
             size=size,
             description=platoon_info.get("description"),
+            emblem_url=normalize_emblem_url(platoon_info.get("emblem")),
         )
 
     return ServerExtras(

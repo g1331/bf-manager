@@ -7,6 +7,7 @@ import { Search, Users, Lock, Filter, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { bf1Api, type ServerSummary } from "@/lib/api/bf1";
 
 const PAGE_SIZE = 50;
@@ -151,10 +152,7 @@ export default function ServerListPage() {
 
   return (
     <main className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6">
-      <header className="space-y-2">
-        <h1 className="text-2xl font-bold sm:text-3xl">服务器列表</h1>
-        <p className="text-muted-foreground text-sm">浏览所有 Battlefield 1 服务器</p>
-      </header>
+      <PageHeader kicker="Servers" title="服务器列表" description="浏览所有 Battlefield 1 服务器" />
 
       <form onSubmit={submit} className="flex gap-2">
         <Input
@@ -258,7 +256,7 @@ function FilterBar({
         <Button type="button" variant="outline" size="sm" onClick={onToggle} className="gap-1">
           <Filter className="size-4" />
           筛选
-          {filtersActive ? <span className="bg-primary size-1.5 rounded-full" /> : null}
+          {filtersActive ? <span className="bg-foreground size-1.5 rounded-full" /> : null}
         </Button>
         <SelectField
           ariaLabel="排序方式"
@@ -453,12 +451,12 @@ function ServerCard({ server, onClick }: { server: ServerSummary; onClick: () =>
               <span className="font-medium">{server.player_count}</span>
               <span className="text-muted-foreground">/ {server.max_player_count}</span>
               {server.queue_count > 0 ? (
-                <span className="text-amber-600">+{server.queue_count}</span>
+                <span className="text-muted-foreground">+{server.queue_count}</span>
               ) : null}
             </div>
             <div className="bg-muted relative h-1.5 flex-1 overflow-hidden rounded-full">
               <div
-                className="bg-primary absolute inset-y-0 left-0 transition-all"
+                className="bg-foreground/45 absolute inset-y-0 left-0 transition-all"
                 style={{ width: `${Math.min(fill, 100)}%` }}
               />
             </div>

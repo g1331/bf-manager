@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { EaLoginFlow } from "@/components/common/EaLoginFlow";
 import { type BindingListItem, listMyBindings, unbindEa } from "@/lib/auth";
 import { useSession } from "@/hooks/useSession";
@@ -46,6 +47,8 @@ export default function AccountPage() {
 
   return (
     <main className="mx-auto max-w-2xl space-y-6 px-4 py-8">
+      <PageHeader kicker="Account" title="账号设置" description="管理平台账号信息与 EA 绑定" />
+
       <Card>
         <CardHeader>
           <CardTitle>账号信息</CardTitle>
@@ -61,7 +64,7 @@ export default function AccountPage() {
             <span
               className={`rounded px-2 py-0.5 text-xs font-medium ${
                 user.role === "admin"
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-foreground text-background"
                   : "bg-secondary text-secondary-foreground"
               }`}
             >
@@ -124,7 +127,7 @@ export default function AccountPage() {
                           {b.display_name ?? `Persona ${b.persona_id}`}
                         </span>
                         {b.is_primary ? (
-                          <span className="bg-primary text-primary-foreground rounded px-1.5 py-0.5 text-[10px] font-semibold">
+                          <span className="bg-foreground text-background rounded px-1.5 py-0.5 text-[10px] font-semibold">
                             primary
                           </span>
                         ) : null}

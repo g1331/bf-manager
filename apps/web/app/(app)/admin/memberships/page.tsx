@@ -20,6 +20,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { SectionHeading } from "@/components/layout/SectionHeading";
 import { ConfirmSheet } from "@/components/common/ConfirmSheet";
 import { ResponsiveTable, type Column } from "@/components/common/ResponsiveTable";
 
@@ -164,13 +166,11 @@ export default function MembershipsAdminPage() {
   return (
     <>
       <main className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6">
-        <header className="space-y-2">
-          <h1 className="text-2xl font-bold sm:text-3xl">服管权限授予</h1>
-          <p className="text-muted-foreground text-sm">
-            为某个玩家在某个服务器赋予 viewer / moderator / admin / owner 权限。同 user × server
-            组合再次提交会覆盖现有角色。
-          </p>
-        </header>
+        <PageHeader
+          kicker="Admin"
+          title="服管权限授予"
+          description="为某个玩家在某个服务器赋予 viewer / moderator / admin / owner 权限。同 user × server 组合再次提交会覆盖现有角色。"
+        />
 
         <Card>
           <CardHeader>
@@ -260,7 +260,7 @@ export default function MembershipsAdminPage() {
         </Card>
 
         <section className="space-y-3">
-          <h2 className="text-lg font-semibold">现有权限（{list.data?.total ?? 0}）</h2>
+          <SectionHeading className="">现有权限（{list.data?.total ?? 0}）</SectionHeading>
           {list.isLoading ? (
             <div className="text-muted-foreground p-8 text-center">加载中…</div>
           ) : (

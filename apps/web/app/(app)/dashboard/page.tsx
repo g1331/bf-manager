@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { KeyRound, ScrollText, Server, ShieldCheck, UserCog, Users } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { SectionHeading } from "@/components/layout/SectionHeading";
 import { useSession } from "@/hooks/useSession";
 import { listMyBindings, type BindingListItem } from "@/lib/auth";
 import { auditApi, type AuditLogItem } from "@/lib/api/audit";
@@ -82,14 +82,18 @@ export default function DashboardPage() {
           <img
             src={primary.avatar_url}
             alt={displayName}
-            className="size-14 shrink-0 rounded-full object-cover"
+            className="border-border size-14 shrink-0 rounded-sm border object-cover"
           />
         ) : (
-          <div className="bg-muted flex size-14 shrink-0 items-center justify-center rounded-full text-xl font-bold">
+          <div className="bg-muted border-border flex size-14 shrink-0 items-center justify-center rounded-sm border text-xl font-bold">
             {displayName.slice(0, 1).toUpperCase()}
           </div>
         )}
         <div>
+          <div className="font-display text-muted-foreground mb-1 flex items-center gap-2 text-xs font-medium tracking-[0.2em] uppercase">
+            <span className="bg-muted-foreground h-[2px] w-6" />
+            Dashboard
+          </div>
           <h1 className="text-2xl font-bold">欢迎回来，{displayName}</h1>
           <p className="text-muted-foreground text-sm">
             {user.role === "admin" ? "平台管理员" : "普通用户"}
@@ -128,7 +132,7 @@ export default function DashboardPage() {
 
       {/* 快捷入口 */}
       <section>
-        <h2 className="mb-3 text-lg font-semibold">快捷入口</h2>
+        <SectionHeading>快捷入口</SectionHeading>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           <QuickLink href="/bf1/players" icon={Users} label="BF1 战绩查询" />
           <QuickLink href="/bf1/servers" icon={Server} label="BF1 服务器" />
@@ -147,18 +151,16 @@ export default function DashboardPage() {
       {recentAudit.data && recentAudit.data.items.length > 0 ? (
         <section>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">最近操作</h2>
-            <Link href="/audit-logs" className="text-primary text-sm hover:underline">
+            <SectionHeading className="mb-0">最近操作</SectionHeading>
+            <Link href="/audit-logs" className="text-foreground text-sm hover:underline">
               查看全部
             </Link>
           </div>
-          <Card>
-            <CardContent className="divide-y p-0">
-              {recentAudit.data.items.map((log) => (
-                <RecentLogRow key={log.id} log={log} />
-              ))}
-            </CardContent>
-          </Card>
+          <div className="border-border bg-card divide-border divide-y rounded-sm border">
+            {recentAudit.data.items.map((log) => (
+              <RecentLogRow key={log.id} log={log} />
+            ))}
+          </div>
         </section>
       ) : null}
     </main>
@@ -177,18 +179,16 @@ function StatCard({
   children?: React.ReactNode;
 }) {
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-muted-foreground text-sm font-medium">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="text-3xl font-bold tabular-nums">
-          {value}
-          <span className="text-muted-foreground ml-1 text-sm font-normal">{suffix}</span>
-        </div>
-        {children ? <div className="mt-1">{children}</div> : null}
-      </CardContent>
-    </Card>
+    <div className="border-border bg-card rounded-sm border p-5">
+      <div className="text-muted-foreground text-xs font-medium tracking-[0.15em] uppercase">
+        {title}
+      </div>
+      <div className="font-display mt-2 text-4xl font-bold tabular-nums">
+        {value}
+        <span className="text-muted-foreground ml-1 text-sm font-normal">{suffix}</span>
+      </div>
+      {children ? <div className="mt-1">{children}</div> : null}
+    </div>
   );
 }
 
@@ -204,9 +204,9 @@ function QuickLink({
   return (
     <Link
       href={href}
-      className="border-border hover:bg-muted flex items-center gap-3 rounded-lg border p-3 text-sm font-medium transition-colors"
+      className="border-border bg-card group flex items-center gap-3 rounded-sm border p-3 text-sm font-medium transition-colors hover:border-white/20 hover:bg-white/5"
     >
-      <Icon className="text-muted-foreground size-4 shrink-0" />
+      <Icon className="text-muted-foreground group-hover:text-foreground size-4 shrink-0 transition-colors" />
       {label}
     </Link>
   );
@@ -216,13 +216,15 @@ function RecentLogRow({ log }: { log: AuditLogItem }) {
   return (
     <div className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
       <div className="flex items-center gap-3">
-        <span className={log.result === "success" ? "text-emerald-600" : "text-destructive"}>
+        <span className={log.result === "success" ? "text-muted-foreground" : "text-destructive"}>
           {log.result === "success" ? "成功" : "失败"}
         </span>
         <span>{ACTION_LABEL[log.action] ?? log.action}</span>
-        <span className="text-muted-foreground">{log.game.toUpperCase()}</span>
+        <span className="text-muted-foreground font-display tracking-wide">
+          {log.game.toUpperCase()}
+        </span>
       </div>
-      <span className="text-muted-foreground shrink-0 text-xs">
+      <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
         {new Date(log.created_at).toLocaleString("zh-CN")}
       </span>
     </div>

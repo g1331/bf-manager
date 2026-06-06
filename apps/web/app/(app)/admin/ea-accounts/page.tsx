@@ -28,6 +28,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { SectionHeading } from "@/components/layout/SectionHeading";
 import { ConfirmSheet } from "@/components/common/ConfirmSheet";
 import { EaLoginFlow } from "@/components/common/EaLoginFlow";
 import { ResponsiveTable, type Column } from "@/components/common/ResponsiveTable";
@@ -87,7 +89,7 @@ function errMsg(err: unknown, fallback: string): string {
 type BadgeTone = "default" | "muted" | "outline" | "destructive";
 
 const BADGE_TONE: Record<BadgeTone, string> = {
-  default: "bg-primary text-primary-foreground",
+  default: "bg-foreground text-background",
   muted: "bg-muted text-muted-foreground",
   outline: "border-border text-foreground border",
   destructive: "bg-destructive text-destructive-foreground",
@@ -494,18 +496,16 @@ export default function EAAccountsAdminPage() {
   return (
     <>
       <main className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6">
-        <header className="space-y-2">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h1 className="text-2xl font-bold sm:text-3xl">EA 服管账号管理</h1>
+        <PageHeader
+          kicker="Admin"
+          title="EA 服管账号管理"
+          description="维护平台代查询用的 EA 账号池。凭据写入后即加密存储，列表只展示健康状态，任何明文都不会回显。同一个 persona_id 只能存在一条记录。"
+          action={
             <Button onClick={() => setLoginFlowOpen(true)} size="sm">
               邮箱密码登录添加
             </Button>
-          </div>
-          <p className="text-muted-foreground text-sm">
-            维护平台代查询用的 EA 账号池。凭据写入后即加密存储，列表只展示健康状态，
-            任何明文都不会回显。同一个 persona_id 只能存在一条记录。
-          </p>
-        </header>
+          }
+        />
 
         <Card>
           <CardHeader>
@@ -614,7 +614,7 @@ export default function EAAccountsAdminPage() {
         </Card>
 
         <section className="space-y-3">
-          <h2 className="text-lg font-semibold">账号池（{list.data?.length ?? 0}）</h2>
+          <SectionHeading className="">账号池（{list.data?.length ?? 0}）</SectionHeading>
           {list.isLoading ? (
             <div className="text-muted-foreground p-8 text-center">加载中…</div>
           ) : (

@@ -74,12 +74,11 @@ export function AppSidebar({ onNavClick }: AppSidebarProps) {
 
   return (
     <nav className="flex h-full flex-col gap-1 px-3 py-4">
-      <Link
-        href="/dashboard"
-        className="mb-4 px-3 text-lg font-bold tracking-tight"
-        onClick={onNavClick}
-      >
-        BF-Manager
+      <Link href="/dashboard" className="mb-6 flex items-center gap-2.5 px-3" onClick={onNavClick}>
+        <span className="h-5 w-[3px] shrink-0 bg-amber-500" />
+        <span className="font-display text-base font-semibold tracking-[0.18em] text-white uppercase">
+          BF-Manager
+        </span>
       </Link>
 
       {NAV_GROUPS.map((group) => {
@@ -87,7 +86,7 @@ export function AppSidebar({ onNavClick }: AppSidebarProps) {
         return (
           <div key={group.title ?? "_main"} className="mt-2">
             {group.title ? (
-              <div className="text-muted-foreground mb-1 px-3 text-xs font-medium tracking-wider uppercase">
+              <div className="text-muted-foreground/70 mb-1.5 px-3 text-[11px] font-medium tracking-[0.18em] uppercase">
                 {group.title}
               </div>
             ) : null}
@@ -100,10 +99,11 @@ export function AppSidebar({ onNavClick }: AppSidebarProps) {
                   href={item.href}
                   onClick={onNavClick}
                   className={cn(
-                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                    "relative flex items-center gap-3 rounded-sm px-3 py-2 text-sm transition-colors",
+                    "before:bg-foreground before:absolute before:top-1/2 before:left-0 before:h-5 before:w-[3px] before:-translate-y-1/2 before:transition-opacity",
                     active
-                      ? "bg-muted text-foreground font-medium"
-                      : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                      ? "text-foreground bg-white/10 font-medium before:opacity-100"
+                      : "text-muted-foreground hover:text-foreground before:opacity-0 hover:bg-white/5",
                   )}
                 >
                   <Icon className="size-4 shrink-0" />

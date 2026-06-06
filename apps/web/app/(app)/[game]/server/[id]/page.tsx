@@ -310,7 +310,7 @@ function PlayersList({ players }: { players: ServerPlayer[] }) {
       key: "name",
       header: "玩家",
       cell: (p) => (
-        <Link href={`/${game}/player/${p.persona_id}`} className="text-primary hover:underline">
+        <Link href={`/${game}/player/${p.persona_id}`} className="text-foreground hover:underline">
           {p.display_name}
         </Link>
       ),
@@ -367,7 +367,7 @@ function RotationList({ items }: { items: MapRotationItem[] }) {
                 <div className="flex items-center justify-between">
                   <span className="font-medium">{mapLabel}</span>
                   {m.is_current ? (
-                    <span className="bg-primary text-primary-foreground rounded px-2 py-0.5 text-xs">
+                    <span className="bg-foreground text-background rounded px-2 py-0.5 text-xs">
                       当前
                     </span>
                   ) : null}

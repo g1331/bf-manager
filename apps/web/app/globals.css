@@ -2,10 +2,10 @@
 @plugin "tailwindcss-animate";
 
 /* ========================================================================
- * 品牌色彩系统 — 战地琥珀暖色调
+ * 品牌色彩系统 — 琥珀强调 + 中性深底
  * - :root 浅色主题（琥珀金品牌色 + 暖色中性底）
- * - .dark 深色主题（明亮琥珀 + 深暖底）
- * - [data-theme="bf1"] 游戏专属覆盖（更偏棕红战地质感）
+ * - .dark 深色主题（中性深灰黑底 + 琥珀强调，去除暗红偏色，贴近着陆页纯黑）
+ * - [data-theme="bf1"] 游戏专属覆盖（深色背景同走中性，仅主按钮色相偏橙）
  * ====================================================================== */
 
 @layer base {
@@ -42,32 +42,32 @@
   }
 
   .dark {
-    --background: oklch(0.14 0.02 55);
-    --foreground: oklch(0.95 0.01 65);
+    --background: oklch(0.14 0 0);
+    --foreground: oklch(0.96 0 0);
 
-    --card: oklch(0.18 0.02 55);
-    --card-foreground: oklch(0.95 0.01 65);
+    --card: oklch(0.18 0 0);
+    --card-foreground: oklch(0.96 0 0);
 
-    --popover: oklch(0.18 0.02 55);
-    --popover-foreground: oklch(0.95 0.01 65);
+    --popover: oklch(0.18 0 0);
+    --popover-foreground: oklch(0.96 0 0);
 
     --primary: oklch(0.72 0.15 60);
-    --primary-foreground: oklch(0.14 0.02 55);
+    --primary-foreground: oklch(0.14 0 0);
 
-    --secondary: oklch(0.24 0.02 55);
-    --secondary-foreground: oklch(0.95 0.01 65);
+    --secondary: oklch(0.24 0 0);
+    --secondary-foreground: oklch(0.96 0 0);
 
-    --muted: oklch(0.24 0.02 55);
-    --muted-foreground: oklch(0.65 0.03 60);
+    --muted: oklch(0.24 0 0);
+    --muted-foreground: oklch(0.65 0 0);
 
-    --accent: oklch(0.24 0.03 55);
-    --accent-foreground: oklch(0.95 0.01 65);
+    --accent: oklch(0.24 0 0);
+    --accent-foreground: oklch(0.96 0 0);
 
     --destructive: oklch(0.58 0.22 27);
     --destructive-foreground: oklch(0.98 0 0);
 
-    --border: oklch(0.28 0.02 55);
-    --input: oklch(0.28 0.02 55);
+    --border: oklch(0.28 0 0);
+    --input: oklch(0.28 0 0);
     --ring: oklch(0.72 0.15 60);
   }
 
@@ -81,20 +81,20 @@
   }
 
   [data-theme="bf1"].dark {
-    --background: oklch(0.18 0.02 50);
-    --foreground: oklch(0.95 0.01 50);
-    --card: oklch(0.22 0.02 50);
-    --card-foreground: oklch(0.95 0.01 50);
-    --popover: oklch(0.22 0.02 50);
-    --popover-foreground: oklch(0.95 0.01 50);
+    --background: oklch(0.14 0 0);
+    --foreground: oklch(0.96 0 0);
+    --card: oklch(0.18 0 0);
+    --card-foreground: oklch(0.96 0 0);
+    --popover: oklch(0.18 0 0);
+    --popover-foreground: oklch(0.96 0 0);
     --primary: oklch(0.72 0.15 50);
-    --primary-foreground: oklch(0.18 0.02 50);
-    --secondary: oklch(0.28 0.02 50);
-    --secondary-foreground: oklch(0.95 0.01 50);
-    --muted: oklch(0.28 0.02 50);
-    --muted-foreground: oklch(0.7 0.02 50);
-    --border: oklch(0.3 0.02 50);
-    --input: oklch(0.3 0.02 50);
+    --primary-foreground: oklch(0.14 0 0);
+    --secondary: oklch(0.24 0 0);
+    --secondary-foreground: oklch(0.96 0 0);
+    --muted: oklch(0.24 0 0);
+    --muted-foreground: oklch(0.65 0 0);
+    --border: oklch(0.28 0 0);
+    --input: oklch(0.28 0 0);
   }
 }
 

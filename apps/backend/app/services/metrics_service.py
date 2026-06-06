@@ -37,7 +37,9 @@ def classify_path(path: str) -> str | None:
     if not path.startswith(prefix):
         return None
     parts = [p for p in path[len(prefix) :].split("/") if p]
-    if not parts or parts[0] in {"health", "openapi.json", "docs", "redoc"}:
+    # healthz 是容器与负载均衡探活端点（注册于 /api/v1/healthz），高频且无 cookie，
+    # 计入会持续抬高访问量并向热门接口注入噪声分组，须按真实路径段排除。
+    if not parts or parts[0] in {"healthz", "openapi.json", "docs", "redoc"}:
         return None
     labels: list[str] = []
     for segment in parts:

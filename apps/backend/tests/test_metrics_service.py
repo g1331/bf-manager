@@ -22,7 +22,8 @@ def test_classify_path_groups_by_resource() -> None:
 
 
 def test_classify_path_excludes_non_business_paths() -> None:
-    assert classify_path("/api/v1/health") is None
+    # 健康检查端点实际注册于 /api/v1/healthz（容器与负载均衡探活），须被排除
+    assert classify_path("/api/v1/healthz") is None
     assert classify_path("/api/v1/openapi.json") is None
     assert classify_path("/docs") is None
     assert classify_path("/") is None

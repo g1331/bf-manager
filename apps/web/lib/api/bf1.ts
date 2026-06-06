@@ -309,9 +309,8 @@ export const bf1Api = {
       `/bf1/server-admin/${gameId}/ban/${personaId}`,
     ),
 
-  adminChooseLevel: (gameId: number, persistedGameId: string, levelIndex: number) =>
+  adminChooseLevel: (gameId: number, levelIndex: number) =>
     api.post<{ success: boolean; message: string | null }>(`/bf1/server-admin/${gameId}/level`, {
-      persisted_game_id: persistedGameId,
       level_index: levelIndex,
     }),
 

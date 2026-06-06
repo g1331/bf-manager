@@ -51,12 +51,13 @@ export function AdminPanel({ gameId, detail }: AdminPanelProps) {
         const res = await bf1Api.adminBan(gameId, pending.player.persona_id);
         toast.success(res.message ?? "已封禁");
       } else if (pending.type === "level") {
-        const persisted = detail.summary.persisted_game_id;
-        if (!persisted) {
-          toast.error("缺少 persisted_game_id，无法换图");
+        // 换图目标由后端依授权服务器派生；此处仅做一次前端预检，服务器尚未回填
+        // persisted_game_id 时直接提示，省去一次必然失败的请求往返。
+        if (!detail.summary.persisted_game_id) {
+          toast.error("服务器尚未完成初始化，无法换图");
           return;
         }
-        const res = await bf1Api.adminChooseLevel(gameId, persisted, pending.index);
+        const res = await bf1Api.adminChooseLevel(gameId, pending.index);
         toast.success(res.message ?? "已切换地图");
       } else if (pending.type === "addVip") {
         const res = await bf1Api.adminAddVip(gameId, pending.personaId);

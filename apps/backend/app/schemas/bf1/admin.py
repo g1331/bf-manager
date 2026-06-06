@@ -21,7 +21,8 @@ class ServerMemberRequest(BaseModel):
 
 
 class ChooseLevelRequest(BaseModel):
-    persisted_game_id: str = Field(..., min_length=8, max_length=64)
+    """换图请求。换图目标由后端依授权服务器自身记录派生，请求体仅需地图序号。"""
+
     level_index: int = Field(..., ge=0, le=100)
 
 

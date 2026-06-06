@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Request
 
 from app.api.deps import CurrentUser, DbDep
+from app.api.errors import ForbiddenError
 from app.schemas.bf1.admin import (
     AdminActionResult,
     BanPlayerRequest,
@@ -155,9 +156,14 @@ async def choose_level(
     request: Request,
 ) -> AdminActionResult:
     authz = ServerAuthzService(db)
-    await authz.require_role(user=user, game="bf1", server_id=game_id, min_role="admin")
+    server = await authz.require_role(user=user, game="bf1", server_id=game_id, min_role="admin")
+    # 换图目标以授权服务器自身记录的 persisted_game_id 为准，不接受请求体传入值，
+    # 与 ban/vip/admin 一致地只信任服务端可信标识，避免借他服 guid 越权换图。
+    # 服务器尚未被 serverInfo 回填（persisted_game_id 为空）时无法换图，fail-closed 拒绝。
+    if server.persisted_game_id is None:
+        raise ForbiddenError(message="服务器尚未完成初始化，无法执行换图操作")
     service = _admin_service(db, request, user, game_id)
-    await service.choose_level(payload.persisted_game_id, payload.level_index)
+    await service.choose_level(server.persisted_game_id, payload.level_index)
     return AdminActionResult(
         success=True,
         message=f"已切换到地图序号 {payload.level_index}",

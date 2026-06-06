@@ -7,6 +7,7 @@ import { Search } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { toast } from "sonner";
 import { bf1Api, type PersonaBrief } from "@/lib/api/bf1";
 import { ApiException } from "@/lib/api-client";
@@ -43,10 +44,11 @@ export default function PlayerSearchPage() {
 
   return (
     <main className="mx-auto max-w-3xl space-y-6 px-4 py-6 sm:px-6">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold sm:text-3xl">玩家战绩查询</h1>
-        <p className="text-muted-foreground text-sm">按 EA 昵称查询 Battlefield 1 玩家战绩</p>
-      </header>
+      <PageHeader
+        kicker="Stats"
+        title="玩家战绩查询"
+        description="按 EA 昵称查询 Battlefield 1 玩家战绩"
+      />
 
       <form onSubmit={submit} className="flex gap-2">
         <Input

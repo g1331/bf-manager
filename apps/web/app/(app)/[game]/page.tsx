@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { getGame } from "@/lib/game-registry";
 
 interface PageProps {
@@ -13,10 +14,7 @@ export default async function GameEntryPage({ params }: PageProps) {
 
   return (
     <main className="mx-auto max-w-4xl space-y-6 px-4 py-8 sm:px-6">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold sm:text-3xl">{meta.displayName}</h1>
-        <p className="text-muted-foreground">{meta.tagline}</p>
-      </header>
+      <PageHeader kicker={meta.shortName} title={meta.displayName} description={meta.tagline} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Card>

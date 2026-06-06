@@ -72,7 +72,7 @@ export function UserMenu() {
           )}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="dark w-56">
         <DropdownMenuLabel className="flex flex-col gap-0.5">
           <span className="truncate">{displayLabel}</span>
           <span className="text-muted-foreground text-xs font-normal">{subtitleLabel}</span>

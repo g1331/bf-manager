@@ -12,15 +12,16 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="min-h-screen">
-      {/* 桌面端固定侧边栏 */}
-      <aside className="bg-background fixed inset-y-0 left-0 z-30 hidden w-60 border-r lg:block">
+    // 应用界面统一深色「指挥台」外壳：根节点挂 dark，token 全量切到深色值
+    <div className="dark bg-background text-foreground min-h-screen">
+      {/* 桌面端固定侧边栏 —— 比内容区略亮一档，形成面板分层 */}
+      <aside className="bg-card fixed inset-y-0 left-0 z-30 hidden w-60 border-r lg:block">
         <AppSidebar />
       </aside>
 
       {/* 移动端 Sheet 侧边栏 */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="w-60 p-0">
+        <SheetContent side="left" className="dark bg-card text-foreground w-60 p-0">
           <SheetTitle className="sr-only">导航菜单</SheetTitle>
           <AppSidebar onNavClick={() => setMobileOpen(false)} />
         </SheetContent>
@@ -40,7 +41,10 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
             <Menu className="size-5" />
           </Button>
 
-          <Link href="/dashboard" className="text-sm font-semibold lg:hidden">
+          <Link
+            href="/dashboard"
+            className="font-display text-sm font-semibold tracking-[0.15em] text-white uppercase lg:hidden"
+          >
             BF-Manager
           </Link>
 

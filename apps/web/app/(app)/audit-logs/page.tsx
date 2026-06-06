@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PageHeader } from "@/components/layout/PageHeader";
 import {
   Sheet,
   SheetContent,
@@ -81,7 +82,7 @@ export default function AuditLogsPage() {
       header: "结果",
       cell: (l) =>
         l.result === "success" ? (
-          <span className="text-emerald-600">成功</span>
+          <span className="text-muted-foreground">成功</span>
         ) : (
           <span className="text-destructive">失败</span>
         ),
@@ -93,7 +94,7 @@ export default function AuditLogsPage() {
         l.server_id ? (
           <Link
             href={`/${l.game}/server/${l.server_id}`}
-            className="text-primary tabular-nums hover:underline"
+            className="text-foreground tabular-nums hover:underline"
           >
             {l.server_id}
           </Link>
@@ -108,7 +109,7 @@ export default function AuditLogsPage() {
         l.target_persona_id ? (
           <Link
             href={`/${l.game}/player/${l.target_persona_id}`}
-            className="text-primary tabular-nums hover:underline"
+            className="text-foreground tabular-nums hover:underline"
           >
             {l.target_persona_id}
           </Link>
@@ -128,70 +129,73 @@ export default function AuditLogsPage() {
 
   return (
     <main className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6">
-      <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold sm:text-3xl">操作日志</h1>
-          <p className="text-muted-foreground text-sm">查看自己的服管操作历史</p>
-        </div>
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="outline">
-              <Filter className="size-4" />
-              筛选
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="right" className="w-full sm:max-w-md">
-            <SheetHeader>
-              <SheetTitle>筛选条件</SheetTitle>
-              <SheetDescription>按服务器或操作类型过滤</SheetDescription>
-            </SheetHeader>
-            <div className="space-y-4 py-6">
-              <div className="space-y-2">
-                <Label htmlFor="game-filter">游戏</Label>
-                <Input
-                  id="game-filter"
-                  value={filters.game ?? ""}
-                  onChange={(e) => setFilters((f) => ({ ...f, game: e.target.value || undefined }))}
-                  placeholder="bf1 / bfv / bf2042"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="server-filter">服务器 game id</Label>
-                <Input
-                  id="server-filter"
-                  inputMode="numeric"
-                  value={filters.serverId ?? ""}
-                  onChange={(e) =>
-                    setFilters((f) => ({ ...f, serverId: e.target.value || undefined }))
-                  }
-                  placeholder="例: 8901234567890"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="action-filter">操作类型</Label>
-                <Input
-                  id="action-filter"
-                  value={filters.action ?? ""}
-                  onChange={(e) =>
-                    setFilters((f) => ({ ...f, action: e.target.value || undefined }))
-                  }
-                  placeholder="kick_player / add_ban / choose_level"
-                />
-              </div>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => {
-                  setFilters({});
-                  setPage(1);
-                }}
-              >
-                清空筛选
+      <PageHeader
+        kicker="Audit"
+        title="操作日志"
+        description="查看自己的服管操作历史"
+        action={
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline">
+                <Filter className="size-4" />
+                筛选
               </Button>
-            </div>
-          </SheetContent>
-        </Sheet>
-      </header>
+            </SheetTrigger>
+            <SheetContent side="right" className="dark w-full sm:max-w-md">
+              <SheetHeader>
+                <SheetTitle>筛选条件</SheetTitle>
+                <SheetDescription>按服务器或操作类型过滤</SheetDescription>
+              </SheetHeader>
+              <div className="space-y-4 py-6">
+                <div className="space-y-2">
+                  <Label htmlFor="game-filter">游戏</Label>
+                  <Input
+                    id="game-filter"
+                    value={filters.game ?? ""}
+                    onChange={(e) =>
+                      setFilters((f) => ({ ...f, game: e.target.value || undefined }))
+                    }
+                    placeholder="bf1 / bfv / bf2042"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="server-filter">服务器 game id</Label>
+                  <Input
+                    id="server-filter"
+                    inputMode="numeric"
+                    value={filters.serverId ?? ""}
+                    onChange={(e) =>
+                      setFilters((f) => ({ ...f, serverId: e.target.value || undefined }))
+                    }
+                    placeholder="例: 8901234567890"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="action-filter">操作类型</Label>
+                  <Input
+                    id="action-filter"
+                    value={filters.action ?? ""}
+                    onChange={(e) =>
+                      setFilters((f) => ({ ...f, action: e.target.value || undefined }))
+                    }
+                    placeholder="kick_player / add_ban / choose_level"
+                  />
+                </div>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    setFilters({});
+                    setPage(1);
+                  }}
+                >
+                  清空筛选
+                </Button>
+              </div>
+            </SheetContent>
+          </Sheet>
+        }
+      />
 
       {logs.isLoading ? (
         <div className="text-muted-foreground p-12 text-center">加载中…</div>

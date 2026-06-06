@@ -23,6 +23,11 @@ interface NavItem {
   icon: React.ElementType;
   /** 高亮采用精确匹配（用于本身是其它路由前缀的入口，如运维概览 /admin）。 */
   exact?: boolean;
+  /**
+   * 额外参与高亮匹配的路由前缀。用于列表入口（复数 /players、/servers）覆盖其
+   * 对应的单数详情页（/player/:id、/server/:id），使从列表点进详情后入口仍高亮。
+   */
+  match?: string[];
 }
 
 interface NavGroup {
@@ -36,8 +41,18 @@ interface NavGroup {
 
 function buildNavGroups(): NavGroup[] {
   const gameItems: NavItem[] = ENABLED_GAMES.flatMap((g) => [
-    { label: `${g.shortName} 战绩查询`, href: `/${g.id}/players`, icon: Users },
-    { label: `${g.shortName} 服务器`, href: `/${g.id}/servers`, icon: Server },
+    {
+      label: `${g.shortName} 战绩查询`,
+      href: `/${g.id}/players`,
+      icon: Users,
+      match: [`/${g.id}/player`],
+    },
+    {
+      label: `${g.shortName} 服务器`,
+      href: `/${g.id}/servers`,
+      icon: Server,
+      match: [`/${g.id}/server`],
+    },
   ]);
 
   return [
@@ -73,7 +88,8 @@ const NAV_GROUPS = buildNavGroups();
 function isActive(pathname: string, item: NavItem): boolean {
   if (item.href === "#") return false;
   if (item.exact) return pathname === item.href;
-  return pathname === item.href || pathname.startsWith(`${item.href}/`);
+  const prefixes = [item.href, ...(item.match ?? [])];
+  return prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
 interface AppSidebarProps {

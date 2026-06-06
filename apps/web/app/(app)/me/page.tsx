@@ -36,10 +36,12 @@ export default function MePage() {
   const [logPage, setLogPage] = useState(1);
 
   useEffect(() => {
-    if (!session.isLoading && !session.data) {
+    // 会话请求自身失败（5xx、网络中断等非 401 错误）时不当作未登录处理，避免把仍持有
+    // 有效会话的用户误踢到登录页；getSession 仅在 401 时返回 null。
+    if (!session.isLoading && !session.isError && !session.data) {
       router.replace("/login?next=/me");
     }
-  }, [session.isLoading, session.data, router]);
+  }, [session.isLoading, session.isError, session.data, router]);
 
   const bindings = useQuery<BindingListItem[]>({
     queryKey: ["my-ea-bindings"],

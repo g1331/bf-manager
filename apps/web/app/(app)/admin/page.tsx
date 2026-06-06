@@ -23,12 +23,15 @@ export default function AdminOverviewPage() {
 
   useEffect(() => {
     if (session.isLoading) return;
+    // 会话请求自身失败（5xx、网络中断等非 401 错误）时不当作未登录处理，避免把仍持有
+    // 有效会话的用户误踢到登录页；getSession 仅在 401 时返回 null。
+    if (session.isError) return;
     if (!session.data) {
       router.replace("/login?next=/admin");
     } else if (session.data.role !== "admin") {
-      router.replace("/stats");
+      router.replace("/me");
     }
-  }, [session.isLoading, session.data, router]);
+  }, [session.isLoading, session.isError, session.data, router]);
 
   const eaAccounts = useQuery<EAAccountItem[]>({
     queryKey: ["ea-accounts"],

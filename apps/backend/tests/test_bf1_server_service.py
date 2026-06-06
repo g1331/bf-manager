@@ -146,6 +146,7 @@ def _make_full_detail() -> dict:
             "mapName": "MP_Alps",
             "mapMode": "Conquest",
             "region": "Asia",
+            "serverType": "OFFICIAL",
             "slots": {
                 "Soldier": {"current": 42, "max": 64},
                 "Queue": {"current": 0, "max": 10},
@@ -209,6 +210,19 @@ def _make_full_detail() -> dict:
             ),
         },
     }
+
+
+def test_to_summary_official_flag_from_nested_server_info() -> None:
+    """详情接口（getFullServerDetails.result）官服判定取嵌套 serverInfo.serverType"""
+    raw = _make_full_detail()
+    assert _to_summary(raw).is_official is True
+
+    raw["serverInfo"]["serverType"] = "RANKED"
+    assert _to_summary(raw).is_official is False
+
+    # serverInfo 缺 serverType 时降为非官方，详情接口偶发缺字段不应误判官服
+    del raw["serverInfo"]["serverType"]
+    assert _to_summary(raw).is_official is False
 
 
 def test_to_extras_full_payload() -> None:

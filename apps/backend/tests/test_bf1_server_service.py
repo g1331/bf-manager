@@ -20,7 +20,7 @@ def _make_search_item() -> dict:
         "persistedGameId": "abc-def",
         "name": "Test Server",
         "mapName": "MP_Alps",
-        "mode": "Conquest",
+        "mapMode": "Conquest",
         "region": "Asia",
         "official": False,
         "ranked": True,
@@ -63,7 +63,7 @@ def test_to_summary_with_unknown_map_falls_back_to_raw_code() -> None:
 def test_to_summary_keeps_original_fields_when_translation_missing() -> None:
     raw = _make_search_item()
     raw["region"] = "Mars"
-    raw["mode"] = "WeirdMode"
+    raw["mapMode"] = "WeirdMode"
     summary = _to_summary(raw)
     assert summary.region == "Mars"
     assert summary.region_display_name == "Mars"
@@ -129,7 +129,7 @@ def _make_full_detail() -> dict:
             "guid": "1a9f5032-0cc0-4c0a-a83b-f229463ea39e",
             "serverBookmarkCount": "123",
             "mapName": "MP_Alps",
-            "mode": "Conquest",
+            "mapMode": "Conquest",
             "region": "Asia",
             "slots": {
                 "Soldier": {"current": 42, "max": 64},

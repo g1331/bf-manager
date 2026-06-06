@@ -414,7 +414,7 @@ function ServerCard({ server, onClick }: { server: ServerSummary; onClick: () =>
   return (
     <Card
       onClick={onClick}
-      className="hover:border-primary active:bg-muted/50 cursor-pointer transition"
+      className="group hover:border-primary active:bg-muted/50 cursor-pointer transition"
     >
       <CardContent className="flex gap-3 p-4">
         {server.map_image_url ? (
@@ -427,7 +427,7 @@ function ServerCard({ server, onClick }: { server: ServerSummary; onClick: () =>
               src={server.map_image_url}
               alt={mapLabel ?? ""}
               loading="lazy"
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
           </div>
         ) : null}

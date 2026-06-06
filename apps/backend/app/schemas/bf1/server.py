@@ -117,12 +117,13 @@ class ServerLifecycle(BaseModel):
 
 
 class PlatoonBrief(BaseModel):
-    """绑定到服务器的战队简介"""
+    """绑定到服务器的战队简介。emblem_url 占位符已展开为可加载 URL"""
 
     tag: str | None = None
     name: str | None = None
     size: int | None = None
     description: str | None = None
+    emblem_url: str | None = None
 
 
 class ServerExtras(BaseModel):

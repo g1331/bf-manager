@@ -382,19 +382,36 @@ function ServerInfoPanel({ extras }: { extras: ServerExtras }) {
           ) : null}
         </dl>
         {extras.platoon?.name ? (
-          <div className="mt-4 rounded-sm border border-white/10 bg-white/[0.03] p-3 text-sm">
-            <div className="mb-1 flex items-center gap-2 font-medium">
-              <ShieldCheck className="size-4 text-amber-300/80" />
-              战队 [{extras.platoon.tag ?? "—"}] {extras.platoon.name}
-              {extras.platoon.size != null ? (
-                <span className="text-xs text-white/45">{extras.platoon.size} 人</span>
-              ) : null}
+          <div className="mt-4 rounded-sm border border-white/10 bg-white/[0.03] p-3">
+            <div className="flex items-start gap-3">
+              {extras.platoon.emblem_url ? (
+                // EA 徽章域不在 next/image remotePatterns 内，用原生 img 避免额外配置
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={extras.platoon.emblem_url}
+                  alt={extras.platoon.name ?? extras.platoon.tag ?? "战队徽章"}
+                  className="size-12 shrink-0 rounded-sm object-contain"
+                  loading="lazy"
+                />
+              ) : (
+                <ShieldCheck className="mt-0.5 size-5 shrink-0 text-amber-300/80" />
+              )}
+              <div className="min-w-0 flex-1 text-sm">
+                <div className="mb-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 font-medium">
+                  <span>
+                    战队 [{extras.platoon.tag ?? "—"}] {extras.platoon.name}
+                  </span>
+                  {extras.platoon.size != null ? (
+                    <span className="text-xs text-white/45">{extras.platoon.size} 人</span>
+                  ) : null}
+                </div>
+                {extras.platoon.description ? (
+                  <p className="text-xs leading-relaxed whitespace-pre-line text-white/55">
+                    {extras.platoon.description}
+                  </p>
+                ) : null}
+              </div>
             </div>
-            {extras.platoon.description ? (
-              <p className="text-xs leading-relaxed whitespace-pre-line text-white/55">
-                {extras.platoon.description}
-              </p>
-            ) : null}
           </div>
         ) : null}
       </Panel>

@@ -22,7 +22,7 @@ def _make_search_item() -> dict:
         "mapName": "MP_Alps",
         "mapMode": "Conquest",
         "region": "Asia",
-        "official": False,
+        "serverType": "RANKED",
         "ranked": True,
         "hasPassword": False,
         "description": "hello",
@@ -50,6 +50,21 @@ def test_to_summary_translates_map_mode_region_and_normalizes_image() -> None:
     assert summary.player_count == 42
     assert summary.max_player_count == 64
     assert summary.queue_count == 3
+
+
+def test_to_summary_official_flag_from_server_type() -> None:
+    """官服判定取 serverType == "OFFICIAL"，EA 返回项不含 official 字段"""
+    raw = _make_search_item()
+    raw["serverType"] = "OFFICIAL"
+    assert _to_summary(raw).is_official is True
+
+    raw["serverType"] = "RANKED"
+    assert _to_summary(raw).is_official is False
+
+    # 缺 serverType 时即便残留 official=True，也不据此判官服（避免回退到已废弃字段）
+    raw.pop("serverType", None)
+    raw["official"] = True
+    assert _to_summary(raw).is_official is False
 
 
 def test_to_summary_with_unknown_map_falls_back_to_raw_code() -> None:
@@ -188,6 +203,10 @@ def _make_full_detail() -> dict:
             "name": "Alpha Bravo",
             "size": "20",
             "description": "战队简介",
+            "emblem": (
+                "https://eaassets-a.akamaihd.net/battlelog/bf-emblems"
+                "/prod_default/exclusive/[SIZE]/EA.[FORMAT]"
+            ),
         },
     }
 
@@ -222,6 +241,9 @@ def test_to_extras_full_payload() -> None:
     assert extras.platoon is not None
     assert extras.platoon.tag == "ABC"
     assert extras.platoon.size == 20
+    assert extras.platoon.emblem_url == (
+        "https://eaassets-a.akamaihd.net/battlelog/bf-emblems/prod_default/exclusive/512/EA.png"
+    )
 
 
 def test_to_extras_without_rsp_and_platoon() -> None:

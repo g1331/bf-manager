@@ -29,7 +29,7 @@ export default function StatsPage() {
       <PageHeader
         kicker="Overview"
         title="全站统计"
-        description="Battlefield 1 服务器与在线概况，面向所有玩家开放浏览。"
+        description="Battlefield 1 全服服务器、在线人数与热门地图模式概况"
       />
 
       {overview.isLoading ? (

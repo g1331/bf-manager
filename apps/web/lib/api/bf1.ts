@@ -226,6 +226,36 @@ export interface ServerDetail {
   raw: Record<string, unknown>;
 }
 
+/** 全站统计：同一指标按官方/私服与亚洲/欧洲/其他地区的拆分 */
+export interface CountBreakdown {
+  total: number;
+  official: number;
+  private: number;
+  asia: number;
+  eu: number;
+  other: number;
+}
+
+/** 按地图模式或游戏模式分组的服务器数与在线人数 */
+export interface NamedCount {
+  label: string;
+  servers: number;
+  players: number;
+}
+
+export interface BF1Overview {
+  available: boolean;
+  updated_at: string | null;
+  sample_pulls: number;
+  raw_count: number;
+  servers: CountBreakdown;
+  players: CountBreakdown;
+  queues: CountBreakdown;
+  spectators: CountBreakdown;
+  top_map_modes: NamedCount[];
+  mode_distribution: NamedCount[];
+}
+
 export const bf1Api = {
   searchPlayers: (name: string) =>
     api.get<PersonaSearchResult>(`/bf1/players/search?name=${encodeURIComponent(name)}`),
@@ -260,6 +290,8 @@ export const bf1Api = {
 
   getServer: (gameId: number) => api.get<ServerDetail>(`/bf1/servers/${gameId}`),
 
+  getOverview: () => api.get<BF1Overview>(`/bf1/overview`),
+
   // ===== 服管操作（需登录 + 权限）=====
   adminKick: (gameId: number, personaId: number, reason: string) =>
     api.post<{ success: boolean; message: string | null }>(`/bf1/server-admin/${gameId}/kick`, {
@@ -277,9 +309,28 @@ export const bf1Api = {
       `/bf1/server-admin/${gameId}/ban/${personaId}`,
     ),
 
-  adminChooseLevel: (gameId: number, persistedGameId: string, levelIndex: number) =>
+  adminChooseLevel: (gameId: number, levelIndex: number) =>
     api.post<{ success: boolean; message: string | null }>(`/bf1/server-admin/${gameId}/level`, {
-      persisted_game_id: persistedGameId,
       level_index: levelIndex,
     }),
+
+  adminAddVip: (gameId: number, personaId: number) =>
+    api.post<{ success: boolean; message: string | null }>(`/bf1/server-admin/${gameId}/vip`, {
+      persona_id: personaId,
+    }),
+
+  adminRemoveVip: (gameId: number, personaId: number) =>
+    api.delete<{ success: boolean; message: string | null }>(
+      `/bf1/server-admin/${gameId}/vip/${personaId}`,
+    ),
+
+  adminAddAdmin: (gameId: number, personaId: number) =>
+    api.post<{ success: boolean; message: string | null }>(`/bf1/server-admin/${gameId}/admin`, {
+      persona_id: personaId,
+    }),
+
+  adminRemoveAdmin: (gameId: number, personaId: number) =>
+    api.delete<{ success: boolean; message: string | null }>(
+      `/bf1/server-admin/${gameId}/admin/${personaId}`,
+    ),
 };

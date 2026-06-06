@@ -57,6 +57,7 @@ class EAAccountItem(BaseModel):
     enabled: bool
     last_used_at: datetime | None
     failure_count: int
+    use_count: int
     has_session: bool
     has_access_token: bool
     created_at: datetime

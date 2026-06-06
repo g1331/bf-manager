@@ -29,3 +29,6 @@ class EAAccount(Base, TimestampMixin):
 
     # 限流计数（简易实现，未来可换 Redis）
     failure_count: Mapped[int] = mapped_column(default=0, nullable=False)
+
+    # 累计被取用次数：每次成功取用（mark_used）自增 1，供运维观察账号负载分布
+    use_count: Mapped[int] = mapped_column(default=0, nullable=False)

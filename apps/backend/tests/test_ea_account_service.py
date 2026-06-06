@@ -147,6 +147,24 @@ async def test_set_disabled_keeps_failure_count(test_session) -> None:
     assert item.failure_count == 3
 
 
+async def test_mark_used_increments_use_count_and_resets_failure(test_session) -> None:
+    """mark_used 用数据库侧原子自增 use_count，并清零失败计数、刷新最近使用时间。"""
+    account = await _seed(test_session, persona_id=1001, failure_count=4)
+    service = EAAccountService(test_session)
+    await service.mark_used(1001)
+    await service.mark_used(1001)
+    refreshed = await _reload(test_session, account.id)
+    assert refreshed.use_count == 2
+    assert refreshed.failure_count == 0
+    assert refreshed.last_used_at is not None
+
+
+async def test_mark_used_missing_persona_is_noop(test_session) -> None:
+    """目标 persona 不在池中时 mark_used 不应报错（更新 0 行）。"""
+    service = EAAccountService(test_session)
+    await service.mark_used(424242)
+
+
 async def test_delete_removes_account(test_session) -> None:
     account = await _seed(test_session)
     service = EAAccountService(test_session)

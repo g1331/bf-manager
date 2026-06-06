@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from app.api.v1 import (
+    admin,
     audit,
     auth,
     ea_accounts,
@@ -25,6 +26,7 @@ api_router.include_router(games.router, prefix="/games", tags=["games"])
 api_router.include_router(audit.router, prefix="/audit-logs", tags=["audit"])
 api_router.include_router(memberships.router, prefix="/memberships", tags=["memberships"])
 api_router.include_router(ea_accounts.router, prefix="/ea-accounts", tags=["ea-accounts"])
+api_router.include_router(admin.router, prefix="/admin", tags=["admin"])
 # EA 邮箱密码登录任务：user 与 admin 两组对称端点。前缀显式包含 ``login-tasks``，
 # 避免被 ea_accounts.py 的 ``/{account_id}`` 动态路由吞掉。
 api_router.include_router(

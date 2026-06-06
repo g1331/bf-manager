@@ -428,13 +428,21 @@ export default function EAAccountsAdminPage() {
     },
     {
       key: "last_used",
-      header: "最近使用",
-      cell: (a) =>
-        a.last_used_at ? (
-          new Date(a.last_used_at).toLocaleString("zh-CN")
-        ) : (
-          <span className="text-muted-foreground">从未</span>
-        ),
+      header: "使用情况",
+      cell: (a) => (
+        <div className="space-y-0.5">
+          <div>
+            {a.last_used_at ? (
+              new Date(a.last_used_at).toLocaleString("zh-CN")
+            ) : (
+              <span className="text-muted-foreground">从未使用</span>
+            )}
+          </div>
+          <div className="text-muted-foreground text-xs tabular-nums">
+            累计取用 {a.use_count} 次
+          </div>
+        </div>
+      ),
     },
     {
       key: "actions",

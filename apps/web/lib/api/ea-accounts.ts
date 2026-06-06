@@ -7,6 +7,7 @@ export interface EAAccountItem {
   enabled: boolean;
   last_used_at: string | null;
   failure_count: number;
+  use_count: number;
   has_session: boolean;
   has_access_token: boolean;
   created_at: string;

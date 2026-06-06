@@ -14,8 +14,15 @@ class BanPlayerRequest(BaseModel):
     persona_id: int
 
 
+class ServerMemberRequest(BaseModel):
+    """VIP / 管理员名单的增减请求，仅需目标 persona。"""
+
+    persona_id: int
+
+
 class ChooseLevelRequest(BaseModel):
-    persisted_game_id: str = Field(..., min_length=8, max_length=64)
+    """换图请求。换图目标由后端依授权服务器自身记录派生，请求体仅需地图序号。"""
+
     level_index: int = Field(..., ge=0, le=100)
 
 

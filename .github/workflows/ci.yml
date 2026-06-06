@@ -70,7 +70,7 @@ jobs:
           ENVIRONMENT: ci
         run: uv run pytest -q
 
-      - name: Alembic migration roundtrip (upgrade → seed → upgrade head → assert → downgrade -1 → assert)
+      - name: Alembic migration roundtrip (upgrade → seed → upgrade head → assert → downgrade base → assert)
         env:
           DATABASE_URL: postgresql+asyncpg://bf:bf@localhost:5432/bf_manager_migration_test
           EA_CRED_ENCRYPTION_KEY: ZGV2LW9ubHktY2hhbmdlLW1lLWluLXByb2QtMzJieXQ=
@@ -88,7 +88,11 @@ jobs:
           uv run python -m tests.migration_seed
           uv run alembic upgrade head
           uv run python -m tests.migration_assert upgraded
-          uv run alembic downgrade -1
+          # 显式回退到身份解耦迁移之前的基线，而非相对的 downgrade -1：
+          # 往后每叠加一个 head 迁移，相对步数都会偏移，使断言落不到预期状态。
+          # 锚定到 20260524_0001 后，无论上面堆叠多少迁移，回退后都稳定处于
+          # ea_bindings 尚未拆分的初始 schema，assert_downgraded 据此校验。
+          uv run alembic downgrade 20260524_0001
           uv run python -m tests.migration_assert downgraded
           uv run alembic upgrade head
           uv run python -m tests.migration_assert upgraded

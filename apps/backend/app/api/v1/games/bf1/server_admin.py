@@ -10,6 +10,7 @@ from app.schemas.bf1.admin import (
     BanPlayerRequest,
     ChooseLevelRequest,
     KickPlayerRequest,
+    ServerMemberRequest,
 )
 from app.services.authz_service import ServerAuthzService
 from app.services.bf1.server_admin_service import BF1ServerAdminService
@@ -82,6 +83,67 @@ async def remove_ban(
     service = _admin_service(db, request, user, game_id)
     await service.remove_ban(persona_id, server.server_id)
     return AdminActionResult(success=True, message=f"已解除玩家 {persona_id} 的封禁")
+
+
+@router.post("/{game_id}/vip", response_model=AdminActionResult)
+async def add_vip(
+    game_id: int,
+    payload: ServerMemberRequest,
+    db: DbDep,
+    user: CurrentUser,
+    request: Request,
+) -> AdminActionResult:
+    authz = ServerAuthzService(db)
+    server = await authz.require_role(user=user, game="bf1", server_id=game_id, min_role="admin")
+    service = _admin_service(db, request, user, game_id)
+    await service.add_vip(payload.persona_id, server.server_id)
+    return AdminActionResult(success=True, message=f"已添加 VIP {payload.persona_id}")
+
+
+@router.delete("/{game_id}/vip/{persona_id}", response_model=AdminActionResult)
+async def remove_vip(
+    game_id: int,
+    persona_id: int,
+    db: DbDep,
+    user: CurrentUser,
+    request: Request,
+) -> AdminActionResult:
+    authz = ServerAuthzService(db)
+    server = await authz.require_role(user=user, game="bf1", server_id=game_id, min_role="admin")
+    service = _admin_service(db, request, user, game_id)
+    await service.remove_vip(persona_id, server.server_id)
+    return AdminActionResult(success=True, message=f"已移除 VIP {persona_id}")
+
+
+# 管理员名单的增减比 VIP 更敏感，限定服主（owner）级别，避免管理员互相增删。
+@router.post("/{game_id}/admin", response_model=AdminActionResult)
+async def add_admin(
+    game_id: int,
+    payload: ServerMemberRequest,
+    db: DbDep,
+    user: CurrentUser,
+    request: Request,
+) -> AdminActionResult:
+    authz = ServerAuthzService(db)
+    server = await authz.require_role(user=user, game="bf1", server_id=game_id, min_role="owner")
+    service = _admin_service(db, request, user, game_id)
+    await service.add_admin(payload.persona_id, server.server_id)
+    return AdminActionResult(success=True, message=f"已添加管理员 {payload.persona_id}")
+
+
+@router.delete("/{game_id}/admin/{persona_id}", response_model=AdminActionResult)
+async def remove_admin(
+    game_id: int,
+    persona_id: int,
+    db: DbDep,
+    user: CurrentUser,
+    request: Request,
+) -> AdminActionResult:
+    authz = ServerAuthzService(db)
+    server = await authz.require_role(user=user, game="bf1", server_id=game_id, min_role="owner")
+    service = _admin_service(db, request, user, game_id)
+    await service.remove_admin(persona_id, server.server_id)
+    return AdminActionResult(success=True, message=f"已移除管理员 {persona_id}")
 
 
 @router.post("/{game_id}/level", response_model=AdminActionResult)

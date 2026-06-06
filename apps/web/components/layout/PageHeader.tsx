@@ -21,8 +21,8 @@ export function PageHeader({
   return (
     <header className={cn("space-y-2", className)}>
       {kicker ? (
-        <div className="font-display text-muted-foreground flex items-center gap-2 text-xs font-medium tracking-[0.2em] uppercase">
-          <span className="bg-muted-foreground h-[2px] w-6" />
+        <div className="font-display flex items-center gap-2 text-xs font-medium tracking-[0.2em] text-amber-500 uppercase">
+          <span className="h-[2px] w-6 bg-amber-500" />
           {kicker}
         </div>
       ) : null}

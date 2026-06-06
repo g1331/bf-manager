@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -10,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResponsiveTable, type Column } from "@/components/common/ResponsiveTable";
 import { AdminPanel } from "@/components/bf1/AdminPanel";
 import { useSession } from "@/hooks/useSession";
+import { auditApi, type AuditLogItem } from "@/lib/api/audit";
 import {
   bf1Api,
   type ServerPlayer,
@@ -17,6 +19,17 @@ import {
   type ServerExtras,
   type ServerMember,
 } from "@/lib/api/bf1";
+
+const ACTION_LABEL: Record<string, string> = {
+  kick_player: "踢人",
+  add_ban: "封禁",
+  remove_ban: "解封",
+  choose_level: "换图",
+  add_vip: "添加 VIP",
+  remove_vip: "移除 VIP",
+  add_admin: "添加管理员",
+  remove_admin: "移除管理员",
+};
 
 export default function ServerDetailPage() {
   const { id, game } = useParams<{ id: string; game: string }>();
@@ -121,10 +134,11 @@ function ServerDetailView({
       <ServerInfoCard extras={extras} />
 
       <Tabs defaultValue="players" className="w-full">
-        <TabsList className={`grid w-full ${isLoggedIn ? "grid-cols-4" : "grid-cols-3"}`}>
+        <TabsList className={`grid w-full ${isLoggedIn ? "grid-cols-5" : "grid-cols-3"}`}>
           <TabsTrigger value="players">玩家列表（{players.length}）</TabsTrigger>
           <TabsTrigger value="rotation">地图轮换（{map_rotation.length}）</TabsTrigger>
           <TabsTrigger value="members">成员名单（{memberCount}）</TabsTrigger>
+          {isLoggedIn ? <TabsTrigger value="audit">本服审计</TabsTrigger> : null}
           {isLoggedIn ? <TabsTrigger value="admin">管理</TabsTrigger> : null}
         </TabsList>
         <TabsContent value="players">
@@ -136,6 +150,11 @@ function ServerDetailView({
         <TabsContent value="members">
           <MembersPanel extras={extras} />
         </TabsContent>
+        {isLoggedIn ? (
+          <TabsContent value="audit">
+            <ServerAuditTab game={game} gameId={gameId} />
+          </TabsContent>
+        ) : null}
         {isLoggedIn ? (
           <TabsContent value="admin">
             <AdminPanel gameId={gameId} detail={detail} />
@@ -331,6 +350,97 @@ function PlayersList({ players }: { players: ServerPlayer[] }) {
       rowKey={(p) => p.persona_id}
       emptyState="服务器内暂无玩家数据"
     />
+  );
+}
+
+function ServerAuditTab({ game, gameId }: { game: string; gameId: number }) {
+  const [page, setPage] = useState(1);
+  const logs = useQuery({
+    queryKey: ["audit-logs", "server", gameId, page],
+    queryFn: () => auditApi.list({ serverId: gameId, page, pageSize: 20 }),
+    enabled: Number.isFinite(gameId),
+  });
+
+  const columns: Column<AuditLogItem>[] = [
+    {
+      key: "time",
+      header: "时间",
+      cell: (l) => new Date(l.created_at).toLocaleString("zh-CN"),
+      isCardTitle: true,
+    },
+    { key: "action", header: "操作", cell: (l) => ACTION_LABEL[l.action] ?? l.action },
+    {
+      key: "result",
+      header: "结果",
+      cell: (l) =>
+        l.result === "success" ? (
+          <span className="text-muted-foreground">成功</span>
+        ) : (
+          <span className="text-destructive">失败</span>
+        ),
+    },
+    {
+      key: "target",
+      header: "目标玩家",
+      cell: (l) =>
+        l.target_persona_id ? (
+          <Link
+            href={`/${game}/player/${l.target_persona_id}`}
+            className="text-foreground tabular-nums hover:underline"
+          >
+            {l.target_persona_id}
+          </Link>
+        ) : (
+          "—"
+        ),
+    },
+    { key: "actor", header: "操作人", cell: (l) => String(l.acting_persona_id) },
+  ];
+
+  const totalPages =
+    logs.data && logs.data.page_size > 0 ? Math.ceil(logs.data.total / logs.data.page_size) : 0;
+
+  if (logs.isLoading) {
+    return <div className="text-muted-foreground p-8 text-center text-sm">加载中…</div>;
+  }
+  if (!logs.data) return null;
+
+  return (
+    <div className="space-y-4">
+      <ResponsiveTable
+        data={logs.data.items}
+        columns={columns}
+        rowKey={(l) => l.id}
+        emptyState="本服暂无操作记录"
+      />
+      {totalPages > 1 ? (
+        <Card>
+          <CardContent className="flex items-center justify-between p-4 text-sm">
+            <span className="text-muted-foreground tabular-nums">
+              共 {logs.data.total} 条 · 第 {logs.data.page} / {totalPages} 页
+            </span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                上一页
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                下一页
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+    </div>
   );
 }
 

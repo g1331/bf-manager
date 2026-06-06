@@ -86,7 +86,7 @@ function HeroSection() {
           BF-Manager
         </span>
         <Link
-          href="/login?next=/dashboard"
+          href="/login"
           className="inline-action text-sm tracking-wide text-white/60 uppercase transition-colors hover:text-white"
         >
           登录
@@ -143,10 +143,10 @@ function HeroSection() {
               <ChevronRight className="size-4 transition-transform group-hover:translate-x-1" />
             </Link>
             <Link
-              href="/login?next=/dashboard"
+              href="/login"
               className="font-display inline-flex items-center border border-white/30 px-9 py-3.5 text-sm font-semibold tracking-[0.15em] text-white uppercase backdrop-blur-sm transition-colors hover:border-white/60 hover:bg-white/5"
             >
-              登录后台
+              登录
             </Link>
           </motion.div>
         </div>

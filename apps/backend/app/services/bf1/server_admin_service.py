@@ -130,6 +130,54 @@ class BF1ServerAdminService:
             await self._audit_failure("remove_ban", payload, err, target_persona_id=persona_id)
             raise
 
+    async def add_vip(self, persona_id: int, ea_server_id: int) -> dict[str, Any]:
+        payload = {"persona_id": persona_id, "server_id": ea_server_id}
+        try:
+            async with self.client_provider.acquire() as client:
+                res = await client.addServerVip(persona_id, ea_server_id)
+                data = _ensure_dict_or_raise(res, "EA_ADD_VIP_FAILED")
+            await self._audit_success("add_vip", payload, target_persona_id=persona_id)
+            return data
+        except EAApiError as err:
+            await self._audit_failure("add_vip", payload, err, target_persona_id=persona_id)
+            raise
+
+    async def remove_vip(self, persona_id: int, ea_server_id: int) -> dict[str, Any]:
+        payload = {"persona_id": persona_id, "server_id": ea_server_id}
+        try:
+            async with self.client_provider.acquire() as client:
+                res = await client.removeServerVip(persona_id, ea_server_id)
+                data = _ensure_dict_or_raise(res, "EA_REMOVE_VIP_FAILED")
+            await self._audit_success("remove_vip", payload, target_persona_id=persona_id)
+            return data
+        except EAApiError as err:
+            await self._audit_failure("remove_vip", payload, err, target_persona_id=persona_id)
+            raise
+
+    async def add_admin(self, persona_id: int, ea_server_id: int) -> dict[str, Any]:
+        payload = {"persona_id": persona_id, "server_id": ea_server_id}
+        try:
+            async with self.client_provider.acquire() as client:
+                res = await client.addServerAdmin(persona_id, ea_server_id)
+                data = _ensure_dict_or_raise(res, "EA_ADD_ADMIN_FAILED")
+            await self._audit_success("add_admin", payload, target_persona_id=persona_id)
+            return data
+        except EAApiError as err:
+            await self._audit_failure("add_admin", payload, err, target_persona_id=persona_id)
+            raise
+
+    async def remove_admin(self, persona_id: int, ea_server_id: int) -> dict[str, Any]:
+        payload = {"persona_id": persona_id, "server_id": ea_server_id}
+        try:
+            async with self.client_provider.acquire() as client:
+                res = await client.removeServerAdmin(persona_id, ea_server_id)
+                data = _ensure_dict_or_raise(res, "EA_REMOVE_ADMIN_FAILED")
+            await self._audit_success("remove_admin", payload, target_persona_id=persona_id)
+            return data
+        except EAApiError as err:
+            await self._audit_failure("remove_admin", payload, err, target_persona_id=persona_id)
+            raise
+
     async def choose_level(self, persisted_game_id: str, level_index: int) -> dict[str, Any]:
         payload = {"persisted_game_id": persisted_game_id, "level_index": level_index}
         try:

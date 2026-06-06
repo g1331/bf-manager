@@ -42,7 +42,7 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
           </Button>
 
           <Link
-            href="/dashboard"
+            href="/stats"
             className="font-display text-sm font-semibold tracking-[0.15em] text-white uppercase lg:hidden"
           >
             BF-Manager

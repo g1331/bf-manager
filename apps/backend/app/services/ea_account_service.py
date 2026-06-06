@@ -5,7 +5,7 @@ from __future__ import annotations
 import contextlib
 from datetime import UTC, datetime
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.errors import EAApiError, NotFoundError, ValidationError
@@ -30,6 +30,7 @@ def _to_item(account: EAAccount) -> EAAccountItem:
         enabled=account.enabled,
         last_used_at=account.last_used_at,
         failure_count=account.failure_count,
+        use_count=account.use_count,
         has_session=account.encrypted_session is not None,
         has_access_token=account.encrypted_access_token is not None,
         created_at=account.created_at,
@@ -71,11 +72,17 @@ class EAAccountService:
         )
 
     async def mark_used(self, persona_id: int) -> None:
-        account = await self.db.scalar(select(EAAccount).where(EAAccount.persona_id == persona_id))
-        if account is None:
-            return
-        account.last_used_at = datetime.now(UTC)
-        account.failure_count = 0
+        # 数据库侧原子自增 use_count：账号池小时多个并发请求会命中同一 persona，
+        # 读改写会丢失计数，故用 SET use_count = use_count + 1 由数据库保证原子。
+        await self.db.execute(
+            update(EAAccount)
+            .where(EAAccount.persona_id == persona_id)
+            .values(
+                last_used_at=datetime.now(UTC),
+                failure_count=0,
+                use_count=EAAccount.use_count + 1,
+            )
+        )
         await self.db.commit()
 
     async def mark_failure(self, persona_id: int) -> None:

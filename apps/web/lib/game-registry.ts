@@ -16,6 +16,8 @@ export interface GameMeta {
   tagline: string;
   /** 图标路径（public/） */
   iconPath: string;
+  /** 着陆页游戏卡片用的官方封面 key art（public/） */
+  cardImage: string;
 }
 
 export const GAMES: Record<GameId, GameMeta> = {
@@ -27,6 +29,7 @@ export const GAMES: Record<GameId, GameMeta> = {
     enabled: true,
     tagline: "战争废土，重返一战",
     iconPath: "/games/bf1.svg",
+    cardImage: "/bf1/backgrounds/general/general-5.jpg",
   },
   bfv: {
     id: "bfv",
@@ -36,6 +39,7 @@ export const GAMES: Record<GameId, GameMeta> = {
     enabled: false,
     tagline: "二战群像（即将到来）",
     iconPath: "/games/bfv.svg",
+    cardImage: "/bfv/backgrounds/key-art.jpg",
   },
   bf2042: {
     id: "bf2042",
@@ -45,6 +49,7 @@ export const GAMES: Record<GameId, GameMeta> = {
     enabled: false,
     tagline: "近未来全境战场（即将到来）",
     iconPath: "/games/bf2042.svg",
+    cardImage: "/bf2042/backgrounds/key-art.jpg",
   },
 };
 

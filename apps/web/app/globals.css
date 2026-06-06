@@ -2,76 +2,76 @@
 @plugin "tailwindcss-animate";
 
 /* ========================================================================
- * shadcn/ui 主题变量系统
- * - :root 默认为浅色主题（中性色板）
- * - [data-theme="bf1"] 等覆盖 per-game 配色
- * - .dark / [data-theme-mode="dark"] 切换深色
+ * 品牌色彩系统 — 战地琥珀暖色调
+ * - :root 浅色主题（琥珀金品牌色 + 暖色中性底）
+ * - .dark 深色主题（明亮琥珀 + 深暖底）
+ * - [data-theme="bf1"] 游戏专属覆盖（更偏棕红战地质感）
  * ====================================================================== */
 
 @layer base {
   :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.15 0.01 285);
+    --background: oklch(0.98 0.008 75);
+    --foreground: oklch(0.15 0.02 60);
 
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.15 0.01 285);
+    --card: oklch(1 0.005 75);
+    --card-foreground: oklch(0.15 0.02 60);
 
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.15 0.01 285);
+    --popover: oklch(1 0.005 75);
+    --popover-foreground: oklch(0.15 0.02 60);
 
-    --primary: oklch(0.21 0.02 285);
+    --primary: oklch(0.55 0.15 60);
     --primary-foreground: oklch(0.98 0 0);
 
-    --secondary: oklch(0.96 0.01 285);
-    --secondary-foreground: oklch(0.21 0.02 285);
+    --secondary: oklch(0.94 0.02 65);
+    --secondary-foreground: oklch(0.25 0.04 60);
 
-    --muted: oklch(0.96 0.01 285);
-    --muted-foreground: oklch(0.55 0.02 285);
+    --muted: oklch(0.94 0.015 65);
+    --muted-foreground: oklch(0.5 0.03 60);
 
-    --accent: oklch(0.96 0.01 285);
-    --accent-foreground: oklch(0.21 0.02 285);
+    --accent: oklch(0.92 0.03 60);
+    --accent-foreground: oklch(0.25 0.04 60);
 
     --destructive: oklch(0.58 0.22 27);
     --destructive-foreground: oklch(0.98 0 0);
 
-    --border: oklch(0.92 0.01 285);
-    --input: oklch(0.92 0.01 285);
-    --ring: oklch(0.71 0.02 285);
+    --border: oklch(0.9 0.02 65);
+    --input: oklch(0.9 0.02 65);
+    --ring: oklch(0.55 0.15 60);
 
     --radius: 0.625rem;
   }
 
   .dark {
-    --background: oklch(0.15 0.01 285);
-    --foreground: oklch(0.98 0 0);
+    --background: oklch(0.14 0.02 55);
+    --foreground: oklch(0.95 0.01 65);
 
-    --card: oklch(0.18 0.01 285);
-    --card-foreground: oklch(0.98 0 0);
+    --card: oklch(0.18 0.02 55);
+    --card-foreground: oklch(0.95 0.01 65);
 
-    --popover: oklch(0.18 0.01 285);
-    --popover-foreground: oklch(0.98 0 0);
+    --popover: oklch(0.18 0.02 55);
+    --popover-foreground: oklch(0.95 0.01 65);
 
-    --primary: oklch(0.98 0 0);
-    --primary-foreground: oklch(0.21 0.02 285);
+    --primary: oklch(0.72 0.15 60);
+    --primary-foreground: oklch(0.14 0.02 55);
 
-    --secondary: oklch(0.27 0.01 285);
-    --secondary-foreground: oklch(0.98 0 0);
+    --secondary: oklch(0.24 0.02 55);
+    --secondary-foreground: oklch(0.95 0.01 65);
 
-    --muted: oklch(0.27 0.01 285);
-    --muted-foreground: oklch(0.71 0.02 285);
+    --muted: oklch(0.24 0.02 55);
+    --muted-foreground: oklch(0.65 0.03 60);
 
-    --accent: oklch(0.27 0.01 285);
-    --accent-foreground: oklch(0.98 0 0);
+    --accent: oklch(0.24 0.03 55);
+    --accent-foreground: oklch(0.95 0.01 65);
 
     --destructive: oklch(0.58 0.22 27);
     --destructive-foreground: oklch(0.98 0 0);
 
-    --border: oklch(0.27 0.01 285);
-    --input: oklch(0.27 0.01 285);
-    --ring: oklch(0.55 0.02 285);
+    --border: oklch(0.28 0.02 55);
+    --input: oklch(0.28 0.02 55);
+    --ring: oklch(0.72 0.15 60);
   }
 
-  /* BF1 主题：战争废土棕橙 */
+  /* BF1 主题：更偏棕红的战地废土色调，与全局琥珀金形成区分 */
   [data-theme="bf1"] {
     --primary: oklch(0.55 0.15 50);
     --primary-foreground: oklch(0.98 0 0);
@@ -87,6 +87,8 @@
     --card-foreground: oklch(0.95 0.01 50);
     --popover: oklch(0.22 0.02 50);
     --popover-foreground: oklch(0.95 0.01 50);
+    --primary: oklch(0.72 0.15 50);
+    --primary-foreground: oklch(0.18 0.02 50);
     --secondary: oklch(0.28 0.02 50);
     --secondary-foreground: oklch(0.95 0.01 50);
     --muted: oklch(0.28 0.02 50);
@@ -120,6 +122,7 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --font-display: var(--font-display), var(--font-sans), system-ui, sans-serif;
 }
 
 @layer base {
@@ -132,8 +135,11 @@
     font-family: var(--font-sans), system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /* iOS 安全区 */
     padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 
   /* 移动端最小触控区 44pt */
@@ -143,7 +149,6 @@
     min-height: 44px;
     min-width: 44px;
   }
-  /* 但行内 / 紧凑场景需要时可覆盖 */
   .inline-action,
   .compact-action,
   table button,

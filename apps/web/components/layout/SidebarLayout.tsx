@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { AppSidebar } from "./AppSidebar";
 import { UserMenu } from "./UserMenu";
+import { PageTransition } from "./PageTransition";
 
 export function SidebarLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -53,8 +54,8 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        {/* 页面内容 */}
-        {children}
+        {/* 页面内容：路由切换时淡入，取代默认硬切 */}
+        <PageTransition>{children}</PageTransition>
       </div>
     </div>
   );

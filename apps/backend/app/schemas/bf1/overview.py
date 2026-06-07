@@ -1,4 +1,4 @@
-"""BF1 全站统计聚合的响应模型"""
+"""BF1 全服统计聚合的响应模型"""
 
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ class NamedCount(BaseModel):
 
 
 class BF1Overview(BaseModel):
-    """BF1 全站统计快照。available=False 表示后台尚未拉到有效数据。"""
+    """BF1 全服统计快照。available=False 表示后台尚未拉到有效数据。"""
 
     available: bool = False
     updated_at: str | None = None

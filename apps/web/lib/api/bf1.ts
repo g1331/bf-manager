@@ -246,7 +246,7 @@ export interface ServerDetail {
   raw: Record<string, unknown>;
 }
 
-/** 全站统计：同一指标按官方/私服与亚洲/欧洲/其他地区的拆分 */
+/** 全服统计：同一指标按官方/私服与亚洲/欧洲/其他地区的拆分 */
 export interface CountBreakdown {
   total: number;
   official: number;

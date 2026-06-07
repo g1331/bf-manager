@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,9 +41,47 @@ type LocalLoginValues = z.infer<typeof localLoginSchema>;
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<main className="text-muted-foreground p-12 text-center">加载中…</main>}>
-      <LoginForm />
-    </Suspense>
+    // 登录页统一深色战地外壳：与首页、应用内深色基调连贯，消除此前浅色卡片导致的「哗白」突兀
+    <div className="dark text-foreground relative flex min-h-screen flex-col bg-black">
+      {/* 战地背景：静态大图 + 渐变遮罩压暗，保证表单文字与输入框可读。
+          用 absolute inset-0 置于内容流首位，靠 DOM 顺序压在底层，避免 -z-10 被父背景遮挡 */}
+      <div className="absolute inset-0" aria-hidden>
+        {/* EA 素材域不在 next/image remotePatterns 内，且为静态首屏图，用原生 img */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/bf1/backgrounds/general/general-3.jpg"
+          alt=""
+          className="h-full w-full object-cover object-center"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/85 to-black/55" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent" />
+      </div>
+
+      <header className="flex items-center justify-between px-6 py-6 sm:px-10">
+        <Link
+          href="/"
+          className="font-display text-base font-semibold tracking-[0.2em] text-white uppercase"
+        >
+          BF-Manager
+        </Link>
+        <Link
+          href="/"
+          className="text-sm tracking-wide text-white/60 uppercase transition-colors hover:text-white"
+        >
+          返回首页
+        </Link>
+      </header>
+
+      <Suspense
+        fallback={
+          <main className="text-muted-foreground flex flex-1 items-center justify-center p-12 text-sm">
+            加载中…
+          </main>
+        }
+      >
+        <LoginForm />
+      </Suspense>
+    </div>
   );
 }
 
@@ -96,9 +135,13 @@ function LoginForm() {
   };
 
   return (
-    <main className="flex min-h-screen items-start justify-center px-4 py-8 sm:items-center sm:py-16">
-      <Card className="w-full max-w-md">
+    <main className="flex flex-1 items-center justify-center px-4 py-8 sm:py-12">
+      <Card className="bg-card/80 w-full max-w-md border-white/10 shadow-2xl backdrop-blur-md">
         <CardHeader>
+          <div className="font-display mb-1 flex items-center gap-2 text-xs font-medium tracking-[0.2em] text-amber-500 uppercase">
+            <span className="h-[2px] w-6 bg-amber-500" />
+            Sign In
+          </div>
           <CardTitle>登录 BF-Manager</CardTitle>
           <CardDescription>
             使用 EA 账号的 Cookie 登录。一般只需要填 <strong>remid</strong>，sid 留空即可—— EA

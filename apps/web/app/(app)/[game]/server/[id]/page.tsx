@@ -153,7 +153,7 @@ function ServerDetailView({
 
 function ServerBackgroundLayer({ url }: { url: string | null }) {
   return (
-    <div className="pointer-events-none fixed inset-0 z-0 lg:left-60">
+    <div className="pointer-events-none fixed inset-0 z-0">
       {url ? (
         <div
           className="absolute inset-0 scale-110 bg-cover bg-center bg-no-repeat blur-[2px]"

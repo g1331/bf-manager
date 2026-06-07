@@ -1,46 +1,12 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { PageHeader } from "@/components/layout/PageHeader";
-import { getGame } from "@/lib/game-registry";
+import { redirect } from "next/navigation";
 
-interface PageProps {
-  params: Promise<{ game: string }>;
-}
-
-export default async function GameEntryPage({ params }: PageProps) {
-  const { game } = await params;
-  const meta = getGame(game)!;
-
-  return (
-    <main className="mx-auto max-w-4xl space-y-6 px-4 py-8 sm:px-6">
-      <PageHeader kicker={meta.shortName} title={meta.displayName} description={meta.tagline} />
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>战绩查询</CardTitle>
-            <CardDescription>按昵称或 persona ID 查询玩家生涯数据</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild className="w-full">
-              <Link href={`/${game}/players`}>开始查询</Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>服务器列表</CardTitle>
-            <CardDescription>浏览所有 {meta.shortName} 服务器</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild variant="outline" className="w-full">
-              <Link href={`/${game}/servers`}>查看服务器</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    </main>
-  );
+/**
+ * 进入某个游戏时直接落到该游戏的「概况」页。
+ *
+ * 新的左侧 rail + 顶部 tab 两级导航已取代旧的「战绩查询 / 服务器列表」双卡中转页，
+ * 因此这里不再渲染中转内容，而是重定向到概况。目前仅 BF1 启用（其余游戏在
+ * [game]/layout 中已 notFound），其概况即 /stats。
+ */
+export default function GameEntryPage() {
+  redirect("/stats");
 }

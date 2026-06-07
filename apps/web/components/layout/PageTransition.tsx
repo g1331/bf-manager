@@ -23,6 +23,10 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
       initial={reduceMotion ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.22, ease: "easeOut" }}
+      // 桌面端作为页面滚动容器：外框（顶栏 / 子标签 / rail / 好友侧栏）固定，内容在此滚动。
+      // 仅 opacity 动画、无 transform，不会成为 fixed 背景的 containing block。
+      // 自身撑满高度的页面（如服务器列表）会把滚动收进其内部区域，此容器则不出现滚动条。
+      className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto"
     >
       {children}
     </motion.div>

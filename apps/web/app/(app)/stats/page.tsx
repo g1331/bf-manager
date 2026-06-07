@@ -11,7 +11,7 @@ import { bf1Api, type BF1Overview, type CountBreakdown, type NamedCount } from "
 import { cn } from "@/lib/utils";
 
 /**
- * 公共全站统计页：免登录可访问，同时是登录后的默认落点。
+ * 公共全服统计页：免登录可访问，同时是登录后的默认落点。
  * 数据来自后端定时轮询 EA 聚合后写入的 Redis 缓存，前端只读并每 60 秒刷新一次。
  */
 export default function StatsPage() {
@@ -30,7 +30,7 @@ export default function StatsPage() {
     <main className="mx-auto max-w-5xl space-y-8 px-4 py-8 sm:px-6">
       <PageHeader
         kicker="Overview"
-        title="全站统计"
+        title="全服统计"
         description="Battlefield 1 全服服务器、在线人数与热门地图模式概况"
       />
 
@@ -39,7 +39,7 @@ export default function StatsPage() {
       ) : !ready ? (
         <section className="rounded-sm border border-white/10 bg-white/[0.04] p-6 backdrop-blur-md">
           <div className="text-muted-foreground text-sm">
-            全站统计数据正在汇总，稍后将在此处展示服务器总数与当前在线人数。
+            全服统计数据正在汇总，稍后将在此处展示服务器总数与当前在线人数。
           </div>
         </section>
       ) : (

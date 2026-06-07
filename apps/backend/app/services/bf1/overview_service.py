@@ -1,7 +1,7 @@
-"""BF1 全站统计聚合服务
+"""BF1 全服统计聚合服务
 
 后台定时任务并发调用 EA `GameServer.searchServers` 拉取全量服务器列表，按 guid 去重后
-聚合为全站快照写入 Redis。前端只读缓存，避免每个访客触发一次全量拉取。
+聚合为全服快照写入 Redis。前端只读缓存，避免每个访客触发一次全量拉取。
 
 聚合口径与上游 bf1 信息查询保持一致：官方服按 is_official 判定，地区按 EA 区域代号
 归入亚洲（Asia）、欧洲（EU）与其他三档。
@@ -30,9 +30,9 @@ SEARCH_LIMIT = 200
 # 热门地图模式展示条数
 TOP_MAP_MODE_LIMIT = 8
 
-# 全站统计专用筛选条件：只按服务器类型与人数档位过滤，与上游 bf1 信息查询完全一致。
+# 全服统计专用筛选条件：只按服务器类型与人数档位过滤，与上游 bf1 信息查询完全一致。
 # 网关默认 filter_dict 额外带 maps / gameModes 等维度的白名单，会改变 EA 返回的服务器
-# 集合，使总数偏离游戏内实际口径，故全站统计改走这份精简条件。
+# 集合，使总数偏离游戏内实际口径，故全服统计改走这份精简条件。
 OVERVIEW_FILTER = {
     "name": "",
     "serverType": {
@@ -79,7 +79,7 @@ def build_overview(
     sample_pulls: int,
     raw_count: int,
 ) -> BF1Overview:
-    """把去重后的服务器摘要列表聚合成全站快照。纯函数，便于单测。"""
+    """把去重后的服务器摘要列表聚合成全服快照。纯函数，便于单测。"""
     servers = CountBreakdown()
     players = CountBreakdown()
     queues = CountBreakdown()
@@ -141,7 +141,7 @@ def build_overview(
 
 
 async def fetch_overview(db: AsyncSession) -> BF1Overview:
-    """并发拉取并聚合全站统计。无任何一次成功拉取时抛出，由调用方决定是否覆盖缓存。
+    """并发拉取并聚合全服统计。无任何一次成功拉取时抛出，由调用方决定是否覆盖缓存。
 
     去重、判空与抛出全部放在 ``get_bf1_client`` 上下文内：searchServers 失败只返回字符串
     而非抛异常，若全失败时让上下文正常退出，工厂会走成功分支 mark_used 并清零失败计数，

@@ -50,7 +50,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     # EA 邮箱密码登录任务管理器：注入 finalizer 后纳入进程级单例
     init_task_manager(EALoginFinalizer().finalize)
 
-    # BF1 全站统计后台轮询：仅在启用 bf1 时启动，拉取 EA 聚合写 Redis 供 /bf1/overview 只读
+    # BF1 全服统计后台轮询：仅在启用 bf1 时启动，拉取 EA 聚合写 Redis 供 /bf1/overview 只读
     overview_task: asyncio.Task[None] | None = None
     if "bf1" in settings.games:
         overview_task = asyncio.create_task(overview_poller())

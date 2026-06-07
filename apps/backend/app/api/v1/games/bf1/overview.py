@@ -1,4 +1,4 @@
-"""BF1 全站统计路由（只读缓存，公开访问）"""
+"""BF1 全服统计路由（只读缓存，公开访问）"""
 
 from __future__ import annotations
 

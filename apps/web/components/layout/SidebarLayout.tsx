@@ -6,6 +6,7 @@ import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { AppRail } from "./AppRail";
+import { FriendsRail } from "./FriendsRail";
 import { MobileNav } from "./MobileNav";
 import { TopTabs } from "./TopTabs";
 import { UserMenu } from "./UserMenu";
@@ -113,6 +114,11 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
             <PageTransition>{children}</PageTransition>
           </div>
         </div>
+
+        {/* 右侧好友 / 派对侧栏：恒定占据展开宽度，主内容据此收窄、为右侧留白；
+            悬浮后在这片预留区内原地铺出面板，不挤压也不覆盖主内容；
+            社交数据待桌面端客户端接口接入。 */}
+        <FriendsRail />
       </div>
     </div>
   );

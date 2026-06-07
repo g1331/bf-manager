@@ -158,4 +158,31 @@
     min-height: 0;
     min-width: 0;
   }
+
+  /* 全站统一滚动条：细窄、半透明浅色方角滑块，取代各浏览器原生样式，
+     与战地大厅的极简滚动条一致；应用以深色为主，浅色滑块在深底上清晰可见。
+     方角滑块呼应全站硬朗几何（--radius 近直角）。 */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.18);
+    /* 2px 透明边 + padding-box 裁切，让滑块视觉更细、两侧留白 */
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.34);
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
 }

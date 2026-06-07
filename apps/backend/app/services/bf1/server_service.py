@@ -32,6 +32,17 @@ from app.services.bf1.gateway_factory import get_bf1_client
 def _to_summary(raw: dict[str, Any]) -> ServerSummary:
     server_info = raw.get("serverInfo") or raw
     map_name = server_info.get("mapName") or raw.get("mapName")
+    # 国家代码：官服返回空字符串，统一降为 None，便于前端「有值才渲染国旗」
+    country = server_info.get("country") or raw.get("country") or None
+    tick_rate_raw = server_info.get("tickRate")
+    if tick_rate_raw is None:
+        tick_rate_raw = raw.get("tickRate")
+    try:
+        tick_rate = int(tick_rate_raw) if tick_rate_raw is not None else None
+    except (TypeError, ValueError):
+        tick_rate = None
+    # ping 节点代号：EA 接口不返回 ping 数值，只能透传节点代号供前端映射为数据中心标签
+    ping_site = server_info.get("pingSiteAlias") or raw.get("pingSiteAlias") or None
     # searchServers 与 getFullServerDetails 均把模式代号放在 mapMode（实测形态：
     # mapName=MP_River / mapMode=Possession），不存在 mode / gameMode 字段，取法与
     # map_name 对称，再交 translate_mode_name 经 ModeDict 译为中文。
@@ -79,6 +90,9 @@ def _to_summary(raw: dict[str, Any]) -> ServerSummary:
         ),
         region=region,
         region_display_name=translate_region(region),
+        country=country,
+        tick_rate=tick_rate,
+        ping_site=ping_site,
         is_official=server_type == "OFFICIAL",
         is_ranked=bool(server_info.get("ranked") or raw.get("ranked") or False),
         has_password=bool(server_info.get("hasPassword") or raw.get("hasPassword") or False),

@@ -143,6 +143,12 @@ export interface ServerSummary {
   spectator_count: number;
   region: string | null;
   region_display_name: string | null;
+  /** ISO 国家代码（如 "JP"），官服多为 null */
+  country: string | null;
+  /** 服务器画面更新率 Hz（如 60），缺失为 null */
+  tick_rate: number | null;
+  /** EA ping 节点代号（如 "nrt"），用于映射数据中心标签；缺失为 null */
+  ping_site: string | null;
   is_official: boolean;
   is_ranked: boolean;
   has_password: boolean;
@@ -217,10 +223,23 @@ export interface ServerExtras {
   platoon: PlatoonBrief | null;
 }
 
+/**
+ * 服务器自定义设置矩阵。EA 已按网关账号语言把键译为中文（繁体），值为 on/off；
+ * Scales 组的值是小数字符串（"1.0" = 100%）。各组可能整体缺失（非 RSP 服务器）。
+ */
+export interface ServerSettings {
+  Kits?: Record<string, string>;
+  Vehicles?: Record<string, string>;
+  Weapons?: Record<string, string>;
+  Misc?: Record<string, string>;
+  Scales?: Record<string, string>;
+  [key: string]: unknown;
+}
+
 export interface ServerDetail {
   summary: ServerSummary;
   description: string | null;
-  settings: Record<string, unknown>;
+  settings: ServerSettings;
   map_rotation: MapRotationItem[];
   players: ServerPlayer[];
   extras: ServerExtras;

@@ -6,6 +6,7 @@ import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { AppRail } from "./AppRail";
+import { FriendsRail } from "./FriendsRail";
 import { MobileNav } from "./MobileNav";
 import { TopTabs } from "./TopTabs";
 import { UserMenu } from "./UserMenu";
@@ -49,8 +50,10 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
         className="relative z-10 mx-auto flex min-h-screen"
         style={{ width: "min(95vw, 200vh)" }}
       >
-        {/* 桌面端 rail：随舞台容器水平居中，sticky 跟随滚动 */}
-        <aside className="sticky top-0 hidden h-screen w-28 shrink-0 lg:block">
+        {/* 桌面端 rail：随舞台容器水平居中，sticky 跟随滚动。
+            z-20 让 rail 浮在详情页 `fixed inset-0 z-0` 的全屏背景之上（低于 header 的 z-40），
+            否则全屏背景在 DOM 中靠后、同层级会把 rail 盖住。 */}
+        <aside className="sticky top-0 z-20 hidden h-screen w-28 shrink-0 lg:block">
           <AppRail />
           {/* 分隔竖线：贯穿整屏高度、与上下边缘接壤，复刻真实大厅 rail 分隔线的全高形态 */}
           <span className="absolute inset-y-0 right-0 w-px bg-white/12" aria-hidden />
@@ -111,6 +114,11 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
             <PageTransition>{children}</PageTransition>
           </div>
         </div>
+
+        {/* 右侧好友 / 派对侧栏：恒定占据展开宽度，主内容据此收窄、为右侧留白；
+            悬浮后在这片预留区内原地铺出面板，不挤压也不覆盖主内容；
+            社交数据待桌面端客户端接口接入。 */}
+        <FriendsRail />
       </div>
     </div>
   );

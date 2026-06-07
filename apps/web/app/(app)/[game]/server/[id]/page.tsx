@@ -24,6 +24,7 @@ import {
   bf1Api,
   type ServerDetail,
   type ServerSummary,
+  type ServerSettings,
   type ServerPlayer,
   type MapRotationItem,
   type ServerExtras,
@@ -115,6 +116,8 @@ function ServerDetailView({
         </button>
 
         <ServerHero summary={summary} />
+
+        <SettingsMatrix settings={detail.settings} />
 
         <ServerInfoPanel extras={extras} />
 
@@ -239,7 +242,12 @@ function ServerHero({ summary }: { summary: ServerSummary }) {
             {summary.is_ranked ? <StatPill text="Ranked" accent /> : null}
           </div>
 
-          <div className="mt-4 grid grid-cols-3 gap-2.5">
+          <div
+            className={cn(
+              "mt-4 grid grid-cols-2 gap-2.5",
+              summary.tick_rate ? "sm:grid-cols-4" : "sm:grid-cols-3",
+            )}
+          >
             <QuickStat
               label="在线"
               value={`${summary.player_count}/${summary.max_player_count}`}
@@ -247,6 +255,9 @@ function ServerHero({ summary }: { summary: ServerSummary }) {
             />
             <QuickStat label="排队" value={String(summary.queue_count)} />
             <QuickStat label="旁观" value={String(summary.spectator_count)} />
+            {summary.tick_rate ? (
+              <QuickStat label="画面更新率" value={`${summary.tick_rate} Hz`} />
+            ) : null}
           </div>
 
           <div className="mt-4">
@@ -308,6 +319,80 @@ function QuickStat({ label, value, accent }: { label: string; value: string; acc
         {value}
       </div>
     </Bf1Panel>
+  );
+}
+
+/* ----------------------------- 自定义设置矩阵 ----------------------------- */
+
+/**
+ * 复刻游戏「伺服器資訊」的四列设置矩阵。数据来自 detail.settings，EA 已按网关账号
+ * 语言把条目键译为中文（繁体），值为 on/off；Scales 组的值是小数字符串（"1.0"=100%）。
+ * 列标题为本应用自有文案，沿用全站简体；条目标签是 EA 来源数据，原样保留繁体。
+ * 某一组整组缺失时（非 RSP 服务器）跳过该列；全部缺失时整块不渲染。
+ */
+function SettingsMatrix({ settings }: { settings: ServerSettings }) {
+  const columns = (
+    [
+      {
+        title: "兵种 / 载具",
+        entries: [...toEntries(settings.Kits), ...toEntries(settings.Vehicles)],
+        kind: "toggle",
+      },
+      { title: "武器", entries: toEntries(settings.Weapons), kind: "toggle" },
+      { title: "进阶", entries: toEntries(settings.Misc), kind: "toggle" },
+      { title: "规则", entries: toEntries(settings.Scales), kind: "scale" },
+    ] as const
+  ).filter((c) => c.entries.length > 0);
+
+  if (columns.length === 0) return null;
+
+  return (
+    <div className="mt-4">
+      <Panel>
+        <SectionTitle>服务器设置</SectionTitle>
+        <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
+          {columns.map((col) => (
+            <section key={col.title}>
+              <h3 className="mb-2 border-b border-white/10 pb-1.5 text-xs font-semibold tracking-wider text-white/55">
+                {col.title}
+              </h3>
+              <dl className="space-y-1.5">
+                {col.entries.map(([label, value]) => (
+                  <div key={label} className="flex items-baseline justify-between gap-3 text-sm">
+                    <dt className="min-w-0 truncate text-white/65" title={label}>
+                      {label}
+                    </dt>
+                    <dd className="shrink-0">
+                      <SettingValue value={value} kind={col.kind} />
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+          ))}
+        </div>
+      </Panel>
+    </div>
+  );
+}
+
+/** 把可能缺失的设置分组安全转成 [键, 值] 列表 */
+function toEntries(group: Record<string, string> | undefined): [string, string][] {
+  if (!group || typeof group !== "object") return [];
+  return Object.entries(group).map(([k, v]) => [k, String(v)]);
+}
+
+function SettingValue({ value, kind }: { value: string; kind: "toggle" | "scale" }) {
+  if (kind === "scale") {
+    const num = Number(value);
+    const text = Number.isFinite(num) ? `${Math.round(num * 100)}%` : value;
+    return <span className="text-white/90 tabular-nums">{text}</span>;
+  }
+  const on = value.toLowerCase() === "on";
+  return (
+    <span className={cn("font-medium tabular-nums", on ? "text-amber-300" : "text-white/35")}>
+      {on ? "開" : "關"}
+    </span>
   );
 }
 

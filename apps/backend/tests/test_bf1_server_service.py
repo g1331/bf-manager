@@ -67,6 +67,32 @@ def test_to_summary_official_flag_from_server_type() -> None:
     assert _to_summary(raw).is_official is False
 
 
+def test_to_summary_extracts_country_and_tick_rate() -> None:
+    """搜索/详情项透传 country 与 tickRate；country 为空字符串时降为 None"""
+    raw = _make_search_item()
+    raw["country"] = "JP"
+    raw["tickRate"] = 60
+    raw["pingSiteAlias"] = "nrt"
+    summary = _to_summary(raw)
+    assert summary.country == "JP"
+    assert summary.tick_rate == 60
+    assert summary.ping_site == "nrt"
+
+    # 缺 pingSiteAlias 时降为 None
+    raw.pop("pingSiteAlias", None)
+    assert _to_summary(raw).ping_site is None
+
+    # 官服常返回空 country，统一降为 None（前端「有值才渲染国旗」）
+    raw["country"] = ""
+    assert _to_summary(raw).country is None
+
+    # tickRate 缺失或非数值时降为 None，不抛异常
+    raw.pop("tickRate", None)
+    assert _to_summary(raw).tick_rate is None
+    raw["tickRate"] = "bad"
+    assert _to_summary(raw).tick_rate is None
+
+
 def test_to_summary_with_unknown_map_falls_back_to_raw_code() -> None:
     raw = _make_search_item()
     raw["mapName"] = "MP_FutureDLC_Q"

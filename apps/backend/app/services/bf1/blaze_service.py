@@ -31,6 +31,7 @@ from app.core.config import get_settings
 from app.domain.ea.account_pool import EACredentials
 from app.domain.ea.blaze_protocol.socket import BlazeServerREQ, BlazeSocket
 from app.domain.ea.data_handle import BlazeData
+from app.domain.games.bf1.maps import MapData
 from app.models.ea_binding import EaBinding
 from app.schemas.bf1.server import (
     BlazePlayer,
@@ -294,7 +295,26 @@ def _build_player(
     )
 
 
-def _build_team_groups(players: list[BlazePlayer]) -> list[BlazeTeamGroup]:
+def _faction_map(detail_res: object) -> dict[int, str]:
+    """从服务器当前地图查 BF1 阵营对阵表，得出 {team_id: 阵营名}。
+
+    BF1 的对阵阵营（法国 / 德意志帝国等）由当前地图固定决定，不在 Blaze roster 内，
+    需用 `getFullServerDetails` 返回的 `serverInfo.mapName` 查 `MapData.MapTeamDict`：
+    Blaze TIDX 0 对应该图 Team1，TIDX 1 对应 Team2。未知地图返回空映射，前端回退「队伍 N」。
+    """
+    if not isinstance(detail_res, dict):
+        return {}
+    raw = detail_res.get("result") or {}
+    map_name = (raw.get("serverInfo") or {}).get("mapName")
+    entry = MapData.MapTeamDict.get(map_name) if map_name else None
+    if not entry:
+        return {}
+    return {0: entry["Team1"], 1: entry["Team2"]}
+
+
+def _build_team_groups(
+    players: list[BlazePlayer], faction_by_team: dict[int, str]
+) -> list[BlazeTeamGroup]:
     """把在场玩家按 Blaze TIDX 分成队伍组，按 team_id 升序（通常得到两组）。"""
     by_team: dict[int, list[BlazePlayer]] = {}
     for player in players:
@@ -306,6 +326,7 @@ def _build_team_groups(players: list[BlazePlayer]) -> list[BlazeTeamGroup]:
         groups.append(
             BlazeTeamGroup(
                 team_id=team_id,
+                faction=faction_by_team.get(team_id),
                 players=members,
                 count=len(members),
                 rank_150_count=sum(1 for m in members if m.rank >= RANK_MAX),
@@ -373,6 +394,7 @@ async def get_server_players(
     async with get_bf1_client(db) as client:
         detail_res = await client.getFullServerDetails(int(game_id))
         admin_ids, vip_ids = _extract_member_ids(detail_res)
+        faction_by_team = _faction_map(detail_res)
         stats_map = await _gather_stats(client, normal_pids) if include_stats else {}
 
     # 3. 平台已绑定用户标记（db 此时已空闲）。
@@ -409,7 +431,7 @@ async def get_server_players(
         player_count=len(normal_players),
         queue_count=len(queued_players),
         spectator_count=len(spectator_players),
-        teams=_build_team_groups(normal_players),
+        teams=_build_team_groups(normal_players, faction_by_team),
         queued=queued_players,
         spectators=spectator_players,
         summary=summary,

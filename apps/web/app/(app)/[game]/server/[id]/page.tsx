@@ -8,20 +8,11 @@
  * 成员 / 审计 / 管理）沿用既有数据与操作逻辑，仅置于半透明深色面板内保证可读。
  */
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import {
-  ArrowLeft,
-  Lock,
-  Bookmark,
-  MapPin,
-  Crosshair,
-  Globe2,
-  ShieldCheck,
-  Signal,
-} from "lucide-react";
+import { ArrowLeft, Lock, Bookmark, MapPin, Crosshair, Globe2, ShieldCheck } from "lucide-react";
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
 import { ResponsiveTable, type Column } from "@/components/common/ResponsiveTable";
 import { AdminPanel } from "@/components/bf1/AdminPanel";
@@ -136,9 +127,9 @@ function ServerDetailView({
           <TabNav tabs={tabs} tab={tab} onTab={setTab} />
           <div className="mt-5">
             {tab === "players" && (
-              <Panel>
+              <div className="rounded-sm bg-black/25 p-4 backdrop-blur-md sm:p-6">
                 <PlayersList gameId={gameId} game={game} />
-              </Panel>
+              </div>
             )}
             {tab === "rotation" && (
               <Panel>
@@ -629,24 +620,35 @@ export function ServerPlayersView({ data, game }: { data: ServerPlayersResponse;
   }
 
   return (
-    <div className="space-y-5">
+    <div className="text-white/90">
       {data.is_mock ? (
-        <div className="rounded-sm border border-amber-400/40 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-200">
+        <div className="mb-3 inline-block rounded-sm border border-amber-400/30 bg-amber-500/10 px-2.5 py-1 text-[11px] text-amber-200/90">
           演示数据（BLAZE_MOCK_MODE 已开启），非真实房间名单
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+      {/* 双阵营并排，中间以竖线分割，与群版整图风格一致 */}
+      <div className="grid grid-cols-1 gap-x-8 gap-y-8 lg:grid-cols-2">
         {teams.map((team, idx) => (
-          <TeamColumn key={team.team_id} team={team} index={idx} game={game} />
+          <TeamColumn
+            key={team.team_id}
+            team={team}
+            index={idx}
+            game={game}
+            className={idx > 0 ? "lg:border-l lg:border-white/15 lg:pl-8" : undefined}
+          />
         ))}
       </div>
 
-      {data.queued.length > 0 ? (
-        <SidePlayerGroup title="排队中" players={data.queued} game={game} />
-      ) : null}
-      {data.spectators.length > 0 ? (
-        <SidePlayerGroup title="旁观者" players={data.spectators} game={game} />
+      {data.queued.length > 0 || data.spectators.length > 0 ? (
+        <div className="mt-7 space-y-3 border-t border-white/10 pt-4">
+          {data.queued.length > 0 ? (
+            <SidePlayerGroup title="排队中" players={data.queued} game={game} />
+          ) : null}
+          {data.spectators.length > 0 ? (
+            <SidePlayerGroup title="旁观者" players={data.spectators} game={game} />
+          ) : null}
+        </div>
       ) : null}
 
       <PlayerLegend
@@ -654,94 +656,181 @@ export function ServerPlayersView({ data, game }: { data: ServerPlayersResponse;
         playerCount={data.player_count}
         maxPlayers={data.max_players}
         statsIncluded={data.stats_included}
+        className="mt-6"
       />
     </div>
   );
 }
 
-/** 队伍列标题用的阵营配色：仅用于区分两列，与真实阵营无强绑定 */
-const TEAM_ACCENTS = ["text-sky-300", "text-rose-300"] as const;
+/** 阵营名称（中文）到旗帜图标文件名的映射，对应 public/factions/{slug}.png */
+const FACTION_SLUG: Record<string, string> = {
+  法国: "fra",
+  德意志帝国: "ger",
+  大英帝国: "uk",
+  美国: "usa",
+  意大利王国: "ita",
+  俄罗斯帝国: "rus",
+  奥匈帝国: "ahu",
+  奥斯曼帝国: "otm",
+  皇家海军陆战队: "rm",
+  红军: "bol",
+};
 
-function TeamColumn({ team, index, game }: { team: BlazeTeamGroup; index: number; game: string }) {
-  const accent = TEAM_ACCENTS[index % TEAM_ACCENTS.length];
+const MAX_RANK = 150;
+
+type TeamAverage = {
+  rank: number | null;
+  winRate: number | null;
+  kd: number | null;
+  kpm: number | null;
+  hours: number | null;
+};
+
+/** 计算单列底部「平均」行：等级取整、战绩各项按有数据者求均值 */
+function computeTeamAverage(players: BlazePlayer[]): TeamAverage {
+  const mean = (values: number[]): number | null =>
+    values.length ? values.reduce((a, b) => a + b, 0) / values.length : null;
+  const pick = (fn: (p: BlazePlayer) => number | null | undefined): number[] =>
+    players.map(fn).filter((v): v is number => typeof v === "number");
+
+  const ranks = pick((p) => (p.rank > 0 ? p.rank : null));
+  const rankMean = mean(ranks);
+  return {
+    rank: rankMean == null ? null : Math.round(rankMean),
+    winRate: mean(pick((p) => p.stats?.win_rate)),
+    kd: mean(pick((p) => p.stats?.kd)),
+    kpm: mean(pick((p) => p.stats?.kpm)),
+    hours: mean(pick((p) => p.stats?.time_hours)),
+  };
+}
+
+function TeamColumn({
+  team,
+  index,
+  game,
+  className,
+}: {
+  team: BlazeTeamGroup;
+  index: number;
+  game: string;
+  className?: string;
+}) {
   const title = team.faction ?? `队伍 ${index + 1}`;
-  return (
-    <Bf1Panel variant="dark" cut={12} className="overflow-hidden">
-      <div className="flex items-baseline justify-between border-b border-white/10 px-3 py-2">
-        <div className="flex items-baseline gap-2">
-          <span className={cn("text-sm font-bold tracking-wide", accent)}>{title}</span>
-          <span className="text-xs text-white/45 tabular-nums">{team.count} 人</span>
-        </div>
-        <div className="flex items-center gap-3 text-[11px] text-white/40 tabular-nums">
-          {team.avg_rank != null ? <span>均级 {Math.round(team.avg_rank)}</span> : null}
-          <span className="text-amber-300/80">150 × {team.rank_150_count}</span>
-        </div>
-      </div>
+  const slug = team.faction ? FACTION_SLUG[team.faction] : undefined;
+  const avg = computeTeamAverage(team.players);
 
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[520px] text-left text-[11px] tabular-nums">
-          <thead>
-            <tr className="border-b border-white/10 text-white/40">
-              <th className="px-1.5 py-1.5 text-center font-medium">#</th>
-              <th className="px-1.5 py-1.5 text-center font-medium">等级</th>
-              <th className="px-1.5 py-1.5 font-medium">玩家</th>
-              <th className="px-1.5 py-1.5 text-right font-medium">胜率</th>
-              <th className="px-1.5 py-1.5 text-right font-medium">K/D</th>
-              <th className="px-1.5 py-1.5 text-right font-medium">KPM</th>
-              <th className="px-1.5 py-1.5 text-right font-medium">时长</th>
-              <th className="px-1.5 py-1.5 text-center font-medium">延迟</th>
-              <th className="px-1.5 py-1.5 text-center font-medium">语言</th>
-            </tr>
-          </thead>
-          <tbody>
-            {team.players.map((p, i) => (
-              <PlayerRow key={p.persona_id} player={p} seq={i + 1} game={game} />
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </Bf1Panel>
+  return (
+    <div className={className}>
+      <table className="w-full border-collapse text-[12.5px] tabular-nums">
+        <colgroup>
+          <col className="w-7" />
+          <col className="w-11" />
+          <col />
+          <col className="w-12" />
+          <col className="w-11" />
+          <col className="w-11" />
+          <col className="w-16" />
+          <col className="w-14" />
+          <col className="w-9" />
+        </colgroup>
+        <thead>
+          {/* 阵营标题行：旗帜 + 阵营名 + 人数，跨越序号/等级/玩家三列 */}
+          <tr className="align-bottom">
+            <th colSpan={3} className="pb-2 text-left">
+              <span className="flex items-center gap-2.5">
+                {slug ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={`/factions/${slug}.png`}
+                    alt={title}
+                    className="h-9 w-9 shrink-0 object-contain drop-shadow"
+                  />
+                ) : null}
+                <span className="text-[17px] leading-none font-bold tracking-wide text-white">
+                  {title}
+                </span>
+                <span className="text-xs text-white/45 tabular-nums">{team.count}</span>
+              </span>
+            </th>
+            <ColHeader>胜率</ColHeader>
+            <ColHeader>K/D</ColHeader>
+            <ColHeader>KPM</ColHeader>
+            <ColHeader>时长</ColHeader>
+            <ColHeader className="text-center">延迟</ColHeader>
+            <ColHeader className="text-center">语言</ColHeader>
+          </tr>
+        </thead>
+        {/* 表头下的整条横线，呼应原图分隔样式 */}
+        <tbody className="border-t border-white/25">
+          {team.players.map((p, i) => (
+            <PlayerRow key={p.persona_id} player={p} seq={i + 1} game={game} />
+          ))}
+        </tbody>
+        <tfoot>
+          <tr className="border-t border-white/20 text-[12px] font-semibold text-amber-300/90">
+            <td colSpan={3} className="pt-2 pl-0.5">
+              平均 {avg.rank ?? "—"}
+            </td>
+            <td className="pt-2 text-right">{formatPercent(avg.winRate)}</td>
+            <td className="pt-2 text-right">{formatRatio(avg.kd)}</td>
+            <td className="pt-2 text-right">{formatRatio(avg.kpm)}</td>
+            <td className="pt-2 text-right">{formatHours(avg.hours)}</td>
+            <td className="pt-2" />
+            <td className="pt-2" />
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  );
+}
+
+function ColHeader({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <th
+      className={cn(
+        "pb-2 text-right text-[11px] font-medium tracking-wide text-white/55",
+        className,
+      )}
+    >
+      {children}
+    </th>
   );
 }
 
 function PlayerRow({ player, seq, game }: { player: BlazePlayer; seq: number; game: string }) {
   const stats = player.stats;
+  const dot = roleDot(player);
   return (
-    <tr className="border-b border-white/[0.06] last:border-0 hover:bg-white/[0.03]">
-      <td className="px-1.5 py-1 text-center text-white/35">{seq}</td>
-      <td className="px-1.5 py-1 text-center">
+    <tr className="border-b border-white/[0.06] transition-colors last:border-0 hover:bg-white/[0.05]">
+      <td className="py-[5px] pr-1 text-right text-[11px] text-white/35">{seq}</td>
+      <td className="py-[5px] text-center">
         <RankBadge rank={player.rank} />
       </td>
-      <td className="max-w-[150px] truncate px-1.5 py-1">
+      <td className="py-[5px] pr-2 pl-2">
         <Link
           href={`/${game}/player/${player.persona_id}`}
-          className={cn("font-medium hover:underline", nameColor(player))}
+          className="flex items-center gap-1.5 hover:underline"
           title={player.display_name}
         >
-          {player.display_name}
+          {dot ? <span className={cn("size-1.5 shrink-0 rounded-full", dot)} /> : null}
+          <span className={cn("truncate font-medium", nameColor(player))}>
+            {player.display_name}
+          </span>
         </Link>
       </td>
-      <td className="px-1.5 py-1 text-right text-white/75">{formatPercent(stats?.win_rate)}</td>
-      <td className="px-1.5 py-1 text-right text-white/75">{formatRatio(stats?.kd)}</td>
-      <td className="px-1.5 py-1 text-right text-white/75">{formatRatio(stats?.kpm)}</td>
-      <td className="px-1.5 py-1 text-right text-white/75">{formatHours(stats?.time_hours)}</td>
-      <td className="px-1.5 py-1 text-center">
+      <td className="py-[5px] text-right text-white/85">{formatPercent(stats?.win_rate)}</td>
+      <td className="py-[5px] text-right text-white/85">{formatRatio(stats?.kd)}</td>
+      <td className="py-[5px] text-right text-white/60">{formatRatio(stats?.kpm)}</td>
+      <td className="py-[5px] text-right text-white/60">{formatHours(stats?.time_hours)}</td>
+      <td className="py-[5px]">
         <LatencyCell latency={player.latency} />
       </td>
-      <td className="px-1.5 py-1 text-center">
-        {player.language ? (
-          <span className="inline-block rounded-sm bg-white/8 px-1 text-white/65">
-            {player.language}
-          </span>
-        ) : (
-          <span className="text-white/25">—</span>
-        )}
-      </td>
+      <td className="py-[5px] text-center text-white/65">{player.language || "—"}</td>
     </tr>
   );
 }
 
-/** 高亮优先级：管理员（绿）> VIP（红）> 群友 / 已绑定（蓝）> 普通（白） */
+/** 高亮优先级：管理员（绿）> VIP（红）> 已绑定用户（蓝）> 普通（白） */
 function nameColor(p: BlazePlayer): string {
   if (p.is_admin) return "text-green-400";
   if (p.is_vip) return "text-red-400";
@@ -749,27 +838,51 @@ function nameColor(p: BlazePlayer): string {
   return "text-white/90";
 }
 
-function RankBadge({ rank }: { rank: number }) {
-  if (rank >= 150) {
-    return (
-      <span className="inline-block min-w-[26px] rounded-sm border border-amber-400/70 bg-amber-500/15 px-1 font-bold text-amber-300">
-        150
-      </span>
-    );
-  }
-  return <span className="inline-block min-w-[26px] text-white/60">{rank > 0 ? rank : "—"}</span>;
+/** 名字前的角色圆点，与字色同源，弱辨识场景下也能一眼区分管理/VIP/已绑定 */
+function roleDot(p: BlazePlayer): string | null {
+  if (p.is_admin) return "bg-green-400";
+  if (p.is_vip) return "bg-red-400";
+  if (p.is_registered) return "bg-sky-400";
+  return null;
 }
 
+/** 等级方框：原图中每个等级都带框，满级 150 用实心琥珀块，其余用细灰描边 */
+function RankBadge({ rank }: { rank: number }) {
+  const isMax = rank >= MAX_RANK;
+  return (
+    <span
+      className={cn(
+        "inline-block min-w-[30px] rounded-[2px] px-1 text-center text-[11px] leading-[1.4] font-bold tabular-nums",
+        isMax
+          ? "bg-[#ff8400] text-black shadow-sm"
+          : "border border-white/25 font-medium text-white/70",
+      )}
+    >
+      {rank > 0 ? rank : "—"}
+    </span>
+  );
+}
+
+/** 延迟以三格信号条 + 数值表示，按强度亮格并着色（低绿 / 中黄 / 高红） */
 function LatencyCell({ latency }: { latency: number }) {
   if (!latency || latency <= 0) {
-    return <span className="text-white/25">—</span>;
+    return <div className="text-center text-white/25">—</div>;
   }
-  const color = latency < 60 ? "text-green-400" : latency < 120 ? "text-amber-300" : "text-red-400";
+  const level = latency < 60 ? 3 : latency < 120 ? 2 : 1;
+  const barColor = latency < 60 ? "bg-green-400" : latency < 120 ? "bg-amber-300" : "bg-red-400";
   return (
-    <span className={cn("inline-flex items-center gap-0.5", color)}>
-      <Signal className="size-3" />
-      {latency}
-    </span>
+    <div className="flex items-center justify-center gap-1">
+      <span className="flex items-end gap-px" aria-hidden>
+        {[1, 2, 3].map((n) => (
+          <span
+            key={n}
+            className={cn("w-[3px] rounded-sm", n <= level ? barColor : "bg-white/15")}
+            style={{ height: `${n * 3 + 1}px` }}
+          />
+        ))}
+      </span>
+      <span className="text-[11px] text-white/65 tabular-nums">{latency}</span>
+    </div>
   );
 }
 
@@ -813,6 +926,7 @@ function PlayerLegend({
   playerCount,
   maxPlayers,
   statsIncluded,
+  className,
 }: {
   summary: {
     online_admin_count: number;
@@ -823,14 +937,20 @@ function PlayerLegend({
   playerCount: number;
   maxPlayers: number;
   statsIncluded: boolean;
+  className?: string;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/10 pt-3 text-xs text-white/55">
-      <LegendItem dotClass="bg-green-400" label="在线管理" value={summary.online_admin_count} />
-      <LegendItem dotClass="bg-red-400" label="在线VIP" value={summary.online_vip_count} />
-      <LegendItem dotClass="bg-sky-400" label="在线群友" value={summary.online_registered_count} />
-      <LegendItem dotClass="bg-amber-400" label="满级150" value={summary.rank_150_count} />
-      <span className="ml-auto text-white/40 tabular-nums">
+    <div
+      className={cn(
+        "flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/10 pt-3 text-xs text-white/60",
+        className,
+      )}
+    >
+      <LegendItem markClass="bg-green-400" label="在线管理" value={summary.online_admin_count} />
+      <LegendItem markClass="bg-red-400" label="在线VIP" value={summary.online_vip_count} />
+      <LegendItem markClass="bg-sky-400" label="在线群友" value={summary.online_registered_count} />
+      <LegendItem markClass="bg-[#ff8400]" label="满级150" value={summary.rank_150_count} />
+      <span className="ml-auto text-white/45 tabular-nums">
         在线 {playerCount}/{maxPlayers}
         {statsIncluded ? "" : " · 未加载战绩"}
       </span>
@@ -839,25 +959,26 @@ function PlayerLegend({
 }
 
 function LegendItem({
-  dotClass,
+  markClass,
   label,
   value,
 }: {
-  dotClass: string;
+  markClass: string;
   label: string;
   value: number;
 }) {
   return (
     <span className="inline-flex items-center gap-1.5">
-      <span className={cn("size-2 rounded-full", dotClass)} />
-      {label}
-      <span className="text-white/80 tabular-nums">{value}</span>
+      <span className={cn("size-2.5 rounded-[2px]", markClass)} />
+      <span>
+        {label}：<span className="font-semibold text-white/90 tabular-nums">{value}</span>
+      </span>
     </span>
   );
 }
 
 function formatPercent(v: number | null | undefined): string {
-  return v == null ? "—" : `${v.toFixed(1)}%`;
+  return v == null ? "—" : `${Math.round(v)}%`;
 }
 
 function formatRatio(v: number | null | undefined): string {
@@ -865,8 +986,7 @@ function formatRatio(v: number | null | undefined): string {
 }
 
 function formatHours(v: number | null | undefined): string {
-  if (v == null) return "—";
-  return v >= 1000 ? `${Math.round(v)}h` : `${v.toFixed(0)}h`;
+  return v == null ? "—" : v.toFixed(1);
 }
 
 /* ----------------------------- 成员名单 ----------------------------- */

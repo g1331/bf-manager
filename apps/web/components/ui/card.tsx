@@ -5,7 +5,12 @@ const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElemen
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn("bg-card text-card-foreground rounded-sm border shadow-sm", className)}
+      className={cn(
+        // 半透明 + 背景模糊：让卡片浮在战场氛围底层之上（BF1 大厅式分层）。
+        // 80% 不透明度兼顾氛围透出与表格/表单文字可读；纯装饰面板可在调用处下调。
+        "bg-card/80 text-card-foreground rounded-sm border shadow-sm backdrop-blur-md",
+        className,
+      )}
       {...props}
     />
   ),

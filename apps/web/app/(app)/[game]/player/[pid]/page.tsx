@@ -216,7 +216,7 @@ export default function Bf1PlayerPage() {
 
 function BackgroundLayer({ url, grayscale }: { url: string | null; grayscale: boolean }) {
   return (
-    <div className="pointer-events-none fixed inset-0 z-0 lg:left-60">
+    <div className="pointer-events-none fixed inset-0 z-0">
       {url ? (
         <div
           className={cn(

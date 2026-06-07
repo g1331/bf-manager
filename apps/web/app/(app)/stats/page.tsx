@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, Clock4, Eye, Search, Server } from "lucide-react";
+import { Clock4, Eye } from "lucide-react";
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
+import { BfCard } from "@/components/bf1/visual/BfCard";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { SectionHeading } from "@/components/layout/SectionHeading";
 import { ENABLED_GAMES } from "@/lib/game-registry";
@@ -37,7 +37,7 @@ export default function StatsPage() {
       {overview.isLoading ? (
         <div className="text-muted-foreground p-12 text-center text-sm">加载中…</div>
       ) : !ready ? (
-        <section className="border-border bg-card rounded-sm border p-6">
+        <section className="rounded-sm border border-white/10 bg-white/[0.04] p-6 backdrop-blur-md">
           <div className="text-muted-foreground text-sm">
             全站统计数据正在汇总，稍后将在此处展示服务器总数与当前在线人数。
           </div>
@@ -49,17 +49,19 @@ export default function StatsPage() {
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {game ? (
           <>
-            <EntryCard
+            <BfCard
               href={`/${game.id}/players`}
-              icon={Search}
+              image="/bf1/backgrounds/general/general-1.jpg"
               title={`${game.shortName} 战绩查询`}
               description="按玩家昵称查询武器、载具、地图等深度战绩。"
+              action="进入查询"
             />
-            <EntryCard
+            <BfCard
               href={`/${game.id}/servers`}
-              icon={Server}
+              image="/bf1/backgrounds/general/general-4.jpg"
               title={`${game.shortName} 服务器`}
               description="浏览实时服务器列表，进入查看玩家、管理员、VIP 与封禁名单。"
+              action="浏览服务器"
             />
           </>
         ) : null}
@@ -225,8 +227,8 @@ function MiniStat({
   value: number;
 }) {
   return (
-    <div className="border-border bg-card flex items-center gap-3 rounded-sm border p-4">
-      <span className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-sm">
+    <div className="flex items-center gap-3 rounded-sm border border-white/10 bg-white/[0.04] p-4 backdrop-blur-md">
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-sm bg-white/[0.06] text-amber-400/80">
         <Icon className="size-4" />
       </span>
       <div className="min-w-0">
@@ -272,35 +274,5 @@ function RankBoard({ items, metric }: { items: NamedCount[]; metric: "players" |
         </div>
       ))}
     </Bf1Panel>
-  );
-}
-
-function EntryCard({
-  href,
-  icon: Icon,
-  title,
-  description,
-}: {
-  href: string;
-  icon: React.ElementType;
-  title: string;
-  description: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="border-border bg-card group flex items-start gap-4 rounded-sm border p-5 transition-colors hover:border-white/20 hover:bg-white/5"
-    >
-      <span className="bg-muted text-muted-foreground group-hover:text-foreground flex size-10 shrink-0 items-center justify-center rounded-sm transition-colors">
-        <Icon className="size-5" />
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5 font-medium">
-          {title}
-          <ChevronRight className="text-muted-foreground group-hover:text-foreground size-4 transition-transform group-hover:translate-x-0.5" />
-        </div>
-        <p className="text-muted-foreground mt-1 text-sm leading-relaxed">{description}</p>
-      </div>
-    </Link>
   );
 }

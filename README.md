@@ -164,39 +164,36 @@ DevTools 中切换到以下 viewport 验证响应式：
 
 ## 生产部署
 
+镜像由 GitHub Actions `release.yml` 在 push main 或打 tag（`v*`）时构建并推送到 GHCR，部署机只 `pull`，不本地 build。首次部署与日常更新都用同一个一键脚本：
+
 ```bash
-# 1. 在部署机器上克隆仓库
+# 在部署机器上克隆仓库（首次）
 git clone https://github.com/g1331/bf-manager.git
 cd bf-manager
 
-# 2. 初始化密钥（生成 secrets/ 下的 postgres_password / database_url / ea_cred_encryption_key / jwt_secret_key）
-bash tools/init-prod-secrets.sh
-
-# 3. 编辑 .env.prod 填入域名等参数（admin 名单不再通过 env 配置，见下方 CLI 步骤）
-cp .env.example .env.prod
-$EDITOR .env.prod   # 至少设置 DOMAIN
-
-# 4. 拉镜像 + 启动
-docker compose --env-file .env.prod -f docker-compose.prod.yml pull
-docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
-
-# 5. （首次部署）migrate 服务由 compose 自动跑一次 alembic upgrade head；
-#    如需手动重跑：
-docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm migrate
-
-# 6. Seed 至少一个 EA 代查询账号（玩家查询 / 服管必需）
-docker compose --env-file .env.prod -f docker-compose.prod.yml exec backend \
-    python tools/seed_ea_account.py \
-    --persona-id <PERSONA_ID> --remid <REMID> --sid <SID>
-
-# 7. 创建初始管理员账号
-docker compose --env-file .env.prod -f docker-compose.prod.yml exec backend \
-    python -m app.cli create-admin --username root
+# 一键部署 / 更新（等价 make deploy）
+#   首次：自动备齐 secrets、交互填 DOMAIN 生成 .env.prod、拉镜像、起服务（自动迁移）、
+#         检测到无管理员时交互创建第一个本地管理员
+#   后续：拉新镜像、滚动更新、自动迁移；幂等可重复
+bash tools/deploy.sh
+# 锁定镜像版本：bash tools/deploy.sh --tag v1.2.3
+# 跳过管理员检测：bash tools/deploy.sh --skip-admin
 ```
+
+更新一个已合并到 main 的改动：等 `release.yml` 把新镜像推到 GHCR 后，在部署机 `git pull` 拉取最新脚本与 compose，再跑一次 `bash tools/deploy.sh` 即可。
+
+脚本不覆盖 EA 代查询账号录入（玩家查询 / 服管所需，凭据敏感）。按需单独执行：
+
+```bash
+docker compose --env-file .env.prod -f docker-compose.prod.yml exec backend \
+    python -m app.cli upsert-ea-account --persona-id <PERSONA_ID> --stdin-json
+```
+
+需要手动分步时，脚本内部等价于：`tools/init-prod-secrets.sh` 生成 secrets → `cp .env.example .env.prod` 并设置 `DOMAIN` → `docker compose --env-file .env.prod -f docker-compose.prod.yml pull && up -d`（`migrate` 服务自动跑 `alembic upgrade head`）→ `... exec backend python -m app.cli create-admin --username root`。
 
 TLS 与反代由 host 上的 openresty / nginx 处理，backend 与 web 容器只把 `127.0.0.1:8000` 与 `127.0.0.1:3000` 暴露给 host，杜绝外网直连绕过反代。
 
-镜像由 GitHub Actions `release.yml` workflow 在 push main 或打 tag（`v*`）时构建并推送到 `ghcr.io/g1331/bf-manager-{backend,web}`。`IMAGE_TAG` 环境变量可锁定具体版本。
+镜像名为 `ghcr.io/g1331/bf-manager-{backend,web}`，`.env.prod` 里的 `IMAGE_TAG`（或 `deploy.sh --tag`）可锁定具体版本。
 
 ## 多游戏支持
 

@@ -3,7 +3,7 @@
 # Windows 下需要 GNU Make（可通过 chocolatey: choco install make 安装）
 
 .PHONY: help install dev dev-logs dev-down dev-clean \
-        prod-pull prod-up prod-down prod-logs prod-restart \
+        deploy prod-pull prod-up prod-down prod-logs prod-restart \
         migrate makemigrations shell-be shell-fe shell-db shell-redis \
         lint typecheck test fmt secrets-init backup gen-types
 
@@ -36,6 +36,9 @@ dev-clean: ## 停止开发环境并清理数据卷
 
 # ===== 生产环境（prod） =====
 # 所有 prod 命令都需要 .env.prod（DOMAIN 等变量由 compose 文件强制要求）
+deploy: ## 一键部署 / 更新生产环境（首次自动备齐 secrets/.env.prod 并交互建首个管理员）
+	bash tools/deploy.sh
+
 prod-pull: ## 拉取生产镜像
 	docker compose -f docker-compose.prod.yml --env-file .env.prod pull
 

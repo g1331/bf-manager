@@ -12,7 +12,16 @@ import { useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Lock, Bookmark, MapPin, Crosshair, Globe2, ShieldCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  Lock,
+  Bookmark,
+  MapPin,
+  Crosshair,
+  Globe2,
+  ShieldCheck,
+  Signal,
+} from "lucide-react";
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
 import { ResponsiveTable, type Column } from "@/components/common/ResponsiveTable";
 import { AdminPanel } from "@/components/bf1/AdminPanel";
@@ -25,10 +34,12 @@ import {
   type ServerDetail,
   type ServerSummary,
   type ServerSettings,
-  type ServerPlayer,
   type MapRotationItem,
   type ServerExtras,
   type ServerMember,
+  type BlazePlayer,
+  type BlazeTeamGroup,
+  type ServerPlayersResponse,
 } from "@/lib/api/bf1";
 
 const ACTION_LABEL: Record<string, string> = {
@@ -85,11 +96,11 @@ function ServerDetailView({
 }) {
   const session = useSession();
   const isLoggedIn = !!session.data;
-  const { summary, map_rotation, players, extras } = detail;
+  const { summary, map_rotation, extras } = detail;
   const memberCount = extras.admins.length + extras.vips.length + extras.banned.length;
 
   const tabs: ReadonlyArray<{ key: TabKey; label: string }> = [
-    { key: "players", label: `玩家列表（${players.length}）` },
+    { key: "players", label: `玩家列表（${summary.player_count}）` },
     { key: "rotation", label: `地图轮换（${map_rotation.length}）` },
     { key: "members", label: `成员名单（${memberCount}）` },
     ...(isLoggedIn
@@ -126,7 +137,7 @@ function ServerDetailView({
           <div className="mt-5">
             {tab === "players" && (
               <Panel>
-                <PlayersList players={players} game={game} />
+                <PlayersList gameId={gameId} game={game} />
               </Panel>
             )}
             {tab === "rotation" && (
@@ -574,39 +585,288 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-/* ----------------------------- 玩家列表 ----------------------------- */
+/* ----------------------------- 玩家列表（Blaze 实时名单） ----------------------------- */
 
-function PlayersList({ players, game }: { players: ServerPlayer[]; game: string }) {
-  const columns: Column<ServerPlayer>[] = [
-    {
-      key: "name",
-      header: "玩家",
-      cell: (p) => (
-        <Link
-          href={`/${game}/player/${p.persona_id}`}
-          className="text-white hover:text-amber-300 hover:underline"
-        >
-          {p.display_name}
-        </Link>
-      ),
-      isCardTitle: true,
-    },
-    {
-      key: "team",
-      header: "队伍",
-      cell: (p) => (p.is_spectator ? "旁观" : p.team_id ? `T${p.team_id}` : "—"),
-    },
-    { key: "rank", header: "等级", cell: (p) => p.rank ?? "—" },
-    { key: "id", header: "ID", cell: (p) => p.persona_id },
-  ];
+/**
+ * 复刻群版「服务器玩家列表」效果：按阵营分双列，逐行展示等级 / 玩家名 / 胜率 / K-D /
+ * KPM / 时长 / 延迟 / 语言。在线管理员以绿色高亮、VIP 以红色、平台已绑定用户（群友）以
+ * 蓝色高亮；满级（150）等级以琥珀色方框突出。数据走独立的 Blaze 玩家列表接口拉取，与
+ * 详情主体分开加载，避免实时名单的耗时拖慢页面其余部分。
+ */
+function PlayersList({ gameId, game }: { gameId: number; game: string }) {
+  const query = useQuery({
+    queryKey: ["bf1-server-players", gameId],
+    queryFn: () => bf1Api.getServerPlayers(gameId),
+    enabled: Number.isFinite(gameId),
+    // 实时名单变动频繁，缓存短时即可；窗口聚焦时自动刷新交给 react-query 默认行为。
+    staleTime: 15_000,
+  });
+
+  if (query.isLoading) {
+    return <div className="py-10 text-center text-sm text-white/40">正在拉取实时玩家名单…</div>;
+  }
+  if (query.isError || !query.data) {
+    return (
+      <div className="py-10 text-center text-sm text-white/45">
+        实时玩家名单暂时不可用（Blaze 连接失败或服务器未在线）
+      </div>
+    );
+  }
+
+  return <ServerPlayersView data={query.data} game={game} />;
+}
+
+/**
+ * 玩家列表纯展示层（与数据获取解耦，便于用 mock 数据独立预览）。
+ */
+export function ServerPlayersView({ data, game }: { data: ServerPlayersResponse; game: string }) {
+  const teams = data.teams;
+  const hasPlayers =
+    teams.some((t) => t.players.length > 0) || data.queued.length > 0 || data.spectators.length > 0;
+
+  if (!hasPlayers) {
+    return <div className="py-10 text-center text-sm text-white/40">服务器内暂无玩家</div>;
+  }
+
   return (
-    <ResponsiveTable
-      data={players}
-      columns={columns}
-      rowKey={(p) => p.persona_id}
-      emptyState="服务器内暂无玩家数据"
-    />
+    <div className="space-y-5">
+      {data.is_mock ? (
+        <div className="rounded-sm border border-amber-400/40 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-200">
+          演示数据（BLAZE_MOCK_MODE 已开启），非真实房间名单
+        </div>
+      ) : null}
+
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+        {teams.map((team, idx) => (
+          <TeamColumn key={team.team_id} team={team} index={idx} game={game} />
+        ))}
+      </div>
+
+      {data.queued.length > 0 ? (
+        <SidePlayerGroup title="排队中" players={data.queued} game={game} />
+      ) : null}
+      {data.spectators.length > 0 ? (
+        <SidePlayerGroup title="旁观者" players={data.spectators} game={game} />
+      ) : null}
+
+      <PlayerLegend
+        summary={data.summary}
+        playerCount={data.player_count}
+        maxPlayers={data.max_players}
+        statsIncluded={data.stats_included}
+      />
+    </div>
   );
+}
+
+/** 队伍列标题用的阵营配色：仅用于区分两列，与真实阵营无强绑定 */
+const TEAM_ACCENTS = ["text-sky-300", "text-rose-300"] as const;
+
+function TeamColumn({ team, index, game }: { team: BlazeTeamGroup; index: number; game: string }) {
+  const accent = TEAM_ACCENTS[index % TEAM_ACCENTS.length];
+  const title = team.faction ?? `队伍 ${index + 1}`;
+  return (
+    <Bf1Panel variant="dark" cut={12} className="overflow-hidden">
+      <div className="flex items-baseline justify-between border-b border-white/10 px-3 py-2">
+        <div className="flex items-baseline gap-2">
+          <span className={cn("text-sm font-bold tracking-wide", accent)}>{title}</span>
+          <span className="text-xs text-white/45 tabular-nums">{team.count} 人</span>
+        </div>
+        <div className="flex items-center gap-3 text-[11px] text-white/40 tabular-nums">
+          {team.avg_rank != null ? <span>均级 {Math.round(team.avg_rank)}</span> : null}
+          <span className="text-amber-300/80">150 × {team.rank_150_count}</span>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[520px] text-left text-[11px] tabular-nums">
+          <thead>
+            <tr className="border-b border-white/10 text-white/40">
+              <th className="px-1.5 py-1.5 text-center font-medium">#</th>
+              <th className="px-1.5 py-1.5 text-center font-medium">等级</th>
+              <th className="px-1.5 py-1.5 font-medium">玩家</th>
+              <th className="px-1.5 py-1.5 text-right font-medium">胜率</th>
+              <th className="px-1.5 py-1.5 text-right font-medium">K/D</th>
+              <th className="px-1.5 py-1.5 text-right font-medium">KPM</th>
+              <th className="px-1.5 py-1.5 text-right font-medium">时长</th>
+              <th className="px-1.5 py-1.5 text-center font-medium">延迟</th>
+              <th className="px-1.5 py-1.5 text-center font-medium">语言</th>
+            </tr>
+          </thead>
+          <tbody>
+            {team.players.map((p, i) => (
+              <PlayerRow key={p.persona_id} player={p} seq={i + 1} game={game} />
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Bf1Panel>
+  );
+}
+
+function PlayerRow({ player, seq, game }: { player: BlazePlayer; seq: number; game: string }) {
+  const stats = player.stats;
+  return (
+    <tr className="border-b border-white/[0.06] last:border-0 hover:bg-white/[0.03]">
+      <td className="px-1.5 py-1 text-center text-white/35">{seq}</td>
+      <td className="px-1.5 py-1 text-center">
+        <RankBadge rank={player.rank} />
+      </td>
+      <td className="max-w-[150px] truncate px-1.5 py-1">
+        <Link
+          href={`/${game}/player/${player.persona_id}`}
+          className={cn("font-medium hover:underline", nameColor(player))}
+          title={player.display_name}
+        >
+          {player.display_name}
+        </Link>
+      </td>
+      <td className="px-1.5 py-1 text-right text-white/75">{formatPercent(stats?.win_rate)}</td>
+      <td className="px-1.5 py-1 text-right text-white/75">{formatRatio(stats?.kd)}</td>
+      <td className="px-1.5 py-1 text-right text-white/75">{formatRatio(stats?.kpm)}</td>
+      <td className="px-1.5 py-1 text-right text-white/75">{formatHours(stats?.time_hours)}</td>
+      <td className="px-1.5 py-1 text-center">
+        <LatencyCell latency={player.latency} />
+      </td>
+      <td className="px-1.5 py-1 text-center">
+        {player.language ? (
+          <span className="inline-block rounded-sm bg-white/8 px-1 text-white/65">
+            {player.language}
+          </span>
+        ) : (
+          <span className="text-white/25">—</span>
+        )}
+      </td>
+    </tr>
+  );
+}
+
+/** 高亮优先级：管理员（绿）> VIP（红）> 群友 / 已绑定（蓝）> 普通（白） */
+function nameColor(p: BlazePlayer): string {
+  if (p.is_admin) return "text-green-400";
+  if (p.is_vip) return "text-red-400";
+  if (p.is_registered) return "text-sky-400";
+  return "text-white/90";
+}
+
+function RankBadge({ rank }: { rank: number }) {
+  if (rank >= 150) {
+    return (
+      <span className="inline-block min-w-[26px] rounded-sm border border-amber-400/70 bg-amber-500/15 px-1 font-bold text-amber-300">
+        150
+      </span>
+    );
+  }
+  return <span className="inline-block min-w-[26px] text-white/60">{rank > 0 ? rank : "—"}</span>;
+}
+
+function LatencyCell({ latency }: { latency: number }) {
+  if (!latency || latency <= 0) {
+    return <span className="text-white/25">—</span>;
+  }
+  const color = latency < 60 ? "text-green-400" : latency < 120 ? "text-amber-300" : "text-red-400";
+  return (
+    <span className={cn("inline-flex items-center gap-0.5", color)}>
+      <Signal className="size-3" />
+      {latency}
+    </span>
+  );
+}
+
+/** 排队 / 旁观玩家组，使用与队伍列一致的高亮规则，但不拆队、不展示战绩 */
+function SidePlayerGroup({
+  title,
+  players,
+  game,
+}: {
+  title: string;
+  players: BlazePlayer[];
+  game: string;
+}) {
+  return (
+    <div>
+      <div className="mb-1.5 flex items-baseline gap-2 text-xs text-white/50">
+        <span className="font-medium">{title}</span>
+        <span className="tabular-nums">{players.length}</span>
+      </div>
+      <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+        {players.map((p) => (
+          <Link
+            key={p.persona_id}
+            href={`/${game}/player/${p.persona_id}`}
+            className={cn(
+              "inline-flex items-center gap-1.5 text-[11px] hover:underline",
+              nameColor(p),
+            )}
+          >
+            <RankBadge rank={p.rank} />
+            <span className="max-w-[140px] truncate">{p.display_name}</span>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PlayerLegend({
+  summary,
+  playerCount,
+  maxPlayers,
+  statsIncluded,
+}: {
+  summary: {
+    online_admin_count: number;
+    online_vip_count: number;
+    online_registered_count: number;
+    rank_150_count: number;
+  };
+  playerCount: number;
+  maxPlayers: number;
+  statsIncluded: boolean;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/10 pt-3 text-xs text-white/55">
+      <LegendItem dotClass="bg-green-400" label="在线管理" value={summary.online_admin_count} />
+      <LegendItem dotClass="bg-red-400" label="在线VIP" value={summary.online_vip_count} />
+      <LegendItem dotClass="bg-sky-400" label="在线群友" value={summary.online_registered_count} />
+      <LegendItem dotClass="bg-amber-400" label="满级150" value={summary.rank_150_count} />
+      <span className="ml-auto text-white/40 tabular-nums">
+        在线 {playerCount}/{maxPlayers}
+        {statsIncluded ? "" : " · 未加载战绩"}
+      </span>
+    </div>
+  );
+}
+
+function LegendItem({
+  dotClass,
+  label,
+  value,
+}: {
+  dotClass: string;
+  label: string;
+  value: number;
+}) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className={cn("size-2 rounded-full", dotClass)} />
+      {label}
+      <span className="text-white/80 tabular-nums">{value}</span>
+    </span>
+  );
+}
+
+function formatPercent(v: number | null | undefined): string {
+  return v == null ? "—" : `${v.toFixed(1)}%`;
+}
+
+function formatRatio(v: number | null | undefined): string {
+  return v == null ? "—" : v.toFixed(2);
+}
+
+function formatHours(v: number | null | undefined): string {
+  if (v == null) return "—";
+  return v >= 1000 ? `${Math.round(v)}h` : `${v.toFixed(0)}h`;
 }
 
 /* ----------------------------- 成员名单 ----------------------------- */

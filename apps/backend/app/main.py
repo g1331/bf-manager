@@ -23,6 +23,7 @@ from app.domain.ea.login.task_manager import close_task_manager, init_task_manag
 
 # 触发游戏 profile 注册
 from app.domain.games import GameRegistry  # noqa: F401
+from app.services.bf1.blaze_service import close_blaze_pool
 from app.services.bf1.overview_service import overview_poller
 from app.services.ea_login_finalizer import EALoginFinalizer
 from app.services.metrics_service import record_request, user_id_from_token
@@ -63,6 +64,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         with contextlib.suppress(asyncio.CancelledError):
             await overview_task
     await close_task_manager()
+    await close_blaze_pool()
     await close_redis()
     await close_engine()
 

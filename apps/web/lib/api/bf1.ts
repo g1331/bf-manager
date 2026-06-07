@@ -187,6 +187,66 @@ export interface ServerPlayer {
   is_spectator: boolean;
 }
 
+/** Blaze roster 单个玩家的生涯综合战绩，全部可能为 null（查询失败或未合并战绩） */
+export interface BlazePlayerStats {
+  win_rate: number | null;
+  kd: number | null;
+  kpm: number | null;
+  time_hours: number | null;
+}
+
+/**
+ * Blaze 实时房间名单中的单个玩家。role 取 normal / queue / spectator；team 是 EA 原始
+ * TIDX（0/1 为对阵两队，65535 为排队或旁观）。is_admin / is_vip 来自服务器 RSP 名单，
+ * is_registered 表示该 persona 已在本平台绑定（群版 UI 的「群友」高亮）。
+ */
+export interface BlazePlayer {
+  persona_id: number;
+  display_name: string;
+  rank: number;
+  team: number;
+  latency: number;
+  language: string | null;
+  join_time: number | null;
+  role: string;
+  is_admin: boolean;
+  is_vip: boolean;
+  is_registered: boolean;
+  stats: BlazePlayerStats | null;
+}
+
+export interface BlazeTeamGroup {
+  team_id: number;
+  /** 阵营名称（如「法国」「德意志帝国」）；真实数据暂未提供时为 null，UI 回退为「队伍 N」 */
+  faction: string | null;
+  players: BlazePlayer[];
+  count: number;
+  rank_150_count: number;
+  avg_rank: number | null;
+}
+
+export interface ServerPlayersSummary {
+  online_admin_count: number;
+  online_vip_count: number;
+  online_registered_count: number;
+  rank_150_count: number;
+}
+
+export interface ServerPlayersResponse {
+  game_id: number;
+  server_name: string | null;
+  max_players: number;
+  player_count: number;
+  queue_count: number;
+  spectator_count: number;
+  teams: BlazeTeamGroup[];
+  queued: BlazePlayer[];
+  spectators: BlazePlayer[];
+  summary: ServerPlayersSummary;
+  stats_included: boolean;
+  is_mock: boolean;
+}
+
 export interface ServerOwner {
   persona_id: number | null;
   display_name: string | null;
@@ -324,6 +384,11 @@ export const bf1Api = {
   },
 
   getServer: (gameId: number) => api.get<ServerDetail>(`/bf1/servers/${gameId}`),
+
+  getServerPlayers: (gameId: number, includeStats = true) =>
+    api.get<ServerPlayersResponse>(
+      `/bf1/servers/${gameId}/players?include_stats=${includeStats ? "true" : "false"}`,
+    ),
 
   getOverview: () => api.get<BF1Overview>(`/bf1/overview`),
 

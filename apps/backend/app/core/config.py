@@ -59,6 +59,12 @@ class Settings(BaseSettings):
     # ===== 启用的游戏 =====
     enabled_games: str = "bf1"
 
+    # ===== Blaze 协议（服务器实时玩家列表）=====
+    # Blaze 是与 EA 后端通信的二进制长连接协议，用于拉取 Gateway 拿不到的实时房间名单
+    # （队伍/延迟/等级/语言）。开启 mock 后玩家列表接口直接返回内置 fixture，不建立真实
+    # 连接，便于本地无凭据时在浏览器预览前端效果；生产默认关闭。
+    blaze_mock_mode: bool = False
+
     # ===== 外部封禁查询 =====
     # BFEAC 案件查询按 EA 昵称发起，需要 API key；BFBAN（gametools）按 persona id
     # 查询，无需 key。未配置 bfeac_api_key 时，BFEAC 一律降级为 unknown，不影响

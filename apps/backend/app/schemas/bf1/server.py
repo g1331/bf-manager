@@ -26,6 +26,10 @@ class ServerSummary(BaseModel):
     spectator_count: int = 0
     region: str | None = None
     region_display_name: str | None = None
+    # ISO 国家代码（EA serverInfo.country，例如 "JP"）；官服多为空字符串，统一降为 None
+    country: str | None = None
+    # 服务器画面更新率 Hz（EA serverInfo.tickRate，常见 60/120）
+    tick_rate: int | None = None
     is_official: bool = False
     is_ranked: bool = False
     has_password: bool = False

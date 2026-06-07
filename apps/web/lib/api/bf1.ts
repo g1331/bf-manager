@@ -160,6 +160,16 @@ export interface ServerListResponse {
   items: ServerSummary[];
 }
 
+/** 服务器搜索查询参数：maps/modes/regions/sizes 下推到 EA 按条件检索；空位由前端二次过滤 */
+export interface ServerListQuery {
+  name?: string;
+  maps?: string[];
+  modes?: string[];
+  regions?: string[];
+  sizes?: number[];
+  limit?: number;
+}
+
 export interface MapRotationItem {
   map_name: string | null;
   map_display_name: string | null;
@@ -301,10 +311,15 @@ export const bf1Api = {
       `/bf1/stats/${personaId}/ban${name ? `?name=${encodeURIComponent(name)}` : ""}`,
     ),
 
-  listServers: (name?: string, limit = 50) => {
+  listServers: (query: ServerListQuery = {}) => {
     const params = new URLSearchParams();
-    if (name) params.set("name", name);
-    params.set("limit", String(limit));
+    if (query.name) params.set("name", query.name);
+    // maps/modes/regions/sizes 作为重复 query 参数下推到后端，由 EA 按条件检索
+    query.maps?.forEach((m) => params.append("maps", m));
+    query.modes?.forEach((m) => params.append("modes", m));
+    query.regions?.forEach((r) => params.append("regions", r));
+    query.sizes?.forEach((s) => params.append("sizes", String(s)));
+    params.set("limit", String(query.limit ?? 200));
     return api.get<ServerListResponse>(`/bf1/servers?${params.toString()}`);
   },
 

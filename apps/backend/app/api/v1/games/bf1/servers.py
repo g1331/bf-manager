@@ -14,11 +14,25 @@ router = APIRouter()
 @router.get("", response_model=ServerListResponse)
 async def list_servers(
     db: DbDep,
-    name: str | None = Query(None, max_length=64, description="按服务器名关键字过滤"),
+    name: str | None = Query(
+        None, max_length=64, description="按服务器名关键字过滤（EA 端包含匹配，大小写不敏感）"
+    ),
+    maps: list[str] | None = Query(None, description="地图代号（MP_*），多值取并集"),
+    modes: list[str] | None = Query(None, description="模式代号，多值取并集"),
+    regions: list[str] | None = Query(None, description="地区代号，多值取并集"),
+    sizes: list[int] | None = Query(None, description="服务器最大人数档位，多值取并集"),
     limit: int = Query(200, ge=1, le=500),
 ) -> ServerListResponse:
-    # EA searchServers 只接受 limit，没有 offset。前端走客户端分批渲染。
-    return await BF1ServerService(db).search(keyword=name, limit=limit)
+    # 筛选条件下推到 EA searchServers 按条件检索。空位（emptySlots）EA 不支持过滤，
+    # 由前端二次过滤。EA searchServers 只接受 limit，没有 offset，前端走客户端分批渲染。
+    return await BF1ServerService(db).search(
+        keyword=name,
+        maps=maps,
+        modes=modes,
+        regions=regions,
+        sizes=sizes,
+        limit=limit,
+    )
 
 
 @router.get("/{game_id}", response_model=ServerDetail)

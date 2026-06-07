@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Check, ChevronDown, Lock, MapPin, RotateCw, Users } from "lucide-react";
@@ -75,37 +75,66 @@ function toggle<T>(arr: T[], val: T): T[] {
   return arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val];
 }
 
+/** 防抖取值：value 停止变化 delayMs 后才返回新值，用于把高频筛选改动合并为一次请求 */
+function useDebouncedValue<T>(value: T, delayMs: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(value), delayMs);
+    return () => clearTimeout(id);
+  }, [value, delayMs]);
+  return debounced;
+}
+
 export default function ServerListPage() {
   const params = useParams<{ game: string }>();
   const router = useRouter();
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
 
-  // 进入页面即拉取服务器列表（复刻游戏浏览器进入即加载的行为）；按名称查找交由右侧
-  // 筛选面板的 nameFilter 在结果内二次过滤，刷新由标题行的「刷新」触发，不再单设中央搜索框。
+  // 地图 / 模式 / 区域 / 规模四个维度下推到后端由 EA 按条件检索：勾选即作为查询参数触发新
+  // 请求，而非仅在已加载的前若干条结果内过滤，避免冷门条件被结果上限截断而漏掉真实存在的服务器。
+  // 勾选合并 300ms 防抖，避免连续勾选产生多次 EA 请求；排序保证勾选顺序不同不产生多份缓存。
+  const selection = useMemo(
+    () => ({
+      maps: [...filters.maps].sort(),
+      modes: [...filters.modes].sort(),
+      regions: [...filters.regions].sort(),
+      sizes: [...filters.sizes].sort((a, b) => a - b),
+    }),
+    [filters.maps, filters.modes, filters.regions, filters.sizes],
+  );
+  const debouncedSelection = useDebouncedValue(selection, 300);
+  // 名称同样下推到 EA（包含匹配、大小写不敏感）以补全前若干条之外的同名服务器，打字停止
+  // 450ms 后才请求；同时下方 filtered 用即时 nameFilter 对当前结果二次过滤，保证打字即时反馈。
+  const debouncedName = useDebouncedValue(filters.nameFilter.trim(), 450);
+
   const servers = useQuery({
-    queryKey: ["bf1-servers"],
-    queryFn: () => bf1Api.listServers(undefined, 500),
-    // 刷新期间保留上一次结果，避免请求期间 servers.data 变 undefined 导致列表与筛选面板闪断。
+    queryKey: ["bf1-servers", debouncedSelection, debouncedName],
+    queryFn: () =>
+      bf1Api.listServers({
+        name: debouncedName || undefined,
+        maps: debouncedSelection.maps.length ? debouncedSelection.maps : undefined,
+        modes: debouncedSelection.modes.length ? debouncedSelection.modes : undefined,
+        regions: debouncedSelection.regions.length ? debouncedSelection.regions : undefined,
+        sizes: debouncedSelection.sizes.length ? debouncedSelection.sizes : undefined,
+        limit: 500,
+      }),
+    // 刷新 / 切换筛选期间保留上一次结果，避免请求期间 servers.data 变 undefined 导致列表与筛选面板闪断。
     placeholderData: keepPreviousData,
   });
 
   const allItems = servers.data?.items ?? [];
 
+  // 服务端已按地图 / 模式 / 区域 / 规模 / 名称检索，这里只做 EA 无法下推的二次过滤：
+  // 空位是实时人数状态、EA searchServers 不支持按其过滤；名称做即时包含过滤以提供打字反馈。
   const filtered = useMemo(() => {
     const nameNeedle = filters.nameFilter.trim().toLowerCase();
     return allItems.filter((s) => {
-      if (filters.modes.length && (!s.game_mode || !filters.modes.includes(s.game_mode)))
-        return false;
-      if (filters.maps.length && (!s.map_name || !filters.maps.includes(s.map_name))) return false;
-      if (filters.regions.length && (!s.region || !filters.regions.includes(s.region)))
-        return false;
       if (filters.emptySlots.length && !filters.emptySlots.includes(emptyBucket(s))) return false;
-      if (filters.sizes.length && !filters.sizes.includes(s.max_player_count)) return false;
       if (nameNeedle && !s.name.toLowerCase().includes(nameNeedle)) return false;
       return true;
     });
-  }, [allItems, filters]);
+  }, [allItems, filters.emptySlots, filters.nameFilter]);
 
   const sorted = useMemo(
     () => [...filtered].sort((a, b) => b.player_count - a.player_count),

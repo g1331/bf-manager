@@ -27,6 +27,7 @@ from app.schemas.bf1.server import (
     ServerSummary,
 )
 from app.services.bf1.gateway_factory import get_bf1_client
+from app.services.bf1.server_filters import build_search_filter
 
 
 def _to_summary(raw: dict[str, Any]) -> ServerSummary:
@@ -247,12 +248,26 @@ class BF1ServerService:
         self,
         keyword: str | None = None,
         *,
+        maps: list[str] | None = None,
+        modes: list[str] | None = None,
+        regions: list[str] | None = None,
+        sizes: list[int] | None = None,
         limit: int = 50,
     ) -> ServerListResponse:
+        # 把筛选条件下推为 EA filter_dict，由上游按条件检索而非仅在本地结果内过滤。
+        # 空位（emptySlots）不在此处理：EA 不按实时空位过滤，交前端二次过滤。
+        filter_dict = build_search_filter(
+            name=keyword,
+            maps=maps,
+            modes=modes,
+            regions=regions,
+            sizes=sizes,
+        )
         async with get_bf1_client(self.db) as client:
             res = await client.searchServers(
                 server_name=keyword or "",
                 limit=limit,
+                filter_dict=filter_dict,
             )
             if not isinstance(res, dict):
                 raise EAApiError(

@@ -13,6 +13,7 @@ Cookie 持久化通过可选回调 on_session_refreshed 注入，避免本层直
 from __future__ import annotations
 
 import asyncio
+import copy
 import json
 import time
 import urllib.parse
@@ -1461,7 +1462,8 @@ class GameServer(_BF1GatewayBase):
         if filter_dict:
             filter_dict = json.dumps(filter_dict)
         else:
-            temp = self.filter_dict
+            # 深拷贝默认字典再写入 name，避免直接改 self.filter_dict 造成跨调用污染
+            temp = copy.deepcopy(self.filter_dict)
             temp["name"] = server_name
             filter_dict = json.dumps(temp)
         return await self.api_call(

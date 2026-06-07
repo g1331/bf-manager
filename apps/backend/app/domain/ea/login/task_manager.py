@@ -329,6 +329,17 @@ class EALoginTaskManager:
                 message="等待用户操作超时，请重新发起登录",
             )
         except EALoginError as e:
+            # 把异常的诊断字段单独打一条 warning：``stage`` 表示链路第几步出问题，
+            # ``snippet`` 仅 FormStructureChangedError 才有（EA 返回的 HTML 片段，
+            # 截断 300 字符），是事后定位 EA 改版唯一的现场证据。这条日志一定要带
+            # 上 component / task_id 让运维能 grep 出整条任务的所有日志。
+            logger.bind(
+                component="ea_login",
+                task_id=state.task_id,
+                error_code=e.code,
+                stage=getattr(e, "stage", None),
+                snippet=getattr(e, "snippet", "") or None,
+            ).warning("ea_login.task.error_detail")
             await self._mark_failed(state, code=e.code, message=e.message)
         except Exception as e:
             logger.bind(component="ea_login", task_id=state.task_id).warning(
@@ -462,14 +473,21 @@ class EALoginTaskManager:
         )
 
     def _log_state(self, state: _TaskState, *, event: str) -> None:
-        logger.bind(
-            component="ea_login",
-            task_id=state.task_id,
-            scope=state.actor_kind,
-            owner_id=state.actor_id,
-            status=state.status.value,
-            version=state.version,
-        ).info("ea_login.task.{}", event)
+        # 失败 / 取消事件同时附带 error_code / error_message，让线上 grep "task.failed"
+        # 这条日志就能直接看到错误码与中文文案，不必再去 Redis 翻状态。
+        extra: dict[str, object] = {
+            "component": "ea_login",
+            "task_id": state.task_id,
+            "scope": state.actor_kind,
+            "owner_id": state.actor_id,
+            "status": state.status.value,
+            "version": state.version,
+        }
+        if state.error_code:
+            extra["error_code"] = state.error_code
+        if state.error_message:
+            extra["error_message"] = state.error_message
+        logger.bind(**extra).info("ea_login.task.{}", event)
 
 
 # ===== 进程级单例 =====

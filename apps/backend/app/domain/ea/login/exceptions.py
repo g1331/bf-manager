@@ -50,6 +50,18 @@ class WrongPasswordError(EALoginError):
     message = "密码错误"
 
 
+class CredentialsExpiredError(EALoginError):
+    """EA 提示 "credentials are incorrect or have expired"：账号凭据已过期或无效。
+
+    与单纯的「密码错错了再试一次」不同：EA 在此状态下会拒绝任何密码尝试，需要用户
+    去 EA 官网走「忘记密码 / 重置密码」流程恢复账号，前端文案与操作按钮也应当区
+    别对待，避免引导用户反复试错触发风控。
+    """
+
+    code = "EA_LOGIN_CREDENTIALS_EXPIRED"
+    message = "EA 凭据已过期或无效，请前往 EA 官网重置密码后重试"
+
+
 class Need2FAMethodSelectionError(EALoginError):
     """EA 提供了多种 2FA 方式，需要由调用方决定走哪一种。
 
@@ -149,6 +161,7 @@ class UpstreamError(EALoginError):
 
 __all__ = [
     "CookieExtractionFailedError",
+    "CredentialsExpiredError",
     "EALoginError",
     "EmailRejectedError",
     "FormStructureChangedError",

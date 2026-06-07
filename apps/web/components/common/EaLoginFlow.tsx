@@ -101,6 +101,60 @@ function describeError(err: unknown, fallback: string): string {
   return err instanceof ApiException ? err.message : fallback;
 }
 
+// EA 账号管理门户首页。凭据过期/无效时引导用户进入官网，自行走「安全设置 → 重置
+// 密码」。刻意用稳定的门户首页而非深链，避免 EA 改版后深链失效把用户导向 404。
+const EA_ACCOUNT_SECURITY_URL = "https://myaccount.ea.com";
+
+interface FailureView {
+  title: string;
+  /** 正文说明；缺省时回退到后端的 error_message。 */
+  description?: string;
+  /** 额外的自助恢复操作链接。 */
+  action?: { label: string; href: string };
+}
+
+/**
+ * 把后端 error_code 映射成差异化的失败展示。区分「需要用户去官网处理」与「改下输入
+ * 重试即可」两类，避免所有失败都笼统显示成一句话、引导不到位。未命中的错误码回退到
+ * 后端 error_message。
+ */
+function resolveFailureView(task: EALoginTaskResponse): FailureView {
+  const fallback = task.error_message ?? task.error_code ?? "未知错误";
+  switch (task.error_code) {
+    case "EA_LOGIN_CREDENTIALS_EXPIRED":
+      return {
+        title: "EA 凭据已过期或无效",
+        description:
+          "EA 拒绝了本次登录，提示账号凭据不正确或已过期。请前往 EA 官网重置密码后，用新密码重新发起绑定。",
+        action: { label: "前往 EA 官网重置密码", href: EA_ACCOUNT_SECURITY_URL },
+      };
+    case "EA_LOGIN_WRONG_PASSWORD":
+      return {
+        title: "邮箱或密码错误",
+        description: "EA 拒绝了本次登录。请核对邮箱与密码后重试；多次错误可能触发 EA 风控。",
+      };
+    case "EA_LOGIN_RISK_BLOCKED":
+      return {
+        title: "EA 风控拦截",
+        description:
+          "EA 判定本次登录存在风险，暂时拒绝。建议稍后再试或更换网络环境；频繁尝试会延长拦截时间。",
+      };
+    case "EA_LOGIN_EMAIL_REJECTED":
+      return {
+        title: "EA 不接受该邮箱",
+        description: "该邮箱可能不是 EA 账号、不存在或已被锁定。请确认后重试。",
+      };
+    case "EA_LOGIN_FORM_CHANGED":
+      return {
+        title: "EA 登录页结构发生变化",
+        description:
+          "EA 改版导致登录链路暂时不可用，这通常需要维护者更新适配。请稍后再试，或联系管理员。",
+      };
+    default:
+      return { title: "登录失败", description: fallback };
+  }
+}
+
 export function EaLoginFlow({ actor, open, onOpenChange, onSucceeded }: Props) {
   const [task, setTask] = useState<EALoginTaskResponse | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -466,16 +520,26 @@ function TaskProgress({
           </p>
         </div>
       );
-    case "failed":
+    case "failed": {
+      const view = resolveFailureView(task);
       return (
         <div className="space-y-2 text-sm">
-          <p className="text-base font-medium text-red-600">登录失败</p>
-          <p className="text-muted-foreground">
-            {task.error_message ?? task.error_code ?? "未知错误"}
-          </p>
+          <p className="text-base font-medium text-red-600">{view.title}</p>
+          <p className="text-muted-foreground">{view.description ?? task.error_message}</p>
+          {view.action ? (
+            <a
+              href={view.action.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary inline-flex items-center text-sm underline underline-offset-4"
+            >
+              {view.action.label}
+            </a>
+          ) : null}
           <p className="text-muted-foreground text-xs">关闭面板后可重新发起。</p>
         </div>
       );
+    }
     case "cancelled":
       return (
         <div className="text-muted-foreground space-y-2 text-sm">

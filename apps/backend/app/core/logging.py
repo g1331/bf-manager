@@ -74,16 +74,30 @@ def _pii_patcher(record: dict[str, Any]) -> None:
 
     被 ``logger.configure(patcher=...)`` 注册后，对每一条 log record 在到达 sink 之前
     调用。修改 ``record["message"]`` 与 ``record["extra"]`` 原地生效。
+
+    两件事：
+    1. PII 脱敏：扫描 message 与 extra，把敏感 key 替换成 ``[REDACTED]``。
+    2. 把 ``logger.bind(...)`` 注入的剩余 extra 字段平铺成 ``key=value`` 串拼到
+       message 末尾。日志 sink 是人类可读的 stderr 格式（非结构化 JSON），如果不在
+       message 上展开 extra，``bind(step=..., http_status=...)`` 这类诊断信息会被
+       完全丢弃，事故排查时无法还原现场。
     """
     msg = record.get("message")
     if isinstance(msg, str):
         record["message"] = _redact_text(msg)
 
     extra = record.get("extra")
-    if extra:
-        for key in list(extra.keys()):
-            if key.lower() in _SENSITIVE_EXTRA_KEYS:
-                extra[key] = "[REDACTED]"
+    if not extra:
+        return
+
+    for key in list(extra.keys()):
+        if key.lower() in _SENSITIVE_EXTRA_KEYS:
+            extra[key] = "[REDACTED]"
+
+    # 平铺到 message 末尾。值用 repr 是为了让多行字符串 / 列表 / dict 在单行日志里仍可读，
+    # 同时避免内层换行破坏日志解析。
+    parts = " ".join(f"{key}={value!r}" for key, value in extra.items())
+    record["message"] = f"{record['message']} | {parts}"
 
 
 class InterceptHandler(logging.Handler):

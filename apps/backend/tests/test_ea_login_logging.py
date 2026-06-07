@@ -106,6 +106,31 @@ def test_pii_patcher_unit_redacts_known_extra_keys():
     assert record["extra"]["task_id"] == "ok"
 
 
+def test_patcher_appends_extra_to_message_for_human_readable_sink():
+    """patcher 把 logger.bind 的 extra 字段平铺拼到 message 末尾。
+
+    生产 sink 的 format 只渲染 ``{message}``、不渲染 ``{extra}``。如果 patcher 不主动
+    把 extra 信息合并进 message，``logger.bind(step=..., http_status=...)`` 这类诊断
+    字段会被静默丢弃，事故排查时无法还原现场。
+    """
+    record: dict = {
+        "message": "ea_login.step",
+        "extra": {"step": "post_password", "http_status": 200, "form_keys": ["a", "b"]},
+    }
+    _pii_patcher(record)
+    assert record["message"].startswith("ea_login.step | ")
+    assert "step='post_password'" in record["message"]
+    assert "http_status=200" in record["message"]
+    assert "form_keys=['a', 'b']" in record["message"]
+
+
+def test_patcher_keeps_message_unchanged_when_extra_empty():
+    """空 extra 时 message 不应被追加任何 ``|`` 后缀。"""
+    record: dict = {"message": "ok", "extra": {}}
+    _pii_patcher(record)
+    assert record["message"] == "ok"
+
+
 def test_patcher_does_not_break_standard_logging_bridge(captured):
     """InterceptHandler 把 stdlib logging 转发到 loguru，patcher 也应该作用其上。
 

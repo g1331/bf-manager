@@ -47,7 +47,7 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
           比 2:1 更宽（超宽屏）时，200vh 上限才介入，把整组元素向中心集中、两侧露出
           战场氛围——对应真实大厅在宽高比变极端时「元素集中统一」而非紧贴边缘的行为。 */}
       <div
-        className="relative z-10 mx-auto flex min-h-screen"
+        className="relative z-10 mx-auto flex min-h-screen lg:h-screen lg:overflow-hidden"
         style={{ width: "min(95vw, 200vh)" }}
       >
         {/* 桌面端 rail：随舞台容器水平居中，sticky 跟随滚动。
@@ -59,8 +59,8 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
           <span className="absolute inset-y-0 right-0 w-px bg-white/12" aria-hidden />
         </aside>
 
-        {/* 主内容列 */}
-        <div className="flex min-w-0 flex-1 flex-col">
+        {/* 主内容列：桌面端固定满高、自身不滚，滚动交给内部页面区，使顶栏与子标签常驻 */}
+        <div className="flex min-w-0 flex-1 flex-col lg:min-h-0 lg:overflow-hidden">
           {/* 顶部 Header：纯浮层，无边框、无实色块；桌面端左侧嵌二级 tab，右侧厂牌与账户 */}
           <header className="relative z-40 flex h-32 items-end px-6 pb-3 sm:px-10">
             {/* 移动端汉堡 */}
@@ -110,7 +110,7 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
            * 实现「整组元素集中统一」的视觉。错误页（max-w-md）需要保留居中，特判跳过。
            * max-w 由页面各自决定，这里只改对齐方式不改宽度。
            */}
-          <div className="[&_main:not(.max-w-md)]:!mr-auto [&_main:not(.max-w-md)]:!ml-0 [&_main:not(.max-w-md)]:!px-6 sm:[&_main:not(.max-w-md)]:!px-10">
+          <div className="lg:flex lg:min-h-0 lg:flex-1 lg:flex-col [&_main:not(.max-w-md)]:!mr-auto [&_main:not(.max-w-md)]:!ml-0 [&_main:not(.max-w-md)]:!px-6 sm:[&_main:not(.max-w-md)]:!px-10">
             <PageTransition>{children}</PageTransition>
           </div>
         </div>

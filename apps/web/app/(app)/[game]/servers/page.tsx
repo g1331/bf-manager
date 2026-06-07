@@ -142,9 +142,9 @@ export default function ServerListPage() {
   ];
 
   return (
-    <main className="space-y-4 py-6 text-white">
+    <main className="flex flex-col gap-4 py-6 text-white lg:h-full lg:min-h-0">
       {/* 标题行 + 右侧筛选摘要、刷新 */}
-      <header className="flex flex-wrap items-end justify-between gap-3">
+      <header className="flex flex-wrap items-end justify-between gap-3 lg:shrink-0">
         <div>
           <div className="font-display flex items-center gap-2 text-xs font-medium tracking-[0.2em] text-amber-500 uppercase">
             <span className="h-[2px] w-6 bg-amber-500" />
@@ -175,41 +175,47 @@ export default function ServerListPage() {
           后三者依赖玩家账号维度的收藏 / 历史 / 自有服务器数据，本应用暂未接入，置灰不可点。 */}
       <SubTabs />
 
-      {/* 主体：左密集表格 + 右筛选面板 */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
-        <section className="min-w-0">
+      {/* 主体：左密集表格 + 右筛选面板。桌面端整块填满剩余高度，仅列表内部滚动 */}
+      <div className="grid grid-cols-1 gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <section className="flex min-w-0 flex-col lg:min-h-0">
           {servers.isLoading ? (
             <div className="py-16 text-center text-sm text-white/45">加载中…</div>
           ) : sorted.length > 0 ? (
             <>
-              <div className="flex items-center gap-4 border-b border-white/10 px-3 pb-2 text-[11px] font-semibold tracking-[0.16em] text-white/40 uppercase">
+              {/* 表头常驻，不随列表滚动 */}
+              <div className="flex items-center gap-4 border-b border-white/10 px-3 pb-2 text-[11px] font-semibold tracking-[0.16em] text-white/40 uppercase lg:shrink-0">
                 <span className="flex-1">名称</span>
                 <span className="w-24 text-right">玩家</span>
                 <span className="hidden w-24 text-right sm:block">节点</span>
               </div>
-              <ul>
-                {visibleItems.map((s) => (
-                  <ServerRow
-                    key={s.server_id}
-                    server={s}
-                    onClick={() => s.game_id && router.push(`/${params.game}/server/${s.game_id}`)}
-                  />
-                ))}
-              </ul>
-              <div className="flex flex-col items-center gap-2 pt-4 text-sm text-white/45">
-                <span className="tabular-nums">
-                  已显示 {visibleItems.length} / {sorted.length} 条
-                  {filtersActive ? `（共 ${allItems.length} 条，已筛选）` : null}
-                </span>
-                {hasMore ? (
-                  <Button
-                    variant="outline"
-                    onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
-                    className="border-white/15 px-8 text-white hover:bg-white/5"
-                  >
-                    加载更多
-                  </Button>
-                ) : null}
+              {/* 列表滚动区：桌面端唯一的内部滚动容器 */}
+              <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+                <ul>
+                  {visibleItems.map((s) => (
+                    <ServerRow
+                      key={s.server_id}
+                      server={s}
+                      onClick={() =>
+                        s.game_id && router.push(`/${params.game}/server/${s.game_id}`)
+                      }
+                    />
+                  ))}
+                </ul>
+                <div className="flex flex-col items-center gap-2 pt-4 text-sm text-white/45">
+                  <span className="tabular-nums">
+                    已显示 {visibleItems.length} / {sorted.length} 条
+                    {filtersActive ? `（共 ${allItems.length} 条，已筛选）` : null}
+                  </span>
+                  {hasMore ? (
+                    <Button
+                      variant="outline"
+                      onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+                      className="border-white/15 px-8 text-white hover:bg-white/5"
+                    >
+                      加载更多
+                    </Button>
+                  ) : null}
+                </div>
               </div>
             </>
           ) : (
@@ -219,7 +225,7 @@ export default function ServerListPage() {
           )}
         </section>
 
-        {/* 筛选面板常驻，复刻游戏右侧固定筛选栏 */}
+        {/* 筛选面板常驻，复刻游戏右侧固定筛选栏；自身满高，条目过多时仅面板内部滚动 */}
         <FilterPanel
           filters={filters}
           patch={patch}
@@ -242,7 +248,7 @@ function SubTabs() {
     { label: "您的服务器", active: false, enabled: false },
   ];
   return (
-    <nav className="flex items-center gap-6 border-b border-white/10 pb-2 text-sm">
+    <nav className="flex items-center gap-6 border-b border-white/10 pb-2 text-sm lg:shrink-0">
       {tabs.map((t) => (
         <span
           key={t.label}
@@ -367,7 +373,7 @@ function FilterPanel({
   summaryChips: string[];
 }) {
   return (
-    <aside className="space-y-5 lg:sticky lg:top-4 lg:self-start">
+    <aside className="space-y-5 lg:min-h-0 lg:self-stretch lg:overflow-y-auto lg:pr-1">
       {/* 您的筛选条件：当前生效条件的标签集 */}
       <section>
         <PanelTitle>您的筛选条件</PanelTitle>

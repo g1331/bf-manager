@@ -34,6 +34,7 @@ from lxml import html as lxml_html
 
 from app.domain.ea.login.exceptions import (
     CookieExtractionFailedError,
+    CredentialsExpiredError,
     EmailRejectedError,
     FormStructureChangedError,
     Invalid2FACodeError,
@@ -80,6 +81,32 @@ _RISK_KEYWORDS = (
     "拦截",
     "请稍后",
 )
+
+# EA 明确告知「账号凭据过期 / 不可用」时返回的关键片段。命中后引导用户去官网走重置
+# 流程，而非反复尝试密码。注意 EA 实际页面常把这条文案与「You must be online…」
+# 等通用提示拼在一起，所以匹配片段只取确诊力强的子串。
+_CREDENTIALS_EXPIRED_KEYWORDS = (
+    "credentials are incorrect or have expired",
+    "credentials have expired",
+    "凭据已过期",
+)
+
+
+def _classify_page_error(page_err: str) -> str:
+    """把 EA 返回的错误文本分流成已知错误类别。
+
+    返回值约定：``"expired"`` / ``"risk_blocked"`` / ``"wrong_password"``。
+    顺序敏感：``expired`` 关键词与 ``wrong_password``（"incorrect"）字面上有交集，
+    必须优先匹配 ``expired`` 才能避免把凭据过期场景误判为单纯密码错误。
+    """
+    if not page_err:
+        return "wrong_password"
+    lower = page_err.lower()
+    if any(kw in lower for kw in _CREDENTIALS_EXPIRED_KEYWORDS):
+        return "expired"
+    if any(kw in lower for kw in _RISK_KEYWORDS):
+        return "risk_blocked"
+    return "wrong_password"
 
 
 @dataclass
@@ -141,11 +168,23 @@ class EALoginEngine:
     # ===== 公开 API =====
 
     async def start(self) -> StartOutcome:
-        """走完 GET → POST email → POST password，把流程推进到等待用户或终态。"""
+        """完成 EA 登录链路前半段，把任务推进到等待用户输入或终态。
+
+        EA 早期分两步：先 POST email，响应是密码页；再 POST password，响应是 2FA / redirect。
+        EA juno 新版改为单页表单，email 与 password 出现在同一个 ``login-form`` 里——
+        ``build_form_payload`` 会一次性取走两者，所以 ``_post_email`` 实际已经完成了
+        密码校验，响应直接是终态页面（密码错 / 凭据过期 / 2FA / redirect）。
+
+        本方法兼容两种版本：``_post_email`` 之后立即分类响应；仅当响应仍是一个**纯**
+        密码输入页（旧版两步流程，并且没有任何错误提示）时才补发一次 ``_post_password``。
+        """
         session = await self._ensure_session()
         start_resp, start_text = await self._get_start(session)
         email_resp, email_text = await self._post_email(session, start_resp, start_text)
-        password_resp, password_text = await self._post_password(session, email_resp, email_text)
+
+        password_resp, password_text = await self._maybe_post_password(
+            session, email_resp, email_text
+        )
 
         if has_privacy_accept_checkbox(password_text):
             self._log("privacy_accept_required")
@@ -153,7 +192,57 @@ class EALoginEngine:
                 session, password_resp, password_text
             )
 
-        self._raise_if_password_rejected(password_text)
+        return await self._classify_post_password_response(session, password_resp, password_text)
+
+    async def _maybe_post_password(
+        self,
+        session: aiohttp.ClientSession,
+        email_resp: aiohttp.ClientResponse,
+        email_text: str,
+    ) -> tuple[aiohttp.ClientResponse, str]:
+        """决定是否补发一次密码 POST，兼容 EA 旧版两步流程。
+
+        判定逻辑：
+        - 响应**有** password 输入框且**没有**任何错误提示 → 旧版两步表单的纯密码页，
+          补发一次 ``_post_password``；
+        - 其它任何情况（含错误、2FA、redirect、隐私协议、未知页）→ 直接交给后续分类器
+          处理，不再发多余 POST。这一步是新版 juno 单页表单的关键修复点：第一次 POST
+          已经完成了密码校验，再 POST 一次会进入引擎不认识的页面，最终被误报为
+          ``FormStructureChangedError``，掩盖掉真实的「密码错误 / 凭据过期」。
+        """
+        tree = lxml_html.fromstring(email_text)
+        has_password_input = bool(tree.xpath('//input[@type="password" and @name="password"]'))
+        if not has_password_input:
+            self._log("skip_post_password", reason="no_password_input")
+            return email_resp, email_text
+
+        if extract_page_error(email_text):
+            self._log("skip_post_password", reason="page_error_present")
+            return email_resp, email_text
+
+        # 旧版两步表单：第一步只校验邮箱，第二步才校验密码。
+        return await self._post_password(session, email_resp, email_text)
+
+    async def _classify_post_password_response(
+        self,
+        session: aiohttp.ClientSession,
+        password_resp: aiohttp.ClientResponse,
+        password_text: str,
+    ) -> StartOutcome:
+        """对 POST email/password 之后的响应做统一分类，抛对应异常或推进流程。
+
+        分类顺序：
+        1. 密码输入框还在 → 凭据被拒（凭据过期 / 风控 / 密码错误三选一）
+        2. 2FA radio 列表非空 → 进入 2FA 流程
+        3. ``window.location=`` 重定向 → 跳过去拿 cookies，``next_step="done"``
+        4. 还有 page error 文本 → 按关键词分流（兜底捕捉 EA 不带 password 输入但
+           直接渲染了错误信息的新版页面）
+        5. 全部不匹配 → ``FormStructureChangedError``，附 HTML snippet 入日志
+        """
+        tree = lxml_html.fromstring(password_text)
+        if tree.xpath('//input[@type="password" and @name="password"]'):
+            page_err = extract_page_error(password_text) or "密码错误"
+            self._raise_for_credentials_outcome(page_err, stage="password")
 
         methods = extract_available_auth_methods(password_text)
         if methods:
@@ -173,10 +262,27 @@ class EALoginEngine:
             return StartOutcome(next_step="need_method", available_methods=methods)
 
         redirect_url = extract_redirect_url(password_text)
-        if not redirect_url:
-            self._raise_for_unexpected_html(password_text, stage="password")
-        cookies = await self._handle_redirect(session, redirect_url, stage="finalize")
-        return StartOutcome(next_step="done", cookies=cookies)
+        if redirect_url:
+            cookies = await self._handle_redirect(session, redirect_url, stage="finalize")
+            return StartOutcome(next_step="done", cookies=cookies)
+
+        page_err = extract_page_error(password_text)
+        if page_err:
+            self._raise_for_credentials_outcome(page_err, stage="password")
+
+        raise FormStructureChangedError(_safe_snippet(password_text), stage="password")
+
+    def _raise_for_credentials_outcome(self, page_err: str, *, stage: str) -> None:
+        """按 :func:`_classify_page_error` 的分流结果抛对应业务异常。
+
+        集中维护这套映射让 ``start()`` 与未来可能的 2FA 阶段分类共享同一份关键词表。
+        """
+        category = _classify_page_error(page_err)
+        if category == "expired":
+            raise CredentialsExpiredError(page_err, stage=stage)
+        if category == "risk_blocked":
+            raise RiskBlockedError(page_err, stage=stage)
+        raise WrongPasswordError(page_err, stage=stage)
 
     async def select_method(self, method: str) -> MethodOutcome:
         """多 2FA 方式分支下选定一种，内部触发 EA 发送验证码。"""
@@ -381,25 +487,6 @@ class EALoginEngine:
             raise UpstreamError(f"POST {stage} failed: {type(e).__name__}", stage=stage) from e
         text = await resp.text()
         return resp, text
-
-    def _raise_if_password_rejected(self, password_html: str) -> None:
-        tree = lxml_html.fromstring(password_html)
-        if not tree.xpath('//input[@type="password" and @name="password"]'):
-            return
-        page_err = extract_page_error(password_html) or "密码错误"
-        lower = page_err.lower()
-        if any(kw in lower for kw in _RISK_KEYWORDS):
-            raise RiskBlockedError(page_err, stage="password")
-        raise WrongPasswordError(page_err, stage="password")
-
-    def _raise_for_unexpected_html(self, password_html: str, *, stage: str) -> None:
-        page_err = extract_page_error(password_html)
-        if page_err:
-            lower = page_err.lower()
-            if any(kw in lower for kw in _RISK_KEYWORDS):
-                raise RiskBlockedError(page_err, stage=stage)
-            raise WrongPasswordError(page_err, stage=stage)
-        raise FormStructureChangedError(_safe_snippet(password_html), stage=stage)
 
     # ===== 基础 =====
 

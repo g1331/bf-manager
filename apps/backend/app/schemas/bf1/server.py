@@ -63,6 +63,82 @@ class ServerPlayer(BaseModel):
     is_spectator: bool = False
 
 
+class BlazePlayerStats(BaseModel):
+    """单个玩家的生涯综合战绩（来自 EA detailedStats，玩家列表按需合并）。
+
+    全部允许为空：detailedStats 查询失败、限流或未开启战绩合并时该字段整体为 None，
+    前端对应列显示占位。win_rate 为百分比（0-100），time_hours 为游玩时长（小时）。
+    """
+
+    win_rate: float | None = None
+    kd: float | None = None
+    kpm: float | None = None
+    time_hours: float | None = None
+
+
+class BlazePlayer(BaseModel):
+    """Blaze roster 单个玩家。
+
+    role 取 normal / queue / spectator；team 是 EA 原始 TIDX（0/1 为对阵两队，65535
+    为排队或旁观）。is_admin / is_vip 由服务器 RSP 名单交叉得到，is_registered 表示该
+    persona 已在本平台绑定（对应群版 UI 的「群友」高亮）。stats 仅在开启战绩合并时填充。
+    """
+
+    persona_id: int
+    display_name: str
+    rank: int = 0
+    team: int = 65535
+    latency: int = 0
+    language: str | None = None
+    join_time: float | None = None
+    role: str = "normal"
+    is_admin: bool = False
+    is_vip: bool = False
+    is_registered: bool = False
+    stats: BlazePlayerStats | None = None
+
+
+class BlazeTeamGroup(BaseModel):
+    """一支队伍的玩家分组与聚合指标。
+
+    faction 是阵营名称（如「法国」「德意志帝国」）；当前 Blaze 响应未提供可靠的阵营字段，
+    暂留空由前端回退为「队伍 N」，待真实数据 dump 确认字段位置后再填充。
+    """
+
+    team_id: int
+    faction: str | None = None
+    players: list[BlazePlayer] = []
+    count: int = 0
+    rank_150_count: int = 0
+    avg_rank: float | None = None
+
+
+class ServerPlayersSummary(BaseModel):
+    """玩家列表底部图例的计数：在线管理 / 在线 VIP / 在线群友 / 满级（150）数量。"""
+
+    online_admin_count: int = 0
+    online_vip_count: int = 0
+    online_registered_count: int = 0
+    rank_150_count: int = 0
+
+
+class ServerPlayersResponse(BaseModel):
+    """服务器实时玩家列表（Blaze roster + RSP 名单 + 可选生涯战绩）。"""
+
+    game_id: int
+    server_name: str | None = None
+    max_players: int = 0
+    player_count: int = 0
+    queue_count: int = 0
+    spectator_count: int = 0
+    teams: list[BlazeTeamGroup] = []
+    queued: list[BlazePlayer] = []
+    spectators: list[BlazePlayer] = []
+    summary: ServerPlayersSummary = ServerPlayersSummary()
+    stats_included: bool = False
+    is_mock: bool = False
+
+
 class ServerOwner(BaseModel):
     """RSP 服主
 

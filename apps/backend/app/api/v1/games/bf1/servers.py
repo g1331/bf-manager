@@ -5,7 +5,8 @@ from __future__ import annotations
 from fastapi import APIRouter, Query
 
 from app.api.deps import DbDep
-from app.schemas.bf1.server import ServerDetail, ServerListResponse
+from app.schemas.bf1.server import ServerDetail, ServerListResponse, ServerPlayersResponse
+from app.services.bf1.blaze_service import get_server_players
 from app.services.bf1.server_service import BF1ServerService
 
 router = APIRouter()
@@ -38,3 +39,16 @@ async def list_servers(
 @router.get("/{game_id}", response_model=ServerDetail)
 async def get_server(game_id: int, db: DbDep) -> ServerDetail:
     return await BF1ServerService(db).get_detail(game_id)
+
+
+@router.get("/{game_id}/players", response_model=ServerPlayersResponse)
+async def get_server_players_route(
+    game_id: int,
+    db: DbDep,
+    include_stats: bool = Query(
+        True, description="是否合并各玩家生涯综合战绩（胜率 / KD / KPM / 时长），关闭可加快响应"
+    ),
+) -> ServerPlayersResponse:
+    # 玩家列表走 Blaze 长连接拉取实时房间名单，叠加 RSP 管理 / VIP 名单与平台绑定标记。
+    # 战绩为可选的慢路径，按 include_stats 控制是否并发查询。
+    return await get_server_players(db, game_id, include_stats=include_stats)

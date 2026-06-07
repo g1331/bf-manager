@@ -7,14 +7,11 @@ methods.py 当前包含的 Components / Commands 主要基于 BF1 协议反向�
 - domain/games/<game_id>/blaze.py（游戏特定 method 覆盖）
 """
 
-from app.domain.ea.blaze_protocol.client import BlazeClient, BlazeClientManagerInstance
 from app.domain.ea.blaze_protocol.protocol import Blaze, keepalive
 from app.domain.ea.blaze_protocol.socket import BlazeServerREQ, BlazeSocket
 
 __all__ = [
     "Blaze",
-    "BlazeClient",
-    "BlazeClientManagerInstance",
     "BlazeServerREQ",
     "BlazeSocket",
     "keepalive",

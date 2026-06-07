@@ -8,7 +8,7 @@
  * 成员 / 审计 / 管理）沿用既有数据与操作逻辑，仅置于半透明深色面板内保证可读。
  */
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -25,10 +25,12 @@ import {
   type ServerDetail,
   type ServerSummary,
   type ServerSettings,
-  type ServerPlayer,
   type MapRotationItem,
   type ServerExtras,
   type ServerMember,
+  type BlazePlayer,
+  type BlazeTeamGroup,
+  type ServerPlayersResponse,
 } from "@/lib/api/bf1";
 
 const ACTION_LABEL: Record<string, string> = {
@@ -85,11 +87,11 @@ function ServerDetailView({
 }) {
   const session = useSession();
   const isLoggedIn = !!session.data;
-  const { summary, map_rotation, players, extras } = detail;
+  const { summary, map_rotation, extras } = detail;
   const memberCount = extras.admins.length + extras.vips.length + extras.banned.length;
 
   const tabs: ReadonlyArray<{ key: TabKey; label: string }> = [
-    { key: "players", label: `玩家列表（${players.length}）` },
+    { key: "players", label: `玩家列表（${summary.player_count}）` },
     { key: "rotation", label: `地图轮换（${map_rotation.length}）` },
     { key: "members", label: `成员名单（${memberCount}）` },
     ...(isLoggedIn
@@ -125,9 +127,9 @@ function ServerDetailView({
           <TabNav tabs={tabs} tab={tab} onTab={setTab} />
           <div className="mt-5">
             {tab === "players" && (
-              <Panel>
-                <PlayersList players={players} game={game} />
-              </Panel>
+              <div className="rounded-sm bg-black/25 p-4 backdrop-blur-md sm:p-6">
+                <PlayersList gameId={gameId} game={game} />
+              </div>
             )}
             {tab === "rotation" && (
               <Panel>
@@ -574,39 +576,417 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-/* ----------------------------- 玩家列表 ----------------------------- */
+/* ----------------------------- 玩家列表（Blaze 实时名单） ----------------------------- */
 
-function PlayersList({ players, game }: { players: ServerPlayer[]; game: string }) {
-  const columns: Column<ServerPlayer>[] = [
-    {
-      key: "name",
-      header: "玩家",
-      cell: (p) => (
-        <Link
-          href={`/${game}/player/${p.persona_id}`}
-          className="text-white hover:text-amber-300 hover:underline"
-        >
-          {p.display_name}
-        </Link>
-      ),
-      isCardTitle: true,
-    },
-    {
-      key: "team",
-      header: "队伍",
-      cell: (p) => (p.is_spectator ? "旁观" : p.team_id ? `T${p.team_id}` : "—"),
-    },
-    { key: "rank", header: "等级", cell: (p) => p.rank ?? "—" },
-    { key: "id", header: "ID", cell: (p) => p.persona_id },
-  ];
+/**
+ * 复刻群版「服务器玩家列表」效果：按阵营分双列，逐行展示等级 / 玩家名 / 胜率 / K-D /
+ * KPM / 时长 / 延迟 / 语言。在线管理员以绿色高亮、VIP 以红色、平台已绑定用户（群友）以
+ * 蓝色高亮；满级（150）等级以琥珀色方框突出。数据走独立的 Blaze 玩家列表接口拉取，与
+ * 详情主体分开加载，避免实时名单的耗时拖慢页面其余部分。
+ */
+function PlayersList({ gameId, game }: { gameId: number; game: string }) {
+  const query = useQuery({
+    queryKey: ["bf1-server-players", gameId],
+    queryFn: () => bf1Api.getServerPlayers(gameId),
+    enabled: Number.isFinite(gameId),
+    // 实时名单变动频繁，缓存短时即可；窗口聚焦时自动刷新交给 react-query 默认行为。
+    staleTime: 15_000,
+  });
+
+  if (query.isLoading) {
+    return <div className="py-10 text-center text-sm text-white/40">正在拉取实时玩家名单…</div>;
+  }
+  if (query.isError || !query.data) {
+    return (
+      <div className="py-10 text-center text-sm text-white/45">
+        实时玩家名单暂时不可用（Blaze 连接失败或服务器未在线）
+      </div>
+    );
+  }
+
+  return <ServerPlayersView data={query.data} game={game} />;
+}
+
+/**
+ * 玩家列表纯展示层（与数据获取解耦，便于用 mock 数据独立预览）。
+ */
+export function ServerPlayersView({ data, game }: { data: ServerPlayersResponse; game: string }) {
+  const teams = data.teams;
+  const hasPlayers =
+    teams.some((t) => t.players.length > 0) || data.queued.length > 0 || data.spectators.length > 0;
+
+  if (!hasPlayers) {
+    return <div className="py-10 text-center text-sm text-white/40">服务器内暂无玩家</div>;
+  }
+
   return (
-    <ResponsiveTable
-      data={players}
-      columns={columns}
-      rowKey={(p) => p.persona_id}
-      emptyState="服务器内暂无玩家数据"
-    />
+    <div className="text-white/90">
+      {data.is_mock ? (
+        <div className="mb-3 inline-block rounded-sm border border-amber-400/30 bg-amber-500/10 px-2.5 py-1 text-[11px] text-amber-200/90">
+          演示数据（BLAZE_MOCK_MODE 已开启），非真实房间名单
+        </div>
+      ) : null}
+
+      {/* 双阵营并排，中间以竖线分割，与群版整图风格一致 */}
+      <div className="grid grid-cols-1 gap-x-8 gap-y-8 lg:grid-cols-2">
+        {teams.map((team, idx) => (
+          <TeamColumn
+            key={team.team_id}
+            team={team}
+            index={idx}
+            game={game}
+            className={idx > 0 ? "lg:border-l lg:border-white/15 lg:pl-8" : undefined}
+          />
+        ))}
+      </div>
+
+      {data.queued.length > 0 || data.spectators.length > 0 ? (
+        <div className="mt-7 space-y-3 border-t border-white/10 pt-4">
+          {data.queued.length > 0 ? (
+            <SidePlayerGroup title="排队中" players={data.queued} game={game} />
+          ) : null}
+          {data.spectators.length > 0 ? (
+            <SidePlayerGroup title="旁观者" players={data.spectators} game={game} />
+          ) : null}
+        </div>
+      ) : null}
+
+      <PlayerLegend
+        summary={data.summary}
+        playerCount={data.player_count}
+        maxPlayers={data.max_players}
+        statsIncluded={data.stats_included}
+        className="mt-6"
+      />
+    </div>
   );
+}
+
+/** 阵营名称（中文）到旗帜图标文件名的映射，对应 public/factions/{slug}.png */
+const FACTION_SLUG: Record<string, string> = {
+  法国: "fra",
+  德意志帝国: "ger",
+  大英帝国: "uk",
+  美国: "usa",
+  意大利王国: "ita",
+  俄罗斯帝国: "rus",
+  奥匈帝国: "ahu",
+  奥斯曼帝国: "otm",
+  皇家海军陆战队: "rm",
+  红军: "bol",
+};
+
+const MAX_RANK = 150;
+
+type TeamAverage = {
+  rank: number | null;
+  winRate: number | null;
+  kd: number | null;
+  kpm: number | null;
+  hours: number | null;
+};
+
+/** 计算单列底部「平均」行：等级取整、战绩各项按有数据者求均值 */
+function computeTeamAverage(players: BlazePlayer[]): TeamAverage {
+  const mean = (values: number[]): number | null =>
+    values.length ? values.reduce((a, b) => a + b, 0) / values.length : null;
+  const pick = (fn: (p: BlazePlayer) => number | null | undefined): number[] =>
+    players.map(fn).filter((v): v is number => typeof v === "number");
+
+  const ranks = pick((p) => (p.rank > 0 ? p.rank : null));
+  const rankMean = mean(ranks);
+  return {
+    rank: rankMean == null ? null : Math.round(rankMean),
+    winRate: mean(pick((p) => p.stats?.win_rate)),
+    kd: mean(pick((p) => p.stats?.kd)),
+    kpm: mean(pick((p) => p.stats?.kpm)),
+    hours: mean(pick((p) => p.stats?.time_hours)),
+  };
+}
+
+function TeamColumn({
+  team,
+  index,
+  game,
+  className,
+}: {
+  team: BlazeTeamGroup;
+  index: number;
+  game: string;
+  className?: string;
+}) {
+  const title = team.faction ?? `队伍 ${index + 1}`;
+  const slug = team.faction ? FACTION_SLUG[team.faction] : undefined;
+  const avg = computeTeamAverage(team.players);
+
+  return (
+    <div className={className}>
+      <table className="w-full border-collapse text-[12.5px] tabular-nums">
+        <colgroup>
+          <col className="w-7" />
+          <col className="w-11" />
+          <col />
+          <col className="w-12" />
+          <col className="w-11" />
+          <col className="w-11" />
+          <col className="w-16" />
+          <col className="w-14" />
+          <col className="w-9" />
+        </colgroup>
+        <thead>
+          {/* 阵营标题行：旗帜 + 阵营名 + 人数，跨越序号/等级/玩家三列 */}
+          <tr className="align-bottom">
+            <th colSpan={3} className="pb-2 text-left">
+              <span className="flex items-center gap-2.5">
+                {slug ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={`/factions/${slug}.png`}
+                    alt={title}
+                    className="h-9 w-9 shrink-0 object-contain drop-shadow"
+                  />
+                ) : null}
+                <span className="text-[17px] leading-none font-bold tracking-wide text-white">
+                  {title}
+                </span>
+                <span className="text-xs text-white/45 tabular-nums">{team.count}</span>
+              </span>
+            </th>
+            <ColHeader>胜率</ColHeader>
+            <ColHeader>K/D</ColHeader>
+            <ColHeader>KPM</ColHeader>
+            <ColHeader>时长</ColHeader>
+            <ColHeader className="text-center">延迟</ColHeader>
+            <ColHeader className="text-center">语言</ColHeader>
+          </tr>
+        </thead>
+        {/* 表头下的整条横线，呼应原图分隔样式 */}
+        <tbody className="border-t border-white/25">
+          {team.players.map((p, i) => (
+            <PlayerRow key={p.persona_id} player={p} seq={i + 1} game={game} />
+          ))}
+        </tbody>
+        <tfoot>
+          <tr className="border-t border-white/20 text-[12px] font-semibold text-amber-300/90">
+            <td colSpan={3} className="pt-2 pl-0.5">
+              平均 {avg.rank ?? "—"}
+            </td>
+            <td className="pt-2 text-right">{formatPercent(avg.winRate)}</td>
+            <td className="pt-2 text-right">{formatRatio(avg.kd)}</td>
+            <td className="pt-2 text-right">{formatRatio(avg.kpm)}</td>
+            <td className="pt-2 text-right">{formatHours(avg.hours)}</td>
+            <td className="pt-2" />
+            <td className="pt-2" />
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  );
+}
+
+function ColHeader({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <th
+      className={cn(
+        "pb-2 text-right text-[11px] font-medium tracking-wide text-white/55",
+        className,
+      )}
+    >
+      {children}
+    </th>
+  );
+}
+
+function PlayerRow({ player, seq, game }: { player: BlazePlayer; seq: number; game: string }) {
+  const stats = player.stats;
+  const dot = roleDot(player);
+  return (
+    <tr className="border-b border-white/[0.06] transition-colors last:border-0 hover:bg-white/[0.05]">
+      <td className="py-[5px] pr-1 text-right text-[11px] text-white/35">{seq}</td>
+      <td className="py-[5px] text-center">
+        <RankBadge rank={player.rank} />
+      </td>
+      <td className="py-[5px] pr-2 pl-2">
+        <Link
+          href={`/${game}/player/${player.persona_id}`}
+          className="flex items-center gap-1.5 hover:underline"
+          title={player.display_name}
+        >
+          {dot ? <span className={cn("size-1.5 shrink-0 rounded-full", dot)} /> : null}
+          <span className={cn("truncate font-medium", nameColor(player))}>
+            {player.display_name}
+          </span>
+        </Link>
+      </td>
+      <td className="py-[5px] text-right text-white/85">{formatPercent(stats?.win_rate)}</td>
+      <td className="py-[5px] text-right text-white/85">{formatRatio(stats?.kd)}</td>
+      <td className="py-[5px] text-right text-white/60">{formatRatio(stats?.kpm)}</td>
+      <td className="py-[5px] text-right text-white/60">{formatHours(stats?.time_hours)}</td>
+      <td className="py-[5px]">
+        <LatencyCell latency={player.latency} />
+      </td>
+      <td className="py-[5px] text-center text-white/65">{player.language || "—"}</td>
+    </tr>
+  );
+}
+
+/** 高亮优先级：管理员（绿）> VIP（红）> 已绑定用户（蓝）> 普通（白） */
+function nameColor(p: BlazePlayer): string {
+  if (p.is_admin) return "text-green-400";
+  if (p.is_vip) return "text-red-400";
+  if (p.is_registered) return "text-sky-400";
+  return "text-white/90";
+}
+
+/** 名字前的角色圆点，与字色同源，弱辨识场景下也能一眼区分管理/VIP/已绑定 */
+function roleDot(p: BlazePlayer): string | null {
+  if (p.is_admin) return "bg-green-400";
+  if (p.is_vip) return "bg-red-400";
+  if (p.is_registered) return "bg-sky-400";
+  return null;
+}
+
+/** 等级方框：原图中每个等级都带框，满级 150 用实心琥珀块，其余用细灰描边 */
+function RankBadge({ rank }: { rank: number }) {
+  const isMax = rank >= MAX_RANK;
+  return (
+    <span
+      className={cn(
+        "inline-block min-w-[30px] rounded-[2px] px-1 text-center text-[11px] leading-[1.4] font-bold tabular-nums",
+        isMax
+          ? "bg-[#ff8400] text-black shadow-sm"
+          : "border border-white/25 font-medium text-white/70",
+      )}
+    >
+      {rank > 0 ? rank : "—"}
+    </span>
+  );
+}
+
+/** 延迟以三格信号条 + 数值表示，按强度亮格并着色（低绿 / 中黄 / 高红） */
+function LatencyCell({ latency }: { latency: number }) {
+  if (!latency || latency <= 0) {
+    return <div className="text-center text-white/25">—</div>;
+  }
+  const level = latency < 60 ? 3 : latency < 120 ? 2 : 1;
+  const barColor = latency < 60 ? "bg-green-400" : latency < 120 ? "bg-amber-300" : "bg-red-400";
+  return (
+    <div className="flex items-center justify-center gap-1">
+      <span className="flex items-end gap-px" aria-hidden>
+        {[1, 2, 3].map((n) => (
+          <span
+            key={n}
+            className={cn("w-[3px] rounded-sm", n <= level ? barColor : "bg-white/15")}
+            style={{ height: `${n * 3 + 1}px` }}
+          />
+        ))}
+      </span>
+      <span className="text-[11px] text-white/65 tabular-nums">{latency}</span>
+    </div>
+  );
+}
+
+/** 排队 / 旁观玩家组，使用与队伍列一致的高亮规则，但不拆队、不展示战绩 */
+function SidePlayerGroup({
+  title,
+  players,
+  game,
+}: {
+  title: string;
+  players: BlazePlayer[];
+  game: string;
+}) {
+  return (
+    <div>
+      <div className="mb-1.5 flex items-baseline gap-2 text-xs text-white/50">
+        <span className="font-medium">{title}</span>
+        <span className="tabular-nums">{players.length}</span>
+      </div>
+      <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+        {players.map((p) => (
+          <Link
+            key={p.persona_id}
+            href={`/${game}/player/${p.persona_id}`}
+            className={cn(
+              "inline-flex items-center gap-1.5 text-[11px] hover:underline",
+              nameColor(p),
+            )}
+          >
+            <RankBadge rank={p.rank} />
+            <span className="max-w-[140px] truncate">{p.display_name}</span>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PlayerLegend({
+  summary,
+  playerCount,
+  maxPlayers,
+  statsIncluded,
+  className,
+}: {
+  summary: {
+    online_admin_count: number;
+    online_vip_count: number;
+    online_registered_count: number;
+    rank_150_count: number;
+  };
+  playerCount: number;
+  maxPlayers: number;
+  statsIncluded: boolean;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/10 pt-3 text-xs text-white/60",
+        className,
+      )}
+    >
+      <LegendItem markClass="bg-green-400" label="在线管理" value={summary.online_admin_count} />
+      <LegendItem markClass="bg-red-400" label="在线VIP" value={summary.online_vip_count} />
+      <LegendItem markClass="bg-sky-400" label="在线群友" value={summary.online_registered_count} />
+      <LegendItem markClass="bg-[#ff8400]" label="满级150" value={summary.rank_150_count} />
+      <span className="ml-auto text-white/45 tabular-nums">
+        在线 {playerCount}/{maxPlayers}
+        {statsIncluded ? "" : " · 未加载战绩"}
+      </span>
+    </div>
+  );
+}
+
+function LegendItem({
+  markClass,
+  label,
+  value,
+}: {
+  markClass: string;
+  label: string;
+  value: number;
+}) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className={cn("size-2.5 rounded-[2px]", markClass)} />
+      <span>
+        {label}：<span className="font-semibold text-white/90 tabular-nums">{value}</span>
+      </span>
+    </span>
+  );
+}
+
+function formatPercent(v: number | null | undefined): string {
+  return v == null ? "—" : `${Math.round(v)}%`;
+}
+
+function formatRatio(v: number | null | undefined): string {
+  return v == null ? "—" : v.toFixed(2);
+}
+
+function formatHours(v: number | null | undefined): string {
+  return v == null ? "—" : v.toFixed(1);
 }
 
 /* ----------------------------- 成员名单 ----------------------------- */

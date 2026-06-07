@@ -185,7 +185,7 @@ export default function ServerListPage() {
               {/* 表头常驻，不随列表滚动 */}
               <div className="flex items-center gap-4 border-b border-white/10 px-3 pb-2 text-[11px] font-semibold tracking-[0.16em] text-white/40 uppercase lg:shrink-0">
                 <span className="flex-1">名称</span>
-                <span className="w-24 text-right">玩家</span>
+                <span className="w-28 text-right">玩家</span>
                 <span className="hidden w-24 text-right sm:block">节点</span>
               </div>
               {/* 列表滚动区：桌面端唯一的内部滚动容器 */}
@@ -334,8 +334,8 @@ function ServerRow({ server, onClick }: { server: ServerSummary; onClick: () => 
           </div>
         </div>
 
-        {/* 玩家数 */}
-        <div className="flex w-24 shrink-0 items-center justify-end gap-1.5 text-sm tabular-nums">
+        {/* 玩家数：满员叠加排队人数（如 64 / 64 [1]）时内容偏长，固定列宽并禁止折行 */}
+        <div className="flex w-28 shrink-0 items-center justify-end gap-1.5 text-sm whitespace-nowrap tabular-nums">
           <Users className="size-3.5 text-white/35" />
           <span className={cn(fill >= 100 ? "text-amber-300" : "text-white")}>
             {server.player_count}

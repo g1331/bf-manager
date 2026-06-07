@@ -72,9 +72,15 @@ def test_to_summary_extracts_country_and_tick_rate() -> None:
     raw = _make_search_item()
     raw["country"] = "JP"
     raw["tickRate"] = 60
+    raw["pingSiteAlias"] = "nrt"
     summary = _to_summary(raw)
     assert summary.country == "JP"
     assert summary.tick_rate == 60
+    assert summary.ping_site == "nrt"
+
+    # 缺 pingSiteAlias 时降为 None
+    raw.pop("pingSiteAlias", None)
+    assert _to_summary(raw).ping_site is None
 
     # 官服常返回空 country，统一降为 None（前端「有值才渲染国旗」）
     raw["country"] = ""

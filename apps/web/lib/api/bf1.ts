@@ -147,6 +147,8 @@ export interface ServerSummary {
   country: string | null;
   /** 服务器画面更新率 Hz（如 60），缺失为 null */
   tick_rate: number | null;
+  /** EA ping 节点代号（如 "nrt"），用于映射数据中心标签；缺失为 null */
+  ping_site: string | null;
   is_official: boolean;
   is_ranked: boolean;
   has_password: boolean;

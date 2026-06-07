@@ -7,6 +7,7 @@ import { Search, Users, Lock, RotateCw, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { pingSiteLabel } from "@/lib/bf1/pingsite";
 import { bf1Api, type ServerSummary } from "@/lib/api/bf1";
 
 const PAGE_SIZE = 50;
@@ -209,12 +210,17 @@ export default function ServerListPage() {
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
           placeholder="按服务器名搜索（留空查全部）"
-          className="flex-1 border-white/15 bg-black/30 text-white placeholder:text-white/35"
+          className="h-10 flex-1 border-white/15 bg-black/30 text-white placeholder:text-white/35"
         />
-        <Button type="submit" disabled={servers.isFetching} size="lg" className="px-6">
+        {/* 搜索按钮沿用大厅控件风格：半透明深底 + 细边，而非高饱和填充色 */}
+        <button
+          type="submit"
+          disabled={servers.isFetching}
+          className="inline-flex h-10 shrink-0 items-center gap-2 rounded-sm border border-white/15 bg-white/[0.06] px-6 text-sm font-medium tracking-wide text-white/85 transition-colors hover:bg-white/[0.12] hover:text-white disabled:opacity-50"
+        >
           <Search className="size-4" />
           {servers.isFetching ? "查询中…" : "搜索"}
-        </Button>
+        </button>
       </form>
 
       {/* 主体：左密集表格 + 右筛选面板，复刻游戏布局 */}
@@ -227,7 +233,8 @@ export default function ServerListPage() {
               {/* 列头 */}
               <div className="flex items-center gap-4 border-b border-white/10 px-3 pb-2 text-[11px] font-semibold tracking-[0.16em] text-white/40 uppercase">
                 <span className="flex-1">名称</span>
-                <span className="w-28 text-right">玩家</span>
+                <span className="w-24 text-right">玩家</span>
+                <span className="hidden w-24 text-right sm:block">节点</span>
               </div>
               <ul>
                 {visibleItems.map((s) => (
@@ -265,20 +272,19 @@ export default function ServerListPage() {
           )}
         </section>
 
-        {allItems.length > 0 ? (
-          <FilterPanel
-            filters={filters}
-            patch={patchFilters}
-            reset={resetFilters}
-            filtersActive={filtersActive}
-            regionCodes={regionCodes}
-            modeCodes={modeCodes}
-            allItems={allItems}
-            sort={sort}
-            setSort={setSort}
-            summaryChips={summaryChips}
-          />
-        ) : null}
+        {/* 筛选面板常驻，复刻游戏右侧固定筛选栏；下拉选项在搜索返回数据后才填充 */}
+        <FilterPanel
+          filters={filters}
+          patch={patchFilters}
+          reset={resetFilters}
+          filtersActive={filtersActive}
+          regionCodes={regionCodes}
+          modeCodes={modeCodes}
+          allItems={allItems}
+          sort={sort}
+          setSort={setSort}
+          summaryChips={summaryChips}
+        />
       </div>
     </main>
   );
@@ -290,6 +296,7 @@ function ServerRow({ server, onClick }: { server: ServerSummary; onClick: () => 
   const mapLabel = server.map_display_name ?? server.map_name;
   const modeLabel = server.mode_display_name ?? server.game_mode;
   const flag = flagEmoji(server.country);
+  const node = pingSiteLabel(server.ping_site) ?? server.region_display_name ?? server.region;
   const fill =
     server.max_player_count > 0
       ? Math.round((server.player_count / server.max_player_count) * 100)
@@ -346,7 +353,7 @@ function ServerRow({ server, onClick }: { server: ServerSummary; onClick: () => 
         </div>
 
         {/* 玩家数 */}
-        <div className="flex w-28 shrink-0 items-center justify-end gap-1.5 text-sm tabular-nums">
+        <div className="flex w-24 shrink-0 items-center justify-end gap-1.5 text-sm tabular-nums">
           <Users className="size-3.5 text-white/35" />
           <span className={cn(fill >= 100 ? "text-amber-300" : "text-white")}>
             {server.player_count}
@@ -355,6 +362,13 @@ function ServerRow({ server, onClick }: { server: ServerSummary; onClick: () => 
           {server.queue_count > 0 ? (
             <span className="text-white/45">[{server.queue_count}]</span>
           ) : null}
+        </div>
+
+        {/* 节点（数据中心）：EA 不返回 ping 数值，展示节点城市，对应游戏内 ping 所测目标 */}
+        <div className="hidden w-24 shrink-0 justify-end text-right text-xs text-white/55 sm:flex">
+          <span className="truncate" title={server.ping_site ?? undefined}>
+            {node ?? "—"}
+          </span>
         </div>
       </button>
     </li>

@@ -720,15 +720,27 @@ function TeamColumn({
   const avg = computeTeamAverage(team.players);
 
   return (
-    // flex 列让平均表用 mt-auto 贴到列底；两列在 grid 中等高，平均行即对齐同一底线。
-    <div className={cn("flex h-full flex-col", className)}>
-      <table className="w-full table-fixed border-collapse text-[12.5px] tabular-nums">
-        <TeamColumnCols />
+    // 列容器在 grid 中等高（items-stretch），table 撑满高度后由占位空行把平均行顶到列底，
+    // 使两列平均行对齐同一底线；不用 table-fixed，玩家名列才能自适应吃满剩余宽度。
+    <div className={cn("h-full", className)}>
+      <table className="h-full w-full border-collapse text-[12.5px] tabular-nums">
+        {/* 自适应布局：数字列按 colgroup 宽取最小宽，名字列由 td 的 w-full+max-w-0 吃满剩余并截断长名 */}
+        <colgroup>
+          <col className="w-6" />
+          <col className="w-10" />
+          <col />
+          <col className="w-12" />
+          <col className="w-11" />
+          <col className="w-11" />
+          <col className="w-14" />
+          <col className="w-12" />
+          <col className="w-8" />
+        </colgroup>
         <thead>
           {/* 阵营标题行：旗帜 + 阵营名 + 人数，跨越序号/等级/玩家三列 */}
           <tr className="align-bottom">
             <th colSpan={3} className="pb-2 text-left">
-              <span className="flex items-center gap-2.5">
+              <span className="flex items-center gap-2.5 whitespace-nowrap">
                 {slug ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -743,10 +755,10 @@ function TeamColumn({
                 <span className="text-xs text-white/45 tabular-nums">{team.count}</span>
               </span>
             </th>
-            <ColHeader>胜率</ColHeader>
-            <ColHeader>K/D</ColHeader>
-            <ColHeader>KPM</ColHeader>
-            <ColHeader>时长</ColHeader>
+            <ColHeader className="pl-3">胜率</ColHeader>
+            <ColHeader className="pl-3">K/D</ColHeader>
+            <ColHeader className="pl-3">KPM</ColHeader>
+            <ColHeader className="pl-3">时长</ColHeader>
             <ColHeader className="text-center">延迟</ColHeader>
             <ColHeader className="text-center">语言</ColHeader>
           </tr>
@@ -756,44 +768,26 @@ function TeamColumn({
           {team.players.map((p, i) => (
             <PlayerRow key={p.persona_id} player={p} seq={i + 1} game={game} />
           ))}
+          {/* 占位空行吸收剩余高度，把下方平均行顶到列底，实现两列平均行对齐 */}
+          <tr aria-hidden className="h-full">
+            <td colSpan={9} />
+          </tr>
         </tbody>
-      </table>
-
-      {/* 平均行单独成表并 mt-auto 贴底，列宽与上表共用同一 colgroup 故对齐 */}
-      <table className="mt-auto w-full table-fixed border-collapse text-[12px] tabular-nums">
-        <TeamColumnCols />
-        <tbody>
-          <tr className="border-t border-white/20 font-semibold text-amber-300/90">
+        <tfoot>
+          <tr className="border-t border-white/20 text-[12px] font-semibold text-amber-300/90">
             <td colSpan={3} className="pt-2 pl-0.5">
               平均 {avg.rank ?? "—"}
             </td>
-            <td className="pt-2 text-right">{formatPercent(avg.winRate)}</td>
-            <td className="pt-2 text-right">{formatRatio(avg.kd)}</td>
-            <td className="pt-2 text-right">{formatRatio(avg.kpm)}</td>
-            <td className="pt-2 text-right">{formatHours(avg.hours)}</td>
+            <td className="pt-2 pl-3 text-right">{formatPercent(avg.winRate)}</td>
+            <td className="pt-2 pl-3 text-right">{formatRatio(avg.kd)}</td>
+            <td className="pt-2 pl-3 text-right">{formatRatio(avg.kpm)}</td>
+            <td className="pt-2 pl-3 text-right">{formatHours(avg.hours)}</td>
             <td className="pt-2" />
             <td className="pt-2" />
           </tr>
-        </tbody>
+        </tfoot>
       </table>
     </div>
-  );
-}
-
-/** 玩家表与平均表共用的列宽定义，保证两表各列严格对齐 */
-function TeamColumnCols() {
-  return (
-    <colgroup>
-      <col className="w-7" />
-      <col className="w-11" />
-      <col />
-      <col className="w-12" />
-      <col className="w-11" />
-      <col className="w-11" />
-      <col className="w-16" />
-      <col className="w-14" />
-      <col className="w-9" />
-    </colgroup>
   );
 }
 
@@ -819,23 +813,23 @@ function PlayerRow({ player, seq, game }: { player: BlazePlayer; seq: number; ga
       <td className="py-[5px] text-center">
         <RankBadge rank={player.rank} />
       </td>
-      <td className="py-[5px] pr-2 pl-2">
+      <td className="w-full max-w-0 py-[5px] pr-2 pl-2">
         <Link
           href={`/${game}/player/${player.persona_id}`}
-          className="flex items-center gap-1.5 hover:underline"
+          className="flex min-w-0 items-center gap-1.5 hover:underline"
           title={player.display_name}
         >
           {dot ? <span className={cn("size-1.5 shrink-0 rounded-full", dot)} /> : null}
-          <span className={cn("truncate font-medium", nameColor(player))}>
+          <span className={cn("min-w-0 truncate font-medium", nameColor(player))}>
             {player.display_name}
           </span>
         </Link>
       </td>
-      <td className="py-[5px] text-right text-white/85">{formatPercent(stats?.win_rate)}</td>
-      <td className="py-[5px] text-right text-white/85">{formatRatio(stats?.kd)}</td>
-      <td className="py-[5px] text-right text-white/60">{formatRatio(stats?.kpm)}</td>
-      <td className="py-[5px] text-right text-white/60">{formatHours(stats?.time_hours)}</td>
-      <td className="py-[5px]">
+      <td className="py-[5px] pl-3 text-right text-white/85">{formatPercent(stats?.win_rate)}</td>
+      <td className="py-[5px] pl-3 text-right text-white/85">{formatRatio(stats?.kd)}</td>
+      <td className="py-[5px] pl-3 text-right text-white/60">{formatRatio(stats?.kpm)}</td>
+      <td className="py-[5px] pl-3 text-right text-white/60">{formatHours(stats?.time_hours)}</td>
+      <td className="py-[5px] pl-2">
         <LatencyCell latency={player.latency} />
       </td>
       <td className="py-[5px] text-center text-white/65">{player.language || "—"}</td>

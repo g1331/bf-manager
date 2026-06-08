@@ -199,6 +199,189 @@ async def _fetch_blaze_authcode(creds: EACredentials) -> str:
     return code
 
 
+# BF1 各等级的累计经验阈值（下标即等级，0..150）。Blaze roster 与 detailedStats 的
+# basicStats 多数情况下不返回 rank（为 null），需用「击杀分速 spm × 游玩时长 / 60」估出
+# 累计经验再查此表反推等级，否则列表会大面积显示等级 0。
+RANK_EXP_THRESHOLDS: tuple[int, ...] = (
+    0,
+    1000,
+    5000,
+    15000,
+    25000,
+    40000,
+    55000,
+    75000,
+    95000,
+    120000,
+    145000,
+    175000,
+    205000,
+    235000,
+    265000,
+    295000,
+    325000,
+    355000,
+    395000,
+    435000,
+    475000,
+    515000,
+    555000,
+    595000,
+    635000,
+    675000,
+    715000,
+    755000,
+    795000,
+    845000,
+    895000,
+    945000,
+    995000,
+    1045000,
+    1095000,
+    1145000,
+    1195000,
+    1245000,
+    1295000,
+    1345000,
+    1405000,
+    1465000,
+    1525000,
+    1585000,
+    1645000,
+    1705000,
+    1765000,
+    1825000,
+    1885000,
+    1945000,
+    2015000,
+    2085000,
+    2155000,
+    2225000,
+    2295000,
+    2365000,
+    2435000,
+    2505000,
+    2575000,
+    2645000,
+    2745000,
+    2845000,
+    2945000,
+    3045000,
+    3145000,
+    3245000,
+    3345000,
+    3445000,
+    3545000,
+    3645000,
+    3750000,
+    3870000,
+    4000000,
+    4140000,
+    4290000,
+    4450000,
+    4630000,
+    4830000,
+    5040000,
+    5260000,
+    5510000,
+    5780000,
+    6070000,
+    6390000,
+    6730000,
+    7110000,
+    7510000,
+    7960000,
+    8430000,
+    8960000,
+    9520000,
+    10130000,
+    10800000,
+    11530000,
+    12310000,
+    13170000,
+    14090000,
+    15100000,
+    16190000,
+    17380000,
+    20000000,
+    20500000,
+    21000000,
+    21500000,
+    22000000,
+    22500000,
+    23000000,
+    23500000,
+    24000000,
+    24500000,
+    25000000,
+    25500000,
+    26000000,
+    26500000,
+    27000000,
+    27500000,
+    28000000,
+    28500000,
+    29000000,
+    29500000,
+    30000000,
+    30500000,
+    31000000,
+    31500000,
+    32000000,
+    32500000,
+    33000000,
+    33500000,
+    34000000,
+    34500000,
+    35000000,
+    35500000,
+    36000000,
+    36500000,
+    37000000,
+    37500000,
+    38000000,
+    38500000,
+    39000000,
+    39500000,
+    40000000,
+    41000000,
+    42000000,
+    43000000,
+    44000000,
+    45000000,
+    46000000,
+    47000000,
+    48000000,
+    49000000,
+    50000000,
+)
+
+
+def _rank_from_basic(basic: dict) -> int | None:
+    """由 basicStats 的 spm 与 timePlayed 估算累计经验，查表反推等级。
+
+    roster / basicStats 的 rank 字段多为 null，故用经验值估算补齐：
+    ``exp = spm * timePlayed / 60``，再在 ``RANK_EXP_THRESHOLDS`` 中取首个不小于 exp 的
+    阈值下标减一作为等级。spm 或时长缺失时返回 None，由调用方回退 roster 给的等级。
+    """
+    try:
+        spm = float(basic.get("spm") or 0)
+        time_played = float(basic.get("timePlayed") or 0)
+    except (TypeError, ValueError):
+        return None
+    if spm <= 0 or time_played <= 0:
+        return None
+    exp = spm * time_played / 60
+    if exp <= RANK_EXP_THRESHOLDS[1]:
+        return 0
+    if exp >= RANK_EXP_THRESHOLDS[-1]:
+        return RANK_MAX
+    for level in range(1, len(RANK_EXP_THRESHOLDS)):
+        if exp <= RANK_EXP_THRESHOLDS[level]:
+            return level - 1
+    return RANK_MAX
+
+
 def _stats_from_basic(basic: dict) -> BlazePlayerStats:
     """从 detailedStats 的 basicStats 子字典提取列表所需的四项综合战绩。"""
 
@@ -223,28 +406,36 @@ def _stats_from_basic(basic: dict) -> BlazePlayerStats:
     )
 
 
-async def _gather_stats(client: object, pids: list[int]) -> dict[int, BlazePlayerStats]:
-    """并发查询多名玩家的生涯战绩，信号量限流，单个失败降级为无战绩。"""
+async def _gather_stats(
+    client: object, pids: list[int]
+) -> tuple[dict[int, BlazePlayerStats], dict[int, int]]:
+    """并发查询多名玩家的生涯战绩，信号量限流，单个失败降级为无战绩。
+
+    返回两张表：综合战绩 ``stats_map`` 与由经验值估算的等级 ``rank_map``。后者用于补齐
+    roster 未给的等级，避免列表大面积显示等级 0。
+    """
     if not pids:
-        return {}
+        return {}, {}
     semaphore = asyncio.Semaphore(STATS_CONCURRENCY)
 
-    async def _one(pid: int) -> tuple[int, BlazePlayerStats | None]:
+    async def _one(pid: int) -> tuple[int, BlazePlayerStats | None, int | None]:
         async with semaphore:
             try:
                 res = await client.detailedStatsByPersonaId(pid)  # type: ignore[attr-defined]
             except Exception as exc:
                 logger.warning(f"玩家 {pid} 战绩查询失败，降级为无战绩: {exc}")
-                return pid, None
+                return pid, None, None
             if not isinstance(res, dict):
-                return pid, None
+                return pid, None, None
             basic = (res.get("result") or {}).get("basicStats") or {}
             if not basic:
-                return pid, None
-            return pid, _stats_from_basic(basic)
+                return pid, None, None
+            return pid, _stats_from_basic(basic), _rank_from_basic(basic)
 
     results = await asyncio.gather(*[_one(pid) for pid in pids])
-    return {pid: stats for pid, stats in results if stats is not None}
+    stats_map = {pid: stats for pid, stats, _ in results if stats is not None}
+    rank_map = {pid: rank for pid, _, rank in results if rank is not None}
+    return stats_map, rank_map
 
 
 def _extract_member_ids(detail_res: object) -> tuple[set[int], set[int]]:
@@ -277,12 +468,17 @@ def _build_player(
     vip_ids: set[int],
     registered_ids: set[int],
     stats_map: dict[int, BlazePlayerStats],
+    rank_map: dict[int, int],
 ) -> BlazePlayer:
     pid = int(raw_player["pid"])
+    # roster 多数情况下不给等级，优先用战绩经验值估算出的等级，估算缺失时再回退 roster 值。
+    rank = rank_map.get(pid)
+    if rank is None:
+        rank = int(raw_player.get("rank") or 0)
     return BlazePlayer(
         persona_id=pid,
         display_name=raw_player.get("display_name") or "",
-        rank=int(raw_player.get("rank") or 0),
+        rank=rank,
         team=int(raw_player.get("team") if raw_player.get("team") is not None else TEAM_SENTINEL),
         latency=int(raw_player.get("latency") or 0),
         language=raw_player.get("language"),
@@ -315,13 +511,19 @@ def _faction_map(detail_res: object) -> dict[int, str]:
 def _build_team_groups(
     players: list[BlazePlayer], faction_by_team: dict[int, str]
 ) -> list[BlazeTeamGroup]:
-    """把在场玩家按 Blaze TIDX 分成队伍组，按 team_id 升序（通常得到两组）。"""
+    """把对战双方（Blaze TIDX 0/1）的在场玩家分成两队，每队内部按等级降序排列。
+
+    仅 TIDX 0/1 为对阵两队；过渡态或未定队位（如 65534、65535 哨兵）的在场玩家无法
+    归入任一阵营，不单独成列。
+    """
     by_team: dict[int, list[BlazePlayer]] = {}
     for player in players:
+        if player.team not in (0, 1):
+            continue
         by_team.setdefault(player.team, []).append(player)
     groups: list[BlazeTeamGroup] = []
     for team_id in sorted(by_team):
-        members = by_team[team_id]
+        members = sorted(by_team[team_id], key=lambda m: m.rank, reverse=True)
         ranks = [m.rank for m in members if m.rank > 0]
         groups.append(
             BlazeTeamGroup(
@@ -395,7 +597,9 @@ async def get_server_players(
         detail_res = await client.getFullServerDetails(int(game_id))
         admin_ids, vip_ids = _extract_member_ids(detail_res)
         faction_by_team = _faction_map(detail_res)
-        stats_map = await _gather_stats(client, normal_pids) if include_stats else {}
+        stats_map, rank_map = (
+            await _gather_stats(client, normal_pids) if include_stats else ({}, {})
+        )
 
     # 3. 平台已绑定用户标记（db 此时已空闲）。
     all_pids = (
@@ -410,6 +614,7 @@ async def get_server_players(
             vip_ids=vip_ids,
             registered_ids=registered_ids,
             stats_map=stats_map,
+            rank_map=rank_map,
         )
 
     normal_players = [_make(p) for p in raw_normal]
@@ -424,14 +629,19 @@ async def get_server_players(
         rank_150_count=sum(1 for p in everyone if p.rank >= RANK_MAX),
     )
 
+    # 仅对战两队进入列表；过渡态 / 未定队位玩家不成列，在线人数按实际成列的两队统计，
+    # 避免因偶发哨兵队位导致「在线数」超过对战槽位。
+    teams = _build_team_groups(normal_players, faction_by_team)
+    battle_player_count = sum(team.count for team in teams)
+
     return ServerPlayersResponse(
         game_id=int(game_id),
         server_name=room.get("server_name"),
         max_players=int(room.get("max_player") or 0),
-        player_count=len(normal_players),
+        player_count=battle_player_count,
         queue_count=len(queued_players),
         spectator_count=len(spectator_players),
-        teams=_build_team_groups(normal_players, faction_by_team),
+        teams=teams,
         queued=queued_players,
         spectators=spectator_players,
         summary=summary,

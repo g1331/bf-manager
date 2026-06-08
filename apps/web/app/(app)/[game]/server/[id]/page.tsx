@@ -720,19 +720,10 @@ function TeamColumn({
   const avg = computeTeamAverage(team.players);
 
   return (
-    <div className={className}>
-      <table className="w-full border-collapse text-[12.5px] tabular-nums">
-        <colgroup>
-          <col className="w-7" />
-          <col className="w-11" />
-          <col />
-          <col className="w-12" />
-          <col className="w-11" />
-          <col className="w-11" />
-          <col className="w-16" />
-          <col className="w-14" />
-          <col className="w-9" />
-        </colgroup>
+    // flex 列让平均表用 mt-auto 贴到列底；两列在 grid 中等高，平均行即对齐同一底线。
+    <div className={cn("flex h-full flex-col", className)}>
+      <table className="w-full table-fixed border-collapse text-[12.5px] tabular-nums">
+        <TeamColumnCols />
         <thead>
           {/* 阵营标题行：旗帜 + 阵营名 + 人数，跨越序号/等级/玩家三列 */}
           <tr className="align-bottom">
@@ -766,8 +757,13 @@ function TeamColumn({
             <PlayerRow key={p.persona_id} player={p} seq={i + 1} game={game} />
           ))}
         </tbody>
-        <tfoot>
-          <tr className="border-t border-white/20 text-[12px] font-semibold text-amber-300/90">
+      </table>
+
+      {/* 平均行单独成表并 mt-auto 贴底，列宽与上表共用同一 colgroup 故对齐 */}
+      <table className="mt-auto w-full table-fixed border-collapse text-[12px] tabular-nums">
+        <TeamColumnCols />
+        <tbody>
+          <tr className="border-t border-white/20 font-semibold text-amber-300/90">
             <td colSpan={3} className="pt-2 pl-0.5">
               平均 {avg.rank ?? "—"}
             </td>
@@ -778,9 +774,26 @@ function TeamColumn({
             <td className="pt-2" />
             <td className="pt-2" />
           </tr>
-        </tfoot>
+        </tbody>
       </table>
     </div>
+  );
+}
+
+/** 玩家表与平均表共用的列宽定义，保证两表各列严格对齐 */
+function TeamColumnCols() {
+  return (
+    <colgroup>
+      <col className="w-7" />
+      <col className="w-11" />
+      <col />
+      <col className="w-12" />
+      <col className="w-11" />
+      <col className="w-11" />
+      <col className="w-16" />
+      <col className="w-14" />
+      <col className="w-9" />
+    </colgroup>
   );
 }
 

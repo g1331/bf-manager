@@ -182,7 +182,7 @@ export default function Bf1PlayerPage() {
     <div className="relative min-h-screen w-full overflow-hidden text-white">
       <BackgroundLayer url={bgUrl} grayscale={banned} />
 
-      <div className="relative z-10 mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-8">
+      <div className="relative z-10 max-w-[1600px] px-6 py-5 sm:px-10 sm:py-8">
         <HeroBanner
           player={player}
           personaId={personaId}

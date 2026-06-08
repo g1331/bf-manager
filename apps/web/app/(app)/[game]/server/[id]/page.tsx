@@ -107,7 +107,7 @@ function ServerDetailView({
     <div className="relative min-h-screen w-full overflow-hidden text-white">
       <ServerBackgroundLayer url={summary.map_image_url} />
 
-      <div className="relative z-10 mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-8">
+      <div className="relative z-10 max-w-[1600px] px-6 py-5 sm:px-10 sm:py-8">
         <button
           type="button"
           onClick={onBack}

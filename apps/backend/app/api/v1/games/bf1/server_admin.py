@@ -11,6 +11,7 @@ from app.schemas.bf1.admin import (
     BanPlayerRequest,
     ChooseLevelRequest,
     KickPlayerRequest,
+    MyServerRoleResult,
     ServerMemberRequest,
 )
 from app.services.authz_service import ServerAuthzService
@@ -39,6 +40,21 @@ def _admin_service(
         game_id=game_id,
         request_meta=_request_meta(request),
     )
+
+
+@router.get("/{game_id}/my-role", response_model=MyServerRoleResult)
+async def my_server_role(
+    game_id: int,
+    db: DbDep,
+    user: CurrentUser,
+) -> MyServerRoleResult:
+    """返回当前登录用户对该服务器的角色，仅需登录、不要求任何角色。
+
+    前端据此 gating 内联服管操作（踢人 / 封禁 / VIP / 换图等），无角色则不渲染入口。
+    """
+    authz = ServerAuthzService(db)
+    role, is_platform_admin = await authz.resolve_role(user=user, game="bf1", server_id=game_id)
+    return MyServerRoleResult(role=role, is_platform_admin=is_platform_admin)
 
 
 @router.post("/{game_id}/kick", response_model=AdminActionResult)

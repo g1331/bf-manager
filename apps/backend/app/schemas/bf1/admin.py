@@ -29,3 +29,10 @@ class ChooseLevelRequest(BaseModel):
 class AdminActionResult(BaseModel):
     success: bool
     message: str | None = None
+
+
+class MyServerRoleResult(BaseModel):
+    """当前登录用户对某服务器的角色，供前端按角色 gating 内联服管操作。"""
+
+    role: str | None = None
+    is_platform_admin: bool = False

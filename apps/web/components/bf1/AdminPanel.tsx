@@ -1,254 +1,145 @@
 "use client";
 
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { UserX, Ban, MapPin, Plus, ShieldCheck, Star, X } from "lucide-react";
+import { Ban, Plus, ShieldCheck, Star, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ConfirmSheet } from "@/components/common/ConfirmSheet";
-import { bf1Api, type ServerDetail, type ServerMember, type ServerPlayer } from "@/lib/api/bf1";
+import { bf1Api, type ServerDetail, type ServerMember } from "@/lib/api/bf1";
 import { ApiException } from "@/lib/api-client";
+import { useServerAdmin } from "@/components/bf1/server-admin/InlineServerAdmin";
 
 interface AdminPanelProps {
-  gameId: number;
   detail: ServerDetail;
 }
 
-type PendingAction =
-  | { type: "kick"; player: ServerPlayer }
-  | { type: "ban"; player: ServerPlayer }
-  | { type: "level"; index: number; mapName: string | null }
-  | { type: "addVip"; personaId: number }
-  | { type: "removeVip"; member: ServerMember }
-  | { type: "addAdmin"; personaId: number }
-  | { type: "removeAdmin"; member: ServerMember }
-  | null;
+type TargetKind = "ban" | "addVip" | "addAdmin";
 
-export function AdminPanel({ gameId, detail }: AdminPanelProps) {
-  const qc = useQueryClient();
-  const [pending, setPending] = useState<PendingAction>(null);
-  const [reason, setReason] = useState("violation of rules");
+/** 解析后的操作目标：persona_id 为后端寻址依据，display_name 仅用于确认文案 */
+interface ResolvedTarget {
+  persona_id: number;
+  display_name: string;
+}
+
+/**
+ * 把「玩家名或 persona ID」解析为目标 persona。
+ * - 纯数字：按 persona ID 精确处理（备选 / 精确路径），顺带取名展示，取名失败也不阻塞；
+ * - 否则：按名字检索，优先精确名匹配，唯一结果次之，找不到则返回 null。
+ */
+async function resolveTarget(raw: string): Promise<ResolvedTarget | null> {
+  const input = raw.trim();
+  if (!input) return null;
+  if (/^\d+$/.test(input)) {
+    const id = Number(input);
+    try {
+      const p = await bf1Api.getPlayer(id);
+      return { persona_id: id, display_name: p.display_name };
+    } catch {
+      return { persona_id: id, display_name: String(id) };
+    }
+  }
+  const res = await bf1Api.searchPlayers(input);
+  const exact = res.personas.find((p) => p.display_name.toLowerCase() === input.toLowerCase());
+  const hit = exact ?? (res.personas.length === 1 ? res.personas[0] : null);
+  return hit ? { persona_id: hit.persona_id, display_name: hit.display_name } : null;
+}
+
+/**
+ * 服管「管理」tab：离线、按名字的名单管理控制台。
+ *
+ * 在线玩家的踢出 / 封禁 / 加 V / 下 V 已内联到玩家列表每一行，换图已内联到地图轮换，
+ * 因此这里只保留无法在列表里就地完成的离线操作：按名字封禁 / 解封、VIP 与管理员名单维护。
+ * 所有写操作复用 Provider 的 act（统一二次确认 + 双键缓存失效 + 提示）。
+ */
+export function AdminPanel({ detail }: AdminPanelProps) {
+  const { can, act } = useServerAdmin();
+  const { extras } = detail;
+  const [banInput, setBanInput] = useState("");
   const [vipInput, setVipInput] = useState("");
   const [adminInput, setAdminInput] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [resolving, setResolving] = useState(false);
 
-  const close = () => {
-    setPending(null);
-    setReason("violation of rules");
-  };
-
-  const execute = async () => {
-    if (!pending) return;
-    setLoading(true);
+  const submit = async (kind: TargetKind, raw: string, clear: () => void) => {
+    if (resolving) return;
+    setResolving(true);
     try {
-      if (pending.type === "kick") {
-        const res = await bf1Api.adminKick(gameId, pending.player.persona_id, reason);
-        toast.success(res.message ?? "已踢出");
-      } else if (pending.type === "ban") {
-        const res = await bf1Api.adminBan(gameId, pending.player.persona_id);
-        toast.success(res.message ?? "已封禁");
-      } else if (pending.type === "level") {
-        // 换图目标由后端依授权服务器派生；此处仅做一次前端预检，服务器尚未回填
-        // persisted_game_id 时直接提示，省去一次必然失败的请求往返。
-        if (!detail.summary.persisted_game_id) {
-          toast.error("服务器尚未完成初始化，无法换图");
-          return;
-        }
-        const res = await bf1Api.adminChooseLevel(gameId, pending.index);
-        toast.success(res.message ?? "已切换地图");
-      } else if (pending.type === "addVip") {
-        const res = await bf1Api.adminAddVip(gameId, pending.personaId);
-        toast.success(res.message ?? "已添加 VIP");
-        setVipInput("");
-      } else if (pending.type === "removeVip") {
-        const res = await bf1Api.adminRemoveVip(gameId, pending.member.persona_id);
-        toast.success(res.message ?? "已移除 VIP");
-      } else if (pending.type === "addAdmin") {
-        const res = await bf1Api.adminAddAdmin(gameId, pending.personaId);
-        toast.success(res.message ?? "已添加管理员");
-        setAdminInput("");
-      } else if (pending.type === "removeAdmin") {
-        const res = await bf1Api.adminRemoveAdmin(gameId, pending.member.persona_id);
-        toast.success(res.message ?? "已移除管理员");
+      const target = await resolveTarget(raw);
+      if (!target) {
+        toast.error("未找到该玩家，请检查名字或改用 persona ID");
+        return;
       }
-      qc.invalidateQueries({ queryKey: ["bf1-server", gameId] });
-      close();
+      act(kind, target);
+      clear();
     } catch (err) {
-      const msg = err instanceof ApiException ? err.message : "操作失败，请稍后重试";
-      toast.error(msg);
+      toast.error(err instanceof ApiException ? err.message : "查询玩家失败，请稍后重试");
     } finally {
-      setLoading(false);
+      setResolving(false);
     }
   };
 
-  const submitAdd = (kind: "vip" | "admin") => {
-    const raw = kind === "vip" ? vipInput : adminInput;
-    const personaId = Number(raw.trim());
-    if (!Number.isInteger(personaId) || personaId <= 0) {
-      toast.error("请输入合法的 persona ID");
-      return;
-    }
-    setPending(kind === "vip" ? { type: "addVip", personaId } : { type: "addAdmin", personaId });
-  };
+  const toRef = (m: ServerMember): ResolvedTarget => ({
+    persona_id: m.persona_id,
+    display_name: m.display_name ?? String(m.persona_id),
+  });
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">玩家管理</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {detail.players.length === 0 ? (
-            <p className="text-muted-foreground text-sm">当前无在线玩家</p>
-          ) : (
-            <ul className="divide-y">
-              {detail.players.map((p) => (
-                <li key={p.persona_id} className="flex items-center justify-between gap-3 py-2">
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate font-medium">{p.display_name}</div>
-                    <div className="text-muted-foreground text-xs">
-                      {p.is_spectator ? "旁观" : `T${p.team_id ?? "?"}`} · LV{p.rank ?? "—"}
-                    </div>
-                  </div>
-                  <div className="flex shrink-0 gap-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="compact-action"
-                      onClick={() => setPending({ type: "kick", player: p })}
-                    >
-                      <UserX className="size-3.5" />
-                      踢出
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      className="compact-action"
-                      onClick={() => setPending({ type: "ban", player: p })}
-                    >
-                      <Ban className="size-3.5" />
-                      封禁
-                    </Button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+      <p className="text-muted-foreground text-sm">
+        在线玩家的踢出 / 封禁 / 加 V / 下 V 请在「玩家列表」里就地操作，换图请在「地图轮换」里操作。
+        此处用于离线、按名字维护封禁与名单。
+      </p>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">切换地图</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {detail.map_rotation.length === 0 ? (
-            <p className="text-muted-foreground text-sm">暂无地图轮换</p>
-          ) : (
-            <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {detail.map_rotation.map((m, i) => (
-                <li
-                  key={`${m.map_name}-${i}`}
-                  className="flex items-center justify-between rounded-md border p-3"
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate font-medium">{m.map_name ?? "未知"}</div>
-                    <div className="text-muted-foreground text-xs">{m.game_mode ?? ""}</div>
-                  </div>
-                  <Button
-                    variant={m.is_current ? "secondary" : "outline"}
-                    size="sm"
-                    disabled={m.is_current}
-                    className="compact-action"
-                    onClick={() => setPending({ type: "level", index: i, mapName: m.map_name })}
-                  >
-                    <MapPin className="size-3.5" />
-                    {m.is_current ? "当前" : "切换"}
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+      {can("ban") ? (
+        <MemberManageCard
+          title="封禁名单"
+          icon={Ban}
+          hint="按名字或 ID 封禁"
+          members={extras.banned}
+          inputValue={banInput}
+          onInputChange={setBanInput}
+          onAdd={() => submit("ban", banInput, () => setBanInput(""))}
+          onRemove={(m) => act("unban", toRef(m))}
+          addLabel="封禁"
+          removeLabel="解封"
+          emptyText="暂无封禁记录"
+          adding={resolving}
+        />
+      ) : null}
 
-      <MemberManageCard
-        title="VIP 名单"
-        icon={Star}
-        hint="/ 50"
-        members={detail.extras.vips}
-        inputValue={vipInput}
-        onInputChange={setVipInput}
-        onAdd={() => submitAdd("vip")}
-        onRemove={(m) => setPending({ type: "removeVip", member: m })}
-        addLabel="添加 VIP"
-        emptyText="暂无 VIP"
-      />
+      {can("addVip") ? (
+        <MemberManageCard
+          title="VIP 名单"
+          icon={Star}
+          hint="/ 50"
+          members={extras.vips}
+          inputValue={vipInput}
+          onInputChange={setVipInput}
+          onAdd={() => submit("addVip", vipInput, () => setVipInput(""))}
+          onRemove={(m) => act("removeVip", toRef(m))}
+          addLabel="添加 VIP"
+          removeLabel="移除"
+          emptyText="暂无 VIP"
+          adding={resolving}
+        />
+      ) : null}
 
-      <MemberManageCard
-        title="管理员名单"
-        icon={ShieldCheck}
-        hint="/ 50 · 仅服主可增减"
-        members={detail.extras.admins}
-        inputValue={adminInput}
-        onInputChange={setAdminInput}
-        onAdd={() => submitAdd("admin")}
-        onRemove={(m) => setPending({ type: "removeAdmin", member: m })}
-        addLabel="添加管理员"
-        emptyText="暂无管理员"
-      />
-
-      <ConfirmSheet
-        open={pending !== null}
-        onOpenChange={(open) => !open && close()}
-        title={
-          pending?.type === "kick"
-            ? `踢出玩家 ${pending.player.display_name}？`
-            : pending?.type === "ban"
-              ? `封禁玩家 ${pending.player.display_name}？`
-              : pending?.type === "level"
-                ? `切换到 ${pending.mapName ?? "此地图"}？`
-                : pending?.type === "addVip"
-                  ? `添加 VIP #${pending.personaId}？`
-                  : pending?.type === "removeVip"
-                    ? `移除 VIP ${pending.member.display_name ?? pending.member.persona_id}？`
-                    : pending?.type === "addAdmin"
-                      ? `添加管理员 #${pending.personaId}？`
-                      : pending?.type === "removeAdmin"
-                        ? `移除管理员 ${pending.member.display_name ?? pending.member.persona_id}？`
-                        : "确认操作"
-        }
-        description={
-          pending?.type === "ban"
-            ? "封禁后该玩家无法再次加入服务器，可在 EA 平台或管理员控制台解除"
-            : pending?.type === "level"
-              ? "切换地图会立即结束当前对局，所有玩家会被移到新地图"
-              : pending?.type === "addAdmin"
-                ? "管理员可对本服执行踢人、封禁等操作，请确认对方身份"
-                : undefined
-        }
-        confirmText="确认"
-        cancelText="取消"
-        variant={pending?.type === "ban" ? "destructive" : "default"}
-        loading={loading}
-        onConfirm={execute}
-      >
-        {pending?.type === "kick" ? (
-          <div className="space-y-2 py-2">
-            <Label htmlFor="kick-reason">踢出理由</Label>
-            <Input
-              id="kick-reason"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              maxLength={128}
-              placeholder="向被踢玩家显示的理由"
-            />
-          </div>
-        ) : null}
-      </ConfirmSheet>
+      {can("addAdmin") ? (
+        <MemberManageCard
+          title="管理员名单"
+          icon={ShieldCheck}
+          hint="/ 50 · 仅服主可增减"
+          members={extras.admins}
+          inputValue={adminInput}
+          onInputChange={setAdminInput}
+          onAdd={() => submit("addAdmin", adminInput, () => setAdminInput(""))}
+          onRemove={(m) => act("removeAdmin", toRef(m))}
+          addLabel="添加管理员"
+          removeLabel="移除"
+          emptyText="暂无管理员"
+          adding={resolving}
+        />
+      ) : null}
     </div>
   );
 }
@@ -263,7 +154,9 @@ function MemberManageCard({
   onAdd,
   onRemove,
   addLabel,
+  removeLabel,
   emptyText,
+  adding,
 }: {
   title: string;
   icon: React.ElementType;
@@ -274,7 +167,9 @@ function MemberManageCard({
   onAdd: () => void;
   onRemove: (m: ServerMember) => void;
   addLabel: string;
+  removeLabel: string;
   emptyText: string;
+  adding: boolean;
 }) {
   return (
     <Card>
@@ -290,17 +185,17 @@ function MemberManageCard({
       <CardContent className="space-y-3">
         <div className="flex gap-2">
           <Input
-            inputMode="numeric"
             value={inputValue}
             onChange={(e) => onInputChange(e.target.value)}
-            placeholder="按 persona ID 添加"
+            placeholder="输入玩家名或 persona ID"
+            disabled={adding}
             onKeyDown={(e) => {
               if (e.key === "Enter") onAdd();
             }}
           />
-          <Button variant="outline" className="shrink-0" onClick={onAdd}>
+          <Button variant="outline" className="shrink-0" onClick={onAdd} disabled={adding}>
             <Plus className="size-4" />
-            {addLabel}
+            {adding ? "查询中…" : addLabel}
           </Button>
         </div>
         {members.length === 0 ? (
@@ -323,7 +218,7 @@ function MemberManageCard({
                   onClick={() => onRemove(m)}
                 >
                   <X className="size-3.5" />
-                  移除
+                  {removeLabel}
                 </Button>
               </li>
             ))}

@@ -16,6 +16,15 @@ import { ArrowLeft, Lock, Bookmark, MapPin, Crosshair, Globe2, ShieldCheck } fro
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
 import { ResponsiveTable, type Column } from "@/components/common/ResponsiveTable";
 import { AdminPanel } from "@/components/bf1/AdminPanel";
+import {
+  ServerAdminProvider,
+  useServerAdmin,
+  PlayerRowActions,
+  TeamSelectAllCheckbox,
+  BatchActionBar,
+} from "@/components/bf1/server-admin/InlineServerAdmin";
+import { useMyServerRole } from "@/hooks/useServerAdminActions";
+import { hasAnyServerAdmin } from "@/lib/bf1/server-admin-authz";
 import { useSession } from "@/hooks/useSession";
 import { auditApi, type AuditLogItem } from "@/lib/api/audit";
 import { FALLBACK_GRADIENT } from "@/lib/bf1/background";
@@ -87,6 +96,9 @@ function ServerDetailView({
 }) {
   const session = useSession();
   const isLoggedIn = !!session.data;
+  // 角色查询用于按权限收紧「管理」tab；与 Provider 内部共用同一 queryKey，react-query 去重，仅一次请求。
+  const roleQuery = useMyServerRole(gameId, isLoggedIn);
+  const canManage = hasAnyServerAdmin(roleQuery.data);
   const { summary, map_rotation, extras } = detail;
   const memberCount = extras.admins.length + extras.vips.length + extras.banned.length;
 
@@ -94,12 +106,9 @@ function ServerDetailView({
     { key: "players", label: `玩家列表（${summary.player_count}）` },
     { key: "rotation", label: `地图轮换（${map_rotation.length}）` },
     { key: "members", label: `成员名单（${memberCount}）` },
-    ...(isLoggedIn
-      ? ([
-          { key: "audit", label: "本服审计" },
-          { key: "admin", label: "管理" },
-        ] as const)
-      : []),
+    ...(isLoggedIn ? ([{ key: "audit", label: "本服审计" }] as const) : []),
+    // 「管理」仅对有服管权限（moderator 及以上 / 平台 admin）的用户开放
+    ...(canManage ? ([{ key: "admin", label: "管理" }] as const) : []),
   ];
   const [tab, setTab] = useState<TabKey>("players");
 
@@ -125,29 +134,35 @@ function ServerDetailView({
 
         <div className="mt-6">
           <TabNav tabs={tabs} tab={tab} onTab={setTab} />
-          <div className="mt-5">
-            {tab === "players" && (
-              <div className="rounded-sm bg-black/25 p-4 backdrop-blur-md sm:p-6">
-                <PlayersList gameId={gameId} game={game} />
-              </div>
-            )}
-            {tab === "rotation" && (
-              <Panel>
-                <RotationList items={map_rotation} />
-              </Panel>
-            )}
-            {tab === "members" && (
-              <Panel>
-                <MembersPanel extras={extras} />
-              </Panel>
-            )}
-            {tab === "audit" && isLoggedIn && (
-              <Panel>
-                <ServerAuditTab game={game} gameId={gameId} />
-              </Panel>
-            )}
-            {tab === "admin" && isLoggedIn && <AdminPanel gameId={gameId} detail={detail} />}
-          </div>
+          {/* Provider 包裹整个 tab 区，让玩家列表、地图轮换、管理三个 tab 共享同一份角色查询与确认机制 */}
+          <ServerAdminProvider gameId={gameId}>
+            <div className="mt-5">
+              {tab === "players" && (
+                <div className="rounded-sm bg-black/25 p-4 backdrop-blur-md sm:p-6">
+                  <PlayersList gameId={gameId} game={game} />
+                </div>
+              )}
+              {tab === "rotation" && (
+                <Panel>
+                  <RotationList
+                    items={map_rotation}
+                    serverInitialized={summary.persisted_game_id != null}
+                  />
+                </Panel>
+              )}
+              {tab === "members" && (
+                <Panel>
+                  <MembersPanel extras={extras} />
+                </Panel>
+              )}
+              {tab === "audit" && isLoggedIn && (
+                <Panel>
+                  <ServerAuditTab game={game} gameId={gameId} />
+                </Panel>
+              )}
+              {tab === "admin" && canManage && <AdminPanel detail={detail} />}
+            </div>
+          </ServerAdminProvider>
         </div>
       </div>
     </div>
@@ -627,6 +642,11 @@ export function ServerPlayersView({ data, game }: { data: ServerPlayersResponse;
         </div>
       ) : null}
 
+      {/* 多选批量操作栏：仅服管可见、选中玩家后浮现（含队列 / 旁观玩家） */}
+      <BatchActionBar
+        players={[...teams.flatMap((t) => t.players), ...data.queued, ...data.spectators]}
+      />
+
       {/* 双阵营并排，中间以竖线分割，与群版整图风格一致 */}
       <div className="grid grid-cols-1 gap-x-8 gap-y-8 lg:grid-cols-2">
         {teams.map((team, idx) => (
@@ -715,9 +735,12 @@ function TeamColumn({
   game: string;
   className?: string;
 }) {
+  const { canManage } = useServerAdmin();
   const title = team.faction ?? `队伍 ${index + 1}`;
   const slug = team.faction ? FACTION_SLUG[team.faction] : undefined;
   const avg = computeTeamAverage(team.players);
+  // 有服管权限时在行尾追加一列（复选框 + ⋯ 菜单），列数随之变化，占位行与平均行的 colSpan 同步。
+  const totalCols = canManage ? 10 : 9;
 
   return (
     // 列容器在 grid 中等高（items-stretch），table 撑满高度后由占位空行把平均行顶到列底，
@@ -735,6 +758,7 @@ function TeamColumn({
           <col className="w-14" />
           <col className="w-12" />
           <col className="w-8" />
+          {canManage ? <col className="w-16" /> : null}
         </colgroup>
         <thead>
           {/* 阵营标题行：旗帜 + 阵营名 + 人数，跨越序号/等级/玩家三列 */}
@@ -761,6 +785,11 @@ function TeamColumn({
             <ColHeader className="pl-3">时长</ColHeader>
             <ColHeader className="text-center">延迟</ColHeader>
             <ColHeader className="text-center">语言</ColHeader>
+            {canManage ? (
+              <th className="pb-2 text-right align-bottom">
+                <TeamSelectAllCheckbox players={team.players} />
+              </th>
+            ) : null}
           </tr>
         </thead>
         {/* 表头下的整条横线，呼应原图分隔样式 */}
@@ -770,7 +799,7 @@ function TeamColumn({
           ))}
           {/* 占位空行吸收剩余高度，把下方平均行顶到列底，实现两列平均行对齐 */}
           <tr aria-hidden className="h-full">
-            <td colSpan={9} />
+            <td colSpan={totalCols} />
           </tr>
         </tbody>
         <tfoot>
@@ -784,6 +813,7 @@ function TeamColumn({
             <td className="pt-2 pl-3 text-right">{formatHours(avg.hours)}</td>
             <td className="pt-2" />
             <td className="pt-2" />
+            {canManage ? <td className="pt-2" /> : null}
           </tr>
         </tfoot>
       </table>
@@ -805,6 +835,7 @@ function ColHeader({ children, className }: { children: ReactNode; className?: s
 }
 
 function PlayerRow({ player, seq, game }: { player: BlazePlayer; seq: number; game: string }) {
+  const { canManage } = useServerAdmin();
   const stats = player.stats;
   const dot = roleDot(player);
   return (
@@ -833,6 +864,11 @@ function PlayerRow({ player, seq, game }: { player: BlazePlayer; seq: number; ga
         <LatencyCell latency={player.latency} />
       </td>
       <td className="py-[5px] text-center text-white/65">{player.language || "—"}</td>
+      {canManage ? (
+        <td className="py-[5px] pl-2">
+          <PlayerRowActions player={player} />
+        </td>
+      ) : null}
     </tr>
   );
 }
@@ -1142,7 +1178,15 @@ function ServerAuditTab({ game, gameId }: { game: string; gameId: number }) {
 
 /* ----------------------------- 地图轮换 ----------------------------- */
 
-function RotationList({ items }: { items: MapRotationItem[] }) {
+function RotationList({
+  items,
+  serverInitialized,
+}: {
+  items: MapRotationItem[];
+  serverInitialized: boolean;
+}) {
+  const { can, chooseLevel } = useServerAdmin();
+  const canSwitch = can("chooseLevel");
   if (items.length === 0) {
     return <div className="py-8 text-center text-sm text-white/40">暂无地图轮换数据</div>;
   }
@@ -1176,9 +1220,23 @@ function RotationList({ items }: { items: MapRotationItem[] }) {
                   ) : null}
                 </div>
               ) : null}
-              <div className="space-y-0.5 p-3">
-                <div className="text-sm font-medium">{mapLabel}</div>
-                {modeLabel ? <div className="text-xs text-white/50">{modeLabel}</div> : null}
+              <div className="flex items-end justify-between gap-2 p-3">
+                <div className="min-w-0 space-y-0.5">
+                  <div className="truncate text-sm font-medium">{mapLabel}</div>
+                  {modeLabel ? <div className="text-xs text-white/50">{modeLabel}</div> : null}
+                </div>
+                {canSwitch && !m.is_current ? (
+                  <button
+                    type="button"
+                    disabled={!serverInitialized}
+                    title={serverInitialized ? "切换到此地图" : "服务器尚未初始化，暂不可换图"}
+                    onClick={() => chooseLevel(i, mapLabel)}
+                    className="inline-flex shrink-0 items-center gap-1 rounded-sm border border-white/15 px-2 py-1 text-xs text-white/80 transition-colors hover:bg-white/10 disabled:opacity-40"
+                  >
+                    <MapPin className="size-3.5" />
+                    换图
+                  </button>
+                ) : null}
               </div>
             </div>
           </li>

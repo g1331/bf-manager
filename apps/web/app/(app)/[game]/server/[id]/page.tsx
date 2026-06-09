@@ -12,7 +12,16 @@ import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Lock, Bookmark, MapPin, Crosshair, Globe2, ShieldCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  Lock,
+  Bookmark,
+  MapPin,
+  Crosshair,
+  Globe2,
+  ShieldCheck,
+  ChevronDown,
+} from "lucide-react";
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
 import { ResponsiveTable, type Column } from "@/components/common/ResponsiveTable";
 import { AdminPanel } from "@/components/bf1/AdminPanel";
@@ -362,32 +371,44 @@ function SettingsMatrix({ settings }: { settings: ServerSettings }) {
   ).filter((c) => c.entries.length > 0);
 
   if (columns.length === 0) return null;
+  const totalCount = columns.reduce((n, c) => n + c.entries.length, 0);
 
   return (
     <div className="mt-4">
       <Panel>
-        <SectionTitle>服务器设置</SectionTitle>
-        <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
-          {columns.map((col) => (
-            <section key={col.title}>
-              <h3 className="mb-2 border-b border-white/10 pb-1.5 text-xs font-semibold tracking-wider text-white/55">
-                {col.title}
-              </h3>
-              <dl className="space-y-1.5">
-                {col.entries.map(([label, value]) => (
-                  <div key={label} className="flex items-baseline justify-between gap-3 text-sm">
-                    <dt className="min-w-0 truncate text-white/65" title={label}>
-                      {label}
-                    </dt>
-                    <dd className="shrink-0">
-                      <SettingValue value={value} kind={col.kind} />
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            </section>
-          ))}
-        </div>
+        {/* 设置项偏运维向、平时少看，默认折叠避免挤占详情主信息；点标题展开 */}
+        <details className="group">
+          <summary className="flex cursor-pointer list-none items-center justify-between [&::-webkit-details-marker]:hidden">
+            <span className="text-sm font-semibold tracking-[0.2em] text-white/60 uppercase">
+              服务器设置
+            </span>
+            <span className="flex items-center gap-2 text-xs text-white/40">
+              <span className="tabular-nums">{totalCount} 项</span>
+              <ChevronDown className="size-4 transition-transform group-open:rotate-180" />
+            </span>
+          </summary>
+          <div className="mt-4 grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
+            {columns.map((col) => (
+              <section key={col.title}>
+                <h3 className="mb-2 border-b border-white/10 pb-1.5 text-xs font-semibold tracking-wider text-white/55">
+                  {col.title}
+                </h3>
+                <dl className="space-y-1.5">
+                  {col.entries.map(([label, value]) => (
+                    <div key={label} className="flex items-baseline justify-between gap-3 text-sm">
+                      <dt className="min-w-0 truncate text-white/65" title={label}>
+                        {label}
+                      </dt>
+                      <dd className="shrink-0">
+                        <SettingValue value={value} kind={col.kind} />
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </section>
+            ))}
+          </div>
+        </details>
       </Panel>
     </div>
   );
@@ -786,8 +807,12 @@ function TeamColumn({
             <ColHeader className="text-center">延迟</ColHeader>
             <ColHeader className="text-center">语言</ColHeader>
             {canManage ? (
-              <th className="pb-2 text-right align-bottom">
-                <TeamSelectAllCheckbox players={team.players} />
+              // 镜像行内 actions 单元格布局（选择框 + ⋯ 占位），让表头全选框与行内复选框同列对齐
+              <th className="pb-2 align-bottom">
+                <div className="flex items-center justify-end gap-1.5">
+                  <TeamSelectAllCheckbox players={team.players} />
+                  <span className="size-6" aria-hidden />
+                </div>
               </th>
             ) : null}
           </tr>
@@ -825,7 +850,7 @@ function ColHeader({ children, className }: { children: ReactNode; className?: s
   return (
     <th
       className={cn(
-        "pb-2 text-right text-[11px] font-medium tracking-wide text-white/55",
+        "pb-2 text-right text-[11px] font-medium tracking-wide whitespace-nowrap text-white/55",
         className,
       )}
     >

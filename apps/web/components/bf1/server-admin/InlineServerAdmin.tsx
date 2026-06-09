@@ -11,18 +11,11 @@
  * - 角色仅用于 gating UI（是否渲染入口、菜单项是否出现），真正鉴权以后端 require_role 为准。
  */
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import {
   Ban,
+  Check,
+  Minus,
   MoreHorizontal,
   ShieldCheck,
   ShieldMinus,
@@ -297,40 +290,70 @@ export function ServerAdminProvider({ gameId, children }: { gameId: number; chil
 
 /* --------------------------- 玩家行内联控件 --------------------------- */
 
-/** 单行选择复选框，仅在有服管权限时由调用方渲染 */
+/**
+ * 暗色主题自定义复选框：用切角方块 + 图标替代原生白框，与战地暗色面板统一。
+ * 半选态（indeterminate）用 Minus 图标表示，避免依赖原生 DOM indeterminate 属性。
+ */
+function SelectBox({
+  checked,
+  indeterminate = false,
+  onToggle,
+  label,
+}: {
+  checked: boolean;
+  indeterminate?: boolean;
+  onToggle: () => void;
+  label: string;
+}) {
+  const active = checked || indeterminate;
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={indeterminate ? "mixed" : checked}
+      aria-label={label}
+      onClick={onToggle}
+      className={cn(
+        "flex size-4 shrink-0 cursor-pointer items-center justify-center rounded-[3px] border transition-colors",
+        active
+          ? "border-amber-500 bg-amber-500 text-black"
+          : "border-white/30 bg-white/5 hover:border-white/55",
+      )}
+    >
+      {indeterminate ? (
+        <Minus className="size-3" strokeWidth={3} />
+      ) : checked ? (
+        <Check className="size-3" strokeWidth={3} />
+      ) : null}
+    </button>
+  );
+}
+
+/** 单行选择框，仅在有服管权限时由调用方渲染 */
 export function PlayerSelectCheckbox({ player }: { player: PlayerRef }) {
   const { isSelected, toggle } = useServerAdmin();
   return (
-    <input
-      type="checkbox"
-      aria-label={`选择 ${player.display_name}`}
+    <SelectBox
       checked={isSelected(player.persona_id)}
-      onChange={() => toggle(player.persona_id)}
-      className="size-3.5 cursor-pointer accent-amber-500"
+      onToggle={() => toggle(player.persona_id)}
+      label={`选择 ${player.display_name}`}
     />
   );
 }
 
-/** 表头「全选本队」复选框：全选中实心、部分选中半选态 */
+/** 表头「全选本队」选择框：全选中实心、部分选中半选态 */
 export function TeamSelectAllCheckbox({ players }: { players: PlayerRef[] }) {
   const { isSelected, selectMany } = useServerAdmin();
-  const ref = useRef<HTMLInputElement>(null);
   const ids = players.map((p) => p.persona_id);
   const selectedCount = ids.filter((id) => isSelected(id)).length;
   const allSelected = ids.length > 0 && selectedCount === ids.length;
   const someSelected = selectedCount > 0 && !allSelected;
-  // indeterminate 只能经 DOM 属性设置，HTML 无对应特性；放进 effect 保持渲染纯净。
-  useEffect(() => {
-    if (ref.current) ref.current.indeterminate = someSelected;
-  }, [someSelected]);
   return (
-    <input
-      ref={ref}
-      type="checkbox"
-      aria-label="全选本队玩家"
+    <SelectBox
       checked={allSelected}
-      onChange={() => selectMany(ids, !allSelected)}
-      className="size-3.5 cursor-pointer accent-amber-500"
+      indeterminate={someSelected}
+      onToggle={() => selectMany(ids, !allSelected)}
+      label="全选本队玩家"
     />
   );
 }
@@ -340,10 +363,13 @@ export function PlayerActionMenu({ player }: { player: BlazePlayer }) {
   const { act, can } = useServerAdmin();
   const ref: PlayerRef = { persona_id: player.persona_id, display_name: player.display_name };
 
+  // 暗色玻璃风菜单项的统一基类（focus 态用半透明白底，覆盖组件默认的浅色 accent）。
+  const itemCls = "cursor-pointer gap-2 focus:bg-white/10 focus:text-white";
+
   const items: ReactNode[] = [];
   if (can("kick")) {
     items.push(
-      <DropdownMenuItem key="kick" onSelect={() => act("kick", ref)}>
+      <DropdownMenuItem key="kick" className={itemCls} onSelect={() => act("kick", ref)}>
         <UserX className="size-3.5" />
         踢出
       </DropdownMenuItem>,
@@ -354,7 +380,7 @@ export function PlayerActionMenu({ player }: { player: BlazePlayer }) {
       <DropdownMenuItem
         key="ban"
         onSelect={() => act("ban", ref)}
-        className="text-red-500 focus:text-red-500"
+        className={cn(itemCls, "text-red-400 focus:bg-red-500/15 focus:text-red-300")}
       >
         <Ban className="size-3.5" />
         封禁
@@ -365,27 +391,31 @@ export function PlayerActionMenu({ player }: { player: BlazePlayer }) {
   const vipItems: ReactNode[] = [];
   if (player.is_vip && can("removeVip")) {
     vipItems.push(
-      <DropdownMenuItem key="removeVip" onSelect={() => act("removeVip", ref)}>
+      <DropdownMenuItem key="removeVip" className={itemCls} onSelect={() => act("removeVip", ref)}>
         <StarOff className="size-3.5" />下 V
       </DropdownMenuItem>,
     );
   } else if (!player.is_vip && can("addVip")) {
     vipItems.push(
-      <DropdownMenuItem key="addVip" onSelect={() => act("addVip", ref)}>
+      <DropdownMenuItem key="addVip" className={itemCls} onSelect={() => act("addVip", ref)}>
         <Star className="size-3.5" />加 V
       </DropdownMenuItem>,
     );
   }
   if (player.is_admin && can("removeAdmin")) {
     vipItems.push(
-      <DropdownMenuItem key="removeAdmin" onSelect={() => act("removeAdmin", ref)}>
+      <DropdownMenuItem
+        key="removeAdmin"
+        className={itemCls}
+        onSelect={() => act("removeAdmin", ref)}
+      >
         <ShieldMinus className="size-3.5" />
         移除管理
       </DropdownMenuItem>,
     );
   } else if (!player.is_admin && can("addAdmin")) {
     vipItems.push(
-      <DropdownMenuItem key="addAdmin" onSelect={() => act("addAdmin", ref)}>
+      <DropdownMenuItem key="addAdmin" className={itemCls} onSelect={() => act("addAdmin", ref)}>
         <ShieldCheck className="size-3.5" />
         设为管理
       </DropdownMenuItem>,
@@ -407,9 +437,15 @@ export function PlayerActionMenu({ player }: { player: BlazePlayer }) {
           <MoreHorizontal className="size-4" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-[8rem]">
+      {/* 暗色玻璃面板，与详情页 Bf1Panel / 半透明黑底统一，覆盖组件默认浅色 popover */}
+      <DropdownMenuContent
+        align="end"
+        className="min-w-[8rem] border-white/10 bg-neutral-900/95 text-white/90 shadow-xl backdrop-blur-md"
+      >
         {items}
-        {items.length > 0 && vipItems.length > 0 ? <DropdownMenuSeparator /> : null}
+        {items.length > 0 && vipItems.length > 0 ? (
+          <DropdownMenuSeparator className="bg-white/10" />
+        ) : null}
         {vipItems}
       </DropdownMenuContent>
     </DropdownMenu>

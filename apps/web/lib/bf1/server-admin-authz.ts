@@ -12,6 +12,7 @@ import type { MembershipRole } from "@/lib/api/memberships";
 /** 内联服管的操作种类，与后端服管端点一一对应 */
 export type ServerAdminAction =
   | "kick"
+  | "move"
   | "ban"
   | "unban"
   | "addVip"
@@ -30,6 +31,7 @@ const ROLE_LEVEL: Record<MembershipRole, number> = {
 /** 每个操作所需的最低角色，与后端各端点的 require_role(min_role) 对齐 */
 export const SERVER_ADMIN_ACTION_MIN_ROLE: Record<ServerAdminAction, MembershipRole> = {
   kick: "moderator",
+  move: "moderator",
   ban: "admin",
   unban: "admin",
   addVip: "admin",

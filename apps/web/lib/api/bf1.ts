@@ -408,6 +408,13 @@ export const bf1Api = {
       reason,
     }),
 
+  // 换边：teamId 传玩家「当前所在队伍」的 Blaze team（0/1），后端据此换到对面阵营
+  adminMove: (gameId: number, personaId: number, teamId: number) =>
+    api.post<{ success: boolean; message: string | null }>(`/bf1/server-admin/${gameId}/move`, {
+      persona_id: personaId,
+      team_id: teamId,
+    }),
+
   adminBan: (gameId: number, personaId: number) =>
     api.post<{ success: boolean; message: string | null }>(`/bf1/server-admin/${gameId}/ban`, {
       persona_id: personaId,

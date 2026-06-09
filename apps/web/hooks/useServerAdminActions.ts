@@ -12,6 +12,7 @@ import { ApiException } from "@/lib/api-client";
  */
 export type AdminActionRequest =
   | { action: "kick"; personaId: number; reason: string; label: string }
+  | { action: "move"; personaId: number; teamId: number; label: string }
   | { action: "ban"; personaId: number; label: string }
   | { action: "unban"; personaId: number; label: string }
   | { action: "addVip"; personaId: number; label: string }
@@ -50,6 +51,8 @@ export function useServerAdminActions(gameId: number) {
       switch (req.action) {
         case "kick":
           return bf1Api.adminKick(gameId, req.personaId, req.reason);
+        case "move":
+          return bf1Api.adminMove(gameId, req.personaId, req.teamId);
         case "ban":
           return bf1Api.adminBan(gameId, req.personaId);
         case "unban":

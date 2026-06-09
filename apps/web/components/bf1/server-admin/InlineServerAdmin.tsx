@@ -13,6 +13,7 @@
 
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import {
+  ArrowLeftRight,
   Ban,
   Check,
   Minus,
@@ -45,13 +46,25 @@ import { canDo, hasAnyServerAdmin, type ServerAdminAction } from "@/lib/bf1/serv
 import type { BlazePlayer, MyServerRole } from "@/lib/api/bf1";
 import { cn } from "@/lib/utils";
 
-/** 玩家的最小寻址信息：persona_id 为后端实际依据，名字用于展示与确认文案 */
-type PlayerRef = Pick<BlazePlayer, "persona_id" | "display_name">;
+/**
+ * 玩家的最小寻址信息：persona_id 为后端实际依据，名字用于展示与确认文案。
+ * team 是玩家当前所在队伍的 Blaze TIDX（0/1），仅换边需要；离线名单管理（按名解析）无队伍
+ * 概念，故设为可选。
+ */
+type PlayerRef = Pick<BlazePlayer, "persona_id" | "display_name"> & { team?: number };
 
 /** 单人操作种类（与菜单项 / 名单管理项对应） */
-type SingleKind = "kick" | "ban" | "unban" | "addVip" | "removeVip" | "addAdmin" | "removeAdmin";
-/** 批量操作种类（仅高频的踢 / 封支持批量） */
-type BatchKind = "kick" | "ban";
+type SingleKind =
+  | "kick"
+  | "move"
+  | "ban"
+  | "unban"
+  | "addVip"
+  | "removeVip"
+  | "addAdmin"
+  | "removeAdmin";
+/** 批量操作种类（仅高频的踢 / 换边 / 封支持批量） */
+type BatchKind = "kick" | "move" | "ban";
 
 interface ServerAdminContextValue {
   /** 是否拥有任意服管权限，决定是否渲染服管入口（选择列 / ⋯ 菜单 / 批量栏） */
@@ -107,6 +120,10 @@ function buildRequest(kind: SingleKind, player: PlayerRef, reason: string): Admi
   switch (kind) {
     case "kick":
       return { action: "kick", personaId: player.persona_id, reason, label };
+    case "move":
+      // 换边总是 toggle 到对面：传玩家当前队伍号（0/1），后端 +1 转 RSP 源队伍号。
+      // team 在换边场景必来自实时名单（对阵玩家 team 必为 0/1），?? 0 仅作类型兜底。
+      return { action: "move", personaId: player.persona_id, teamId: player.team ?? 0, label };
     case "ban":
       return { action: "ban", personaId: player.persona_id, label };
     case "unban":
@@ -124,6 +141,7 @@ function buildRequest(kind: SingleKind, player: PlayerRef, reason: string): Admi
 
 const SINGLE_VERB: Record<SingleKind, string> = {
   kick: "踢出",
+  move: "换边",
   ban: "封禁",
   unban: "解封",
   addVip: "添加 VIP",
@@ -236,6 +254,7 @@ export function ServerAdminProvider({ gameId, children }: { gameId: number; chil
   );
 
   const isKick = pending?.mode !== "level" && pending?.kind === "kick";
+  const isMove = pending?.mode !== "level" && pending?.kind === "move";
   const isBan = pending?.mode !== "level" && pending?.kind === "ban";
   const confirmTitle = !pending
     ? ""
@@ -244,18 +263,23 @@ export function ServerAdminProvider({ gameId, children }: { gameId: number; chil
       : pending.mode === "batch"
         ? `${SINGLE_VERB[pending.kind]}选中的 ${pending.players.length} 名玩家？`
         : `切换到 ${pending.mapName}？`;
-  // batch 分支须先于 isBan 判断：批量封禁时 isBan 同样为真，若不前置会错误显示单人文案。
+  // isMove / batch 分支须先于 isBan 判断：批量时对应 kind 的标志同样为真，若不前置会错误回退到
+  // 单人 / 通用文案。换边无论单人或批量都要提示 forceKill 会强制阵亡一次。
   const confirmDescription = !pending
     ? undefined
     : pending.mode === "level"
       ? "切换地图会立即结束当前对局，所有玩家会被移到新地图"
-      : pending.mode === "batch"
-        ? "将对所有选中玩家依次执行，部分失败不会中断其余项"
-        : isBan
-          ? "封禁后该玩家无法再次加入服务器，可在管理后台或 EA 平台解除"
-          : pending.kind === "addAdmin"
-            ? "管理员可对本服执行踢人、封禁等操作，请确认对方身份"
-            : undefined;
+      : isMove
+        ? pending.mode === "batch"
+          ? "换边会强制玩家阵亡一次后移到对方阵营；将对所有选中玩家依次执行，部分失败不会中断其余项"
+          : "换边会强制玩家阵亡一次后移到对方阵营"
+        : pending.mode === "batch"
+          ? "将对所有选中玩家依次执行，部分失败不会中断其余项"
+          : isBan
+            ? "封禁后该玩家无法再次加入服务器，可在管理后台或 EA 平台解除"
+            : pending.kind === "addAdmin"
+              ? "管理员可对本服执行踢人、封禁等操作，请确认对方身份"
+              : undefined;
 
   return (
     <ServerAdminContext.Provider value={value}>
@@ -361,7 +385,11 @@ export function TeamSelectAllCheckbox({ players }: { players: PlayerRef[] }) {
 /** 玩家行 ⋯ 操作菜单，按角色与玩家当前状态（是否已 VIP / 管理）决定菜单项 */
 export function PlayerActionMenu({ player }: { player: BlazePlayer }) {
   const { act, can } = useServerAdmin();
-  const ref: PlayerRef = { persona_id: player.persona_id, display_name: player.display_name };
+  const ref: PlayerRef = {
+    persona_id: player.persona_id,
+    display_name: player.display_name,
+    team: player.team,
+  };
 
   // 暗色玻璃风菜单项的统一基类（focus 态用半透明白底，覆盖组件默认的浅色 accent）。
   const itemCls = "cursor-pointer gap-2 focus:bg-white/10 focus:text-white";
@@ -372,6 +400,14 @@ export function PlayerActionMenu({ player }: { player: BlazePlayer }) {
       <DropdownMenuItem key="kick" className={itemCls} onSelect={() => act("kick", ref)}>
         <UserX className="size-3.5" />
         踢出
+      </DropdownMenuItem>,
+    );
+  }
+  if (can("move")) {
+    items.push(
+      <DropdownMenuItem key="move" className={itemCls} onSelect={() => act("move", ref)}>
+        <ArrowLeftRight className="size-3.5" />
+        换边
       </DropdownMenuItem>,
     );
   }
@@ -481,6 +517,17 @@ export function BatchActionBar({ players }: { players: BlazePlayer[] }) {
           >
             <UserX className="size-3.5" />
             批量踢出
+          </Button>
+        ) : null}
+        {can("move") ? (
+          <Button
+            variant="outline"
+            size="sm"
+            className="compact-action"
+            onClick={() => actBatch("move", selectedPlayers)}
+          >
+            <ArrowLeftRight className="size-3.5" />
+            批量换边
           </Button>
         ) : null}
         {can("ban") ? (

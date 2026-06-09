@@ -26,6 +26,15 @@ class ChooseLevelRequest(BaseModel):
     level_index: int = Field(..., ge=0, le=100)
 
 
+class MovePlayerRequest(BaseModel):
+    """换边请求。team_id 是玩家「当前所在队伍」的 Blaze TIDX（0 或 1），后端据此把他
+    换到对面阵营——换边总是 toggle，不存在指定目标队伍，因此请求体只需当前队伍号。
+    """
+
+    persona_id: int
+    team_id: int = Field(..., ge=0, le=1)
+
+
 class AdminActionResult(BaseModel):
     success: bool
     message: str | None = None

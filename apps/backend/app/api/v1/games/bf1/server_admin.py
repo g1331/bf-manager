@@ -11,6 +11,7 @@ from app.schemas.bf1.admin import (
     BanPlayerRequest,
     ChooseLevelRequest,
     KickPlayerRequest,
+    MovePlayerRequest,
     MyServerRoleResult,
     ServerMemberRequest,
 )
@@ -70,6 +71,22 @@ async def kick_player(
     service = _admin_service(db, request, user, game_id)
     await service.kick_player(payload.persona_id, payload.reason)
     return AdminActionResult(success=True, message=f"已踢出玩家 {payload.persona_id}")
+
+
+@router.post("/{game_id}/move", response_model=AdminActionResult)
+async def move_player(
+    game_id: int,
+    payload: MovePlayerRequest,
+    db: DbDep,
+    user: CurrentUser,
+    request: Request,
+) -> AdminActionResult:
+    # 换边是瞬时、温和、高频的人数平衡操作（玩家不离服），与踢人同列 moderator。
+    authz = ServerAuthzService(db)
+    await authz.require_role(user=user, game="bf1", server_id=game_id, min_role="moderator")
+    service = _admin_service(db, request, user, game_id)
+    await service.move_player(payload.persona_id, payload.team_id)
+    return AdminActionResult(success=True, message=f"已将玩家 {payload.persona_id} 换边")
 
 
 @router.post("/{game_id}/ban", response_model=AdminActionResult)

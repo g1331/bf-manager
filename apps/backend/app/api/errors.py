@@ -41,8 +41,15 @@ class NotFoundError(AppError):
 
 
 class EAApiError(AppError):
+    """EA 上游调用失败。
+
+    状态码用 503 而非语义上更贴切的 502：生产外层的 Cloudflare 会把源站的 502/504
+    响应整体替换为自家 HTML 错误页（Origin Error Page Passthru 仅企业版可用），
+    JSON 错误体到不了浏览器，前端只能展示空白报错；503 可原样穿透。
+    """
+
     def __init__(self, code: str, message: str, details: dict[str, Any] | None = None) -> None:
-        super().__init__(status.HTTP_502_BAD_GATEWAY, code, message, details)
+        super().__init__(status.HTTP_503_SERVICE_UNAVAILABLE, code, message, details)
 
 
 class ValidationError(AppError):

@@ -241,7 +241,7 @@ async def test_verify_failure_marks_failure(test_session, monkeypatch) -> None:
 
 async def test_verify_session_ok_but_access_token_fail(test_session, monkeypatch) -> None:
     """session 通而 remid/sid 已失效时 verify 必须判失败，避免「verify 通过、按
-    昵称查询 502」的设计盲区。错误消息要明确指向 access_token 链路。"""
+    昵称查询 5xx」的设计盲区。错误消息要明确指向 access_token 链路。"""
     account = await _seed(test_session, failure_count=0)
     monkeypatch.setattr("app.domain.games.bf1.gateway.BF1GatewayClient", _FakeGatewaySessionOnly)
     service = EAAccountService(test_session)

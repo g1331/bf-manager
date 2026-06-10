@@ -105,6 +105,26 @@ class BF1ServerAdminService:
             await self._audit_failure("kick_player", payload, err, target_persona_id=persona_id)
             raise
 
+    async def move_player(self, persona_id: int, team_id: int) -> dict[str, Any]:
+        """把玩家换到对面阵营（换边）。
+
+        RSP.movePlayer 的 teamId 语义是玩家「当前所在队伍」的队伍号（1-based）：传入源
+        队伍号，引擎会把该玩家移动到另一队。Blaze 实时名单里的 team 是 0/1（TIDX），因此
+        rsp_team = team_id + 1。换边总是 toggle 到对面，故只需玩家当前队伍号即可。
+        与 kick 一致用 game_id 寻址（不是 ea_server_id）。
+        """
+        rsp_team = team_id + 1
+        payload = {"persona_id": persona_id, "team_id": team_id, "rsp_team": rsp_team}
+        try:
+            async with self.client_provider.acquire() as client:
+                res = await client.movePlayer(self.game_id, persona_id, rsp_team)
+                data = _ensure_dict_or_raise(res, "EA_MOVE_FAILED")
+            await self._audit_success("move_player", payload, target_persona_id=persona_id)
+            return data
+        except EAApiError as err:
+            await self._audit_failure("move_player", payload, err, target_persona_id=persona_id)
+            raise
+
     async def add_ban(self, persona_id: int, ea_server_id: int) -> dict[str, Any]:
         """添加 ban（用 EA serverId，不是 game_id）"""
         payload = {"persona_id": persona_id, "server_id": ea_server_id}

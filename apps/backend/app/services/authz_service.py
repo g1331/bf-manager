@@ -65,3 +65,36 @@ class ServerAuthzService:
         if ROLE_LEVEL.get(membership.role, 0) < ROLE_LEVEL.get(min_role, 99):
             raise ForbiddenError(message=f"需要 {min_role} 及以上权限（当前 {membership.role}）")
         return server
+
+    async def resolve_role(
+        self,
+        *,
+        user: User,
+        game: str,
+        server_id: int,
+    ) -> tuple[str | None, bool]:
+        """取 user 对该服务器的角色，不抛错。
+
+        用于前端按角色 gating 内联服管操作。返回 (role, is_platform_admin)：
+        - 平台 admin：(None, True)，前端据此放开全部操作；
+        - 服务器尚未注册或用户无成员记录：(None, False)；
+        - 其余：(membership.role, False)。
+        """
+        if user.role == "admin":
+            return None, True
+
+        server = await self.db.scalar(
+            select(Server).where(Server.game == game, Server.server_id == server_id)
+        )
+        if server is None:
+            return None, False
+
+        membership = await self.db.scalar(
+            select(ServerMembership).where(
+                ServerMembership.user_id == user.id,
+                ServerMembership.server_pk == server.id,
+            )
+        )
+        if membership is None:
+            return None, False
+        return membership.role, False

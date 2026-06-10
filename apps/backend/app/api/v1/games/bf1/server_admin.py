@@ -11,6 +11,8 @@ from app.schemas.bf1.admin import (
     BanPlayerRequest,
     ChooseLevelRequest,
     KickPlayerRequest,
+    MovePlayerRequest,
+    MyServerRoleResult,
     ServerMemberRequest,
 )
 from app.services.authz_service import ServerAuthzService
@@ -41,6 +43,21 @@ def _admin_service(
     )
 
 
+@router.get("/{game_id}/my-role", response_model=MyServerRoleResult)
+async def my_server_role(
+    game_id: int,
+    db: DbDep,
+    user: CurrentUser,
+) -> MyServerRoleResult:
+    """返回当前登录用户对该服务器的角色，仅需登录、不要求任何角色。
+
+    前端据此 gating 内联服管操作（踢人 / 封禁 / VIP / 换图等），无角色则不渲染入口。
+    """
+    authz = ServerAuthzService(db)
+    role, is_platform_admin = await authz.resolve_role(user=user, game="bf1", server_id=game_id)
+    return MyServerRoleResult(role=role, is_platform_admin=is_platform_admin)
+
+
 @router.post("/{game_id}/kick", response_model=AdminActionResult)
 async def kick_player(
     game_id: int,
@@ -54,6 +71,22 @@ async def kick_player(
     service = _admin_service(db, request, user, game_id)
     await service.kick_player(payload.persona_id, payload.reason)
     return AdminActionResult(success=True, message=f"已踢出玩家 {payload.persona_id}")
+
+
+@router.post("/{game_id}/move", response_model=AdminActionResult)
+async def move_player(
+    game_id: int,
+    payload: MovePlayerRequest,
+    db: DbDep,
+    user: CurrentUser,
+    request: Request,
+) -> AdminActionResult:
+    # 换边是瞬时、温和、高频的人数平衡操作（玩家不离服），与踢人同列 moderator。
+    authz = ServerAuthzService(db)
+    await authz.require_role(user=user, game="bf1", server_id=game_id, min_role="moderator")
+    service = _admin_service(db, request, user, game_id)
+    await service.move_player(payload.persona_id, payload.team_id)
+    return AdminActionResult(success=True, message=f"已将玩家 {payload.persona_id} 换边")
 
 
 @router.post("/{game_id}/ban", response_model=AdminActionResult)

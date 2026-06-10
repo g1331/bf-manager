@@ -346,6 +346,12 @@ export interface BF1Overview {
   mode_distribution: NamedCount[];
 }
 
+/** 当前登录用户对某服务器的角色；role 为 null 且 is_platform_admin 为 false 表示无任何服管权限 */
+export interface MyServerRole {
+  role: "viewer" | "moderator" | "admin" | "owner" | null;
+  is_platform_admin: boolean;
+}
+
 export const bf1Api = {
   searchPlayers: (name: string) =>
     api.get<PersonaSearchResult>(`/bf1/players/search?name=${encodeURIComponent(name)}`),
@@ -392,11 +398,21 @@ export const bf1Api = {
 
   getOverview: () => api.get<BF1Overview>(`/bf1/overview`),
 
+  // 当前登录用户对该服务器的角色，供前端按角色 gating 内联服管入口
+  getMyServerRole: (gameId: number) => api.get<MyServerRole>(`/bf1/server-admin/${gameId}/my-role`),
+
   // ===== 服管操作（需登录 + 权限）=====
   adminKick: (gameId: number, personaId: number, reason: string) =>
     api.post<{ success: boolean; message: string | null }>(`/bf1/server-admin/${gameId}/kick`, {
       persona_id: personaId,
       reason,
+    }),
+
+  // 换边：teamId 传玩家「当前所在队伍」的 Blaze team（0/1），后端据此换到对面阵营
+  adminMove: (gameId: number, personaId: number, teamId: number) =>
+    api.post<{ success: boolean; message: string | null }>(`/bf1/server-admin/${gameId}/move`, {
+      persona_id: personaId,
+      team_id: teamId,
     }),
 
   adminBan: (gameId: number, personaId: number) =>

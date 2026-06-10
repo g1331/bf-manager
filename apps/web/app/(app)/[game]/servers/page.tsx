@@ -220,9 +220,11 @@ export default function ServerListPage() {
               {/* 列表滚动区：桌面端唯一的内部滚动容器 */}
               <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
                 <ul>
-                  {visibleItems.map((s) => (
+                  {visibleItems.map((s, i) => (
+                    // 搜索结果里 server_id 多为 0（RSP serverId 仅详情接口返回），用 game_id
+                    // 作为唯一键，空值回退到索引，避免重复 key。
                     <ServerRow
-                      key={s.server_id}
+                      key={s.game_id ?? `idx-${i}`}
                       server={s}
                       onClick={() =>
                         s.game_id && router.push(`/${params.game}/server/${s.game_id}`)

@@ -29,6 +29,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { AdminPageSkeleton } from "@/components/layout/PageSkeleton";
 import { SectionHeading } from "@/components/layout/SectionHeading";
 import { ConfirmSheet } from "@/components/common/ConfirmSheet";
 import { EaLoginFlow } from "@/components/common/EaLoginFlow";
@@ -373,7 +374,7 @@ export default function EAAccountsAdminPage() {
   });
 
   if (session.isLoading) {
-    return <main className="text-muted-foreground p-12 text-center">加载中…</main>;
+    return <AdminPageSkeleton />;
   }
   if (!session.data) {
     return (

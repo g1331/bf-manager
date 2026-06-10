@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, KeyRound, ScrollText, ShieldCheck } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { AdminPageSkeleton } from "@/components/layout/PageSkeleton";
 import { SectionHeading } from "@/components/layout/SectionHeading";
 import { useSession } from "@/hooks/useSession";
 import { eaAccountsApi, type EAAccountItem } from "@/lib/api/ea-accounts";
@@ -53,7 +54,7 @@ export default function AdminOverviewPage() {
   });
 
   if (session.isLoading || !isAdmin) {
-    return <main className="text-muted-foreground p-12 text-center">加载中…</main>;
+    return <AdminPageSkeleton />;
   }
 
   const eaList = eaAccounts.data ?? [];

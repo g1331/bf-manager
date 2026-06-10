@@ -9,6 +9,7 @@ import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { PageHeaderSkeleton, RowsSkeleton } from "@/components/layout/PageSkeleton";
 import { SectionHeading } from "@/components/layout/SectionHeading";
 import { ResponsiveTable, type Column } from "@/components/common/ResponsiveTable";
 import { EaLoginFlow } from "@/components/common/EaLoginFlow";
@@ -66,7 +67,12 @@ export default function MePage() {
   });
 
   if (session.isLoading || !session.data) {
-    return <main className="text-muted-foreground p-12 text-center">加载中…</main>;
+    return (
+      <main className="mx-auto max-w-3xl space-y-8 px-4 py-8 sm:px-6">
+        <PageHeaderSkeleton />
+        <RowsSkeleton rows={5} />
+      </main>
+    );
   }
 
   const user = session.data;

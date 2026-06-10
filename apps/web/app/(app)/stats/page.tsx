@@ -5,6 +5,7 @@ import { Clock4, Eye } from "lucide-react";
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
 import { BfCard } from "@/components/bf1/visual/BfCard";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { StatsOverviewSkeleton } from "@/components/layout/PageSkeleton";
 import { SectionHeading } from "@/components/layout/SectionHeading";
 import { ENABLED_GAMES } from "@/lib/game-registry";
 import { bf1Api, type BF1Overview, type CountBreakdown, type NamedCount } from "@/lib/api/bf1";
@@ -35,7 +36,7 @@ export default function StatsPage() {
       />
 
       {overview.isLoading ? (
-        <div className="text-muted-foreground p-12 text-center text-sm">加载中…</div>
+        <StatsOverviewSkeleton />
       ) : !ready ? (
         <section className="rounded-sm border border-white/10 bg-white/[0.04] p-6 backdrop-blur-md">
           <div className="text-muted-foreground text-sm">

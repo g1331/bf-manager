@@ -329,7 +329,7 @@ class EAAccountService:
         2. access_token 链路：_ensure_desktop_token 用 remid/sid 换 EA Desktop SAL
            access_token，按昵称搜索等接口必须走它。session 可能未过期但 remid/sid
            已失效，因此第 1 步通过不代表按昵称查询能用，必须再检 access_token，
-           否则会留下「verify 通过、按昵称查询 502」的盲区。
+           否则会留下「verify 通过、按昵称查询 5xx」的盲区。
 
         复用各战绩接口共用的判定约定：gateway 认证类方法成功返回 dict，失败返回
         错误字符串。结果只反映调用时刻 EA 服务器的响应，不保证与并发写入原子一致。

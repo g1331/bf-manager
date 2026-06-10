@@ -7,6 +7,7 @@ import { Check, ChevronDown, Lock, MapPin, RotateCw, Users } from "lucide-react"
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { ServerListSkeleton } from "@/components/layout/PageSkeleton";
 import { pingSiteLabel } from "@/lib/bf1/pingsite";
 import {
   BF1_MAPS,
@@ -208,7 +209,7 @@ export default function ServerListPage() {
       <div className="grid grid-cols-1 gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_300px]">
         <section className="flex min-w-0 flex-col lg:min-h-0">
           {servers.isLoading ? (
-            <div className="py-16 text-center text-sm text-white/45">加载中…</div>
+            <ServerListSkeleton />
           ) : sorted.length > 0 ? (
             <>
               {/* 表头常驻，不随列表滚动 */}

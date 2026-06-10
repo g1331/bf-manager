@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { AdminPageSkeleton } from "@/components/layout/PageSkeleton";
 import { SectionHeading } from "@/components/layout/SectionHeading";
 import { ConfirmSheet } from "@/components/common/ConfirmSheet";
 import { ResponsiveTable, type Column } from "@/components/common/ResponsiveTable";
@@ -89,7 +90,7 @@ export default function MembershipsAdminPage() {
   });
 
   if (session.isLoading) {
-    return <main className="text-muted-foreground p-12 text-center">加载中…</main>;
+    return <AdminPageSkeleton />;
   }
   if (!session.data) {
     return (

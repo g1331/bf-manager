@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { AdminPageSkeleton } from "@/components/layout/PageSkeleton";
 import {
   Sheet,
   SheetContent,
@@ -71,7 +72,7 @@ export default function AdminAuditPage() {
   });
 
   if (session.isLoading || !isAdmin) {
-    return <main className="text-muted-foreground p-12 text-center">加载中…</main>;
+    return <AdminPageSkeleton />;
   }
 
   const columns: Column<AuditLogItem>[] = [

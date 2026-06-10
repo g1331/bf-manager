@@ -23,6 +23,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
+import { ServerDetailSkeleton } from "@/components/layout/PageSkeleton";
 import { ResponsiveTable, type Column } from "@/components/common/ResponsiveTable";
 import { AdminPanel } from "@/components/bf1/AdminPanel";
 import {
@@ -76,7 +77,7 @@ export default function ServerDetailPage() {
   });
 
   if (detail.isLoading) {
-    return <CenterNote text="正在加载服务器数据…" />;
+    return <ServerDetailSkeleton />;
   }
   if (!detail.data) {
     return <CenterNote text="未找到该服务器，请返回列表重试" />;

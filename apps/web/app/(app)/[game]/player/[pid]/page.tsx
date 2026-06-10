@@ -12,6 +12,11 @@ import * as React from "react";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
+import {
+  CardGridSkeleton,
+  PlayerDetailSkeleton,
+  RowsSkeleton,
+} from "@/components/layout/PageSkeleton";
 import { RarityStar } from "@/components/bf1/visual/RarityStar";
 import { BanBadge } from "@/components/bf1/visual/BanBadge";
 import {
@@ -163,7 +168,7 @@ export default function Bf1PlayerPage() {
     return <CenterNote text="无效的玩家 ID" />;
   }
   if (statsQ.isLoading || playerQ.isLoading) {
-    return <CenterNote text="正在加载玩家数据…" />;
+    return <PlayerDetailSkeleton />;
   }
   if (statsQ.isError || !statsQ.data) {
     return <CenterNote text="加载玩家战绩失败，请稍后重试" />;
@@ -540,7 +545,7 @@ function OverviewTab({
 /* ----------------------------- 武器 / 载具 Tab ----------------------------- */
 
 function WeaponsTab({ weapons, loading }: { weapons: WeaponStat[]; loading: boolean }) {
-  if (loading) return <EmptyState text="正在加载武器数据…" />;
+  if (loading) return <CardGridSkeleton />;
   if (weapons.length === 0) return <EmptyState text="暂无武器数据" />;
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -574,7 +579,7 @@ function WeaponsTab({ weapons, loading }: { weapons: WeaponStat[]; loading: bool
 }
 
 function VehiclesTab({ vehicles, loading }: { vehicles: VehicleStat[]; loading: boolean }) {
-  if (loading) return <EmptyState text="正在加载载具数据…" />;
+  if (loading) return <CardGridSkeleton />;
   if (vehicles.length === 0) return <EmptyState text="暂无载具数据" />;
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -860,7 +865,7 @@ function SoldierDistribution({
 /* ----------------------------- 最近 Tab ----------------------------- */
 
 function RecentTab({ servers, loading }: { servers: RecentServer[]; loading: boolean }) {
-  if (loading) return <EmptyState text="正在加载最近游玩记录…" />;
+  if (loading) return <RowsSkeleton rows={5} />;
   if (servers.length === 0) return <EmptyState text="暂无最近游玩记录" />;
   return (
     <div className="space-y-3">

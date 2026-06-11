@@ -66,6 +66,28 @@ class Cache:
     async def exists(self, key: str) -> bool:
         return bool(await self._r.exists(self._key(key)))
 
+    async def list_append(
+        self, key: str, value: Any, *, max_len: int, ttl: int | None = None
+    ) -> None:
+        """向列表尾部追加一个 JSON 元素并裁剪到最近 max_len 条，用于固定长度的时间序列。"""
+        async with self._r.pipeline(transaction=True) as pipe:
+            pipe.rpush(self._key(key), json.dumps(value, ensure_ascii=False))
+            pipe.ltrim(self._key(key), -max_len, -1)
+            if ttl is not None:
+                pipe.expire(self._key(key), ttl)
+            await pipe.execute()
+
+    async def list_all(self, key: str) -> list[Any]:
+        """读取整个列表并逐条 JSON 反序列化，无法解析的脏元素直接跳过。"""
+        raw = await self._r.lrange(self._key(key), 0, -1)
+        items: list[Any] = []
+        for entry in raw:
+            try:
+                items.append(json.loads(entry))
+            except json.JSONDecodeError:
+                continue
+        return items
+
 
 async def get_cache() -> Cache:
     return Cache(await get_redis())

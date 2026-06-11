@@ -19,7 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.cache import get_cache
 from app.db.session import get_sessionmaker
-from app.schemas.bf1.overview import BF1Overview, CountBreakdown, NamedCount
+from app.schemas.bf1.overview import BF1Overview, CountBreakdown, NamedCount, TrendPoint
 from app.schemas.bf1.server import ServerSummary
 from app.services.bf1.gateway_factory import get_bf1_client
 from app.services.bf1.server_service import _to_summary
@@ -55,6 +55,12 @@ OVERVIEW_CACHE_KEY = "bf1:overview"
 OVERVIEW_CACHE_TTL = 600
 POLL_INTERVAL_SECONDS = 60
 
+# 24h 趋势历史：poller 每轮成功刷新追加一个点，按轮询周期保留约 24 小时。
+# TTL 给两天，服务长期停摆后陈旧曲线自动过期，而短暂重启不丢历史。
+HISTORY_CACHE_KEY = "bf1:overview:history"
+HISTORY_MAX_POINTS = 24 * 60 * 60 // POLL_INTERVAL_SECONDS
+HISTORY_CACHE_TTL = 2 * 24 * 60 * 60
+
 
 def _region_key(region_code: str | None) -> str:
     if region_code == "Asia":
@@ -87,6 +93,7 @@ def build_overview(
 
     map_mode_servers: dict[str, int] = defaultdict(int)
     map_mode_players: dict[str, int] = defaultdict(int)
+    map_mode_image: dict[str, str] = {}
     mode_servers: dict[str, int] = defaultdict(int)
     mode_players: dict[str, int] = defaultdict(int)
 
@@ -105,12 +112,19 @@ def build_overview(
 
         map_mode_servers[map_mode_label] += 1
         map_mode_players[map_mode_label] += s.player_count
+        if s.map_image_url and map_mode_label not in map_mode_image:
+            map_mode_image[map_mode_label] = s.map_image_url
         mode_servers[mode_label] += 1
         mode_players[mode_label] += s.player_count
 
     top_map_modes = sorted(
         (
-            NamedCount(label=label, servers=cnt, players=map_mode_players[label])
+            NamedCount(
+                label=label,
+                servers=cnt,
+                players=map_mode_players[label],
+                image=map_mode_image.get(label),
+            )
             for label, cnt in map_mode_servers.items()
         ),
         key=lambda x: (x.players, x.servers),
@@ -178,10 +192,25 @@ async def fetch_overview(db: AsyncSession) -> BF1Overview:
 
 
 async def refresh_overview_cache(db: AsyncSession) -> BF1Overview:
-    """拉取并写入缓存。拉取失败时抛出，保留上一次快照不被覆盖。"""
+    """拉取并写入缓存。拉取失败时抛出，保留上一次快照不被覆盖。
+
+    快照与趋势历史分开存储：快照整体覆盖写，历史按采样点追加并裁剪到最近 24h，
+    读取端再把两者拼装成完整响应。
+    """
     overview = await fetch_overview(db)
     cache = await get_cache()
     await cache.set(OVERVIEW_CACHE_KEY, overview.model_dump(), ttl=OVERVIEW_CACHE_TTL)
+    point = TrendPoint(
+        ts=int(datetime.now(UTC).timestamp()),
+        players=overview.players.total,
+        servers=overview.servers.total,
+    )
+    await cache.list_append(
+        HISTORY_CACHE_KEY,
+        point.model_dump(),
+        max_len=HISTORY_MAX_POINTS,
+        ttl=HISTORY_CACHE_TTL,
+    )
     logger.info(
         "BF1 overview refreshed: servers={} players={} pulls={}/{}",
         overview.servers.total,
@@ -203,9 +232,14 @@ async def read_overview_cache() -> BF1Overview:
     except RedisError as e:
         logger.warning("BF1 overview cache read failed, serving empty snapshot: {}", e)
         return BF1Overview(available=False)
-    if cached:
-        return BF1Overview(**cached)
-    return BF1Overview(available=False)
+    if not cached:
+        return BF1Overview(available=False)
+    overview = BF1Overview(**cached)
+    try:
+        overview.history = [TrendPoint(**p) for p in await cache.list_all(HISTORY_CACHE_KEY)]
+    except (RedisError, ValueError) as e:
+        logger.warning("BF1 overview history read failed, serving snapshot without trend: {}", e)
+    return overview
 
 
 async def overview_poller() -> None:

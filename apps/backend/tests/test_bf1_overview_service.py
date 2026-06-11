@@ -19,6 +19,7 @@ def _summary(
     spectator: int = 0,
     mode: str = "征服",
     map_name: str = "剃刀边缘",
+    map_image_url: str | None = None,
 ) -> ServerSummary:
     return ServerSummary(
         server_id=0,
@@ -34,6 +35,7 @@ def _summary(
         mode_display_name=mode,
         map_name=map_name,
         map_display_name=map_name,
+        map_image_url=map_image_url,
     )
 
 
@@ -102,6 +104,28 @@ def test_build_overview_top_map_modes_sorted_by_players() -> None:
     assert ov.mode_distribution[0].servers == 2
     assert ov.mode_distribution[1].label == "行动模式"
     assert ov.mode_distribution[1].servers == 1
+
+
+def test_build_overview_top_map_modes_carry_map_image() -> None:
+    summaries = [
+        # 同组首台无图、次台有图：应取到组内首个非空图
+        _summary(region="Asia", official=True, players=10, mode="征服", map_name="A"),
+        _summary(
+            region="Asia",
+            official=True,
+            players=20,
+            mode="征服",
+            map_name="A",
+            map_image_url="https://cdn.example/a.jpg",
+        ),
+        # 全组无图：image 保持 None
+        _summary(region="EU", official=True, players=5, mode="行动模式", map_name="B"),
+    ]
+    ov = build_overview(summaries, sample_pulls=1, raw_count=3)
+
+    by_label = {m.label: m for m in ov.top_map_modes}
+    assert by_label["征服 · A"].image == "https://cdn.example/a.jpg"
+    assert by_label["行动模式 · B"].image is None
 
 
 def test_build_overview_empty() -> None:

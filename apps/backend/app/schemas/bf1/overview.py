@@ -26,6 +26,16 @@ class NamedCount(BaseModel):
     label: str
     servers: int = 0
     players: int = 0
+    # 该分组内任一服务器的地图实景图 URL，供前端做图卡背景；同地图各服图一致
+    image: str | None = None
+
+
+class TrendPoint(BaseModel):
+    """全服趋势的单个采样点。ts 为 UTC epoch 秒，poller 每轮成功刷新追加一个点。"""
+
+    ts: int
+    players: int = 0
+    servers: int = 0
 
 
 class BF1Overview(BaseModel):
@@ -44,3 +54,6 @@ class BF1Overview(BaseModel):
 
     top_map_modes: list[NamedCount] = Field(default_factory=list)
     mode_distribution: list[NamedCount] = Field(default_factory=list)
+
+    # 最近 24h 的在线人数/服务器数趋势，按时间升序；历史单独存于 Redis list，读取时拼装
+    history: list[TrendPoint] = Field(default_factory=list)

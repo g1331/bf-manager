@@ -37,18 +37,24 @@ export function RowsSkeleton({ rows = 8, className }: { rows?: number; className
   );
 }
 
-/** 全服统计（概况）的指标区骨架：总览数字四宫格 + 两块分布面板。 */
+/** 全服统计（战情板）骨架：左列数字带 + 趋势 + 双分布面板，右列热门地图排行。 */
 export function StatsOverviewSkeleton() {
   return (
-    <section className="space-y-4">
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        {Array.from({ length: 4 }, (_, i) => (
-          <Skeleton key={i} className="h-24 w-full" />
-        ))}
+    <section className="grid grid-cols-1 gap-5 xl:grid-cols-12">
+      <div className="space-y-5 xl:col-span-8">
+        <div className="grid grid-cols-2 gap-5 lg:grid-cols-4">
+          {Array.from({ length: 4 }, (_, i) => (
+            <Skeleton key={i} className="h-40 w-full" />
+          ))}
+        </div>
+        <Skeleton className="h-72 w-full" />
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          <Skeleton className="h-56 w-full" />
+          <Skeleton className="h-56 w-full" />
+        </div>
       </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Skeleton className="h-48 w-full" />
-        <Skeleton className="h-48 w-full" />
+      <div className="xl:col-span-4">
+        <Skeleton className="h-full min-h-96 w-full" />
       </div>
     </section>
   );

@@ -333,11 +333,19 @@ export interface CountBreakdown {
   other: number;
 }
 
-/** 按地图模式或游戏模式分组的服务器数与在线人数 */
+/** 按地图模式或游戏模式分组的服务器数与在线人数；image 为组内任一服务器的地图实景图 */
 export interface NamedCount {
   label: string;
   servers: number;
   players: number;
+  image: string | null;
+}
+
+/** 全服趋势采样点，ts 为 UTC epoch 秒，后端 poller 每分钟一个点 */
+export interface TrendPoint {
+  ts: number;
+  players: number;
+  servers: number;
 }
 
 export interface BF1Overview {
@@ -351,6 +359,8 @@ export interface BF1Overview {
   spectators: CountBreakdown;
   top_map_modes: NamedCount[];
   mode_distribution: NamedCount[];
+  /** 最近 24h 趋势，按时间升序；服务刚部署时为空，前端需有占位态 */
+  history: TrendPoint[];
 }
 
 /** 当前登录用户对某服务器的角色；role 为 null 且 is_platform_admin 为 false 表示无任何服管权限 */

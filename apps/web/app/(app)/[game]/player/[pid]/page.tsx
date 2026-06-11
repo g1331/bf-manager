@@ -590,11 +590,13 @@ function WeaponsTab({ weapons, loading }: { weapons: WeaponStat[]; loading: bool
         <EmptyState text="无匹配结果" />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((w) => {
+          {filtered.map((w, i) => {
             const kpm = computeKpm(w.kills, w.time_seconds);
             return (
               <EquipmentCard
-                key={w.name ?? ""}
+                // EA 返回里存在同名条目（如 繃帶包 在多个兵种组重复出现），单用
+                // name 作 key 会重复，过滤切换时 React diff 错乱渲染出残留卡片
+                key={`${w.name ?? ""}-${i}`}
                 kind="weapon"
                 name={w.name}
                 subtitle={w.category}
@@ -643,11 +645,11 @@ function VehiclesTab({ vehicles, loading }: { vehicles: VehicleStat[]; loading: 
         <EmptyState text="无匹配结果" />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((v) => {
+          {filtered.map((v, i) => {
             const kpm = computeKpm(v.kills, v.time_seconds);
             return (
               <EquipmentCard
-                key={v.name ?? ""}
+                key={`${v.name ?? ""}-${i}`}
                 kind="vehicle"
                 name={v.name}
                 subtitle={v.category}

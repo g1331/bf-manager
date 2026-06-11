@@ -950,7 +950,9 @@ function LatencyCell({ latency }: { latency: number }) {
           />
         ))}
       </span>
-      <span className="text-[11px] text-white/65 tabular-nums">{latency}</span>
+      <span className="min-w-[3ch] text-right text-[11px] text-white/65 tabular-nums">
+        {latency}
+      </span>
     </div>
   );
 }

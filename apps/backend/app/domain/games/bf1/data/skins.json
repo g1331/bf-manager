@@ -1,0 +1,4307 @@
+{
+ "00224568-3D2D-4222-8E6F-3296299852EB": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/89/89/U_MP18_BATTLEPACKS_NIGHT_T1S4_LARGE-a759b27d.png",
+  "name": "維萊布勒托納戰役",
+  "rarity": "Standard"
+ },
+ "0061E582-DDE9-4B5B-B33C-563F27572A2C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/48/1/U_MAUSERSL_BATTLEPACKS_VETERAN_T2S2_LARGE-d0ff4b5e.png",
+  "name": "科隆普林茲",
+  "rarity": "Enhanced"
+ },
+ "00B55DBA-E6E4-4A48-9AE5-E49856B3FBF4": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/123/31/U_WINCHESTERM1907_BATTLEPACKS_HUNTER_T3S1_LARGE-851f5f88.png",
+  "name": "老酒桶",
+  "rarity": "Superior"
+ },
+ "00B85D49-A128-4F22-82EF-8A766F1F2DA6": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/61/79/U_MONDRAGON_BATTLEPACKS_SCOUT_T1S2_LARGE-3d4f74cf.png",
+  "name": "迷彩套",
+  "rarity": "Standard"
+ },
+ "00B9B9E0-E43A-44CE-8A7F-7339FF89D75C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/67/58/U_MADSENMG_BATTLEPACKS_SCOUT_T3S1_LARGE-bd3ada94.png",
+  "name": "巴藏丹山脊",
+  "rarity": "Superior"
+ },
+ "00F43D69-DD19-4DA0-8A42-7BA5F5EFE902": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/76/92/U_MAUSERC96_BATTLEPACKS_VETERAN_T1S4_LARGE-b45c2e68.png",
+  "name": "老鳥騎兵",
+  "rarity": "Standard"
+ },
+ "016D8B0B-C013-4315-98C0-AD6BCF037BBA": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/113/121/U_ROSSMKIII_BATTLEPACKS_BATTLESCARRED_T1S3_LARGE-8f7974e6.png",
+  "name": "佐內貝克",
+  "rarity": "Standard"
+ },
+ "0172DE9D-0704-4A2D-8301-60C9EC93A46D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/102/103/ST_CHAMOND_E1_LARGE-9a991e1f.png",
+  "name": "金屬沙蒙 (極稀有)",
+  "rarity": "Superior"
+ },
+ "01B841A6-F2AC-4FD7-82E0-C0B5D710AF97": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/15/78/U_HOTCHKISSM1909_BATTLEPACKS_VETERAN_T2S1_LARGE-0fb2b0c1.png",
+  "name": "勒卡托",
+  "rarity": "Enhanced"
+ },
+ "02037C60-19E1-480C-97FD-2F4F307E12CB": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/22/35/U_REMINGTONMODEL1900_BATTLEPACKS_FABERGE_T1S3_LARGE-16ddc4f5.png",
+  "name": "魯特斯克戰役",
+  "rarity": "Standard"
+ },
+ "020C3966-C489-4D5A-9883-5F1D26F7CFC3": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/66/25/UIWepRussianCombatKnife_Final-be193fa0.png",
+  "name": "俄軍勳刀",
+  "rarity": "Superior"
+ },
+ "02772E95-50FC-4B2B-AE55-923BAAD6941A": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/45/2/U_LEWISMG_BATTLEPACKS_ROYAL_T2S2_LARGE-2d02f16e.png",
+  "name": "梅辛",
+  "rarity": "Enhanced"
+ },
+ "02926979-B37E-4404-A5CA-70949E135DD1": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/34/56/SPADU_SCOUT_PAINT_07_LARGE-de38860e.png",
+  "name": "三國協約",
+  "rarity": "Enhanced"
+ },
+ "0305EF3F-3E8C-4696-B854-902625F8178A": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/75/48/U_REMINGTONMODEL8_BATTLEPACKS_VETERAN_T1S2_LARGE-b5305cb2.png",
+  "name": "老鳥護衛",
+  "rarity": "Standard"
+ },
+ "030F10BD-467B-42A5-AF84-DE3B48023021": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/124/104/U_MAUSERC96_BATTLEPACKS_UNIQUE_V1_LARGE-8468b6a1.png",
+  "name": "條頓之怒",
+  "rarity": "Superior"
+ },
+ "03170B72-0024-4C18-B5E8-03E4B783AF73": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/26/13/U_BROWNINGA5_BATTLEPACKS_NIGHT_T1S1_LARGE-e6f385a0.png",
+  "name": "伊塞克希薩立克戰役",
+  "rarity": "Standard"
+ },
+ "032D3782-7BFF-417E-8DA7-8521E9E08B0F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/8/68/U_MADSENMG_BATTLEPACKS_NIGHT_T1S3_LARGE-08448ad2.png",
+  "name": "304 號高地戰役",
+  "rarity": "Standard"
+ },
+ "0333A8C7-0179-4E37-8AD2-DC6B3B1F0CD2": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/99/61/U_LUGER1906_BATTLEPACKS_NIGHT_T3S1_LARGE-633d6513.png",
+  "name": "蒙斯犬",
+  "rarity": "Superior"
+ },
+ "0350ACF8-A513-4F15-81DA-E28F72B6A485": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/36/50/U_MARTINIHENRY_BATTLEPACKS_NIGHT_T2S1_LARGE-24cefe8d.png",
+  "name": "莎麗拜爾山脊",
+  "rarity": "Enhanced"
+ },
+ "04479533-23C0-4E1B-A117-BC9E0D84E3CE": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/21/41/U_BERGMANN1915MG_BATTLEPACKS_SCOUT_T2S2_LARGE-eb291432.png",
+  "name": "毛奇",
+  "rarity": "Enhanced"
+ },
+ "0483C255-8078-4C21-81BC-6429D27F7385": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/9/92/U_LANCASTERHOWDAH_BATTLEPACKS_VETERAN_T3S1_LARGE-f75cbdbb.png",
+  "name": "上校",
+  "rarity": "Superior"
+ },
+ "04C3FB0E-31B1-4CB8-8D54-49CEE7699231": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/3/26/HMSLANCERU_DESTROYER_PAINT_03_LARGE-03e6af72.png",
+  "name": "黑鯊魚",
+  "rarity": "Enhanced"
+ },
+ "04DB7469-AC97-4D79-BFC2-6C2F8682E37D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/84/112/U_MAUSERSL_BATTLEPACKS_VETERAN_T3S1_LARGE-54700452.png",
+  "name": "總理大臣",
+  "rarity": "Superior"
+ },
+ "0503139F-0862-4DD8-81E9-B358FBD0C11F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/96/87//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_PARABELLUMLMG_BATTLEPACKS_Y201_T3S2_LARGE-60a9516a.png",
+  "name": "保羅·克利",
+  "rarity": "Superior"
+ },
+ "0557F0EF-24EA-4E53-9D00-CB0E47E67D41": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/117/5/U_BERETTAM1918_BATTLEPACKS_NIGHT_T1S3_LARGE-75fb7495.png",
+  "name": "304 號高地戰役",
+  "rarity": "Standard"
+ },
+ "05C59341-22A8-4AE5-9700-8E98ED918494": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/89/105/U_STEYRM1912_BATTLEPACKS_ROYAL_T1S4_LARGE-a7973251.png",
+  "name": "皇家法規",
+  "rarity": "Standard"
+ },
+ "070EA291-9FAA-4083-9A52-57C8BECCEC8A": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/18/95/U_NAGANTM1895_BATTLEPACKS_FABERGE_T1S4_LARGE-12a14b43.png",
+  "name": "尤格拉戰役",
+  "rarity": "Standard"
+ },
+ "07127B5E-6CC3-40AE-939C-B744C1C3EEF3": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/8/56/U_CARCANOCARBINE_BATTLEPACKS_MQT_T2S2_LARGE-f8c89118.png",
+  "name": "斯圖皮扎衝鋒",
+  "rarity": "Enhanced"
+ },
+ "07D6A699-75B9-4EEE-ADB6-F28AABEB4E4A": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/46/79/U_GEWEHR98_BATTLEPACKS_SCOUT_T2S2_LARGE-d24f792a.png",
+  "name": "史利芬",
+  "rarity": "Enhanced"
+ },
+ "08023788-4122-494E-9C3A-E03935F8DD11": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/1/102//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_BSAHOWELLM1916_BATTLEPACKS_Y201_T3S2_LARGE-ff66e38a.png",
+  "name": "死去的君王",
+  "rarity": "Superior"
+ },
+ "08D8D05A-4ADD-4600-AFEF-BF5E7F393B62": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/75/45/U_RSC1917_BATTLEPACKS_FRENCH_T1S3_LARGE-4bd3f5e9.png",
+  "name": "波旁王朝",
+  "rarity": "Standard"
+ },
+ "08EAA051-9DAB-4891-80CA-8A5A229A0EF5": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/14/28/U_WEBFOSAUTOREV_BATTLEPACKS_ROYAL_T1S2_LARGE-f2e4b332.png",
+  "name": "皇家詔書",
+  "rarity": "Standard"
+ },
+ "08FA8FD3-0E57-4E72-B1DF-AC87C6CABEBD": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/79/49/U_WEBLEYMK6_BATTLEPACKS_BATTLESCARRED_T2S2_LARGE-b1cfa0f2.png",
+  "name": "慰英魂",
+  "rarity": "Enhanced"
+ },
+ "08FAA550-675D-4998-B7F0-994C90DCB8D9": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/101/98/U_WEBFOSAUTOREV_BATTLEPACKS_ROYAL_T1S3_LARGE-659e4b46.png",
+  "name": "皇家旨令",
+  "rarity": "Standard"
+ },
+ "092D80A3-C12F-41B9-BB7B-58E0774C004A": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/77/114/U_MAUSERSL_BATTLEPACKS_NIGHT_T2S2_LARGE-b3728ebf.png",
+  "name": "夜間轟炸機",
+  "rarity": "Enhanced"
+ },
+ "0999D611-08B6-4C89-83BA-8188707B3AFA": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/125/50/U_PERINO_BATTLEPACKS_FABERGE_T2S1_LARGE-83320817.png",
+  "name": "特爾尼",
+  "rarity": "Enhanced"
+ },
+ "0A4690BA-0246-4AC6-BB68-2979347ACFDA": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/71/108/U_LUGERP08_BATTLEPACKS_UNIQUE_V1_LARGE-b96c532d.png",
+  "name": "柯尼格雷茲進行曲",
+  "rarity": "Superior"
+ },
+ "0A553FF6-89EB-4A01-8697-5EEE975B2651": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/18/93/UIWepHook-ee5d19e6.png",
+  "name": "勾索",
+  "rarity": "Superior"
+ },
+ "0AC0293F-C42D-4DBB-A592-AE9AD5EFB1AF": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/42/93/U_WEBFOSAUTOREV_BATTLEPACKS_ROYAL_T2S2_LARGE-2aa36612.png",
+  "name": "紅標籤",
+  "rarity": "Enhanced"
+ },
+ "0AFD6666-5525-43B4-8301-9F41031FD3D0": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/37/128/U_MAUSER1914_BATTLEPACKS_SCOUT_T2S2_LARGE-db804441.png",
+  "name": "帝國輕步兵",
+  "rarity": "Enhanced"
+ },
+ "0B09D2E9-35FB-4E07-A564-9B0027159798": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/9/106/U_MADSENMG_BATTLEPACKS_SCOUT_T1S3_LARGE-099627d1.png",
+  "name": "迷彩罩",
+  "rarity": "Standard"
+ },
+ "0BB9F6A4-558E-4183-94CD-B7511B848937": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/96/122/U_WINCHESTERM1907_BATTLEPACKS_SCOUT_T1S2_LARGE-a07a2a0c.png",
+  "name": "迷彩套",
+  "rarity": "Standard"
+ },
+ "0BF1A825-B712-4C7F-9E10-C3286C55A29D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/102/53/U_PARABELLUM_BATTLEPACKS_FABERGE_T1S2_LARGE-66cbbaf0.png",
+  "name": "戈爾利采·塔爾努夫戰役",
+  "rarity": "Standard"
+ },
+ "0C07765D-90FC-43C8-8EC9-30DF4C024E1F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/33/10/U_SMITHWESSON_BATTLEPACKS_ROYAL_T1S3_LARGE-210a6a74.png",
+  "name": "皇家旨令",
+  "rarity": "Standard"
+ },
+ "0C3377CA-85BA-4965-A9D0-21536EEC6F85": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/28/80/HANSAU_BOMBER_PAINT_01_LARGE-e4b0cc4b.png",
+  "name": "紅尾鷹",
+  "rarity": "Enhanced"
+ },
+ "0C54B8D2-3531-4B83-9B14-A6D4334AD718": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/35/59/U_VETTERLI_BATTLEPACKS_FABERGE_T3S1_LARGE-233b11ba.png",
+  "name": "史卡洛尼",
+  "rarity": "Superior"
+ },
+ "0C8AE175-6CF3-4A20-AFCA-99492AC95340": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/79/36/U_WEBLEYMK6_BATTLEPACKS_BATTLESCARRED_T1S3_LARGE-4fdcb79b.png",
+  "name": "坎塔拉",
+  "rarity": "Standard"
+ },
+ "0C90B0BB-A8C2-4CD7-B753-61496463376A": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/101/10/U_RSCSMG_BATTLEPACKS_BATTLESCARRED_T1S3_LARGE-650aa20f.png",
+  "name": "聖柏莎",
+  "rarity": "Standard"
+ },
+ "0D21DEAB-7B27-467B-BD17-EF2BCA7B4604": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/78/4/U_CHAUCHAT_BATTLEPACKS_FRENCH_T3S1_LARGE-b204dea4.png",
+  "name": "火炬",
+  "rarity": "Superior"
+ },
+ "0D37BC58-1F61-4024-BCA7-00F7A6BC76D6": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/33/15/U_GENERALLIU_BATTLEPACKS_FABERGE_T1S3_LARGE-210f8ae9.png",
+  "name": "魯特斯克戰役",
+  "rarity": "Standard"
+ },
+ "0D3F510F-CA36-41D4-85C5-BB7943EB5F68": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/107/120//mnt/dice-filer-gamedata/3589301/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_M1919THOMPSONANNIHILATOR_BATTLEPACKS_Y201_T3S1_LARGE-958821dc.png",
+  "name": "比利‧米契爾",
+  "rarity": "Superior"
+ },
+ "0DBF8DC7-06C1-4DF9-9A1F-399D34D4031F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/103/68/U_WINCHESTER1897_BATTLEPACKS_NIGHT_T3S1_LARGE-67bc04fb.png",
+  "name": "伯內特",
+  "rarity": "Superior"
+ },
+ "0DCFD3DB-4959-42F8-82CD-3DEFEB93B0AD": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/36/34/U_GENERALLIU_BATTLEPACKS_FABERGE_T3S1_LARGE-dcdeb4f1.png",
+  "name": "陽",
+  "rarity": "Superior"
+ },
+ "0DD5DDBC-B076-4793-90E0-4E6F52E91044": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/59/117/U_WINCHESTERM1907_BATTLEPACKS_NIGHT_T2S1_LARGE-c58bcadd.png",
+  "name": "沃依辛",
+  "rarity": "Enhanced"
+ },
+ "0E19B040-61CA-4761-B7E0-160CE992AE95": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/93/88/U_TYPE38ARISAKA_BATTLEPACKS_MQT_T3S1_LARGE-a3a8d18b.png",
+  "name": "真理",
+  "rarity": "Superior"
+ },
+ "0E99FBFF-A4C0-4461-9B5F-A2F66628A908": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/65/105/U_BARM1918_BATTLEPACKS_ROYAL_T2S1_LARGE-4197f435.png",
+  "name": "馬朗庫爾",
+  "rarity": "Enhanced"
+ },
+ "0F7EAD3E-4447-4A0C-82E9-A739145613AA": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/31/15/SPADU_SCOUT_PAINT_06_LARGE-1f0f9f47.png",
+  "name": "大黃蜂",
+  "rarity": "Enhanced"
+ },
+ "102B4A5C-764B-4538-9420-32B96A2B8A51": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/11/120/U_STEYRMANM1895_BATTLEPACKS_VETERAN_T2S2_LARGE-0b7823f4.png",
+  "name": "前前後後",
+  "rarity": "Enhanced"
+ },
+ "108DE0D9-F48A-4555-9A26-EEB0C930330D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/10/59/U_MONDRAGON_BATTLEPACKS_SCOUT_T2S2_LARGE-f6c57618.png",
+  "name": "羅溫哈特",
+  "rarity": "Enhanced"
+ },
+ "10BA0144-5262-4F9B-92A6-F5EC0F03E145": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/88/110/FT_17U_FRA_FT-17_PAINT_02_LARGE-586eeeac.png",
+  "name": "勝利",
+  "rarity": "Enhanced"
+ },
+ "110C7C14-0B76-4E97-9627-7F7B76ED021C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/75/97/U_MARTINIHENRY_BATTLEPACKS_ROYAL_T3S1_LARGE-4b614c04.png",
+  "name": "馬索科",
+  "rarity": "Superior"
+ },
+ "11281106-828B-49DC-A74E-B8701C03CC0F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/60/57/u_winchester1897_battlepacks_hunter_t3s1_large-3cc78ed2.png",
+  "name": "華盛頓",
+  "rarity": "Superior"
+ },
+ "113F9D7B-A247-4DF2-A664-4015C0EE384C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/113/13/U_LEWISMG_BATTLEPACKS_NIGHT_T1S4_LARGE-8f0d842b.png",
+  "name": "維萊布勒托納戰役",
+  "rarity": "Standard"
+ },
+ "1149B3B7-014B-331A-3F6D-D0C1FC21AE2D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/46/120/U_BODEO1889_BATTLEPACKS_VETERAN_T1S1_LARGE-2e88f40a.png",
+  "name": "老鳥士兵",
+  "rarity": "Standard"
+ },
+ "115CE23A-2B87-4DE5-85E9-391BB1257162": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/64/127//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_PARABELLUMLMG_BATTLEPACKS_Y201_T3S1_LARGE-40811b00.png",
+  "name": "奧托·迪克斯",
+  "rarity": "Superior"
+ },
+ "115F352D-03DD-4853-AAA9-046F15983A70": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/20/19/U_MAXIMSMG_BATTLEPACKS_FABERGE_T2S1_LARGE-1413439c.png",
+  "name": "拳擊行動",
+  "rarity": "Enhanced"
+ },
+ "11755A29-34A4-4CF7-A395-D6049F09DE6E": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/118/84/FT_17U_FRA_FT-17_PAINT_04_LARGE-8aacaabb.png",
+  "name": "日式風格",
+  "rarity": "Enhanced"
+ },
+ "1182B572-0E4E-49B8-BD48-295F8E3B51D4": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/119/98/A7VU_GER_A7V_PAINT_04_LARGE-899e66fe.png",
+  "name": "König Wilhelm",
+  "rarity": "Enhanced"
+ },
+ "11957252-62D4-4CDB-A5A0-1C91A9A09752": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/62/90/U_WINCHESTERM1895_BATTLEPACKS_ROYAL_T3S1_LARGE-c2a679f8.png",
+  "name": "醫藥",
+  "rarity": "Superior"
+ },
+ "119BAFE9-C9B0-4696-87C2-AD4AD667B505": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/93/5//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_ENFIELD1917_BATTLEPACKS_Y201_T3S1_LARGE-a3fbf87d.png",
+  "name": "K 連",
+  "rarity": "Superior"
+ },
+ "11DE428A-1DED-4091-8399-4BB2653BDEC2": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/93/95/U_BERETTAM1918_BATTLEPACKS_ROYAL_T2S1_LARGE-a3a18fb4.png",
+  "name": "伊松佐",
+  "rarity": "Enhanced"
+ },
+ "1243BCD4-A647-4487-B4AB-64136E3AE936": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/118/95//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_WEBLEYMK6_BATTLEPACKS_Y201_T3S1_LARGE-76a1b778.png",
+  "name": "貝利庫爾隧道",
+  "rarity": "Superior"
+ },
+ "1333925D-29DA-45C4-9D7B-B06E21957AEB": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/78/23/U_WINCHESTERM1895_BATTLEPACKS_NIGHT_T3S1_LARGE-4e17e0c2.png",
+  "name": "維斯瓦河",
+  "rarity": "Superior"
+ },
+ "13A79CBA-9247-424D-B6C7-88EB50262DC1": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/80/75/U_CARCANOCARBINE_BATTLEPACKS_MQT_T1S3_LARGE-504b835d.png",
+  "name": "日德蘭戰役",
+  "rarity": "Standard"
+ },
+ "14891DEC-906C-4AF6-A9CF-14DF87786BD9": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/120/87/MARKVU_GBR_MARKV_PAINT_GOLD_LARGE-88a9ca47.png",
+  "name": "雙色金 (極稀有)",
+  "rarity": "Superior"
+ },
+ "149BB627-31D2-48E0-9633-D4F068613909": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/102/14/U_MOSINNAGANT_BATTLEPACKS_FABERGE_T1S2_LARGE-660e97ab.png",
+  "name": "戈爾利采·塔爾努夫戰役",
+  "rarity": "Standard"
+ },
+ "1506BA35-8DDA-4E91-A7DD-DA4309759577": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/112/43/U_PARABELLUM_BATTLEPACKS_FABERGE_T2S2_LARGE-702b39d7.png",
+  "name": "沙克夫斯卡亞",
+  "rarity": "Enhanced"
+ },
+ "155863A0-7A9F-49B7-B282-B6AFE46DCF2D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/83/4/U_STEYRMANM1895_BATTLEPACKS_R2X_T3S1_LARGE-ad0481d2.png",
+  "name": "復活節之戰",
+  "rarity": "Superior"
+ },
+ "15AB1A92-7066-48B2-A36F-062885F47406": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/35/40/U_MARTINIHENRY_BATTLEPACKS_NIGHT_T2S2_LARGE-dd28f1b4.png",
+  "name": "格拉斯哥",
+  "rarity": "Enhanced"
+ },
+ "16376CE6-7FC0-4BF2-A713-0776649D4C90": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/126/49/U_STEYRMANM1895_BATTLEPACKS_VETERAN_T1S3_LARGE-7ecfcf04.png",
+  "name": "老鳥步兵",
+  "rarity": "Standard"
+ },
+ "16409EA5-D6BC-48F9-AAA0-36C3B6F5BD84": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/23/7/U_VETTERLI_BATTLEPACKS_FABERGE_T1S3_LARGE-17074eda.png",
+  "name": "魯特斯克戰役",
+  "rarity": "Standard"
+ },
+ "16884119-C96A-48A4-B340-AA38984E4BC1": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/88/17/U_GASSERM1870_BATTLEPACKS_VETERAN_T1S2_LARGE-a8112394.png",
+  "name": "老鳥護衛",
+  "rarity": "Standard"
+ },
+ "17C92A05-3539-4EDB-8F00-B075AA55A7E2": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/108/16/U_BODEO1889_BATTLEPACKS_VETERAN_T1S3_LARGE-6c10d6f7.png",
+  "name": "老鳥步兵",
+  "rarity": "Standard"
+ },
+ "17E923D9-B221-4337-916C-FFD8D7DA0958": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/124/54/U_STEYRM1912_P16_BATTLEPACKS_MQT_T1S2_LARGE-84ca5ca0.png",
+  "name": "福克蘭群島戰役",
+  "rarity": "Standard"
+ },
+ "187C72CF-49BC-4ECE-A222-76693E6DFE82": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/97/100/U_BERETTAM1918_BATTLEPACKS_ROYAL_T1S3_LARGE-9f646033.png",
+  "name": "皇家旨令",
+  "rarity": "Standard"
+ },
+ "18877EB4-95B7-40CD-AA6C-9CE2BCB07F42": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/105/48//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_FARQUHARHILL_BATTLEPACKS_Y201_T3S1_LARGE-97d0b2ba.png",
+  "name": "唐登空襲",
+  "rarity": "Superior"
+ },
+ "188D982E-351B-4415-BBF5-B38E46287B98": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/83/71/U_CHAUCHAT_BATTLEPACKS_FRENCH_T1S4_LARGE-ad47a0bd.png",
+  "name": "波拿巴王朝",
+  "rarity": "Standard"
+ },
+ "18A623D8-7BA0-4B61-86B9-441DABE691CD": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/38/125/ILYAMUROMETSU_HEAVYBOMBER_PAINT_03_LARGE-da7dbe87.png",
+  "name": "基輔蛋糕",
+  "rarity": "Enhanced"
+ },
+ "192C1F21-2B8B-1161-A6C4-D27D1AD1316B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/119/108/U_BERETTAM1918_BATTLEPACKS_ROYAL_T1S1_LARGE-8994c120.png",
+  "name": "皇家旨意",
+  "rarity": "Standard"
+ },
+ "193865F3-67B2-48BC-909E-BA96CF17722D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/67/108/U_ENFIELD1917_BATTLEPACKS_BATTLESCARRED_T2S1_LARGE-436c8269.png",
+  "name": "赫利",
+  "rarity": "Enhanced"
+ },
+ "19614459-76CC-43D6-996F-BDFAFF5846EB": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/55/75/U_HOWELL_BATTLEPACKS_BATTLESCARRED_T3S1_LARGE-c9b58b4e.png",
+  "name": "神聖二十人護士團",
+  "rarity": "Superior"
+ },
+ "19738762-955F-4A82-A13F-3418195DFABB": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/86/45/U_GEWEHR98_BATTLEPACKS_NIGHT_T2S1_LARGE-aad33828.png",
+  "name": "列日",
+  "rarity": "Enhanced"
+ },
+ "19E1AE6B-2E29-43AB-BFF6-D8257001F258": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/86/52/U_TYPE38ARISAKA_BATTLEPACKS_MQT_T1S1_LARGE-5634f29c.png",
+  "name": "青島戰役",
+  "rarity": "Standard"
+ },
+ "1A01D4D2-85BC-49EB-B379-983B81938387": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/53/54/U_MAXIMSMG_BATTLEPACKS_FABERGE_T1S1_LARGE-35362262.png",
+  "name": "格尼拉利帕戰役",
+  "rarity": "Standard"
+ },
+ "1A352427-5567-44B2-A6E4-1F7658236102": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/16/78/U_BORCHARDTC93_BATTLEPACKS_ROYAL_T2S1_LARGE-104ed605.png",
+  "name": "皮翁考普",
+  "rarity": "Enhanced"
+ },
+ "1A35539D-D250-4D84-B59C-695BBE7A23C6": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/2/101/U_GASSERM1870_BATTLEPACKS_VETERAN_T2S2_LARGE-029bec5b.png",
+  "name": "聖史蒂芬",
+  "rarity": "Enhanced"
+ },
+ "1A9595CF-11A1-41EA-9EC9-5EC38921513A": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/88/82/U_LUGER1906_BATTLEPACKS_ROYAL_T1S4_LARGE-a852c1a3.png",
+  "name": "皇家法規",
+  "rarity": "Standard"
+ },
+ "1ADB725A-C3B7-47FA-8F64-3B797D0917CF": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/24/13/U_BERGMANN1915MG_BATTLEPACKS_SCOUT_T1S3_LARGE-18f36803.png",
+  "name": "迷彩罩",
+  "rarity": "Standard"
+ },
+ "1AE548F1-A4AF-445D-97E4-86F07CB7491D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/89/119/FT_17U_FRA_FT-17_PAINT_06_LARGE-59774cdb.png",
+  "name": "西班牙戰間期",
+  "rarity": "Enhanced"
+ },
+ "1B5CA7FB-4A46-4BDA-9929-A25F18AF04B7": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/67/58/U_MADSENMG_BATTLEPACKS_SCOUT_T3S1_LARGE-bd3ada94.png",
+  "name": "戴恩",
+  "rarity": "Superior"
+ },
+ "1B5FB5FD-0101-4AF6-B36D-A359E98BF5B3": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/59/34/U_BROWNINGA5_BATTLEPACKS_NIGHT_T1S4_LARGE-c5de6928.png",
+  "name": "維萊布勒托納戰役",
+  "rarity": "Standard"
+ },
+ "1B7128FC-DF90-403B-9CE9-AAF4C0DD3827": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/128/8/U_BERGMANN1915MG_BATTLEPACKS_SCOUT_T1S2_LARGE-80f81993.png",
+  "name": "迷彩套",
+  "rarity": "Standard"
+ },
+ "1BEA25AD-3556-4BD9-A56C-4736DC9E3F08": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/87/88/U_M1911_BATTLEPACKS_UNIQUE_V1_LARGE-a9a81302.png",
+  "name": "路西法",
+  "rarity": "Superior"
+ },
+ "1C3E49B5-F455-47E4-A369-C986A727E0C3": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/110/80/U_VETTERLI_BATTLEPACKS_FABERGE_T1S1_LARGE-6e508c78.png",
+  "name": "格尼拉利帕戰役",
+  "rarity": "Standard"
+ },
+ "1C413B83-ED8A-4F02-90D5-612039C78030": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/13/114/U_WINCHESTERM1907_BATTLEPACKS_NIGHT_T3S1_LARGE-0d8e354d.png",
+  "name": "皮埃羅",
+  "rarity": "Superior"
+ },
+ "1C48CA21-9211-476C-9B46-626C50B6E54B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/48/22/U_CHAUCHAT_BATTLEPACKS_FRENCH_T1S2_LARGE-d0ea9fc3.png",
+  "name": "蘭卡斯特王朝",
+  "rarity": "Standard"
+ },
+ "1C4D5575-7BCE-4EA3-9F64-44718FE301BF": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/38/116/U_OBREZ_BATTLEPACKS_FABERGE_T1S2_LARGE-26744558.png",
+  "name": "戈爾利采·塔爾努夫戰役",
+  "rarity": "Standard"
+ },
+ "1CACFE87-1A68-4973-A8F9-2A6EFBB1DA27": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/86/0/U_MARTINIHENRY_BATTLEPACKS_HUNTER_T3S1_LARGE-aa004616.png",
+  "name": "獵犬",
+  "rarity": "Superior"
+ },
+ "1CEC001D-8B89-4827-A49D-C12F01AA6A9D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/126/29/U_LANCASTERHOWDAH_BATTLEPACKS_VETERAN_T1S2_LARGE-7e1d0db7.png",
+  "name": "老鳥護衛",
+  "rarity": "Standard"
+ },
+ "1DEF2ACC-90B5-455F-A866-B14345974EA1": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/125/124/U_LEBEL_BATTLEPACKS_FRENCH_T1S2_LARGE-7d7c1ad9.png",
+  "name": "蘭卡斯特王朝",
+  "rarity": "Standard"
+ },
+ "1DF30D23-5A36-47D4-A059-1BFFE5E8E133": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/57/28/U_MAUSERSL_BATTLEPACKS_NIGHT_T3S1_LARGE-39e44a1f.png",
+  "name": "凱戈爾",
+  "rarity": "Superior"
+ },
+ "1E356041-BC47-440F-AF9E-6E3160BF81A3": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/49/11/U_NAGANTM1895_BATTLEPACKS_FABERGE_T2S2_LARGE-310bf57a.png",
+  "name": "埃米爾",
+  "rarity": "Enhanced"
+ },
+ "1E73392B-2AEA-40F7-9935-5E9AB755EA6B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/53/8/U_LUGERP08_BATTLEPACKS_VETERAN_T2S1_LARGE-3508cb2e.png",
+  "name": "威爾納·沃斯",
+  "rarity": "Enhanced"
+ },
+ "1E9216B5-4E7E-4BB3-B96A-FFDA09FD3C7F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/97/47/U_MP18_BATTLEPACKS_NIGHT_T2S1_LARGE-61d119e1.png",
+  "name": "拉姆斯卡佩爾",
+  "rarity": "Enhanced"
+ },
+ "1E968EDB-91E8-C018-8054-7514BD3A8597": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/53/20/U_LEBEL_BATTLEPACKS_FRENCH_T1S1_LARGE-cbec1693.png",
+  "name": "瓦盧瓦王朝",
+  "rarity": "Standard"
+ },
+ "1EAC5D0C-2AAD-4868-AA28-7B0ABBEFF6AC": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/88/61/U_MOSINNAGANT_BATTLEPACKS_FABERGE_T2S2_LARGE-583de538.png",
+  "name": "寇寇帖娃",
+  "rarity": "Enhanced"
+ },
+ "1ECDB18D-41C8-4100-B668-E5130F8AE695": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/81/27/U_STEYRM1912_BATTLEPACKS_UNIQUE_V1_LARGE-afe5544d.png",
+  "name": "帝國輕步兵",
+  "rarity": "Superior"
+ },
+ "1F1276FC-8744-4F2A-BF63-AE181684804F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/30/51/U_MG0818_BATTLEPACKS_BATTLESCARRED_T1S1_LARGE-1e33b6b4.png",
+  "name": "評價",
+  "rarity": "Standard"
+ },
+ "1F813971-01A1-4865-ADB5-32301C6FB75B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/23/97/U_MARSAUTOPISTOL_BATTLEPACKS_SCOUT_T1S2_LARGE-e99fd90a.png",
+  "name": "迷彩套",
+  "rarity": "Standard"
+ },
+ "1FC4A96E-9DE5-4F42-BADB-84888EDFFEB5": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/123/88/U_LEBEL_BATTLEPACKS_FRENCH_T1S4_LARGE-7ba8c035.png",
+  "name": "波拿巴王朝",
+  "rarity": "Standard"
+ },
+ "2011C910-CCF2-4C2C-8C2A-402E89F9549F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/90/18/SPADU_SCOUT_PAINT_08_LARGE-a612b3c2.png",
+  "name": "嘎尼",
+  "rarity": "Enhanced"
+ },
+ "201E5BDA-C1BE-425E-A876-BA38A467C313": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/97/93/U_REMINGTONM10_BATTLEPACKS_SCOUT_T1S4_LARGE-9fa35cd1.png",
+  "name": "迷彩紗",
+  "rarity": "Standard"
+ },
+ "209B6F69-0744-4094-861E-B729C9102528": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/78/123/PIERCEARROWU_GBR_PIERCEARROW_PAINT_02_LARGE-b27be236.png",
+  "name": "法蘭德斯",
+  "rarity": "Enhanced"
+ },
+ "20F7E6CC-AACF-34A9-646C-571BAFC6CA1F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/18/128/U_REMINGTONM10_BATTLEPACKS_SCOUT_T1S1_LARGE-1280e7d6.png",
+  "name": "迷彩圖樣",
+  "rarity": "Standard"
+ },
+ "2108CB7D-763B-4529-AD32-24DA74C35CFE": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/45/55/U_GEWEHR98_BATTLEPACKS_NIGHT_T1S2_LARGE-2d375072.png",
+  "name": "費斯蒂貝爾戰役",
+  "rarity": "Standard"
+ },
+ "21AFF9A4-0DC5-4F56-B3EA-8E0B3ED08B29": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/62/92/U_REMINGTONMODEL8_BATTLEPACKS_VETERAN_T1S3_LARGE-3e5c4bad.png",
+  "name": "老鳥步兵",
+  "rarity": "Standard"
+ },
+ "21FC1412-EC94-4E9E-B483-2F5350D049B7": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/42/104/U_FROMMERSTOP_BATTLEPACKS_SCOUT_T2S2_LARGE-d66827f8.png",
+  "name": "獵人特種部隊",
+  "rarity": "Enhanced"
+ },
+ "22939774-5F8D-4372-A69F-1FBAC0155733": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/53/28/HANSAU_BOMBER_PAINT_08_LARGE-35e4ff8f.png",
+  "name": "美國",
+  "rarity": "Enhanced"
+ },
+ "22DD53DB-3462-43A1-CC89-98D272DFDD5A": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/110/122/U_RIBEYROLLES_BATTLEPACKS_FRENCH_T1S1_LARGE-928678bd.png",
+  "name": "瓦盧瓦王朝",
+  "rarity": "Standard"
+ },
+ "22F4B555-8F9B-4194-980D-799F3D9246D6": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/63/53/U_MARTINIHENRY_BATTLEPACKS_NIGHT_T1S3_LARGE-c135fa83.png",
+  "name": "304 號高地戰役",
+  "rarity": "Standard"
+ },
+ "22FC09E7-1D23-412B-9CB7-71C24F5AE87C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/82/46/U_WINCHESTERM1907_BATTLEPACKS_SCOUT_T2S2_LARGE-aed2338b.png",
+  "name": "對峙",
+  "rarity": "Enhanced"
+ },
+ "2397A4A8-6F2E-478E-89B5-BCAD9C56E78C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/65/43/U_WINCHESTER1897_BATTLEPACKS_VETERAN_T1S4_LARGE-41d53109.png",
+  "name": "老鳥騎兵",
+  "rarity": "Standard"
+ },
+ "244A2CA9-27EA-4314-A133-6BEB018BD8A9": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/117/64/U_LUGERP08_BATTLEPACKS_VETERAN_T1S2_LARGE-75c0ebad.png",
+  "name": "老鳥護衛",
+  "rarity": "Standard"
+ },
+ "2462076F-8B82-4C83-B86D-BDBE384447B6": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/42/90/U_COLTPOCKET1903_BATTLEPACKS_SCOUT_T2S1_LARGE-d65a8257.png",
+  "name": "巴頓",
+  "rarity": "Enhanced"
+ },
+ "24C9C5DE-CC08-4F6E-989E-40BEDA2D182C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/68/52/STCHAMOND_FRA_STCHAMOND_PAINT_09_LARGE-bccc5b0c.png",
+  "name": "閃耀",
+  "rarity": "Enhanced"
+ },
+ "24DA6CE1-6F93-4372-B2A8-C7A31E4B5594": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/27/30/U_HELLRIEGEL1915_BATTLEPACKS_NIGHT_T1S3_LARGE-1be2874f.png",
+  "name": "304 號高地戰役",
+  "rarity": "Standard"
+ },
+ "251F71F2-9909-4CD8-8E84-F1468282E250": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/79/124/A7VU_GER_A7V_PAINT_METALIC_LARGE-4f7c33b8.png",
+  "name": "金屬方塊 (極稀有)",
+  "rarity": "Superior"
+ },
+ "2568C809-CA32-4F3D-A1C1-7FC93D24C732": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/102/121/U_MONDRAGON_BATTLEPACKS_NIGHT_T1S3_LARGE-9a797821.png",
+  "name": "304 號高地戰役",
+  "rarity": "Standard"
+ },
+ "25B80482-77E9-4A4C-86B9-B1185417FF4B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/75/125/U_KOLIBRI_BATTLEPACKS_ROYAL_T1S2_LARGE-4b7d740f.png",
+  "name": "皇家詔書",
+  "rarity": "Standard"
+ },
+ "25E5F15B-CDB5-458C-A2CE-6FCF5BDF5CBB": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/26/51/U_HUOTAUTORIFLE_BATTLEPACKS_VETERAN_T3S1_LARGE-1acd2912.png",
+  "name": "錫福斯步兵團",
+  "rarity": "Superior"
+ },
+ "26975985-6AD8-4E91-B0D7-4B7C720F85A3": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/51/117/U_CEIRIGOTTIM1895_BATTLEPACKS_NIGHT_T1S3_LARGE-cd8b13a6.png",
+  "name": "304 號高地戰役",
+  "rarity": "Standard"
+ },
+ "26A4E74A-4640-4613-BD30-500FEE08CEF3": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/101/118/U_BULLDOG_BATTLEPACKS_ROYAL_T2S2_LARGE-9b7665c3.png",
+  "name": "賭徒",
+  "rarity": "Enhanced"
+ },
+ "26D75396-1C40-F968-AEA5-6BAA8493E36B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/12/75/U_LUGER1906_BATTLEPACKS_ROYAL_T1S1_LARGE-f44b58fd.png",
+  "name": "皇家旨意",
+  "rarity": "Standard"
+ },
+ "27279B96-FF58-4752-9108-E56A4DFC3735": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/42/33//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_BSAHOWELLM1916_BATTLEPACKS_Y201_T3S1_LARGE-2adfc372.png",
+  "name": "芙蘿山德斯",
+  "rarity": "Superior"
+ },
+ "274722AF-7451-4D5C-A852-BA075F1F7045": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/29/54/U_COLTPOCKET1903_BATTLEPACKS_SCOUT_T2S2_LARGE-1d36085d.png",
+  "name": "艾森豪威爾",
+  "rarity": "Enhanced"
+ },
+ "275FAB33-A6BF-4676-AFAD-CE5CEE35257C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/97/40/A7VU_GER_A7V_PAINT_09_LARGE-61d80aa3.png",
+  "name": "獨眼龍",
+  "rarity": "Enhanced"
+ },
+ "27ECDF06-C070-49ED-8A8F-47D5D98538F2": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/54/62/U_BODEO1889_BATTLEPACKS_VETERAN_T2S1_LARGE-36c2141b.png",
+  "name": "馬爾莫拉達",
+  "rarity": "Enhanced"
+ },
+ "282C273B-323E-4FDF-B677-4955CEC5482C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/99/46/PUTILOVU_ASSAULTTRUCK_PAINT_03_LARGE-63d2f821.png",
+  "name": "熊殺者",
+  "rarity": "Enhanced"
+ },
+ "2870629A-44C2-4721-887E-D19482CC8344": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/1/51/U_SMITHWESSON_BATTLEPACKS_ROYAL_T1S2_LARGE-ff33a2b2.png",
+  "name": "皇家詔書",
+  "rarity": "Standard"
+ },
+ "2871CB0D-D63C-4686-9645-B7A7C568C17D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/125/9/U_REMINGTONMODEL1900_BATTLEPACKS_FABERGE_T1S1_LARGE-8309cd5d.png",
+  "name": "格尼拉利帕戰役",
+  "rarity": "Standard"
+ },
+ "28D193A9-CAAA-48B3-88A5-F37DFA4FE123": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/48/54/U_SMITHWESSON_BATTLEPACKS_ROYAL_T2S2_LARGE-d0ca8ee4.png",
+  "name": "殺手",
+  "rarity": "Enhanced"
+ },
+ "28E5D728-3CB2-4ACC-8A10-CB6D0E3FF534": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/126/8/U_HUOTAUTORIFLE_BATTLEPACKS_NIGHT_T3S1_LARGE-82f8474a.png",
+  "name": "殘丘",
+  "rarity": "Superior"
+ },
+ "28EBC672-182F-4A18-930A-210571AB645D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/123/62/SALMSONU_2SEAT_PAINT_03_LARGE-853e9597.png",
+  "name": "黃腹鳥",
+  "rarity": "Enhanced"
+ },
+ "28F7955A-7C53-4779-BC46-91E82A757455": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/74/11/U_KOLIBRI_BATTLEPACKS_ROYAL_T1S4_LARGE-b6f52742.png",
+  "name": "皇家法規",
+  "rarity": "Standard"
+ },
+ "29C25F88-0D7F-49E8-BBC0-B7659295EE46": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/87/39/U_REMINGTONM10_BATTLEPACKS_NIGHT_T1S2_LARGE-57d958c7.png",
+  "name": "費斯蒂貝爾戰役",
+  "rarity": "Standard"
+ },
+ "29D92971-5508-4EFA-A044-8DA6E88A39AB": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/64/15/U_GENERALLIU_BATTLEPACKS_FABERGE_T1S4_LARGE-c00f65ec.png",
+  "name": "尤格拉戰役",
+  "rarity": "Standard"
+ },
+ "2A2C5C45-8F72-4DB7-8F69-3F1C24FA9EC4": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/11/119/A7VU_GER_A7V_PAINT_ZEBRA_LARGE-f589f294.png",
+  "name": "閃耀鍍鉻 (極稀有)",
+  "rarity": "Superior"
+ },
+ "2A814962-2AF6-7527-AF78-16C6E4F2E0F9": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/102/98/U_M1911_BATTLEPACKS_VETERAN_T1S1_LARGE-669e31a0.png",
+  "name": "老鳥士兵",
+  "rarity": "Standard"
+ },
+ "2AD2C37C-E68C-4DFB-9FD0-313A2C2AF45B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/105/8/UIWepRussianAxe-690808c0.png",
+  "name": "俄軍戰斧",
+  "rarity": "Superior"
+ },
+ "2AD85DA6-9265-4E18-8BF9-0498A9F575D7": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/54/124/U_OBREZ_BATTLEPACKS_FABERGE_T1S1_LARGE-3684ee44.png",
+  "name": "格尼拉利帕戰役",
+  "rarity": "Standard"
+ },
+ "2AFD78E4-6283-4889-857C-A680E7A12205": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/97/8/U_STEYRMANM1895_BATTLEPACKS_NIGHT_T1S1_LARGE-9f0895d7.png",
+  "name": "伊塞克希薩立克戰役",
+  "rarity": "Standard"
+ },
+ "2B3F056E-252C-42F3-98E8-93C9F5A5493B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/121/97/U_GEWEHR98_BATTLEPACKS_NIGHT_T1S3_LARGE-8761ac53.png",
+  "name": "304 號高地戰役",
+  "rarity": "Standard"
+ },
+ "2BD11AFF-BA6C-4E97-8FEA-105A8D6E6E74": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/31/120/U_BROWNINGM1917_BATTLEPACKS_MQT_T1S2_LARGE-1f78a13c.png",
+  "name": "福克蘭群島戰役",
+  "rarity": "Standard"
+ },
+ "2C8E3943-F98C-4FCD-BC59-1A8328BA1D04": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/16/3/U_HOTCHKISSM1909_BATTLEPACKS_NIGHT_T3S1_LARGE-f0fd6acd.png",
+  "name": "夜間慎用",
+  "rarity": "Superior"
+ },
+ "2D1D7837-BB5C-449E-B3B7-8E76C36308DC": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/128/3/U_LUGER1906_BATTLEPACKS_ROYAL_T1S3_LARGE-80fd362e.png",
+  "name": "皇家旨令",
+  "rarity": "Standard"
+ },
+ "2D3D094A-469F-4B4E-9499-5F086E5A646B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/113/86/U_RSCSMG_BATTLEPACKS_BATTLESCARRED_T1S2_LARGE-7156b428.png",
+  "name": "克拉萬康",
+  "rarity": "Standard"
+ },
+ "2E6E3E37-FB7E-4F8F-B5BC-481D244BA95B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/84/91/U_MAUSERSL_BATTLEPACKS_NIGHT_T1S2_LARGE-ac5bacd3.png",
+  "name": "費斯蒂貝爾戰役",
+  "rarity": "Standard"
+ },
+ "2E840B67-314A-49FD-A999-4A49F6282DB5": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/116/23/U_SJOGRENSHOTGUN_BATTLEPACKS_FRENCH_T2S1_LARGE-7417a6f6.png",
+  "name": "卡爾·阿克塞爾",
+  "rarity": "Enhanced"
+ },
+ "2EC3A32C-37C2-42F3-B502-58F76A91387E": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/120/100/U_KOLIBRI_BATTLEPACKS_ROYAL_T2S1_LARGE-889cdd85.png",
+  "name": "救星",
+  "rarity": "Enhanced"
+ },
+ "2EDC6E79-C06A-4526-9E27-E625998BC29D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/98/43/ILYAMUROMETSU_HEAVYBOMBER_PAINT_07_LARGE-9e2b7979.png",
+  "name": "獸神",
+  "rarity": "Enhanced"
+ },
+ "2F123E03-739A-4F89-83A2-3297EF592133": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/35/92/U_BERETTAM1918_BATTLEPACKS_ROYAL_T1S2_LARGE-23a41f7c.png",
+  "name": "皇家詔書",
+  "rarity": "Standard"
+ },
+ "2F4BFDF6-8A7A-4877-8DEF-9D231B8EC34C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/48/60/U_CEIRIGOTTIM1895_BATTLEPACKS_NIGHT_T1S1_LARGE-303c506e.png",
+  "name": "伊塞克希薩立克戰役",
+  "rarity": "Standard"
+ },
+ "2F6ACEC7-9A39-4148-A817-22898FF264CA": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/31/11/SALMSONU_2SEAT_PAINT_05_LARGE-e10b3aa2.png",
+  "name": "玫瑰金",
+  "rarity": "Enhanced"
+ },
+ "2FB80090-EC83-474E-8BA9-888D6A349F72": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/56/5/U_GASSERM1870_BATTLEPACKS_VETERAN_T3S1_LARGE-3805b3d4.png",
+  "name": "騎士",
+  "rarity": "Superior"
+ },
+ "2FC9C7D6-8F46-4314-9933-50DE674D9C99": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/22/112/PUTILOVU_ASSAULTTRUCK_PAINT_02_LARGE-16700cd5.png",
+  "name": "自由軍團",
+  "rarity": "Enhanced"
+ },
+ "2FEE044B-B960-4ECA-8374-840668E93E06": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/30/102//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_CARCANOCARBINE_BATTLEPACKS_Y201_T3S1_LARGE-e29af6e0.png",
+  "name": "德·奇里訶",
+  "rarity": "Superior"
+ },
+ "30837DBA-3A66-4A07-9E99-4E0C91102C36": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/106/8/U_FEDOROVAVTOMAT_BATTLEPACKS_FABERGE_T2S1_LARGE-6af8de86.png",
+  "name": "米哈伊洛維奇",
+  "rarity": "Enhanced"
+ },
+ "30C39743-9711-4998-925C-462A8F8BA4BF": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/69/115/U_MP18_BATTLEPACKS_NIGHT_T2S2_LARGE-bb7379e8.png",
+  "name": "諾德運河",
+  "rarity": "Enhanced"
+ },
+ "310F5EFC-563B-46CB-A2FF-CBC71AD00198": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/28/27/U_TYPE38ARISAKA_BATTLEPACKS_MQT_T1S3_LARGE-e41b7c9a.png",
+  "name": "日德蘭戰役",
+  "rarity": "Standard"
+ },
+ "31101A9D-DDBC-45B7-A8C8-3417A1555AD8": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/124/122/PIERCEARROWU_GBR_PIERCEARROW_PAINT_PLATINUM_LARGE-7c86ec74.png",
+  "name": "白金雪佛龍 (極稀有)",
+  "rarity": "Superior"
+ },
+ "31420A2E-FA79-4845-BF56-CF073C335889": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/12/35/U_PERINO_BATTLEPACKS_FABERGE_T1S4_LARGE-0c231422.png",
+  "name": "尤格拉戰役",
+  "rarity": "Standard"
+ },
+ "31BADE93-62A4-44C2-8231-E50F4E783D13": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/111/7/U_HOTCHKISSM1909_BATTLEPACKS_VETERAN_T2S2_LARGE-9107f327.png",
+  "name": "凡爾登",
+  "rarity": "Enhanced"
+ },
+ "32C75D14-C996-4F56-9472-3B105407B851": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/13/31/A7VU_GER_A7V_PAINT_01_LARGE-0de158b3.png",
+  "name": "SchnucK",
+  "rarity": "Enhanced"
+ },
+ "32E43AD4-9EE2-46A7-A18E-11393F4A0BF1": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/60/70/U_GASSERM1870_BATTLEPACKS_UNIQUE_V1_LARGE-c4ba05f0.png",
+  "name": "利奧波德",
+  "rarity": "Superior"
+ },
+ "3382A196-7F3C-4D98-8BBA-D89E8B1DE2A5": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/101/79/U_MAXIMSMG_BATTLEPACKS_FABERGE_T2S2_LARGE-65b10afc.png",
+  "name": "原野灰",
+  "rarity": "Enhanced"
+ },
+ "33F888F1-1D95-439E-9117-3067C8914E1C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/36/58/U_LEEENFIELDSMLE_BATTLEPACKS_SCOUT_T2S1_LARGE-dcc6a400.png",
+  "name": "孤松",
+  "rarity": "Enhanced"
+ },
+ "34289804-DA25-4A79-BB68-C8B8996CF7F0": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/30/39/U_MG0818_BATTLEPACKS_BATTLESCARRED_T2S2_LARGE-1e275f6a.png",
+  "name": "羅恩格林",
+  "rarity": "Enhanced"
+ },
+ "343A8FB7-D60D-43AD-8B7B-5D71F33DEED2": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/115/31/U_ROSSMKIII_BATTLEPACKS_BATTLESCARRED_T2S1_LARGE-8de1f134.png",
+  "name": "赦免",
+  "rarity": "Enhanced"
+ },
+ "345DECA2-B2A0-4FE1-93D4-E56603D73C4C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/78/68/U_ENFIELD1917_BATTLEPACKS_BATTLESCARRED_T1S2_LARGE-4ebc9722.png",
+  "name": "地獄火交界",
+  "rarity": "Standard"
+ },
+ "346F83BE-754B-4080-8886-A451B089700F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/76/20/U_SJOGRENSHOTGUN_BATTLEPACKS_FRENCH_T3S1_LARGE-4c14f8bf.png",
+  "name": "莫爾翁",
+  "rarity": "Superior"
+ },
+ "3490F189-AC0D-4C4B-AE99-AD35295C0444": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/123/28/U_RIBEYROLLES_BATTLEPACKS_FRENCH_T2S1_LARGE-85e48cbd.png",
+  "name": "拉扎爾",
+  "rarity": "Enhanced"
+ },
+ "34D4650D-BC3A-4670-B462-56B9293B369A": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/87/124/UIWepRoyalSabre-a97c9a48.png",
+  "name": "軍刀",
+  "rarity": "Superior"
+ },
+ "359B266D-FC57-4781-A136-6EEDF2071086": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/114/66/ST_CHAMOND_E3_LARGE-8ebe221c.png",
+  "name": "閃耀藍 (極稀有)",
+  "rarity": "Superior"
+ },
+ "38582D83-7F33-4D9D-9FCC-0D017D83A076": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/67/125/U_LUGERP08_BATTLEPACKS_UNIQUE_V3_LARGE-437da179.png",
+  "name": "上帝與我們同在",
+  "rarity": "Superior"
+ },
+ "385881EF-41CF-4771-B5C8-F32EB045B260": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/70/35/U_MARTINIHENRY_BATTLEPACKS_ROYAL_T2S1_LARGE-badd17c5.png",
+  "name": "祖魯",
+  "rarity": "Enhanced"
+ },
+ "38D1A488-6E62-4E62-B23D-6A3AFC2898B4": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/71/99/U_TYPE38ARISAKA_BATTLEPACKS_MQT_T1S4_LARGE-476344a1.png",
+  "name": "奧特朗托海峽戰役",
+  "rarity": "Standard"
+ },
+ "38D4A9DD-D237-4114-89B3-CFA2F4D51148": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/77/124/U_PERINO_BATTLEPACKS_FABERGE_T1S2_LARGE-b37c376c.png",
+  "name": "戈爾利采·塔爾努夫戰役",
+  "rarity": "Standard"
+ },
+ "3907F8C9-187B-45FF-B9B2-A1BAA537DCBF": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/34/59/U_ENFIELD1917_BATTLEPACKS_BATTLESCARRED_T3S1_LARGE-de3bba32.png",
+  "name": "無名士兵",
+  "rarity": "Superior"
+ },
+ "39BDA5DD-7385-4F21-830B-75CE30BB99FC": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/1/112/U_BROWNINGA5_BATTLEPACKS_ROYAL_T1S4_LARGE-ff7044c5.png",
+  "name": "皇家法規",
+  "rarity": "Standard"
+ },
+ "3A4E4A46-4487-4D1C-B5A4-2AF8363F93A0": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/19/96/U_REMINGTONMODEL1900_BATTLEPACKS_FABERGE_T2S1_LARGE-1360fac4.png",
+  "name": "薩巴涅夫",
+  "rarity": "Enhanced"
+ },
+ "3B75C891-72B2-46EA-8930-7FE9C292BC92": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/22/120/U_STEYRM1912_P16_BATTLEPACKS_MQT_T1S3_LARGE-16887c8a.png",
+  "name": "日德蘭戰役",
+  "rarity": "Standard"
+ },
+ "3C19CA5F-1D07-4C07-8F77-E14AC0E07352": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/34/21/U_SMITHWESSON_BATTLEPACKS_ROYAL_T2S1_LARGE-22ebd1e8.png",
+  "name": "阿奇巴巴",
+  "rarity": "Enhanced"
+ },
+ "3C22056C-4045-444D-A181-2AF7C92D6B17": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/70/36/U_REMINGTONMODEL1900_BATTLEPACKS_FABERGE_T1S2_LARGE-badc690c.png",
+  "name": "戈爾利采·塔爾努夫戰役",
+  "rarity": "Standard"
+ },
+ "3C823B26-DB16-41D5-AFFE-48FAD4B19E53": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/90/125/U_ROSSMKIII_BATTLEPACKS_BATTLESCARRED_T1S2_LARGE-5a83f463.png",
+  "name": "V 海灘",
+  "rarity": "Standard"
+ },
+ "3C99C517-6874-41A7-B39F-EC4B6D9CA3C5": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/93/1/U_WINCHESTERM1907_BATTLEPACKS_SCOUT_T1S4_LARGE-5dffcf59.png",
+  "name": "迷彩紗",
+  "rarity": "Standard"
+ },
+ "3CCFE5CD-9D7F-4492-B364-EB2251FED842": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/120/98/U_GENERALLIU_BATTLEPACKS_FABERGE_T1S2_LARGE-889eb4cb.png",
+  "name": "戈爾利采·塔爾努夫戰役",
+  "rarity": "Standard"
+ },
+ "3CE3E123-235B-AFD7-A7A5-3594280C5012": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/65/1/U_LEWISMG_BATTLEPACKS_ROYAL_T1S1_LARGE-bf018f7d.png",
+  "name": "皇家旨意",
+  "rarity": "Standard"
+ },
+ "3D15FC45-21E5-C1E1-EBCF-11386569BCC9": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/16/88/U_M1911_CONVERSIONMISSION_SKIN_LARGE-10583337.png",
+  "name": "監禁者",
+  "rarity": "Enhanced"
+ },
+ "3D499294-2981-4AE5-86D5-0FA2648FCB1D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/4/20/U_WINCHESTER1897_BATTLEPACKS_VETERAN_T1S2_LARGE-fc146f29.png",
+  "name": "老鳥護衛",
+  "rarity": "Standard"
+ },
+ "3D4D2449-E078-447E-B0A5-CFBB1931C181": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/101/6/U_MP18_BATTLEPACKS_NIGHT_T1S3_LARGE-6506115c.png",
+  "name": "304 號高地戰役",
+  "rarity": "Standard"
+ },
+ "3D522B9A-D409-46B7-9470-B781A43DDD7D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/35/62/U_NAGANTM1895_BATTLEPACKS_FABERGE_T1S3_LARGE-23c29d6c.png",
+  "name": "魯特斯克戰役",
+  "rarity": "Standard"
+ },
+ "3DDB162E-992A-41CF-8BAD-B34EECDDAB23": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/40/126/HMSLANCERU_DESTROYER_PAINT_02_LARGE-287e6230.png",
+  "name": "閃爍方格",
+  "rarity": "Enhanced"
+ },
+ "3DF9B93D-413F-4939-ADC1-F960927F4E01": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/57/112/U_FARQUHARHILL_BATTLEPACKS_MQT_T1S1_LARGE-c790bc42.png",
+  "name": "青島戰役",
+  "rarity": "Standard"
+ },
+ "3E66AB58-DAC8-2816-C85E-C377E478ECEE": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/98/48/U_BORCHARDTC93_BATTLEPACKS_ROYAL_T1S1_LARGE-9e30060d.png",
+  "name": "皇家旨意",
+  "rarity": "Standard"
+ },
+ "3F89C712-C174-422D-9AAB-CA7690AF41DA": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/73/79/U_HELLRIEGEL1915_BATTLEPACKS_NIGHT_T1S4_LARGE-49b1b5ab.png",
+  "name": "維萊布勒托納戰役",
+  "rarity": "Standard"
+ },
+ "3FAF68ED-4966-4EAF-805A-B1A02B2C4DA1": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/58/128/U_MG0818_BATTLEPACKS_BATTLESCARRED_T2S1_LARGE-3a806757.png",
+  "name": "諸神的黃昏",
+  "rarity": "Enhanced"
+ },
+ "3FDF55BB-DFE8-4E2F-8121-8B3A2E81760E": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/57/4/ILYAMUROMETSU_HEAVYBOMBER_PAINT_04_LARGE-c70474b5.png",
+  "name": "羅斯波羅第",
+  "rarity": "Enhanced"
+ },
+ "3FE8B053-3B4A-4C1E-8914-D9FEAA321117": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/76/43/U_WINCHESTERM1895_BATTLEPACKS_NIGHT_T1S1_LARGE-4c2b8f52.png",
+  "name": "伊塞克希薩立克戰役",
+  "rarity": "Standard"
+ },
+ "40B85525-46AD-C8F9-B186-4ADCC4FA0B87": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/15/126/U_WINCHESTERM1907_BATTLEPACKS_SCOUT_T1S1_LARGE-f17e0bc8.png",
+  "name": "迷彩圖樣",
+  "rarity": "Standard"
+ },
+ "40BA4723-1FE1-4D21-BA82-2A7C40F961CA": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/84/76/U_FROMMERSTOP_BATTLEPACKS_SCOUT_T2S1_LARGE-acb42900.png",
+  "name": "卡波雷托",
+  "rarity": "Enhanced"
+ },
+ "41F4B47C-0693-42E8-8F3A-A4AF3734B9F3": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/80/104/U_FN1903_BATTLEPACKS_UNIQUE_V1_LARGE-b068e62a.png",
+  "name": "兵工廠",
+  "rarity": "Superior"
+ },
+ "4220E050-0B05-4205-A8E4-3C37FB5B6424": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/39/108//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_PERINOM1908_BATTLEPACKS_Y201_T3S1_LARGE-d96c8205.png",
+  "name": "波佐洛",
+  "rarity": "Superior"
+ },
+ "423898E3-DEA2-4491-9F9D-10CAE78517B8": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/44/80/U_LEWISMG_BATTLEFEST_SKIN_LARGE-2c50dd25.png",
+  "name": "耶爾斯",
+  "rarity": "Superior"
+ },
+ "42995CF0-6BC7-7E58-0B6A-28C6514D3382": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/99/95/U_BERETTAM1915_BATTLEPACKS_VETERAN_T1S1_LARGE-9d5faa2a.png",
+  "name": "老鳥士兵",
+  "rarity": "Standard"
+ },
+ "42BC4682-3AF5-41FE-8CBB-692B074D3B9B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/87/111/U_FEDOROVAVTOMAT_BATTLEPACKS_FABERGE_T1S4_LARGE-5791d05c.png",
+  "name": "尤格拉戰役",
+  "rarity": "Standard"
+ },
+ "4302260E-5F07-4A5D-A84B-271D9C0C50D4": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/21/117/ILYAMUROMETSU_HEAVYBOMBER_PAINT_06_LARGE-eb75bb9f.png",
+  "name": "莫尼諾",
+  "rarity": "Enhanced"
+ },
+ "4302F195-A58A-45E4-8729-7BAB08A2AC49": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/5/61/U_BROWNINGA5_BATTLEPACKS_NIGHT_T1S2_LARGE-05c37336.png",
+  "name": "費斯蒂貝爾戰役",
+  "rarity": "Standard"
+ },
+ "4327211D-75E4-4D91-89EB-28BCD1130B53": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/117/66//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_RSC1917_BATTLEPACKS_Y201_T3S2_LARGE-8b4217ed.png",
+  "name": "克拉奧訥之歌",
+  "rarity": "Superior"
+ },
+ "4485ABC3-580F-4A88-A0C1-6D869AF3FCBC": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/119/22/U_PERINO_BATTLEPACKS_FABERGE_T1S3_LARGE-77ead85e.png",
+  "name": "魯特斯克戰役",
+  "rarity": "Standard"
+ },
+ "448A89C3-5F91-490A-9FF9-7A89892A41CA": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/29/62/U_HOTCHKISSM1909_BATTLEPACKS_VETERAN_T1S4_LARGE-e3c297d1.png",
+  "name": "老鳥騎兵",
+  "rarity": "Standard"
+ },
+ "455AB1C7-94EF-4AE9-9989-D96A79689907": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/35/14/U_LEEENFIELDSMLE_BATTLEFEST_SKIN_LARGE-230e6ebd.png",
+  "name": "皮克漢格頓",
+  "rarity": "Superior"
+ },
+ "45629BFF-8046-4C75-9C39-BE10C0866C41": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/90/60/UIWepBillhook-a63cb104.png",
+  "name": "鉤鐮",
+  "rarity": "Superior"
+ },
+ "4591502C-1F4B-47B1-9754-2E6C01F9F91D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/70/108/U_WINCHESTERM1895_BATTLEPACKS_NIGHT_T1S4_LARGE-ba9455e0.png",
+  "name": "維萊布勒托納戰役",
+  "rarity": "Standard"
+ },
+ "45B1E5F3-7584-4F87-872C-4361DCE53C62": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/2/100/HANSAU_BOMBER_PAINT_09_LARGE-fe9c0395.png",
+  "name": "閃耀",
+  "rarity": "Enhanced"
+ },
+ "45BF8F5E-0FA1-4F9C-92C5-26BB166D0EBB": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/41/77//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_STEYRM1912_P16_BATTLEPACKS_Y201_T3S1_LARGE-29b371a1.png",
+  "name": "荀白克",
+  "rarity": "Superior"
+ },
+ "45DE3982-EEBC-4EE1-8C46-A922AC23AF95": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/52/12/U_WINCHESTER1897_BATTLEPACKS_NIGHT_T1S4_LARGE-34f40ffd.png",
+  "name": "維萊布勒托納戰役",
+  "rarity": "Standard"
+ },
+ "4635DA95-7705-401D-9223-A0D4D4F88BA3": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/116/57/U_MADSENMG_BATTLEPACKS_SCOUT_T1S2_LARGE-8cc73553.png",
+  "name": "迷彩套",
+  "rarity": "Standard"
+ },
+ "4648AEF2-36B1-4C19-BC10-03297DC2BA70": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/78/54/U_CEIRIGOTTIM1895_BATTLEPACKS_ROYAL_T1S3_LARGE-b2ca57f7.png",
+  "name": "皇家旨令",
+  "rarity": "Standard"
+ },
+ "4704FA1D-2428-4A33-9352-F201695BE3A3": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/73/44/U_MONDRAGON_BATTLEPACKS_NIGHT_T1S1_LARGE-492c8352.png",
+  "name": "伊塞克希薩立克戰役",
+  "rarity": "Standard"
+ },
+ "472E8D79-2A83-4F86-A675-8572B51067D0": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/63/80/U_SMITHWESSON_BATTLEPACKS_ROYAL_T3S1_LARGE-3fb055e1.png",
+  "name": "步兵軍團",
+  "rarity": "Superior"
+ },
+ "4736F9AE-35D1-4A6B-A652-23B8121917B2": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/123/98/U_LEBEL_BATTLEPACKS_FRENCH_T2S1_LARGE-85628c19.png",
+  "name": "貴婦小徑",
+  "rarity": "Enhanced"
+ },
+ "47ED5B9D-BE48-4BBE-94A7-5AA8D4644CD1": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/40/102/U_BERETTAM1915_BATTLEPACKS_VETERAN_T2S2_LARGE-d8667355.png",
+  "name": "巴拉卡",
+  "rarity": "Enhanced"
+ },
+ "47EFBE34-8604-4811-BD9B-51415E04F251": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/110/108/UIWepBartekBludgeon-926c3733.png",
+  "name": "鮑爾泰克巨木棒",
+  "rarity": "Superior"
+ },
+ "482C2B6F-0A05-45B0-AE3D-CFC3141ADBDF": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/109/37/U_CARCANOCARBINE_BATTLEPACKS_MQT_T1S1_LARGE-93db1c04.png",
+  "name": "青島戰役",
+  "rarity": "Standard"
+ },
+ "48595A58-C5B4-4812-BD6C-F021C8F9C4DB": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/55/47/U_RSC1917_BATTLEPACKS_FRENCH_T3S1_LARGE-c92f1fc0.png",
+  "name": "虎",
+  "rarity": "Superior"
+ },
+ "48894CB6-AA44-4966-859A-CDFAE16CE899": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/93/45/U_MAUSERSL_BATTLEPACKS_NIGHT_T2S1_LARGE-a3d34607.png",
+  "name": "林纳茨",
+  "rarity": "Enhanced"
+ },
+ "493F9149-339D-4787-90B4-357082664222": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/61/4/U_BERGMANN1915MG_BATTLEPACKS_HUNTER_T3S1_LARGE-3d04d24b.png",
+  "name": "大丹犬",
+  "rarity": "Superior"
+ },
+ "496C546B-83DB-4A2A-B06A-AFFC68A36F6E": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/63/7/U_NAGANTM1895_BATTLEPACKS_FABERGE_T1S2_LARGE-3ff94b5e.png",
+  "name": "戈爾利采·塔爾努夫戰役",
+  "rarity": "Standard"
+ },
+ "496DACA0-81CE-4045-97F9-4C3CA6AB8F67": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/71/29/u_ceirigottim1895_battlepacks_hunter_t3s1_large-b91d7bab.png",
+  "name": "怪奇之物",
+  "rarity": "Superior"
+ },
+ "49A876BC-70AD-43B8-8280-F5A509BFC7C4": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/95/32/U_REMINGTONM10_BATTLEPACKS_NIGHT_T3S1_LARGE-5f20b9ce.png",
+  "name": "馬恩河磐石",
+  "rarity": "Superior"
+ },
+ "49F3C2D4-BF5B-467B-AD94-217E9C592770": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/68/17/U_MARSAUTOPISTOL_BATTLEPACKS_SCOUT_T1S4_LARGE-4411ccda.png",
+  "name": "迷彩紗",
+  "rarity": "Standard"
+ },
+ "4B1867FC-AF82-4702-8147-9D37D96FD906": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/90/65/U_CEIRIGOTTIM1895_BATTLEPACKS_ROYAL_T2S2_LARGE-a6414d8c.png",
+  "name": "亞美利哥",
+  "rarity": "Enhanced"
+ },
+ "4B78928B-E073-4ABE-8FE2-C1FF9EDF81B6": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/24/59/U_STEYRMANM1895_BATTLEPACKS_NIGHT_T1S4_LARGE-183b38e4.png",
+  "name": "維萊布勒托納戰役",
+  "rarity": "Standard"
+ },
+ "4BB880BB-9D5D-4450-A224-D774A77AE820": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/112/107/U_LUGER1906_BATTLEPACKS_NIGHT_T2S1_LARGE-706b1f33.png",
+  "name": "威茲瑞克",
+  "rarity": "Enhanced"
+ },
+ "4BED8A7D-7092-4C1A-8542-4242D5F7C743": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/109/80/U_RIBEYROLLES_BATTLEPACKS_FRENCH_T3S1_LARGE-935084d3.png",
+  "name": "神聖聯盟",
+  "rarity": "Superior"
+ },
+ "4BF760E6-D690-4670-9146-14DC07F2DDF0": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/15/91/U_KOLIBRI_BATTLEPACKS_ROYAL_T1S3_LARGE-0fa5b79e.png",
+  "name": "皇家旨令",
+  "rarity": "Standard"
+ },
+ "4BFD502E-82E6-42E4-8C05-0FB3BACB9C4F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/63/111/U_HOTCHKISSM1909_BATTLEPACKS_VETERAN_T1S3_LARGE-3f6fbc7c.png",
+  "name": "老鳥步兵",
+  "rarity": "Standard"
+ },
+ "4C5AA618-4728-4FFA-8B80-4E8EF563C9D2": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/87/95/U_WINCHESTERM1907_BATTLEPACKS_SCOUT_T2S1_LARGE-57a1fc00.png",
+  "name": "伊珀爾",
+  "rarity": "Enhanced"
+ },
+ "4CD8AFD6-DB35-4D71-A015-A4B124927563": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/16/104/U_WINCHESTER1897_BATTLEPACKS_NIGHT_T1S2_LARGE-f068b40e.png",
+  "name": "費斯蒂貝爾戰役",
+  "rarity": "Standard"
+ },
+ "4D41117B-6AA4-4EFB-9988-0C1D804AA0B8": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/114/6//mnt/dice-filer-gamedata/3597807/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_M1919THOMPSONANNIHILATOR_BATTLEPACKS_Y201_T3S2_LARGE-72fad5a4.png",
+  "name": "在那邊",
+  "rarity": "Superior"
+ },
+ "4D5E8A16-4FC4-44D0-A062-93CC40541FB7": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/115/16/U_FEDOROVAVTOMAT_BATTLEPACKS_FABERGE_T3S1_LARGE-8df034f4.png",
+  "name": "克倫斯基",
+  "rarity": "Superior"
+ },
+ "4D8F6529-28BE-4329-BB7A-F4ED276FEE6B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/104/72//mnt/dice-filer-gamedata/3597807/Persistence/Images/UI/Textures/Persistence/Fancy_Large/U_MAUSERSL_BATTLEPACKS_R2X_T3S1_LARGE-6848e924.png",
+  "name": "血腥四月",
+  "rarity": "Superior"
+ },
+ "4DDB2F8B-4D8A-4276-9AB7-83CB998124C1": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/84/91/U_WINCHESTERM1907_BATTLEPACKS_NIGHT_T2S2_LARGE-54a50cc8.png",
+  "name": "法蘭茲",
+  "rarity": "Enhanced"
+ },
+ "4E39A47C-4A17-494D-87F1-17C0D70B03C9": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/39/46/U_BODEO1889_BATTLEPACKS_VETERAN_T1S2_LARGE-272e7acb.png",
+  "name": "老鳥護衛",
+  "rarity": "Standard"
+ },
+ "4E727101-9D1D-4198-8F73-6333401C5FFB": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/102/60/U_SPRINGFIELDM1903_BATTLEPACKS_NIGHT_T1S2_LARGE-66c44b59.png",
+  "name": "費斯蒂貝爾戰役",
+  "rarity": "Standard"
+ },
+ "4E7D333F-1B2B-4F3C-9E2A-A8534A538717": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/128/112/U_VETTERLI_BATTLEPACKS_FABERGE_T2S1_LARGE-80709947.png",
+  "name": "朱塞佩",
+  "rarity": "Enhanced"
+ },
+ "4EBE35DA-758D-45C1-BE42-D509051326B9": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/33/43/U_MONDRAGON_BATTLEPACKS_NIGHT_T2S1_LARGE-df2b675b.png",
+  "name": "鎂",
+  "rarity": "Enhanced"
+ },
+ "4F0ECB98-4A57-4B71-ACE2-3D3473E7B9E1": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/19/72/PIERCEARROWU_GBR_PIERCEARROW_PAINT_CRIMSON_LARGE-edb87b67.png",
+  "name": "深紅銀 (極稀有)",
+  "rarity": "Superior"
+ },
+ "4F18004D-37DD-E8A1-1975-67022F367607": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/32/53/U_BROWNINGA5_BATTLEPACKS_ROYAL_T1S1_LARGE-e035a03a.png",
+  "name": "皇家旨意",
+  "rarity": "Standard"
+ },
+ "4F6AF7E8-05C3-4FDB-B1BA-7317BAA784B4": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/121/12/U_LEEENFIELDSMLE_BATTLEPACKS_SCOUT_T3S1_LARGE-79f4fabd.png",
+  "name": "黑衛士兵團",
+  "rarity": "Superior"
+ },
+ "4F74A07F-F902-4E97-9B56-ED47523B4C3E": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/124/100/U_CARCANOCARBINE_BATTLEPACKS_MQT_T3S1_LARGE-849c2555.png",
+  "name": "亞歷山德里亞",
+  "rarity": "Superior"
+ },
+ "4FD5E120-31E4-46CD-8A62-97F8F394042F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/60/42/U_HUOTAUTORIFLE_BATTLEPACKS_NIGHT_T1S1_LARGE-3cd64801.png",
+  "name": "伊塞克希薩立克戰役",
+  "rarity": "Standard"
+ },
+ "50549A64-73A7-4614-8E46-EECAE82EF2DB": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/99/59/U_HOWELL_BATTLEPACKS_BATTLESCARRED_T2S1_LARGE-9d3b24e9.png",
+  "name": "哈佛菲爾德",
+  "rarity": "Enhanced"
+ },
+ "516D9E87-9B27-4729-B620-7BDDF3FF5D9B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/128/15/U_LUGERP08_BATTLEPACKS_UNIQUE_V2_LARGE-800fa33d.png",
+  "name": "聖米耶勒",
+  "rarity": "Superior"
+ },
+ "51E19950-B846-40AA-B173-BD917C730623": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/116/83/U_HELLRIEGEL1915_BATTLEPACKS_NIGHT_T3S1_LARGE-745301b3.png",
+  "name": "斯瑞根斯坦城堡",
+  "rarity": "Superior"
+ },
+ "521CBC05-4333-4435-A19E-59877C777620": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/71/40/U_BROWNINGA5_BATTLEPACKS_ROYAL_T1S2_LARGE-47283a02.png",
+  "name": "皇家詔書",
+  "rarity": "Standard"
+ },
+ "5248BFB8-DC84-41EF-AB5C-E4CF1F74806D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/29/109/U_MP18_BATTLEPACKS_SCOUT_T1S2_LARGE-1d93c558.png",
+  "name": "迷彩套",
+  "rarity": "Standard"
+ },
+ "53373EB6-BDA9-4154-94E3-43CDF04D146B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/121/48/U_HOTCHKISSM1909_BATTLEPACKS_NIGHT_T1S1_LARGE-87d0b0d2.png",
+  "name": "伊塞克希薩立克戰役",
+  "rarity": "Standard"
+ },
+ "5351D39A-60F4-4493-AB62-FDA756BB8D43": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/103/128//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_REMINGTONMODEL1900_BATTLEPACKS_Y201_T3S1_LARGE-9980b265.png",
+  "name": "菲姆",
+  "rarity": "Superior"
+ },
+ "5370F7F8-DC05-434A-85EE-1CD6BC033B8D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/4/46//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_OBREZ_BATTLEPACKS_Y201_T3S1_LARGE-fc2e1193.png",
+  "name": "羅曼諾夫卡",
+  "rarity": "Superior"
+ },
+ "538F5BAF-6455-41D9-A243-7210FE10DB6E": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/45/43/STCHAMOND_FRA_STCHAMOND_PAINT_03_LARGE-2d2bb0e1.png",
+  "name": "花之戀",
+  "rarity": "Enhanced"
+ },
+ "539A61A2-D946-4354-8C1F-5968D9098AE1": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/119/1/U_MOSINNAGANT_BATTLEPACKS_FABERGE_T1S4_LARGE-89ffb40f.png",
+  "name": "尤格拉戰役",
+  "rarity": "Standard"
+ },
+ "5469ECEE-11DA-4463-9F5B-676D5252A290": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/45/54/U_WINCHESTER1897_BATTLEPACKS_NIGHT_T1S1_LARGE-d3caec3b.png",
+  "name": "伊塞克希薩立克戰役",
+  "rarity": "Standard"
+ },
+ "547D940F-3BE0-414D-A177-62B972CAA073": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/22/84/U_REMINGTONMODEL8_BATTLEPACKS_NIGHT_T2S2_LARGE-eaac035e.png",
+  "name": "蝙蝠",
+  "rarity": "Enhanced"
+ },
+ "5488B050-00EF-4959-BBFF-0E46D34CBFEE": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/45/105//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_FEDOROVAVTOMAT_BATTLEPACKS_Y201_T3S2_LARGE-d39797d1.png",
+  "name": "奧伊圖茲",
+  "rarity": "Superior"
+ },
+ "55511F40-4B3A-4DB7-B779-C0C9779B9255": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/116/86/U_FROMMERSTOP_BATTLEPACKS_SCOUT_T3S1_LARGE-8caa1dd4.png",
+  "name": "皇帝",
+  "rarity": "Superior"
+ },
+ "55F3849E-F209-4C12-8F2F-00F4CC7D586F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/11/32/U_GEWEHR98_BATTLEPACKS_SCOUT_T2S1_LARGE-0b201823.png",
+  "name": "耶格爾",
+  "rarity": "Enhanced"
+ },
+ "5626EF1F-368F-40D0-AB53-61443B78DF5B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/92/10/U_MAXIMSMG_BATTLEPACKS_FABERGE_T3S1_LARGE-a40abc6c.png",
+  "name": "馮·克魯克",
+  "rarity": "Superior"
+ },
+ "5673762C-56C5-449C-AAFD-6D185036A6FE": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/52/46/U_MAUSERSL_BATTLEPACKS_NIGHT_T1S1_LARGE-34d25cff.png",
+  "name": "伊塞克希薩立克戰役",
+  "rarity": "Standard"
+ },
+ "569AA762-E24C-497E-9C7D-3DDFEAED69BF": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/62/85/U_MP18_BATTLEPACKS_SCOUT_T2S1_LARGE-3e553b3a.png",
+  "name": "阿茲布魯克",
+  "rarity": "Enhanced"
+ },
+ "56DBDA46-EE98-456E-8A15-2673BC007C31": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/71/1/U_MP18_BATTLEPACKS_NIGHT_T1S2_LARGE-47013987.png",
+  "name": "費斯蒂貝爾戰役",
+  "rarity": "Standard"
+ },
+ "56DF9EEB-FE54-452C-B9B8-A1625AE952CF": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/89/55/U_BORCHARDTC93_BATTLEPACKS_ROYAL_T1S2_LARGE-a7c94dc9.png",
+  "name": "皇家詔書",
+  "rarity": "Standard"
+ },
+ "57113EAC-DFEF-468D-8419-C93D3146170A": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/13/49/U_HUOTAUTORIFLE_BATTLEPACKS_NIGHT_T2S1_LARGE-f331388c.png",
+  "name": "蕾吉娜",
+  "rarity": "Enhanced"
+ },
+ "57295179-EE58-4F52-A89D-B4E755CFDE02": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/18/37/u_remingtonm10_battlepacks_hunter_t3s1_large-12dbda48.png",
+  "name": "克里夫蘭",
+  "rarity": "Superior"
+ },
+ "572DB776-279E-46EC-8B34-F2272617B4E1": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/127/58/STCHAMOND_FRA_STCHAMOND_PAINT_02_LARGE-813af1b5.png",
+  "name": "索米爾",
+  "rarity": "Enhanced"
+ },
+ "573D8060-D528-44ED-82AE-E3E2AAA82B21": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/24/102/U_STEYRM1912_P16_BATTLEPACKS_MQT_T2S1_LARGE-189a64e4.png",
+  "name": "斯泰爾",
+  "rarity": "Enhanced"
+ },
+ "578FC840-6AB6-4A4D-96E9-DEDD55F3124B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/92/79/U_MARTINIHENRY_BATTLEPACKS_NIGHT_T3S1_LARGE-a44f7898.png",
+  "name": "燃燒彈",
+  "rarity": "Superior"
+ },
+ "5792FB0D-90EF-4C3D-8521-9462C3E2C7FD": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/30/109/PIERCEARROWU_GBR_PIERCEARROW_PAINT_GOLDEN_LARGE-e26d8011.png",
+  "name": "黃金甲 (極稀有)",
+  "rarity": "Superior"
+ },
+ "579F85E8-84D1-437C-8B70-C3864F713049": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/92/50/U_MADSENMG_BATTLEPACKS_SCOUT_T1S4_LARGE-5cce3ab3.png",
+  "name": "迷彩紗",
+  "rarity": "Standard"
+ },
+ "57EAB779-B881-4D9A-8F16-A7EC3B359061": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/51/90/UIWepTotokia-cda60e9f.png",
+  "name": "鳥嘴槌",
+  "rarity": "Superior"
+ },
+ "58089E7B-A8DF-4AEF-87A1-16F7EAAEFB0B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/44/78/U_CEIRIGOTTIM1895_BATTLEPACKS_ROYAL_T1S4_LARGE-d44e43f4.png",
+  "name": "皇家法規",
+  "rarity": "Standard"
+ },
+ "58535A98-F7E3-4177-BFE2-9A824CAC79B5": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/87/25/U_MG0818_BATTLEPACKS_BATTLESCARRED_T1S3_LARGE-a9e76b31.png",
+  "name": "但澤戰壕",
+  "rarity": "Standard"
+ },
+ "58897287-C5E2-4DAF-B05B-1AA83752BFAC": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/121/117/U_BARM1918_BATTLEPACKS_ROYAL_T1S4_LARGE-7975166c.png",
+  "name": "皇家法規",
+  "rarity": "Standard"
+ },
+ "58925124-EC9B-4B6E-8BA6-3A768E02A5C4": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/10/35/U_MAXIMSMG_BATTLEPACKS_FABERGE_T1S3_LARGE-f6dde0c6.png",
+  "name": "魯特斯克戰役",
+  "rarity": "Standard"
+ },
+ "58AF077E-8BCF-44A7-B4D7-E0197129EF7C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/115/56/U_COLTPOCKET1903_BATTLEPACKS_SCOUT_T1S2_LARGE-8dc8282b.png",
+  "name": "迷彩套",
+  "rarity": "Standard"
+ },
+ "58F22016-2B87-451D-8BCB-6B88730469FC": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/21/49/U_LEEENFIELDSMLE_BATTLEPACKS_SCOUT_T1S3_LARGE-ebcf55d0.png",
+  "name": "迷彩罩",
+  "rarity": "Standard"
+ },
+ "58F97C08-80D8-4F54-9AAF-F92A30BC8762": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/50/39/U_BERETTAM1915_BATTLEPACKS_VETERAN_T1S4_LARGE-ced90cf5.png",
+  "name": "老鳥騎兵",
+  "rarity": "Standard"
+ },
+ "590517D5-CBE1-4D3C-B77C-B39BA36E5C31": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/14/52/U_VETTERLI_BATTLEPACKS_FABERGE_T2S2_LARGE-0e34fbec.png",
+  "name": "陶里諾朗",
+  "rarity": "Enhanced"
+ },
+ "5A3DF950-9DBB-4E35-96BB-A5E08F1E4416": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/7/91/PIERCEARROWU_GBR_PIERCEARROW_PAINT_08_LARGE-075b9044.png",
+  "name": "加拿大",
+  "rarity": "Enhanced"
+ },
+ "5A798055-8D48-40A3-ABAF-672D048818FA": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/79/67/U_LEWISMG_BATTLEPACKS_NIGHT_T2S2_LARGE-4f43dd6d.png",
+  "name": "P.B.31E",
+  "rarity": "Enhanced"
+ },
+ "5AFE2D2B-2CE3-4227-A2F9-D6351B325FF0": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/85/119/U_FN1903_BATTLEPACKS_ROYAL_T1S3_LARGE-ab779d8e.png",
+  "name": "皇家旨令",
+  "rarity": "Standard"
+ },
+ "5BC30532-1E64-2D1C-7333-430615256B1B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/9/72/U_MP18_BATTLEPACKS_SCOUT_T1S1_LARGE-f74802bd.png",
+  "name": "迷彩圖樣",
+  "rarity": "Standard"
+ },
+ "5BCDA8AE-E088-4106-B4D6-1AEC26B7F140": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/67/113/UIWepArarebo-438f78bb.png",
+  "name": "金碎棒",
+  "rarity": "Superior"
+ },
+ "5BD827C5-3A2D-4A3D-64D1-1302FE05CB47": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/9/20/U_MADSENMG_BATTLEPACKS_SCOUT_T1S1_LARGE-09ec3e7c.png",
+  "name": "迷彩圖樣",
+  "rarity": "Standard"
+ },
+ "5C146393-51F3-438D-937F-6C53378BA1C1": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/17/63//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_RSC1917_BATTLEPACKS_Y201_T3S1_LARGE-ef3f70cf.png",
+  "name": "德塞夫勒",
+  "rarity": "Superior"
+ },
+ "5C1D7756-1E24-4209-934D-E6529BD65CCE": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/108/34/U_PARABELLUM_BATTLEPACKS_FABERGE_T1S4_LARGE-6cde8768.png",
+  "name": "尤格拉戰役",
+  "rarity": "Standard"
+ },
+ "5C970C1F-0440-4593-9CD7-A3439EF1D13A": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/122/33/U_BARM1918_BATTLEPACKS_NIGHT_T1S2_LARGE-7a21f747.png",
+  "name": "費斯蒂貝爾戰役",
+  "rarity": "Standard"
+ },
+ "5CDE5FB0-9984-4E94-8B1E-4939C99519E9": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/57/32/U_BROWNINGM1917_BATTLEPACKS_MQT_T3S1_LARGE-3920fa4c.png",
+  "name": "山米",
+  "rarity": "Superior"
+ },
+ "5D3B25B3-7C0E-4FA9-BCA8-BD9ABD56BADA": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/90/85/u_huotautorifle_battlepacks_hunter_t3s1_large-a655f665.png",
+  "name": "加拿大野犬",
+  "rarity": "Superior"
+ },
+ "5D553AFA-9CF4-4E50-A9A3-E93BAB89D9AD": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/50/70/U_CHAUCHAT_BATTLEPACKS_FRENCH_T2S2_LARGE-324612ea.png",
+  "name": "角鬥士",
+  "rarity": "Enhanced"
+ },
+ "5DDB538A-68FB-4DDB-8F30-64E6B2D19C62": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/39/85/U_REMINGTONMODEL8_BATTLEPACKS_VETERAN_T1S4_LARGE-d9550481.png",
+  "name": "老鳥騎兵",
+  "rarity": "Standard"
+ },
+ "5DF59985-C2FE-4184-BEF8-FB21DBD29266": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/106/20/U_WEBFOSAUTOREV_BATTLEPACKS_ROYAL_T3S1_LARGE-6a14a4dd.png",
+  "name": "戈登高地兵團",
+  "rarity": "Superior"
+ },
+ "5E6F004E-DC11-4D3A-93F2-37BCF85D5FCA": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/29/89//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_VETTERLIVITALIM1870_BATTLEPACKS_Y201_T3S2_LARGE-1da78d3f.png",
+  "name": "茨納河",
+  "rarity": "Superior"
+ },
+ "5EB945B9-6E62-4ED6-AE9D-D9163BE80557": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/98/39//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_MAXIMSMG_BATTLEPACKS_Y201_T3S1_LARGE-62d971f3.png",
+  "name": "巴赫馬奇",
+  "rarity": "Superior"
+ },
+ "5F7252D5-86C1-4884-9698-8189933B76BE": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/56/117/U_MAUSERC96_BATTLEPACKS_VETERAN_T2S2_LARGE-c8752ae6.png",
+  "name": "魯登道夫",
+  "rarity": "Enhanced"
+ },
+ "5F727639-39CA-48DF-94B9-7A49549BE7CA": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/18/2/ST_CHAMOND_E2_LARGE-eefe783c.png",
+  "name": "法式雙色調 (極稀有)",
+  "rarity": "Superior"
+ },
+ "5FD0BED7-AB03-17CE-FF26-7C575E080088": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/36/40/U_M1911_EAPLAY_T1_LARGE-dc283dbe.png",
+  "name": "家鄉套件",
+  "rarity": "Enhanced"
+ },
+ "5FFE006E-0BF8-4505-9B12-B1B96A7C771B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/41/125/U_GENERALLIU_BATTLEPACKS_FABERGE_T2S2_LARGE-d77d4d67.png",
+  "name": "卡爾賈",
+  "rarity": "Enhanced"
+ },
+ "6029DB02-D86D-4C8E-B5D8-177B25A84428": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/16/7/U_RIBEYROLLES_BATTLEPACKS_FRENCH_T1S4_LARGE-1007e07a.png",
+  "name": "波拿巴王朝",
+  "rarity": "Standard"
+ },
+ "6040FA9E-47F3-4A68-A2FD-A2F16B8EB4E4": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/76/63/U_LEEENFIELDSMLE_BATTLEPACKS_NIGHT_T3S1_LARGE-4c3fb20a.png",
+  "name": "血槽",
+  "rarity": "Superior"
+ },
+ "605F7D17-C222-48F8-B0B2-5DFC9DDCDD24": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/24/72/U_HOTCHKISSM1909_BATTLEPACKS_NIGHT_T1S4_LARGE-e848b11a.png",
+  "name": "維萊布勒托納戰役",
+  "rarity": "Standard"
+ },
+ "6069D7E4-545F-4FA2-A821-525B18EB5D72": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/94/53/U_RSC1917_BATTLEPACKS_FRENCH_T2S1_LARGE-5e350d2d.png",
+  "name": "祖母",
+  "rarity": "Enhanced"
+ },
+ "606FE78D-62BB-4228-88B4-305376C6EA7B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/48/125/U_SPRINGFIELDM1903_BATTLEPACKS_VETERAN_T1S3_LARGE-d07dba17.png",
+  "name": "老鳥步兵",
+  "rarity": "Standard"
+ },
+ "607EBD1A-6014-4EA3-8EE7-5FA333338317": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/106/76/U_OBREZ_BATTLEPACKS_FABERGE_T1S3_LARGE-6ab4daf0.png",
+  "name": "魯特斯克戰役",
+  "rarity": "Standard"
+ },
+ "60E99916-4017-4929-8C9F-C749B267B9FA": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/112/9/U_SPRINGFIELDM1903_BATTLEPACKS_VETERAN_T1S2_LARGE-90094f8c.png",
+  "name": "老鳥護衛",
+  "rarity": "Standard"
+ },
+ "61576833-F22D-4E06-971D-28015C6B9D6D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/94/65/U_GEWEHR98_BATTLEPACKS_SCOUT_T3S1_LARGE-a2bfed8d.png",
+  "name": "德皇",
+  "rarity": "Superior"
+ },
+ "62707A43-FBB1-4A46-8EB1-473C55319BE2": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/12/127/STCHAMOND_FRA_STCHAMOND_PAINT_05_LARGE-0c81237b.png",
+  "name": "方托馬斯",
+  "rarity": "Enhanced"
+ },
+ "63844A6D-9028-4C18-8D93-5FC959BC1A36": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/16/14/U_STEYRMANM1895_BATTLEPACKS_NIGHT_T3S1_LARGE-10f24f7e.png",
+  "name": "SM U-5",
+  "rarity": "Superior"
+ },
+ "63A87564-B178-4007-81F7-D217260E0C25": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/32/6/MARKVU_GBR_MARKV_PAINT_BRONZE_LARGE-20fa3b94.png",
+  "name": "銅色 (極稀有)",
+  "rarity": "Superior"
+ },
+ "63ED183C-35DB-47EF-A0F2-2A875852122A": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/37/19/U_LEEENFIELDSMLE_BATTLEPACKS_SCOUT_T2S2_LARGE-25edafbb.png",
+  "name": "傑里科",
+  "rarity": "Enhanced"
+ },
+ "63FC4615-5A69-54AC-D905-F96CDB26FAC4": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/97/87/U_MONDRAGON_BATTLEPACKS_SCOUT_T1S1_LARGE-6157f5d3.png",
+  "name": "迷彩圖樣",
+  "rarity": "Standard"
+ },
+ "6469849C-4D85-4924-ACCB-170B53C84E2C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/15/13/U_LUGERP08_BATTLEPACKS_VETERAN_T1S4_LARGE-f10deb1b.png",
+  "name": "老鳥騎兵",
+  "rarity": "Standard"
+ },
+ "64774415-69D1-44AD-9C9D-B77EE5F010FA": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/111/53//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_CHAUCHAT_BATTLEPACKS_Y201_T3S2_LARGE-91cbaa26.png",
+  "name": "加利格拉姆",
+  "rarity": "Superior"
+ },
+ "649F08DD-8C70-44C9-9524-EE5FBEEF8E12": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/5/21/ILYAMUROMETSU_HEAVYBOMBER_PAINT_02_LARGE-05eb6fd7.png",
+  "name": "小戰靴",
+  "rarity": "Enhanced"
+ },
+ "64B4FF39-8EAE-4C40-96A0-9DDB3B44F2A2": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/115/70/U_BODEO1889_BATTLEPACKS_VETERAN_T2S2_LARGE-73467889.png",
+  "name": "劍客",
+  "rarity": "Enhanced"
+ },
+ "655613FF-92FB-45A1-9129-524AF362F2E2": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/36/33/U_BROWNINGM1917_BATTLEPACKS_MQT_T1S4_LARGE-2421e9af.png",
+  "name": "奧特朗托海峽戰役",
+  "rarity": "Standard"
+ },
+ "6572D29D-F689-4481-B847-B7EFD4F71883": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/17/83/U_MAUSER1917_BATTLEPACKS_MQT_T1S2_LARGE-efaddc6c.png",
+  "name": "福克蘭群島戰役",
+  "rarity": "Standard"
+ },
+ "65890C45-5142-4F7F-BBAC-47860340FCDA": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/84/56/U_LEEENFIELDSMLE_BATTLEPACKS_NIGHT_T2S1_LARGE-54380689.png",
+  "name": "白金漢 Mark I",
+  "rarity": "Enhanced"
+ },
+ "6595BD64-F0AF-4BE2-A7A4-A6E7F50A7149": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/120/24/PUTILOVU_ASSAULTTRUCK_PAINT_09_LARGE-78e8054a.png",
+  "name": "大波蘭",
+  "rarity": "Enhanced"
+ },
+ "65D6FBE1-873A-490A-8F5B-DDA173969385": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/47/105/U_REMINGTONMODEL1900_BATTLEPACKS_FABERGE_T3S1_LARGE-2f691b98.png",
+  "name": "斯摩根",
+  "rarity": "Superior"
+ },
+ "6608E43C-85EC-460F-BF27-7DA8F9E37AD7": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/69/44/U_GASSERM1870_BATTLEPACKS_VETERAN_T2S1_LARGE-bbd4d99a.png",
+  "name": "巨龍",
+  "rarity": "Enhanced"
+ },
+ "6691989B-919B-4C8E-981E-878EE444BD0E": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/61/11/U_MP18_BATTLEPACKS_SCOUT_T3S1_LARGE-c3f5fcc5.png",
+  "name": "皇帝會戰",
+  "rarity": "Superior"
+ },
+ "669728CA-F0C9-4AB8-AD11-B83C4E3F5FC1": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/58/46/PIERCEARROWU_GBR_PIERCEARROW_PAINT_01_LARGE-3a2e7bea.png",
+  "name": "裝甲車",
+  "rarity": "Enhanced"
+ },
+ "66A7C7B0-4E15-4064-9F27-B640107E1825": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/3/127/U_MARTINIHENRY_BATTLEPACKS_NIGHT_T1S4_LARGE-0381aac8.png",
+  "name": "維萊布勒托納戰役",
+  "rarity": "Standard"
+ },
+ "674EAE81-F2D2-40E4-979D-52BF137AE8D3": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/63/95/U_STEYRM1912_P16_BATTLEPACKS_MQT_T3S1_LARGE-c15f880d.png",
+  "name": "蒂羅林",
+  "rarity": "Superior"
+ },
+ "675BA28A-FF8D-4BC3-A325-B7AB7D86EF13": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/111/53/U_LANCASTERHOWDAH_BATTLEPACKS_UNIQUE_V1_LARGE-91351d30.png",
+  "name": "巨煙",
+  "rarity": "Superior"
+ },
+ "678CD0F5-EA21-4894-BC03-936805EAB954": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/19/94/U_WINCHESTERM1895_BATTLEPACKS_ROYAL_T1S2_LARGE-13a2501e.png",
+  "name": "皇家詔書",
+  "rarity": "Standard"
+ },
+ "67F196B8-B0A5-4984-8230-C871C8E2FF2C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/90/43/U_FARQUHARHILL_BATTLEPACKS_MQT_T2S1_LARGE-a62be298.png",
+  "name": "莫布雷",
+  "rarity": "Enhanced"
+ },
+ "68288390-5276-4F16-81E7-80AB31887A7C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/101/80/U_ENFIELD1917_BATTLEPACKS_BATTLESCARRED_T1S4_LARGE-9b5080b8.png",
+  "name": "馬梅斯",
+  "rarity": "Standard"
+ },
+ "6844220A-D8E3-4571-AF80-1B93776EF118": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/107/115/U_STEYRMANM1895_BATTLEPACKS_NIGHT_T2S1_LARGE-6b731851.png",
+  "name": "SMS Novara",
+  "rarity": "Enhanced"
+ },
+ "685CE154-D5FA-4AD6-8617-B542FA4D825A": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/89/83/U_HELLRIEGEL1915_BATTLEPACKS_NIGHT_T1S2_LARGE-a753eb66.png",
+  "name": "費斯蒂貝爾戰役",
+  "rarity": "Standard"
+ },
+ "686F81E8-8546-43BF-AF27-3CA82A317879": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/125/35/U_BROWNINGM1917_BATTLEPACKS_MQT_T2S1_LARGE-7d23bcd8.png",
+  "name": "黑傑克",
+  "rarity": "Enhanced"
+ },
+ "688C92FA-A3DB-4519-A0C2-DE24CCF00EB0": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/0/83/UIWepCoupeCoupe-005370f3.png",
+  "name": "開山刀",
+  "rarity": "Superior"
+ },
+ "68BD9929-DD17-451D-8150-0412CEBC671B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/107/105/U_COLTPOCKET1903_BATTLEPACKS_SCOUT_T1S3_LARGE-9569e18d.png",
+  "name": "迷彩罩",
+  "rarity": "Standard"
+ },
+ "69C8AD47-041B-4024-A045-15D045B007D5": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/64/107/U_SMITHWESSON_BATTLEPACKS_ROYAL_T1S4_LARGE-c06b4f5c.png",
+  "name": "皇家法規",
+  "rarity": "Standard"
+ },
+ "69ECA851-70B4-4C89-B9C0-C8AF24A3ADC2": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/17/42/U_M1911_BATTLEPACKS_UNIQUE_V3_LARGE-efd6070e.png",
+  "name": "臨危受命",
+  "rarity": "Superior"
+ },
+ "6A2C4D8B-D169-4D08-9E69-849453F8747E": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/104/1/U_SPRINGFIELDM1903_BATTLEPACKS_VETERAN_T2S2_LARGE-68ff6bc1.png",
+  "name": "海軍",
+  "rarity": "Enhanced"
+ },
+ "6B654BD1-FC53-4380-8299-16133C054D4B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/89/78/U_MAUSERC96_BATTLEPACKS_VETERAN_T1S2_LARGE-59b25900.png",
+  "name": "老鳥護衛",
+  "rarity": "Standard"
+ },
+ "6B8923C7-495A-4477-AA17-37D3F2394988": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/8/24/U_WINCHESTER1897_BATTLEPACKS_NIGHT_T2S1_LARGE-f8e8262d.png",
+  "name": "沙托蒂耶里",
+  "rarity": "Enhanced"
+ },
+ "6BF17083-88AF-4BA2-8811-22797DD44791": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/71/65/U_BERGMANN1915MG_BATTLEPACKS_SCOUT_T1S4_LARGE-b9bfb866.png",
+  "name": "迷彩紗",
+  "rarity": "Standard"
+ },
+ "6C2CC180-4892-44AE-8278-10C63B9FF8D8": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/9/19//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_TYPE38ARISAKA_BATTLEPACKS_Y201_T3S1_LARGE-f7ed4794.png",
+  "name": "若宮丸",
+  "rarity": "Superior"
+ },
+ "6CBBDCF8-03D9-AA7A-113A-E49A9AE295AA": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/19/34/U_STEYRMANM1895_BATTLEPACKS_VETERAN_T1S1_LARGE-edde2d55.png",
+  "name": "老鳥士兵",
+  "rarity": "Standard"
+ },
+ "6CD501AF-71D2-4DB5-9F0B-FD64696105DD": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/5/51/U_REMINGTONM10_BATTLEPACKS_NIGHT_T2S1_LARGE-05cdfbca.png",
+  "name": "沃克斯",
+  "rarity": "Enhanced"
+ },
+ "6CE129F0-9B56-CDCC-0DD7-C0E2FD358FCF": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/57/86/U_SJOGRENSHOTGUN_BATTLEPACKS_FRENCH_T1S1_LARGE-c7560e49.png",
+  "name": "瓦盧瓦王朝",
+  "rarity": "Standard"
+ },
+ "6D578C44-4A96-48DD-8D04-B178CDB8B240": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/21/31/U_OBREZ_BATTLEPACKS_FABERGE_T2S2_LARGE-eb1fa2ac.png",
+  "name": "瑟雷德涅卡",
+  "rarity": "Enhanced"
+ },
+ "6D713ECA-2B86-4D55-9175-09B0187EAF4F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/85/126/U_MOSINNAGANT_BATTLEPACKS_FABERGE_T2S1_LARGE-5582696c.png",
+  "name": "尤爾洛娃",
+  "rarity": "Enhanced"
+ },
+ "6DC7C70A-E0F6-4F93-B7FA-6FD794E3C8EE": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/2/21/U_CEIRIGOTTIM1895_BATTLEPACKS_ROYAL_T2S1_LARGE-0215165c.png",
+  "name": "單鍵步",
+  "rarity": "Enhanced"
+ },
+ "6E300BB8-F951-4909-8703-12F5770003DA": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/53/24/U_MARSAUTOPISTOL_BATTLEPACKS_SCOUT_T2S1_LARGE-cbe828a1.png",
+  "name": "密而不宣",
+  "rarity": "Enhanced"
+ },
+ "6E5FDF7A-B920-4728-8019-056A4AEE130E": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/61/58/FT_17U_FRA_FT-17_PAINT_GOLDENM1917_LARGE-c3c6c32d.png",
+  "name": "M1917 獎盃 (極稀有)",
+  "rarity": "Superior"
+ },
+ "6EAC5D67-4F70-4CA4-B403-30FB7CBD3784": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/44/6/U_MARTINIHENRY_BATTLEPACKS_ROYAL_T1S4_LARGE-d4068884.png",
+  "name": "皇家法規",
+  "rarity": "Standard"
+ },
+ "6F3285EC-D96E-46FC-A090-B840000A3834": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/101/52/U_LUGERP08_BATTLEPACKS_VETERAN_T2S2_LARGE-9bcc1866.png",
+  "name": "格奈澤瑙伯爵",
+  "rarity": "Enhanced"
+ },
+ "70B72B9D-1F6B-4BAB-8EEB-925E69303EAF": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/74/65/U_CEIRIGOTTIM1895_BATTLEFEST_SKIN_LARGE-4abf89d0.png",
+  "name": "柯克派崔克",
+  "rarity": "Superior"
+ },
+ "723D189C-329C-4A1A-9BFE-3999CA17AF5F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/70/40/U_REMINGTONM10_BATTLEPACKS_NIGHT_T1S3_LARGE-46d86a60.png",
+  "name": "304 號高地戰役",
+  "rarity": "Standard"
+ },
+ "725BA291-A3A4-46C5-AE53-567AEC48055D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/107/92/U_BERETTAM1915_BATTLEPACKS_VETERAN_T1S3_LARGE-955ce138.png",
+  "name": "老鳥步兵",
+  "rarity": "Standard"
+ },
+ "72E11037-1D3E-4A60-A5DF-B4C60CB4D3C3": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/109/62/U_GEWEHR98_BATTLEPACKS_HUNTER_T3S1_LARGE-933edd06.png",
+  "name": "野狩",
+  "rarity": "Superior"
+ },
+ "7346FAB2-AE76-4630-BEB7-978C36BFC81C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/3/118/U_MARSAUTOPISTOL_BATTLEPACKS_UNIQUE_V1_LARGE-0376c260.png",
+  "name": "辛迪加",
+  "rarity": "Superior"
+ },
+ "73672384-CC2B-4529-A2D3-387AA02EA7FF": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/75/119/U_REMINGTONMODEL8_BATTLEPACKS_NIGHT_T1S2_LARGE-b577ec92.png",
+  "name": "費斯蒂貝爾戰役",
+  "rarity": "Standard"
+ },
+ "738E919F-E2CF-4DA3-B16E-325436703EA0": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/38/47/U_BERETTAM1915_BATTLEPACKS_VETERAN_T2S1_LARGE-da2f092a.png",
+  "name": "迪亞茲",
+  "rarity": "Enhanced"
+ },
+ "73EC3F5F-5C9A-40C0-8C7C-9F2EA69940CE": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/20/53/U_MAUSER1914_BATTLEPACKS_SCOUT_T3S1_LARGE-1435faa1.png",
+  "name": "尼可爾",
+  "rarity": "Superior"
+ },
+ "746B197A-CDD5-449C-8329-4241AB6DAC98": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/95/69/SPADU_SCOUT_PAINT_01_LARGE-a1452ee3.png",
+  "name": "紅鷹",
+  "rarity": "Enhanced"
+ },
+ "74A6F577-819D-4325-9AB5-95B926F46520": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/79/49/U_MP18_BATTLEPACKS_NIGHT_T1S1_LARGE-b131bea1.png",
+  "name": "伊塞克希薩立克戰役",
+  "rarity": "Standard"
+ },
+ "74D4F025-1D2A-BFA5-EACB-99E9A337B91D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/50/4/U_CHAUCHAT_BATTLEPACKS_FRENCH_T1S1_LARGE-cefcb6af.png",
+  "name": "瓦盧瓦王朝",
+  "rarity": "Standard"
+ },
+ "7529A80C-D2A6-48CA-ABA5-28F1583B5C06": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/111/16/U_M1911_BATTLEPACKS_VETERAN_T1S4_LARGE-6f10779d.png",
+  "name": "老鳥騎兵",
+  "rarity": "Standard"
+ },
+ "75617FF9-CBAB-4221-A8EB-E9F936B1C986": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/75/126//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_MG0818_BATTLEPACKS_Y201_T3S2_LARGE-4b825a85.png",
+  "name": "風暴",
+  "rarity": "Superior"
+ },
+ "75BB575E-3D2D-4D9C-B858-04A6E5B4E2F7": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/100/44/u_lewismg_battlepacks_hunter_t3s1_large-9c2c8f05.png",
+  "name": "黃金獵犬",
+  "rarity": "Superior"
+ },
+ "75C60964-B3AA-4F08-9C88-B52DBFE21C80": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/80/67/U_MARSAUTOPISTOL_BATTLEPACKS_SCOUT_T3S1_LARGE-b0bd51e5.png",
+  "name": "野獸",
+  "rarity": "Superior"
+ },
+ "75C8E89E-8388-41AE-ACD9-942D1D16FD5C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/125/89/U_REMINGTONM10_BATTLEPACKS_SCOUT_T1S2_LARGE-7d59f6b7.png",
+  "name": "迷彩套",
+  "rarity": "Standard"
+ },
+ "7615450A-59B3-40B8-9FB1-1D5E21FAB2CF": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/24/44/U_OBREZ_BATTLEPACKS_FABERGE_T3S1_LARGE-18d46e88.png",
+  "name": "富農",
+  "rarity": "Superior"
+ },
+ "76D20E69-E980-4E37-8E26-668304B5BD98": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/113/15/U_HELLRIEGEL1915_BATTLEPACKS_VETERAN_T1S4_LARGE-710f7470.png",
+  "name": "老鳥騎兵",
+  "rarity": "Standard"
+ },
+ "76D6D19C-10B3-4514-8BCF-9374370FDA86": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/113/29/A7VU_GER_A7V_PAINT_03_LARGE-711de62c.png",
+  "name": "Baden I",
+  "rarity": "Enhanced"
+ },
+ "76D9B149-F454-4295-93EB-6EB9916DD263": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/96/19/U_CEIRIGOTTIM1895_BATTLEPACKS_ROYAL_T3S1_LARGE-60ed257a.png",
+  "name": "奧斯塔公爵",
+  "rarity": "Superior"
+ },
+ "76FCAA23-DEEE-44CF-ABE3-61A2AE60C363": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/16/62/U_LEEENFIELDSMLE_BATTLEPACKS_NIGHT_T1S4_LARGE-f03e0862.png",
+  "name": "維萊布勒托納戰役",
+  "rarity": "Standard"
+ },
+ "7738C326-7CC2-4337-A086-4BEC03076C06": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/82/94/U_FARQUHARHILL_BATTLEPACKS_MQT_T3S1_LARGE-aea22adb.png",
+  "name": "英國皇家海軍航空隊",
+  "rarity": "Superior"
+ },
+ "77638846-78A1-452C-8897-3A17A2F864ED": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/15/50/U_MARTINIHENRY_BATTLEPACKS_NIGHT_T1S2_LARGE-f1324756.png",
+  "name": "費斯蒂貝爾戰役",
+  "rarity": "Standard"
+ },
+ "77D05D74-755B-4BB4-BDE6-33B23BE10587": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/82/109/U_BARM1918_BATTLEPACKS_NIGHT_T2S1_LARGE-52933ac6.png",
+  "name": "磷光",
+  "rarity": "Enhanced"
+ },
+ "78361B87-5736-479D-A3FA-0B896E094CBF": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/4/11/U_GASSERM1870_BATTLEPACKS_UNIQUE_V2_LARGE-fcf5e6d2.png",
+  "name": "尼古拉王",
+  "rarity": "Superior"
+ },
+ "783F8386-A394-45D0-8A17-4EC42517BB34": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/12/74/PUTILOVU_ASSAULTTRUCK_PAINT_06_LARGE-0c4ad359.png",
+  "name": "杜羅斯杜維",
+  "rarity": "Enhanced"
+ },
+ "78502D88-206A-4216-BD0D-F5FCFDCDAF44": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/50/19/UIWepKukri-32ed91e1.png",
+  "name": "反曲刀",
+  "rarity": "Superior"
+ },
+ "78A69110-075F-4925-9F02-93C3E6F146FF": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/98/85/U_MAXIMSMG_BATTLEPACKS_FABERGE_T1S2_LARGE-62551e2b.png",
+  "name": "戈爾利采·塔爾努夫戰役",
+  "rarity": "Standard"
+ },
+ "78C007F2-946F-4B4F-8363-7CE4F6FA8C0D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/62/7/SPADU_SCOUT_PAINT_04_LARGE-3e075785.png",
+  "name": "黃色馬戲團",
+  "rarity": "Enhanced"
+ },
+ "78EB0C4D-A578-4B48-B50C-A4D93941E527": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/66/89/U_MOSINNAGANT_BATTLEPACKS_FABERGE_T1S1_LARGE-bea76abf.png",
+  "name": "格尼拉利帕戰役",
+  "rarity": "Standard"
+ },
+ "794F5A8A-2B2A-49D5-BDB8-B2942B441BB5": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/98/22/U_BROWNINGM1917_BATTLEPACKS_MQT_T1S1_LARGE-9eeac3c4.png",
+  "name": "青島戰役",
+  "rarity": "Standard"
+ },
+ "79608D2E-A991-CD6D-71E1-A9BCE9783C08": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/128/56/U_WEBFOSAUTOREV_BATTLEPACKS_ROYAL_T1S1_LARGE-8038179c.png",
+  "name": "皇家旨意",
+  "rarity": "Standard"
+ },
+ "79777154-BD03-440C-97DA-7A800C9D03C3": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/45/68/U_SJOGRENSHOTGUN_BATTLEPACKS_FRENCH_T2S2_LARGE-2d442d64.png",
+  "name": "杜奧蒙",
+  "rarity": "Enhanced"
+ },
+ "799C0BF2-3226-4747-89BC-ABE3D7C1F865": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/109/93/U_MAXIMSMG_BATTLEPACKS_FABERGE_T1S4_LARGE-6da3401a.png",
+  "name": "尤格拉戰役",
+  "rarity": "Standard"
+ },
+ "7A24E35C-EC07-4C2D-A9DE-A8C000C50D0C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/71/59/U_BORCHARDTC93_BATTLEPACKS_ROYAL_T2S2_LARGE-473b39cf.png",
+  "name": "掠奪者",
+  "rarity": "Enhanced"
+ },
+ "7A363DC8-45EB-46E8-AA04-337405D0A1BA": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/29/28/U_WINCHESTERM1895_BATTLEPACKS_NIGHT_T1S2_LARGE-e3e45c4d.png",
+  "name": "費斯蒂貝爾戰役",
+  "rarity": "Standard"
+ },
+ "7AC1787E-DFD2-4D9E-AC10-A5BCC92B1E18": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/28/26/U_GEWEHR98_BATTLEPACKS_SCOUT_T1S3_LARGE-e4e6459e.png",
+  "name": "迷彩罩",
+  "rarity": "Standard"
+ },
+ "7B20BF32-D2C6-4AD2-9208-F9612FCC7CDA": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/19/60/U_BROWNINGA5_BATTLEPACKS_ROYAL_T2S2_LARGE-ed3cb5f0.png",
+  "name": "雷霆",
+  "rarity": "Enhanced"
+ },
+ "7CB43200-5E40-40FB-89FD-5B550AC2879F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/18/30/UIWepPrybar-121eb5cc.png",
+  "name": "撬棍",
+  "rarity": "Superior"
+ },
+ "7CED7D03-5804-4E67-A5A1-44A83B5722D1": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/118/20/U_LUGER1906_BATTLEPACKS_ROYAL_T1S2_LARGE-8aec3993.png",
+  "name": "皇家詔書",
+  "rarity": "Standard"
+ },
+ "7D65E42B-3F4E-4501-BFCD-0823EE97B3A6": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/88/83/U_BERETTAM1915_BATTLEPACKS_VETERAN_T3S1_LARGE-a853530e.png",
+  "name": "敢死隊",
+  "rarity": "Superior"
+ },
+ "7D94B1C9-1D02-45D1-B584-FF016D7EC46D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/95/118/U_CEIRIGOTTIM1895_BATTLEPACKS_NIGHT_T2S2_LARGE-5f8a630b.png",
+  "name": "卡佩羅",
+  "rarity": "Enhanced"
+ },
+ "7DA77EA6-E44F-4F4C-94D4-B4952C236D7D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/123/76/U_LUGER1906_BATTLEPACKS_NIGHT_T1S3_LARGE-854c4efe.png",
+  "name": "304 號高地戰役",
+  "rarity": "Standard"
+ },
+ "7DB56082-9560-4B12-ADA9-8F55E90C04F9": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/54/2/U_MP18_BATTLEPACKS_SCOUT_T1S4_LARGE-36fed00a.png",
+  "name": "迷彩紗",
+  "rarity": "Standard"
+ },
+ "7E66B03E-5D17-470D-9FDE-58CBAA4DAF3F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/63/7/U_HOTCHKISSM1909_BATTLEPACKS_NIGHT_T1S2_LARGE-c1f9c8e8.png",
+  "name": "費斯蒂貝爾戰役",
+  "rarity": "Standard"
+ },
+ "7E9597B9-5E01-4537-8159-5F36D1DAA2AB": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/54/92/U_REMINGTONM10_BATTLEPACKS_NIGHT_T1S1_LARGE-365c19d6.png",
+  "name": "伊塞克希薩立克戰役",
+  "rarity": "Standard"
+ },
+ "7EA986CE-6BC2-40C3-A36F-07670A39BB22": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/87/107/U_HUOTAUTORIFLE_BATTLEPACKS_NIGHT_T2S2_LARGE-a96b9bd6.png",
+  "name": "布洛克",
+  "rarity": "Enhanced"
+ },
+ "7EB5AE6A-D1BF-487A-B234-626DDBF834B8": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/126/114//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_NAGANT1895_BATTLEPACKS_Y201_T3S1_LARGE-7e728d82.png",
+  "name": "薩利卡米什",
+  "rarity": "Superior"
+ },
+ "7F1B843B-46CD-4C38-AC9D-FBEA49205861": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/46/33/U_HELLRIEGEL1915_BATTLEPACKS_NIGHT_T1S1_LARGE-d2df2293.png",
+  "name": "伊塞克希薩立克戰役",
+  "rarity": "Standard"
+ },
+ "7FA10C31-133B-449B-8A50-8B81BF2C7959": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/126/114/MARKVU_GBR_MARKV_PAINT_07_LARGE-828ed800.png",
+  "name": "原廠灰",
+  "rarity": "Enhanced"
+ },
+ "8038A04E-40A9-996D-C692-DACAB767F5E1": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/113/10/U_MAUSERSL_BATTLEPACKS_VETERAN_T1S1_LARGE-8f0a193d.png",
+  "name": "老鳥士兵",
+  "rarity": "Standard"
+ },
+ "805A97E9-7C08-4158-8CFE-76C6068CD4BA": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/36/116/SALMSONU_2SEAT_PAINT_04_LARGE-dc8cbb11.png",
+  "name": "閃耀紅",
+  "rarity": "Enhanced"
+ },
+ "80BEFA1A-043D-404C-B13F-BBF8219FAFC7": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/62/85/U_BODEO1889_BATTLEPACKS_VETERAN_T3S1_LARGE-c2557e08.png",
+  "name": "勇者",
+  "rarity": "Superior"
+ },
+ "80FC78D6-CD9A-475C-BE0D-379C37B689A2": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/40/58/U_WINCHESTERM1895_BATTLEPACKS_NIGHT_T2S1_LARGE-d83abbcd.png",
+  "name": "格羅德諾",
+  "rarity": "Enhanced"
+ },
+ "81067EFF-5DB7-484A-AC79-2DAC7377BB4A": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/82/83/A7VU_GER_A7V_PAINT_DESERT_LARGE-525341fb.png",
+  "name": "沙漠金 (極稀有)",
+  "rarity": "Superior"
+ },
+ "822C7AFD-1A76-48FC-BEED-40E33E1520A1": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/59/112/U_CEIRIGOTTIM1895_BATTLEPACKS_NIGHT_T2S1_LARGE-3b706650.png",
+  "name": "內羅山",
+  "rarity": "Enhanced"
+ },
+ "8291FA2E-97ED-4DD4-B0ED-23C685E19ECA": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/49/50/U_REMINGTONMODEL1900_BATTLEPACKS_FABERGE_T1S4_LARGE-31324406.png",
+  "name": "尤格拉戰役",
+  "rarity": "Standard"
+ },
+ "8298AD9A-3DA3-4A37-83B2-522631C7BCAF": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/15/78/U_MAUSERC96_BATTLEPACKS_VETERAN_T2S1_LARGE-f1b26e7e.png",
+  "name": "邱吉爾",
+  "rarity": "Enhanced"
+ },
+ "82D88D7C-7EC9-4E67-A6D6-0BF27BCE41A9": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/6/123/U_SPRINGFIELDM1903_BATTLEPACKS_VETERAN_T2S1_LARGE-fa7b1320.png",
+  "name": "貝洛伍德",
+  "rarity": "Enhanced"
+ },
+ "834274CA-3761-409E-968A-F79335D47793": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/42/103/u_hotchkissm1909_battlepacks_hunter_t3s1_large-d6995dfb.png",
+  "name": "大格里芬凡丁犬",
+  "rarity": "Superior"
+ },
+ "83F05BEF-4AF2-4DD5-A3D8-132F8C9FA27E": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/28/93/HMSLANCERU_DESTROYER_PAINT_01_LARGE-1c5dbfdd.png",
+  "name": "閃爍條紋",
+  "rarity": "Enhanced"
+ },
+ "848080CA-0F2C-4B2D-B6EC-2BFF74ADAB11": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/121/126/U_NAGANTM1895_BATTLEPACKS_FABERGE_T3S1_LARGE-877eca94.png",
+  "name": "拉斯普丁",
+  "rarity": "Superior"
+ },
+ "854F9EE2-3158-4843-9518-F7499EDCDE76": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/89/107/U_WINCHESTERM1907_BATTLEPACKS_NIGHT_T1S2_LARGE-59950891.png",
+  "name": "費斯蒂貝爾戰役",
+  "rarity": "Standard"
+ },
+ "8553788E-91F5-44CB-B4F2-ED71101799B0": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/17/46/U_MOSINNAGANT_BATTLEPACKS_FABERGE_T1S3_LARGE-efd2e022.png",
+  "name": "魯特斯克戰役",
+  "rarity": "Standard"
+ },
+ "85EAF47C-285E-4B0C-BEE9-2C6875CF590E": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/36/8/U_MAUSER1914_BATTLEPACKS_UNIQUE_V1_LARGE-dcf8e20e.png",
+  "name": "莫伯日",
+  "rarity": "Superior"
+ },
+ "86540C31-99B3-4CEB-8929-23E302CEBB60": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/110/118/U_GEWEHR98_BATTLEPACKS_NIGHT_T1S4_LARGE-6e8a4090.png",
+  "name": "維萊布勒托納戰役",
+  "rarity": "Standard"
+ },
+ "866412A9-30D8-2F90-4807-52532421E28E": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/1/13/U_HELLRIEGEL1915_BATTLEPACKS_VETERAN_T1S1_LARGE-fff3cbff.png",
+  "name": "老鳥士兵",
+  "rarity": "Standard"
+ },
+ "86AD1AAC-2742-4331-BA48-538BAE406C8A": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/72/66/U_HOTCHKISSM1909_BATTLEPACKS_NIGHT_T1S3_LARGE-48be578c.png",
+  "name": "304 號高地戰役",
+  "rarity": "Standard"
+ },
+ "86AF823C-B535-46CC-BF52-1EC763E025F8": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/2/1/ILYAMUROMETSU_HEAVYBOMBER_PAINT_05_LARGE-feff490f.png",
+  "name": "俄羅斯騎士",
+  "rarity": "Enhanced"
+ },
+ "8815D87D-8149-41A6-A5C9-C8DC275BCD3B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/102/15/U_WEBLEYMK6_BATTLEPACKS_BATTLESCARRED_T2S1_LARGE-9af155be.png",
+  "name": "賈卡幫",
+  "rarity": "Enhanced"
+ },
+ "885CA94F-525C-43E1-9351-D1A8BFD4071B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/99/81/U_LANCASTERHOWDAH_BATTLEPACKS_VETERAN_T1S4_LARGE-9d518416.png",
+  "name": "老鳥騎兵",
+  "rarity": "Standard"
+ },
+ "88ADE5C7-13C5-4E8F-BAFE-C5E952BDE34E": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/46/95/MARKVU_GBR_MARKV_PAINT_05_LARGE-d25f9308.png",
+  "name": "閃耀",
+  "rarity": "Enhanced"
+ },
+ "88BEB074-FD3D-4F6D-8109-CE44EA2B3908": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/86/99/U_HOTCHKISSM1909_BATTLEPACKS_NIGHT_T2S2_LARGE-aa9d4156.png",
+  "name": "波默羅伊",
+  "rarity": "Enhanced"
+ },
+ "892EEB96-06A5-4009-B775-B87833714D6C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/113/11/U_REMINGTONMODEL8_BATTLEPACKS_VETERAN_T2S2_LARGE-710bb2d8.png",
+  "name": "摩西",
+  "rarity": "Enhanced"
+ },
+ "89D3684E-C518-4377-8662-A7CCD8B43C63": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/115/33/U_FN1903_BATTLEPACKS_ROYAL_T2S1_LARGE-8d21a371.png",
+  "name": "吹牛者",
+  "rarity": "Enhanced"
+ },
+ "89D9DB4C-599B-0167-1BC4-7474A3EF818C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/98/59/U_BULLDOG_BATTLEPACKS_ROYAL_T1S1_LARGE-623b9174.png",
+  "name": "皇家旨意",
+  "rarity": "Standard"
+ },
+ "89E64FD6-02C7-60C2-8F91-A162FC496190": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/91/111/U_LUGERP08_BATTLEPACKS_VETERAN_T1S1_LARGE-a591d6e5.png",
+  "name": "老鳥士兵",
+  "rarity": "Standard"
+ },
+ "89F25A3F-E7F3-43DD-A440-36BE377668AB": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/14/98/U_ROSSMKIII_BATTLEPACKS_BATTLESCARRED_T3S1_LARGE-0e6210a2.png",
+  "name": "廢物",
+  "rarity": "Superior"
+ },
+ "8A58B8D4-063A-41A2-83BC-451B042A6D18": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/99/63/U_MARSAUTOPISTOL_BATTLEPACKS_SCOUT_T2S2_LARGE-633f6022.png",
+  "name": "費爾法克斯",
+  "rarity": "Enhanced"
+ },
+ "8B569FC8-3A15-4BEA-8A7D-FC10E4213B19": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/72/80/U_LEEENFIELDSMLE_BATTLEPACKS_NIGHT_T1S1_LARGE-b8b0519c.png",
+  "name": "伊塞克希薩立克戰役",
+  "rarity": "Standard"
+ },
+ "8BCCD028-1945-4515-B9A5-DA3E48ED0E80": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/82/35/U_PERINO_BATTLEPACKS_FABERGE_T1S1_LARGE-ae23fa73.png",
+  "name": "格尼拉利帕戰役",
+  "rarity": "Standard"
+ },
+ "8C104B37-8C89-A99D-02D3-BE1782D9DB92": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/35/29/U_MARTINIHENRY_BATTLEPACKS_ROYAL_T1S1_LARGE-dd1d5e35.png",
+  "name": "皇家旨意",
+  "rarity": "Standard"
+ },
+ "8C218316-3611-4686-A7AC-BE6297CBB715": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/5/72/U_RSCSMG_BATTLEPACKS_BATTLESCARRED_T1S1_LARGE-fb48e842.png",
+  "name": "回憶錄",
+  "rarity": "Standard"
+ },
+ "8C5A4F63-C0CF-4BD0-B5CF-88C15A332564": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/61/42/U_RSCSMG_BATTLEPACKS_BATTLESCARRED_T3S1_LARGE-c32a7422.png",
+  "name": "藏骨堂",
+  "rarity": "Superior"
+ },
+ "8C8BDEBF-9A24-4C0F-BA62-EF13C807996B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/1/74/HANSAU_BOMBER_PAINT_06_LARGE-ff4a98cf.png",
+  "name": "黑圖樣",
+  "rarity": "Enhanced"
+ },
+ "8CB6E1BE-FE80-458B-B5E0-204C0D96FAA0": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/55/38//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_CHAUCHATSMG_BATTLEPACKS_Y201_T3S1_LARGE-c9da9cad.png",
+  "name": "狼人",
+  "rarity": "Superior"
+ },
+ "8D0B9171-2DBB-4FCD-B5B7-3AC8DBC9FC5E": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/98/73//mnt/dice-filer-gamedata/3597807/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_M1919THOMPSONANNIHILATOR_BATTLEPACKS_Y201_T3S1_LARGE-62b7c9cf.png",
+  "name": "飛蛾撲火",
+  "rarity": "Superior"
+ },
+ "8DBE38D8-14D7-4E1F-AEB5-76EB266E5E60": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/19/10/U_ENFIELD1917_BATTLEPACKS_BATTLESCARRED_T1S1_LARGE-13f6298f.png",
+  "name": "彈震症",
+  "rarity": "Standard"
+ },
+ "8DD01353-AF5F-425E-91AA-384922986208": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/54/85/U_MONDRAGON_BATTLEPACKS_NIGHT_T2S2_LARGE-36555ca0.png",
+  "name": "R 重型轟炸機",
+  "rarity": "Enhanced"
+ },
+ "8E06EACD-AE78-4283-B8BC-281BCE691243": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/40/98/U_WEBLEYMK6_BATTLEPACKS_BATTLESCARRED_T1S4_LARGE-289e4fa9.png",
+  "name": "血腥比勒庫爾",
+  "rarity": "Standard"
+ },
+ "8EAFFFE6-0377-427F-9E07-AFE29B54AAED": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/84/112//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_VETTERLIVITALIM1870_BATTLEPACKS_Y201_T3S1_LARGE-ac904aab.png",
+  "name": "多貝爾多",
+  "rarity": "Superior"
+ },
+ "8EB3F6A7-688A-435D-BCE1-9D1AB65B7DA7": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/88/68/U_BERGMANN1915MG_BATTLEPACKS_NIGHT_T1S4_LARGE-a844ac50.png",
+  "name": "維萊布勒托納戰役",
+  "rarity": "Standard"
+ },
+ "8EC4D497-A0C3-430E-8855-A60EF284C188": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/45/29/U_HOTCHKISSM1909_BATTLEPACKS_VETERAN_T3S1_LARGE-d31d8d24.png",
+  "name": "福煦",
+  "rarity": "Superior"
+ },
+ "8F09AA25-22F0-4FCA-988C-634FE45E0486": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/60/122/U_SPRINGFIELDM1903_BATTLEPACKS_NIGHT_T3S1_LARGE-3c8616ee.png",
+  "name": "哈特尼",
+  "rarity": "Superior"
+ },
+ "8F47EBD4-ACE8-428F-997F-47C075CDA6FF": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/27/71/U_FEDOROVAVTOMAT_BATTLEPACKS_FABERGE_T2S2_LARGE-1bb93213.png",
+  "name": "伊斯梅爾",
+  "rarity": "Enhanced"
+ },
+ "8F790A53-FB96-40B1-8808-A0D6639B7314": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/28/85/U_MONDRAGON_BATTLEPACKS_HUNTER_T3S1_LARGE-1c552169.png",
+  "name": "阿塔白",
+  "rarity": "Superior"
+ },
+ "8FC0A1AA-B7CE-4A36-B76D-0882F66966D8": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/97/4/U_STEYRMANM1895_BATTLEPACKS_VETERAN_T1S2_LARGE-9f049b5b.png",
+  "name": "老鳥護衛",
+  "rarity": "Standard"
+ },
+ "9039F98A-F20D-43E9-B528-D3D33A5F0D27": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/117/29/PIERCEARROWU_GBR_PIERCEARROW_PAINT_05_LARGE-751d17eb.png",
+  "name": "雙色調",
+  "rarity": "Enhanced"
+ },
+ "907FF44E-30AB-425F-8213-BB5315DA754D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/53/8/U_OBREZ_BATTLEPACKS_FABERGE_T2S1_LARGE-35f83831.png",
+  "name": "貝德涅卡",
+  "rarity": "Enhanced"
+ },
+ "90DA9620-9D73-4388-8D1D-A37B3A9ED278": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/97/22/U_REMINGTONM10_BATTLEPACKS_SCOUT_T1S3_LARGE-9f16b2c5.png",
+  "name": "迷彩罩",
+  "rarity": "Standard"
+ },
+ "90F1C5E9-AE57-40FB-A503-6B054D10CE71": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/50/76/U_GEWEHR98_BATTLEPACKS_SCOUT_T1S4_LARGE-ceb419a2.png",
+  "name": "迷彩紗",
+  "rarity": "Standard"
+ },
+ "917A8650-E80A-27F0-11FE-7BD7C53637D7": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/114/5/U_HUOTAUTORIFLE_BATTLEPACKS_VETERAN_T1S1_LARGE-7205f4d6.png",
+  "name": "老鳥士兵",
+  "rarity": "Standard"
+ },
+ "917B1B48-21BC-4FCE-A45C-BDE2A1C561FB": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/122/62/UIWepBarbedWireClub-7a3e6d11.png",
+  "name": "鐵絲木棒",
+  "rarity": "Superior"
+ },
+ "9182AAC1-832C-4FD2-B0C7-1A26EE3FFBBF": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/6/64/U_FROMMERSTOP_BATTLEPACKS_SCOUT_T1S2_LARGE-06c01000.png",
+  "name": "迷彩套",
+  "rarity": "Standard"
+ },
+ "9227838C-083C-48AF-B8B3-6E7D2FDAF651": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/100/18/U_MADSENMG_BATTLEPACKS_SCOUT_T2S1_LARGE-9ceef8cd.png",
+  "name": "坦能堡",
+  "rarity": "Enhanced"
+ },
+ "924A1CC5-0673-40C8-AF1B-083E4AF862CF": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/84/125/U_REMINGTONM10_BATTLEPACKS_SCOUT_T2S2_LARGE-54835b9b.png",
+  "name": "迪林格",
+  "rarity": "Enhanced"
+ },
+ "9254D4FF-781E-4896-9EBD-7AB12BE25805": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/110/100/U_LEWISMG_BATTLEPACKS_ROYAL_T1S2_LARGE-929cd1dc.png",
+  "name": "皇家詔書",
+  "rarity": "Standard"
+ },
+ "92AAFB82-6D9E-4639-9F74-2CA9E2CF8459": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/14/5/U_CARCANOCARBINE_BATTLEPACKS_MQT_T1S2_LARGE-0e053358.png",
+  "name": "福克蘭群島戰役",
+  "rarity": "Standard"
+ },
+ "92C87AFC-9689-48DF-A675-0CCEEE9AC425": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/8/25/U_LUGER1906_BATTLEPACKS_NIGHT_T1S1_LARGE-f819e372.png",
+  "name": "伊塞克希薩立克戰役",
+  "rarity": "Standard"
+ },
+ "92E9824E-CC52-4318-BC6C-884CB21E2BE1": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/6/8/U_HELLRIEGEL1915_BATTLEPACKS_VETERAN_T1S3_LARGE-06f884f1.png",
+  "name": "老鳥步兵",
+  "rarity": "Standard"
+ },
+ "935C2E77-E1EC-44E0-8D7E-07697A6BDF0E": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/128/66/U_REMINGTONMODEL8_BATTLEPACKS_NIGHT_T1S3_LARGE-80423006.png",
+  "name": "304 號高地戰役",
+  "rarity": "Standard"
+ },
+ "93855551-D133-46FB-969E-7BE1BB2D8947": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/82/5/U_FROMMERSTOP_BATTLEPACKS_SCOUT_T1S3_LARGE-52fbc5ea.png",
+  "name": "迷彩罩",
+  "rarity": "Standard"
+ },
+ "93C225BD-31D4-432E-AF4A-06B5EAD5A681": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/18/111/U_LANCASTERHOWDAH_BATTLEPACKS_VETERAN_T2S1_LARGE-ee6f417a.png",
+  "name": "驃騎兵",
+  "rarity": "Enhanced"
+ },
+ "93D8FB83-7BE1-47A9-BD01-3FE86C7AF9FA": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/112/115/U_BARM1918_BATTLEPACKS_ROYAL_T3S1_LARGE-9073a025.png",
+  "name": "步兵小子",
+  "rarity": "Superior"
+ },
+ "94CEF58D-7893-499A-ABB8-C674B5A4869A": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/127/32//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_GENERALLIURIFLE_BATTLEPACKS_Y201_T3S1_LARGE-81e05ef8.png",
+  "name": "埃丹",
+  "rarity": "Superior"
+ },
+ "94D32AAA-DD2D-4441-B757-039F8FDC5022": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/41/80/U_WEBFOSAUTOREV_BATTLEPACKS_ROYAL_T2S1_LARGE-d7b09dc1.png",
+  "name": "索姆河",
+  "rarity": "Enhanced"
+ },
+ "94DDE961-03AD-4E0A-828A-B30005EDA238": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/97/87/U_M1911_BATTLEPACKS_VETERAN_T3S1_LARGE-9f57cd46.png",
+  "name": "攪局者",
+  "rarity": "Superior"
+ },
+ "94E4E926-3D73-4A28-9870-5F1EBA3D3211": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/68/106/U_WINCHESTERM1895_BATTLEPACKS_ROYAL_T1S4_LARGE-4496484b.png",
+  "name": "皇家法規",
+  "rarity": "Standard"
+ },
+ "94FB44B8-68AE-460C-BC59-B148814FD85B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/118/3/U_MADSENMG_BATTLEPACKS_NIGHT_T2S1_LARGE-7603dbaf.png",
+  "name": "波濟耶爾",
+  "rarity": "Enhanced"
+ },
+ "9500B18B-E656-4229-A50C-C862F2BA55A3": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/82/110/U_WEBFOSAUTOREV_BATTLEPACKS_ROYAL_T1S4_LARGE-5292deb6.png",
+  "name": "皇家法規",
+  "rarity": "Standard"
+ },
+ "9504F717-094E-4833-95E5-62853DABA910": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/2/100/U_WINCHESTER1897_BATTLEPACKS_VETERAN_T1S3_LARGE-02644734.png",
+  "name": "老鳥步兵",
+  "rarity": "Standard"
+ },
+ "95140DF1-7D34-44CB-962F-149A0BEBFC9C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/50/123/U_STEYRM1912_BATTLEPACKS_ROYAL_T1S3_LARGE-327b88ea.png",
+  "name": "皇家旨令",
+  "rarity": "Standard"
+ },
+ "951DB077-B898-4B1A-8BD8-55DDCF6C8962": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/65/53/U_WINCHESTER1897_BATTLEPACKS_VETERAN_T3S1_LARGE-bf35cdbe.png",
+  "name": "掃蕩者",
+  "rarity": "Superior"
+ },
+ "955187D9-8742-4E25-A020-A0B50D088EA9": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/116/24/U_M1911_BATTLEPACKS_UNIQUE_V2_LARGE-74e8938c.png",
+  "name": "在法蘭德斯戰場",
+  "rarity": "Superior"
+ },
+ "956FF883-E096-4814-9C68-020363D4A3CA": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/17/88/U_FROMMERSTOP_BATTLEPACKS_UNIQUE_V1_LARGE-1158f4e0.png",
+  "name": "榮譽團長",
+  "rarity": "Superior"
+ },
+ "9599CB67-4626-43D1-A2B6-667F139DCF7D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/93/114/U_REMINGTONM10_BATTLEPACKS_NIGHT_T1S4_LARGE-5d72f659.png",
+  "name": "維萊布勒托納戰役",
+  "rarity": "Standard"
+ },
+ "95E65D86-5B92-44BC-93DB-CB0E88EFE578": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/115/44/U_BULLDOG_BATTLEPACKS_ROYAL_T3S1_LARGE-8d2cd49c.png",
+  "name": "小孩",
+  "rarity": "Superior"
+ },
+ "9648248D-9174-4A67-910F-43B9C01173F8": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/89/46/U_BARM1918_BATTLEPACKS_NIGHT_T1S3_LARGE-a7d2fd48.png",
+  "name": "304 號高地戰役",
+  "rarity": "Standard"
+ },
+ "975DC5AF-6F41-47BA-A480-873AD9040C2A": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/95/125/U_GEWEHR98_BATTLEPACKS_NIGHT_T2S2_LARGE-a17db8ab.png",
+  "name": "施瓦本",
+  "rarity": "Enhanced"
+ },
+ "9786E070-9756-484C-8357-9C841D9E1041": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/43/67/A7VU_GER_A7V_PAINT_07_LARGE-d5431444.png",
+  "name": "齊格飛",
+  "rarity": "Enhanced"
+ },
+ "9794AD11-9A7C-45BC-A82D-4DC78BFCF764": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/111/18/U_LEEENFIELDSMLE_BATTLEPACKS_NIGHT_T2S2_LARGE-6f12bb6e.png",
+  "name": "無聲者",
+  "rarity": "Enhanced"
+ },
+ "97A779A0-4581-4041-9790-8B330DF5FEA2": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/112/107/U_BODEO1889_BATTLEPACKS_UNIQUE_V1_LARGE-70959487.png",
+  "name": "極近距離",
+  "rarity": "Superior"
+ },
+ "97D47EE9-701A-46F3-B939-2C7EB051FB09": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/14/56//mnt/dice-filer-gamedata/3597807/Persistence/Images/UI/Textures/Persistence/Fancy_Large/U_MP18_BATTLEPACKS_R2X_T3S1_LARGE-f2c885f9.png",
+  "name": "齊格飛防線",
+  "rarity": "Superior"
+ },
+ "97DFD03C-A9D4-41D8-8A3D-1F25A50C2609": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/110/84/U_REMINGTONMODEL8_BATTLEPACKS_NIGHT_T2S1_LARGE-6eacb25a.png",
+  "name": "法曼",
+  "rarity": "Enhanced"
+ },
+ "9842CB4C-54B9-439F-8007-04D50C57C9B7": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/63/82/U_CHAUCHAT_BATTLEPACKS_FRENCH_T1S3_LARGE-c1ae47fa.png",
+  "name": "波旁王朝",
+  "rarity": "Standard"
+ },
+ "98CA7C4B-E02F-4701-9097-C70CEBEAECA0": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/43/5/U_MAUSER1917_BATTLEPACKS_MQT_T1S3_LARGE-2bfb1831.png",
+  "name": "日德蘭戰役",
+  "rarity": "Standard"
+ },
+ "98E54235-126E-4B84-99CF-E3733192BEC8": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/3/60/U_LEWISMG_BATTLEPACKS_ROYAL_T3S1_LARGE-03c43ff2.png",
+  "name": "響尾蛇軍團",
+  "rarity": "Superior"
+ },
+ "99005D93-0034-4F32-9089-70B7410656F6": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/68/109/U_BERETTAM1918_BATTLEPACKS_NIGHT_T2S1_LARGE-bc6ddf2b.png",
+  "name": "奇莫內山",
+  "rarity": "Enhanced"
+ },
+ "9938DDC3-44C1-4868-A141-E217CE4A0A47": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/27/95/U_WINCHESTERM1895_BATTLEPACKS_NIGHT_T2S2_LARGE-e5a185fa.png",
+  "name": "科普蘇茲",
+  "rarity": "Enhanced"
+ },
+ "99887592-70E6-4B19-8605-F1EA76080F95": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/61/91/U_FN1903_BATTLEPACKS_ROYAL_T1S2_LARGE-c3a53ed8.png",
+  "name": "皇家詔書",
+  "rarity": "Standard"
+ },
+ "9988A3D0-C273-4B44-A864-AC7195C9F58A": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/91/90/U_BROWNINGA5_BATTLEPACKS_NIGHT_T2S1_LARGE-5b5aae86.png",
+  "name": "142 號山丘",
+  "rarity": "Enhanced"
+ },
+ "999D12E0-9D35-405F-9668-8EBCC9C31373": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/112/105/U_MOSINNAGANT_BATTLEPACKS_FABERGE_T3S1_LARGE-7069856b.png",
+  "name": "波卡列娃",
+  "rarity": "Superior"
+ },
+ "99BBF6B6-B5B3-4EB8-B7CB-9CF9F5E8E6F6": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/110/38/U_STEYRMANM1895_BATTLEPACKS_VETERAN_T2S1_LARGE-92268b30.png",
+  "name": "加利西亞",
+  "rarity": "Enhanced"
+ },
+ "99DAB1AB-8231-4F1A-9992-9EEDD5545A7E": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/93/126/U_BERGMANN1915MG_BATTLEPACKS_SCOUT_T2S1_LARGE-5d7ecb50.png",
+  "name": "巴波姆",
+  "rarity": "Enhanced"
+ },
+ "9A20ED1B-4B8B-F28A-B1D6-0E8FF475078F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/117/97/U_KOLIBRI_BATTLEPACKS_ROYAL_T1S1_LARGE-759fd646.png",
+  "name": "皇家旨意",
+  "rarity": "Standard"
+ },
+ "9A4DC7CF-13F3-4E5F-A3DB-A0D2DFDDF17A": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/37/6/U_BERGMANN1915MG_BATTLEPACKS_NIGHT_T1S3_LARGE-2506a2fa.png",
+  "name": "304 號高地戰役",
+  "rarity": "Standard"
+ },
+ "9B270588-B76C-4038-AF63-0AA637DE0E98": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/30/59/U_REMINGTONMODEL8_BATTLEPACKS_NIGHT_T3S1_LARGE-1e3bf6a8.png",
+  "name": "哈佩",
+  "rarity": "Superior"
+ },
+ "9BFAA4F2-F300-448E-8164-8A3CA29DE059": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/42/85/U_MAUSERSL_BATTLEPACKS_VETERAN_T2S1_LARGE-d655faaf.png",
+  "name": "巴伐利亞",
+  "rarity": "Enhanced"
+ },
+ "9CA4A701-C9BC-4E56-8869-AF873F329F3F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/101/108/U_BROWNINGM1917_BATTLEPACKS_MQT_T2S2_LARGE-6594988d.png",
+  "name": "莉莉",
+  "rarity": "Enhanced"
+ },
+ "9D039E2E-A732-4EEE-9A77-CF02CB7331B3": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/124/1/U_ENFIELD1917_BATTLEPACKS_BATTLESCARRED_T1S3_LARGE-8401eb7a.png",
+  "name": "雅巴爾峽谷",
+  "rarity": "Standard"
+ },
+ "9D070D54-DAB4-483C-B4B4-D8C9053D7FA9": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/38/44/U_STEYRMANM1895_BATTLEPACKS_NIGHT_T2S2_LARGE-262c350b.png",
+  "name": "馮·巴亨費爾德",
+  "rarity": "Enhanced"
+ },
+ "9D15AA59-DBD8-49CF-9743-AD6FD3A600D6": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/66/26/U_HELLRIEGEL1915_BATTLEPACKS_VETERAN_T2S1_LARGE-bee6e227.png",
+  "name": "提羅爾",
+  "rarity": "Enhanced"
+ },
+ "9D341A63-6850-40C5-96A5-7112E809D332": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/86/10/U_HOWELL_BATTLEPACKS_BATTLESCARRED_T1S4_LARGE-56f6f6e4.png",
+  "name": "德維爾森林",
+  "rarity": "Standard"
+ },
+ "9D8DF4EA-C4F4-4E23-B581-C22A365A2A41": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/104/85/HANSAU_BOMBER_PAINT_05_LARGE-68abad30.png",
+  "name": "紅粉佳人",
+  "rarity": "Enhanced"
+ },
+ "9D92A534-A5F7-4BCA-81E7-2A5E13A54368": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/114/26/U_HELLRIEGEL1915_BATTLEPACKS_VETERAN_T2S2_LARGE-8e1a808c.png",
+  "name": "蝸牛",
+  "rarity": "Enhanced"
+ },
+ "9DF23238-B031-4682-9DB7-E7D98E9A29B1": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/62/91/U_CARCANOCARBINE_BATTLEPACKS_MQT_T1S4_LARGE-c2a521c2.png",
+  "name": "奧特朗托海峽戰役",
+  "rarity": "Standard"
+ },
+ "9E034162-3A13-421D-B5D3-3FABF398F3A0": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/82/11/U_SJOGRENSHOTGUN_BATTLEPACKS_FRENCH_T1S4_LARGE-520b2afb.png",
+  "name": "波拿巴王朝",
+  "rarity": "Standard"
+ },
+ "9E3E4647-F9E4-4E3F-81B4-BFDEA6CA5C37": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/16/48/U_REMINGTONM10_BATTLEPACKS_SCOUT_T3S1_LARGE-f0308244.png",
+  "name": "暴動",
+  "rarity": "Superior"
+ },
+ "9EC71D6B-AE9F-4BDE-B5A9-4016916B890C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/39/125/U_FEDOROVAVTOMAT_BATTLEPACKS_FABERGE_T1S2_LARGE-d983872e.png",
+  "name": "戈爾利采·塔爾努夫戰役",
+  "rarity": "Standard"
+ },
+ "9ECD0422-7EA9-4845-B8AB-61566B4AC7E9": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/86/43/U_REMINGTONM10_BATTLEPACKS_NIGHT_T2S2_LARGE-aad5caca.png",
+  "name": "貢德雷庫",
+  "rarity": "Enhanced"
+ },
+ "9F001B7E-98ED-4868-8DB9-BBC097A484EA": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/82/2/U_MAUSER1914_BATTLEPACKS_SCOUT_T1S2_LARGE-aefee787.png",
+  "name": "迷彩套",
+  "rarity": "Standard"
+ },
+ "9F0C9DDC-97AB-4F1A-8331-4002811D1731": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/69/120/U_BULLDOG_BATTLEPACKS_ROYAL_T1S3_LARGE-45889e79.png",
+  "name": "皇家旨令",
+  "rarity": "Standard"
+ },
+ "9F4942D8-70EF-40D9-9C06-A226434FBFDD": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/63/84/U_STEYRMANM1895_BATTLEPACKS_VETERAN_T3S1_LARGE-3fac6091.png",
+  "name": "雪絨花",
+  "rarity": "Superior"
+ },
+ "9F8E7713-E573-4B90-AFB9-07B69F168C11": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/3/112/U_SPRINGFIELDM1903_BATTLEPACKS_HUNTER_T3S1_LARGE-03906b5c.png",
+  "name": "艾森豪",
+  "rarity": "Superior"
+ },
+ "9F8F08B4-3E1F-4916-96F4-4CD043B7FAD1": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/2/47/U_SJOGRENSHOTGUN_BATTLEPACKS_FRENCH_T1S2_LARGE-02d1a3ac.png",
+  "name": "蘭卡斯特王朝",
+  "rarity": "Standard"
+ },
+ "9FF0139C-40FC-7818-C164-E22CFA11AD62": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/44/20/U_LEEENFIELDSMLE_BATTLEPACKS_SCOUT_T1S1_LARGE-2c14a382.png",
+  "name": "迷彩圖樣",
+  "rarity": "Standard"
+ },
+ "A07242B6-C08C-4B1E-8EE9-FF39A5D0B5A8": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/128/14/U_WINCHESTER1897_BATTLEPACKS_NIGHT_T2S2_LARGE-80f2c482.png",
+  "name": "凱利少校",
+  "rarity": "Enhanced"
+ },
+ "A09D645C-52E0-4F04-BF09-D03F843205D0": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/115/10/U_MAUSERSL_BATTLEPACKS_NIGHT_T1S4_LARGE-8d0aed1c.png",
+  "name": "維萊布勒托納戰役",
+  "rarity": "Standard"
+ },
+ "A1272932-1612-478E-8598-E9A9EE52D7E3": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/26/80/U_RSCSMG_BATTLEPACKS_BATTLESCARRED_T1S4_LARGE-e650ff6e.png",
+  "name": "安克河",
+  "rarity": "Standard"
+ },
+ "A14D0AEF-F4BE-4F81-948C-BAF35F2964CC": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/82/36/U_BODEO1889_BATTLEPACKS_VETERAN_T1S4_LARGE-5224ca58.png",
+  "name": "老鳥騎兵",
+  "rarity": "Standard"
+ },
+ "A1525767-ACAA-4C2F-93E2-8F5B43861FA9": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/73/38/U_M1911_BATTLEPACKS_VETERAN_T1S3_LARGE-49264ffc.png",
+  "name": "老鳥步兵",
+  "rarity": "Standard"
+ },
+ "A157057F-43BA-4082-9FFE-C2AED50DC60D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/124/53/U_SJOGRENSHOTGUN_BATTLEPACKS_FRENCH_T1S3_LARGE-7ccb5e85.png",
+  "name": "波旁王朝",
+  "rarity": "Standard"
+ },
+ "A1633FDC-198F-464C-8D9B-673F3C6A56FD": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/53/6//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_LEBEL1886_BATTLEPACKS_Y201_T3S2_LARGE-35065e33.png",
+  "name": "巨馬",
+  "rarity": "Superior"
+ },
+ "A1C649B1-0F23-4EC2-9F29-DA6BED24551B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/64/32/U_LEEENFIELDSMLE_BATTLEPACKS_SCOUT_T1S4_LARGE-402046c9.png",
+  "name": "迷彩紗",
+  "rarity": "Standard"
+ },
+ "A1F3DA09-92D3-4118-9BAB-10BA0F196B98": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/24/24/U_LEWISMG_BATTLEPACKS_R2X_T3S1_LARGE-e81870a1.png",
+  "name": "沐浴鮮血",
+  "rarity": "Superior"
+ },
+ "A27939B5-5E0A-475C-AB27-1C2EA90BCCAB": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/94/86/U_LUGERP08_BATTLEPACKS_VETERAN_T3S1_LARGE-5eaad716.png",
+  "name": "和平追尋者",
+  "rarity": "Superior"
+ },
+ "A400E618-3F46-4CE4-7D34-E6524235B96B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/48/68/U_STEYRM1912_BATTLEPACKS_ROYAL_T1S1_LARGE-d0bc985e.png",
+  "name": "皇家旨意",
+  "rarity": "Standard"
+ },
+ "A478E21C-49A1-4F5D-9A18-F0E009D3431F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/28/4/U_BARM1918_BATTLEPACKS_ROYAL_T1S2_LARGE-e4049e43.png",
+  "name": "皇家詔書",
+  "rarity": "Standard"
+ },
+ "A47F25C4-FBD0-42B0-A953-396074FC40F0": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/100/49/FT_17U_FRA_FT-17_PAINT_BRONZEDAZZLE_LARGE-9c318faa.png",
+  "name": "閃耀銅 (極稀有)",
+  "rarity": "Superior"
+ },
+ "A49BE854-AB33-4C1D-B4CB-DD96DF1D35D1": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/10/71/U_RIBEYROLLES_BATTLEPACKS_FRENCH_T1S3_LARGE-0ab9bea6.png",
+  "name": "波旁王朝",
+  "rarity": "Standard"
+ },
+ "A53BA2AE-169F-4E87-9694-91AD87EEDFBD": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/111/106/U_HUOTAUTORIFLE_BATTLEPACKS_NIGHT_T1S4_LARGE-6f6a7bf0.png",
+  "name": "維萊布勒托納戰役",
+  "rarity": "Standard"
+ },
+ "A57230F7-BA9B-4145-A437-DF1D757D1093": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/84/127/U_WEBLEYMK6_BATTLEPACKS_BATTLESCARRED_T3S1_LARGE-ac7f10bc.png",
+  "name": "親吻",
+  "rarity": "Superior"
+ },
+ "A5F3BE0D-0D0D-4175-B825-B28BBB1333BE": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/81/112/U_BARM1918_BATTLEPACKS_HUNTER_T3S1_LARGE-5190ddd3.png",
+  "name": "帕金獵犬",
+  "rarity": "Superior"
+ },
+ "A6847FE9-D32E-4415-BD43-83575EB95FA7": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/60/93/U_BARM1918_BATTLEPACKS_NIGHT_T1S1_LARGE-c4a3cdde.png",
+  "name": "伊塞克希薩立克戰役",
+  "rarity": "Standard"
+ },
+ "A6A320B5-4598-49DE-B9DA-0DC8CD696BD2": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/74/16/U_VETTERLI_BATTLEPACKS_FABERGE_T1S4_LARGE-b61018bf.png",
+  "name": "尤格拉戰役",
+  "rarity": "Standard"
+ },
+ "A6DE2827-8536-4202-92DB-8AA8BECF2536": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/80/65/U_REMINGTONMODEL8_BATTLEPACKS_VETERAN_T3S1_LARGE-50412849.png",
+  "name": "獵人",
+  "rarity": "Superior"
+ },
+ "A6F85D0E-4847-48F8-8B1A-B7347C4BACBB": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/27/48//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_MAUSER1917_BATTLEPACKS_Y201_T3S1_LARGE-e53086f2.png",
+  "name": "史特拉姆",
+  "rarity": "Superior"
+ },
+ "A71FA722-E687-4EB4-B9B7-08E9F0ED7F51": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/22/85/U_NAGANTM1895_BATTLEPACKS_FABERGE_T2S1_LARGE-16ab4a09.png",
+  "name": "李昂",
+  "rarity": "Enhanced"
+ },
+ "A7453AE2-BD2F-44E0-AEF8-4D099D64D73B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/10/72/U_RSCSMG_BATTLEPACKS_BATTLESCARRED_T2S1_LARGE-0a48acb6.png",
+  "name": "杜瑞茲",
+  "rarity": "Enhanced"
+ },
+ "A77476C4-859A-4DC1-A9C1-2A314E23AA52": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/75/107/U_MONDRAGON_BATTLEPACKS_NIGHT_T3S1_LARGE-b56b62c0.png",
+  "name": "包戈爾",
+  "rarity": "Superior"
+ },
+ "A8C764A4-EE6A-4B0B-A479-B2BCFF261063": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/14/85/U_CEIRIGOTTIM1895_BATTLEPACKS_NIGHT_T1S2_LARGE-f2557ebb.png",
+  "name": "費斯蒂貝爾戰役",
+  "rarity": "Standard"
+ },
+ "A8C78E92-D42B-4E5E-B7F2-72B77AB46244": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/86/33/U_MARTINIHENRY_BATTLEPACKS_NIGHT_T1S1_LARGE-aadf92b0.png",
+  "name": "伊塞克希薩立克戰役",
+  "rarity": "Standard"
+ },
+ "A8C8A069-4B34-45BC-ABB0-50651776340D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/125/61/U_HUOTAUTORIFLE_BATTLEPACKS_VETERAN_T1S4_LARGE-833ddcea.png",
+  "name": "老鳥騎兵",
+  "rarity": "Standard"
+ },
+ "A93FFF10-79AB-CDA2-128E-4E625A6EDB47": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/11/50/U_MAUSER1914_BATTLEPACKS_SCOUT_T1S1_LARGE-f532d2a8.png",
+  "name": "迷彩圖樣",
+  "rarity": "Standard"
+ },
+ "A94B071F-47EF-4D2F-89A6-FE49504B994E": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/66/58/U_HUOTAUTORIFLE_BATTLEPACKS_VETERAN_T1S3_LARGE-42c67715.png",
+  "name": "老鳥步兵",
+  "rarity": "Standard"
+ },
+ "A94FCFD9-585F-4B31-BE36-95DD62CEC96E": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/98/68/PUTILOVU_ASSAULTTRUCK_PAINT_05_LARGE-6244030e.png",
+  "name": "烏拉雷斯",
+  "rarity": "Enhanced"
+ },
+ "A9CB716A-38CD-442A-98FD-AF533FAC29B4": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/80/102/U_HELLRIEGEL1915_BATTLEPACKS_VETERAN_T1S2_LARGE-b0665a3a.png",
+  "name": "老鳥護衛",
+  "rarity": "Standard"
+ },
+ "A9D6DE47-3C82-4CE2-AF5C-F509B5749FE5": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/43/71/U_HOWELL_BATTLEPACKS_BATTLESCARRED_T1S1_LARGE-2b478ff8.png",
+  "name": "堅忍",
+  "rarity": "Standard"
+ },
+ "AB9D8B15-9887-F3DD-83A5-9EF8B60C04F1": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/67/7/U_COLTPOCKET1903_BATTLEPACKS_SCOUT_T1S1_LARGE-bdf9c0cf.png",
+  "name": "迷彩圖樣",
+  "rarity": "Standard"
+ },
+ "ABCF453F-E822-46E0-A25E-7DD1B4C4EA93": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/14/66/U_BARM1918_BATTLEPACKS_NIGHT_T3S1_LARGE-0ebee12c.png",
+  "name": "大紅一師",
+  "rarity": "Superior"
+ },
+ "AC8F05FE-76B0-4FED-95C7-90140946B348": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/0/44/FT_17U_FRA_FT-17_PAINT_07_LARGE-00d4083b.png",
+  "name": "燒灼",
+  "rarity": "Enhanced"
+ },
+ "AC9C4787-E4CA-40BF-813C-170B6D3092F4": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/58/16/U_LUGER1906_BATTLEPACKS_NIGHT_T1S2_LARGE-3a10e919.png",
+  "name": "費斯蒂貝爾戰役",
+  "rarity": "Standard"
+ },
+ "AD9B5329-7D43-5642-98B6-417852607D07": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/14/6/U_RSC1917_BATTLEPACKS_FRENCH_T1S1_LARGE-0e06449d.png",
+  "name": "瓦盧瓦王朝",
+  "rarity": "Standard"
+ },
+ "AE045BDE-3D75-4A29-B56E-E34688508BDE": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/95/72/U_MAUSER1917_BATTLEPACKS_MQT_T2S1_LARGE-a148d07c.png",
+  "name": "奧伯恩多夫",
+  "rarity": "Enhanced"
+ },
+ "AE2A5095-2D17-44BC-9AB8-B86CAE3B2883": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/82/11/U_HELLRIEGEL1915_BATTLEPACKS_VETERAN_T3S1_LARGE-ae0b0330.png",
+  "name": "大公",
+  "rarity": "Superior"
+ },
+ "AE489B8C-8ED5-46DA-A258-E73ADAC150A0": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/107/101/ASTRATORRESU_AIRSHIP_PAINT_01_LARGE-959ba93d.png",
+  "name": "HMA No. 3",
+  "rarity": "Enhanced"
+ },
+ "AE892212-E385-43D6-AEC9-8F3D8780E535": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/106/27/U_SPRINGFIELDM1903_BATTLEPACKS_NIGHT_T2S1_LARGE-6ae5d2d9.png",
+  "name": "佩里營",
+  "rarity": "Enhanced"
+ },
+ "AE924132-6AAA-4D29-806E-FA3757119CB9": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/76/64/U_MG0818_BATTLEPACKS_BATTLESCARRED_T3S1_LARGE-4c40bbf6.png",
+  "name": "魔笛",
+  "rarity": "Superior"
+ },
+ "AEA2FC09-0DBF-441F-AA10-ABE2EB758D7C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/25/119//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_CHAUCHATSMG_BATTLEPACKS_Y201_T3S2_LARGE-e77718a8.png",
+  "name": "黑貓",
+  "rarity": "Superior"
+ },
+ "AEDF1250-77FB-7776-8972-3C452DDEA1BE": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/21/2/U_CEIRIGOTTIM1895_BATTLEPACKS_ROYAL_T1S1_LARGE-eb0276de.png",
+  "name": "皇家旨意",
+  "rarity": "Standard"
+ },
+ "AF2217C8-229A-45FE-ADB0-FA1950088A87": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/81/11/U_BULLDOG_BATTLEPACKS_ROYAL_T1S2_LARGE-aff5735a.png",
+  "name": "皇家詔書",
+  "rarity": "Standard"
+ },
+ "AFE15AF0-F7F4-4D27-A4E8-B8A6D9446B7A": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/48/78/U_LEBEL_BATTLEPACKS_FRENCH_T1S3_LARGE-d04ed8e2.png",
+  "name": "波旁王朝",
+  "rarity": "Standard"
+ },
+ "B050D893-A4F4-4FEB-80C7-E2FCF0C559D8": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/23/93/U_HOWELL_BATTLEPACKS_BATTLESCARRED_T1S3_LARGE-e9a3b248.png",
+  "name": "莫切尼",
+  "rarity": "Standard"
+ },
+ "B05B7722-FEF7-4659-9631-481C66DD5944": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/90/37/U_PARABELLUM_BATTLEPACKS_FABERGE_T3S1_LARGE-5adbf170.png",
+  "name": "普魯士人",
+  "rarity": "Superior"
+ },
+ "B0DB4030-9A24-4B29-A509-226B1473BE9B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/30/5/U_RIBEYROLLES_BATTLEPACKS_FRENCH_T1S2_LARGE-1efb1b7e.png",
+  "name": "蘭卡斯特王朝",
+  "rarity": "Standard"
+ },
+ "B0F609E2-7587-4CD2-AD90-AA1410D1373B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/10/52/U_ENFIELD1917_BATTLEPACKS_BATTLESCARRED_T2S2_LARGE-0accda54.png",
+  "name": "慰靈碑",
+  "rarity": "Enhanced"
+ },
+ "B1096350-8196-4ED3-8603-B7E2C6B029F0": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/120/18/U_WEBLEYMK6_BATTLEPACKS_BATTLESCARRED_T1S1_LARGE-88ee13cb.png",
+  "name": "騎士精神",
+  "rarity": "Standard"
+ },
+ "B15F10EC-B662-44BD-B439-206EF43BA3F3": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/122/65/ILYAMUROMETSU_HEAVYBOMBER_PAINT_08_LARGE-86bf0516.png",
+  "name": "多布雷尼亞",
+  "rarity": "Enhanced"
+ },
+ "B164017A-DAEA-4F30-93F0-7DC145B9A314": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/95/95/STCHAMOND_FRA_STCHAMOND_PAINT_01_LARGE-a15f4f94.png",
+  "name": "尚泰科",
+  "rarity": "Enhanced"
+ },
+ "B1C7D3C6-F03B-4246-8BC7-26E17583E583": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/45/110/U_BERGMANN1915MG_BATTLEPACKS_NIGHT_T3S1_LARGE-d36ee594.png",
+  "name": "Schütte-Lanz 飛艇",
+  "rarity": "Superior"
+ },
+ "B1FE0D69-4C67-443C-A2D6-0F9967EE9F8B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/7/64/U_BROWNINGA5_BATTLEPACKS_ROYAL_T1S3_LARGE-074075e7.png",
+  "name": "皇家旨令",
+  "rarity": "Standard"
+ },
+ "B2044D4C-D454-4BC6-A236-FDF4048671CC": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/76/13/U_LEWISMG_BATTLEPACKS_NIGHT_T1S3_LARGE-4cf3eba8.png",
+  "name": "304 號高地戰役",
+  "rarity": "Standard"
+ },
+ "B2A21CCB-6AD9-451B-99AC-4A2F0268C6A6": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/68/94/U_WINCHESTER1897_BATTLEPACKS_NIGHT_T1S3_LARGE-bc5eea9d.png",
+  "name": "304 號高地戰役",
+  "rarity": "Standard"
+ },
+ "B2CD563C-3628-44BA-81D5-9EB62A575B88": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/17/30/U_BARM1918_BATTLEPACKS_NIGHT_T2S2_LARGE-efe23c4e.png",
+  "name": "蒙特福孔森林",
+  "rarity": "Enhanced"
+ },
+ "B2F769C3-4A56-4590-82FB-DDD08419C254": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/8/24/U_LEEENFIELDSMLE_BATTLEPACKS_NIGHT_T1S2_LARGE-f8188be7.png",
+  "name": "費斯蒂貝爾戰役",
+  "rarity": "Standard"
+ },
+ "B32AE5C5-51F3-47F1-A0F1-FF0D1101C02A": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/113/95/U_BERETTAM1918_BATTLEPACKS_NIGHT_T3S1_LARGE-715f2f1f.png",
+  "name": "水蛭魚雷",
+  "rarity": "Superior"
+ },
+ "B35C1254-F427-4AB6-BBAA-3DCCA335D15F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/33/53/SALMSONU_2SEAT_PAINT_06_LARGE-df3531b2.png",
+  "name": "鱷魚",
+  "rarity": "Enhanced"
+ },
+ "B37AED53-AC6B-4043-AE79-0868C67AB7E9": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/24/48/U_MP18_BATTLEPACKS_SCOUT_T1S3_LARGE-183052f5.png",
+  "name": "迷彩罩",
+  "rarity": "Standard"
+ },
+ "B3E5370F-889B-4756-B241-F09D56A54431": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/71/41/U_MAUSERSL_BATTLEPACKS_NIGHT_T1S3_LARGE-47d715d4.png",
+  "name": "304 號高地戰役",
+  "rarity": "Standard"
+ },
+ "B3F830BA-8C4A-4057-B503-41D367321907": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/36/22/U_MAUSERSL_BATTLEPACKS_VETERAN_T1S2_LARGE-24164183.png",
+  "name": "老鳥護衛",
+  "rarity": "Standard"
+ },
+ "B4685EA9-7074-4284-9968-A67A1A8A452B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/2/34/U_MAUSER1914_BATTLEPACKS_SCOUT_T1S4_LARGE-02de6466.png",
+  "name": "迷彩紗",
+  "rarity": "Standard"
+ },
+ "B50E7C1C-F8CB-4273-AD95-C4FA6E81EE31": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/97/107/U_STEYRMANM1895_BATTLEPACKS_VETERAN_T1S4_LARGE-9f6b6655.png",
+  "name": "老鳥騎兵",
+  "rarity": "Standard"
+ },
+ "B527F13F-118A-4BED-B6CE-7C4CDC666569": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/90/63/MARKVU_GBR_MARKV_PAINT_02_LARGE-a6c1ae1d.png",
+  "name": "法國軍服",
+  "rarity": "Enhanced"
+ },
+ "B550AA13-F36E-4E61-9619-675654321E0A": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/19/58/U_BERETTAM1918_BATTLEPACKS_NIGHT_T1S4_LARGE-edc63c69.png",
+  "name": "維萊布勒托納戰役",
+  "rarity": "Standard"
+ },
+ "B59C9D4E-C7FB-4E57-8CCF-AAB9076E498C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/115/105/U_OBREZ_BATTLEPACKS_FABERGE_T1S4_LARGE-7397cdb2.png",
+  "name": "尤格拉戰役",
+  "rarity": "Standard"
+ },
+ "B5E79DFB-678E-49DA-B5F6-469C4DDF63F2": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/127/28/SPADU_SCOUT_PAINT_03_LARGE-81e4b9f0.png",
+  "name": "黑隼",
+  "rarity": "Enhanced"
+ },
+ "B5FB12D9-9C6B-45EF-B5E3-5466A5DD28D5": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/112/79/U_SPRINGFIELDM1903_BATTLEPACKS_VETERAN_T1S4_LARGE-90b1d2b8.png",
+  "name": "老鳥騎兵",
+  "rarity": "Standard"
+ },
+ "B68FB066-950E-4A72-B46E-07101C89CD59": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/7/92/U_MAUSERC96_BATTLEPACKS_VETERAN_T1S3_LARGE-f95c6398.png",
+  "name": "老鳥步兵",
+  "rarity": "Standard"
+ },
+ "B70A90E7-D509-41B8-83FC-555B19840BBB": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/37/28/U_FARQUHARHILL_BATTLEPACKS_MQT_T1S3_LARGE-dbe4f4f1.png",
+  "name": "日德蘭戰役",
+  "rarity": "Standard"
+ },
+ "B7302FA4-80C2-4396-A60B-DCD64C38F80A": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/54/105/U_STEYRM1912_BATTLEPACKS_ROYAL_T2S1_LARGE-ca973b30.png",
+  "name": "迪拉那山口",
+  "rarity": "Enhanced"
+ },
+ "B7A718A3-049B-4907-9C16-77C28D33F6E9": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/82/66//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_CHAUCHAT_BATTLEPACKS_Y201_T3S1_LARGE-52be7ccd.png",
+  "name": "我的機槍",
+  "rarity": "Superior"
+ },
+ "B86CAFA9-BF24-47E7-B247-4140F8E8095B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/74/117/U_SPRINGFIELDM1903_BATTLEPACKS_NIGHT_T2S2_LARGE-4a7571bc.png",
+  "name": "屈內森林",
+  "rarity": "Enhanced"
+ },
+ "B8A78114-442D-4369-9983-748D09946640": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/8/113/U_FROMMERSTOP_BATTLEPACKS_SCOUT_T1S4_LARGE-f87129a8.png",
+  "name": "迷彩紗",
+  "rarity": "Standard"
+ },
+ "B8AE7364-8D30-497C-99C8-35F7C90D166B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/93/28/U_PARABELLUM_BATTLEPACKS_FABERGE_T2S1_LARGE-5d1cf384.png",
+  "name": "德格特勒娃",
+  "rarity": "Enhanced"
+ },
+ "B8F62CEE-CB41-44D2-8A5B-CBA68371A7E1": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/97/41/U_WINCHESTERM1895_BATTLEPACKS_ROYAL_T1S3_LARGE-612983b7.png",
+  "name": "皇家旨令",
+  "rarity": "Standard"
+ },
+ "B921D296-7721-4058-A116-242D3CF1184D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/61/95/U_MARTINIHENRY_BATTLEPACKS_ROYAL_T1S3_LARGE-c3a126d0.png",
+  "name": "皇家旨令",
+  "rarity": "Standard"
+ },
+ "B970AD9D-69C7-4510-B272-1C1E6D316AE2": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/22/105/U_BARM1918_BATTLEPACKS_ROYAL_T1S3_LARGE-ea69a996.png",
+  "name": "皇家旨令",
+  "rarity": "Standard"
+ },
+ "B9BB130F-14E3-4EB1-A05F-00B6FDADE6E8": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/52/97/U_LEWISMG_BATTLEPACKS_ROYAL_T2S1_LARGE-cc9fc845.png",
+  "name": "阿拉斯",
+  "rarity": "Enhanced"
+ },
+ "B9E7D840-8F77-4B61-828F-6E8518957C03": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/42/12/U_STEYRMANM1895_BATTLEPACKS_HUNTER_T3S1_LARGE-2a0c8507.png",
+  "name": "奧地利的伊莉莎白女皇",
+  "rarity": "Superior"
+ },
+ "BA139722-04B2-4050-933D-60A371F5559B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/89/22/U_STEYRM1912_P16_BATTLEPACKS_MQT_T1S1_LARGE-59ea1aae.png",
+  "name": "青島戰役",
+  "rarity": "Standard"
+ },
+ "BAA5848F-4325-462A-B691-0F21E7AA55B2": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/37/83/U_HUOTAUTORIFLE_BATTLEPACKS_VETERAN_T2S1_LARGE-25ad8720.png",
+  "name": "維米山脊",
+  "rarity": "Enhanced"
+ },
+ "BABE0A1F-5879-4E0F-BFBF-5C79B61DC5F1": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/55/41/U_GASSERM1870_BATTLEPACKS_VETERAN_T1S4_LARGE-37292249.png",
+  "name": "老鳥騎兵",
+  "rarity": "Standard"
+ },
+ "BAC0952D-EF8B-4DFA-9596-61673A36D75F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/78/124/U_TYPE38ARISAKA_BATTLEPACKS_MQT_T1S2_LARGE-b28413af.png",
+  "name": "福克蘭群島戰役",
+  "rarity": "Standard"
+ },
+ "BB16CEE5-845B-4367-A599-69ED7C7D0284": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/0/63//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_BROWNINGM1917_BATTLEPACKS_Y201_T3S2_LARGE-003fb48d.png",
+  "name": "集合點",
+  "rarity": "Superior"
+ },
+ "BB730D8B-5F9B-4BAC-978B-6EAFAC92A5BA": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/80/87/U_MAUSER1914_BATTLEPACKS_SCOUT_T2S1_LARGE-50577d8b.png",
+  "name": "帝國步兵",
+  "rarity": "Enhanced"
+ },
+ "BB961CED-A1DA-4D72-A4B5-0BAE2AB0CFCE": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/73/14/STCHAMOND_FRA_STCHAMOND_PAINT_08_LARGE-b7f246ce.png",
+  "name": "坦克突擊",
+  "rarity": "Enhanced"
+ },
+ "BBB10FB5-BD07-4665-AD6A-4FADC7047C7B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/120/77/u_hellriegel1915_battlepacks_hunter_t3s1_large-784dc2df.png",
+  "name": "泰羅林獵犬",
+  "rarity": "Superior"
+ },
+ "BC690BFC-CB2D-C535-02A6-67A3035639F3": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/125/67/U_MAUSERC96_BATTLEPACKS_VETERAN_T1S1_LARGE-8343b28e.png",
+  "name": "老鳥士兵",
+  "rarity": "Standard"
+ },
+ "BC6BF9CD-6D94-4921-A315-89C2177BC711": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/128/88/U_FEDOROVAVTOMAT_BATTLEPACKS_FABERGE_T1S3_LARGE-80a832e5.png",
+  "name": "魯特斯克戰役",
+  "rarity": "Standard"
+ },
+ "BCD1EDC9-7DA4-4C53-AD36-2C3347CFF940": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/38/126/U_STEYRMANM1895_BATTLEPACKS_NIGHT_T1S3_LARGE-da82b9cd.png",
+  "name": "304 號高地戰役",
+  "rarity": "Standard"
+ },
+ "BDAE505A-E8C4-41E3-80C2-27966C60841F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/5/0/U_LUGER1906_BATTLEPACKS_NIGHT_T2S2_LARGE-0500e345.png",
+  "name": "女武神",
+  "rarity": "Enhanced"
+ },
+ "BDD6BAE6-2495-4475-98E3-C6D8E67BEE2D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/111/45/U_GEWEHR98_BATTLEPACKS_NIGHT_T1S1_LARGE-912d0e50.png",
+  "name": "伊塞克希薩立克戰役",
+  "rarity": "Standard"
+ },
+ "BE4F8562-C296-43B3-9EFC-7F78CC1EBF95": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/14/17/U_PERINO_BATTLEPACKS_FABERGE_T3S1_LARGE-0e112869.png",
+  "name": "銅頭蝮",
+  "rarity": "Superior"
+ },
+ "BEE26BF7-5DC5-4F65-92F0-C08788195761": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/126/77/U_WINCHESTERM1907_BATTLEPACKS_SCOUT_T1S3_LARGE-7eb3a4b3.png",
+  "name": "迷彩罩",
+  "rarity": "Standard"
+ },
+ "BF551ED7-B7E1-4159-B78B-4C73C98DEF3C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/17/112/U_MAUSER1917_BATTLEPACKS_MQT_T1S4_LARGE-11703471.png",
+  "name": "奧特朗托海峽戰役",
+  "rarity": "Standard"
+ },
+ "BF70715D-0673-4C06-AE07-70F09C970FE9": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/48/11/U_BERETTAM1918_BATTLEPACKS_NIGHT_T2S2_LARGE-d0f57607.png",
+  "name": "帕帕多普利",
+  "rarity": "Enhanced"
+ },
+ "BF886338-7D54-B06E-CAB2-DA4477BD94B2": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/20/8/U_BARM1918_BATTLEPACKS_ROYAL_T1S1_LARGE-ec089db4.png",
+  "name": "皇家旨意",
+  "rarity": "Standard"
+ },
+ "C0C1B955-F9F1-4C02-9CBD-DB556223206C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/55/72/U_TYPE38ARISAKA_BATTLEPACKS_MQT_T2S1_LARGE-37b8014a.png",
+  "name": "三八式",
+  "rarity": "Enhanced"
+ },
+ "C10A4714-1E50-4451-BDAE-E0664B9503C3": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/45/89/U_BERGMANN1915MG_BATTLEPACKS_NIGHT_T1S1_LARGE-d3a718e2.png",
+  "name": "伊塞克希薩立克戰役",
+  "rarity": "Standard"
+ },
+ "C13D17AA-523B-4420-AF63-051090335243": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/52/51/U_WINCHESTERM1907_BATTLEPACKS_NIGHT_T1S1_LARGE-34330a55.png",
+  "name": "伊塞克希薩立克戰役",
+  "rarity": "Standard"
+ },
+ "C160098D-9DC1-4D19-8DE7-4F881E628E1F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/91/14/U_FEDOROVAVTOMAT_BATTLEPACKS_FABERGE_T1S1_LARGE-5b0e536c.png",
+  "name": "格尼拉利帕戰役",
+  "rarity": "Standard"
+ },
+ "C1A22321-558E-4210-B5FA-38C1EFC70558": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/67/30/U_HOWELL_BATTLEPACKS_BATTLESCARRED_T1S2_LARGE-bd1e9b73.png",
+  "name": "羅斯托夫",
+  "rarity": "Standard"
+ },
+ "C1D4D88A-B20F-4A72-9A2B-098140511FCB": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/8/73/U_LEEENFIELDSMLE_BATTLEPACKS_SCOUT_T1S2_LARGE-084906c3.png",
+  "name": "迷彩套",
+  "rarity": "Standard"
+ },
+ "C1D59741-0C4C-B6FF-C5A3-ED71975D5856": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/34/26/U_FROMMERSTOP_BATTLEPACKS_SCOUT_T1S1_LARGE-221abac8.png",
+  "name": "迷彩圖樣",
+  "rarity": "Standard"
+ },
+ "C20145D0-86C7-4DC0-A0E1-D0B5C58B972E": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/118/108/U_WEBFOSAUTOREV_BATTLEPACKS_UNIQUE_V1_LARGE-8a6c5304.png",
+  "name": "晚安之吻",
+  "rarity": "Superior"
+ },
+ "C21B709F-8C94-41B7-8230-048663188E91": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/29/23/U_CEIRIGOTTIM1895_BATTLEPACKS_ROYAL_T1S2_LARGE-e3e97fcf.png",
+  "name": "皇家詔書",
+  "rarity": "Standard"
+ },
+ "C22DC3B1-8C18-4C1E-ABB8-0B8495743B27": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/107/49/U_MAUSER1914_BATTLEPACKS_SCOUT_T1S3_LARGE-6bcf876c.png",
+  "name": "迷彩罩",
+  "rarity": "Standard"
+ },
+ "C2F40941-E1CC-4998-B7FD-0A4AA3314959": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/52/39/U_REMINGTONMODEL8_BATTLEPACKS_NIGHT_T1S4_LARGE-34273bf4.png",
+  "name": "維萊布勒托納戰役",
+  "rarity": "Standard"
+ },
+ "C3255A97-FD3D-4186-A846-FD7E285C99F8": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/44/40/PIERCEARROWU_GBR_PIERCEARROW_PAINT_09_LARGE-d4d8c0f3.png",
+  "name": "Junovicz",
+  "rarity": "Enhanced"
+ },
+ "C32EFFBF-3284-4287-9395-B22A971C538C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/71/12/U_MAUSER1917_BATTLEPACKS_MQT_T1S1_LARGE-47f4d4b3.png",
+  "name": "青島戰役",
+  "rarity": "Standard"
+ },
+ "C3850F7B-0DB1-49CC-859D-E207475AFA8F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/74/114/U_SPRINGFIELDM1903_BATTLEPACKS_NIGHT_T1S3_LARGE-b6726e58.png",
+  "name": "304 號高地戰役",
+  "rarity": "Standard"
+ },
+ "C445627C-8E43-4538-A29B-2731E9B3D27E": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/50/64/U_M1911_BATTLEPACKS_VETERAN_T1S2_LARGE-3240c91b.png",
+  "name": "老鳥護衛",
+  "rarity": "Standard"
+ },
+ "C4871A9B-5A33-42C4-BB7B-6A3DD08CD2D3": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/39/45/U_GASSERM1870_BATTLEPACKS_VETERAN_T1S3_LARGE-d9d3c95c.png",
+  "name": "老鳥步兵",
+  "rarity": "Standard"
+ },
+ "C5031CD4-013C-49EE-BCB9-0CB1D3964FB2": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/102/26/U_SPRINGFIELDM1903_BATTLEPACKS_VETERAN_T3S1_LARGE-66e61b13.png",
+  "name": "惡魔犬",
+  "rarity": "Superior"
+ },
+ "C5095E0B-EB7B-4C7C-9CA1-1C37C38D9FE4": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/43/101/U_GEWEHR98_BATTLEPACKS_SCOUT_T1S2_LARGE-d5650a4f.png",
+  "name": "迷彩套",
+  "rarity": "Standard"
+ },
+ "C536DE6D-5B0D-4B06-8175-CC87A5D3F6C1": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/114/17/U_M1911_BATTLEPACKS_VETERAN_T2S2_LARGE-8eef05f4.png",
+  "name": "約克",
+  "rarity": "Enhanced"
+ },
+ "C55CFCF5-D83A-4AB1-9E52-956DEFDEFDA0": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/30/20/PIERCEARROWU_GBR_PIERCEARROW_PAINT_04_LARGE-1e142368.png",
+  "name": "Kurzemiesk",
+  "rarity": "Enhanced"
+ },
+ "C55E0270-7B6F-4D42-885F-B4C7C151830D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/104/81/U_BERETTAM1915_BATTLEPACKS_VETERAN_T1S2_LARGE-685125fa.png",
+  "name": "老鳥護衛",
+  "rarity": "Standard"
+ },
+ "C57CFFF3-6BDE-4E01-BA60-B6842219642B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/49/96/U_WINCHESTERM1895_BATTLEPACKS_NIGHT_T1S3_LARGE-cfa0ae9c.png",
+  "name": "304 號高地戰役",
+  "rarity": "Standard"
+ },
+ "C58E86F7-E428-42DB-B4B7-946718878B70": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/18/55/U_BULLDOG_BATTLEPACKS_UNIQUE_V1_LARGE-ee370226.png",
+  "name": "沙灘之喙",
+  "rarity": "Superior"
+ },
+ "C5CEC530-C21A-494C-AF38-98F151402849": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/109/36/U_LEBEL_BATTLEPACKS_FRENCH_T3S1_LARGE-6d240eb8.png",
+  "name": "織物",
+  "rarity": "Superior"
+ },
+ "C5FADFAE-EDE0-46B6-7D2F-57573F3CEC1E": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/98/40/U_REMINGTONMODEL8_BATTLEPACKS_VETERAN_T1S1_LARGE-9ed8d2a9.png",
+  "name": "老鳥士兵",
+  "rarity": "Standard"
+ },
+ "C60739FF-3759-4C7E-AD71-B7788DA70CEC": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/57/9/U_MG0818_BATTLEPACKS_BATTLESCARRED_T1S2_LARGE-39f7e2a9.png",
+  "name": "凱撒山脊",
+  "rarity": "Standard"
+ },
+ "C63560C1-2F82-44DC-8FFF-0D7226626A18": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/17/50/U_CARCANOCARBINE_BATTLEPACKS_MQT_T2S1_LARGE-11ce8671.png",
+  "name": "九一式步槍",
+  "rarity": "Enhanced"
+ },
+ "C683FB3C-BD2D-BDB2-1034-733792CF0A03": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/74/86/U_GASSERM1870_BATTLEPACKS_VETERAN_T1S1_LARGE-4a564d38.png",
+  "name": "老鳥士兵",
+  "rarity": "Standard"
+ },
+ "C7401413-28FE-4338-A50D-A933FF42290A": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/94/61/U_LUGER1906_BATTLEPACKS_ROYAL_T2S2_LARGE-a23d712b.png",
+  "name": "法金漢",
+  "rarity": "Enhanced"
+ },
+ "C7791A62-41B4-4D19-B47B-28283C1927AF": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/92/82/U_KOLIBRI_BATTLEPACKS_ROYAL_T3S1_LARGE-5caed7d1.png",
+  "name": "蜂鳥",
+  "rarity": "Superior"
+ },
+ "C8220DFD-B762-4548-9766-F84791042C9D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/1/3/PUTILOVU_ASSAULTTRUCK_PAINT_04_LARGE-01fdcc82.png",
+  "name": "西伯利亞人",
+  "rarity": "Enhanced"
+ },
+ "C8B95F6F-D735-492A-AE29-FC6C28A1BD92": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/87/23/U_MAUSERSL_BATTLEPACKS_VETERAN_T1S4_LARGE-571782c1.png",
+  "name": "老鳥騎兵",
+  "rarity": "Standard"
+ },
+ "C8EEE3B7-F488-42E3-BA75-7B616C2229A1": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/45/51/FT_17U_FRA_FT-17_PAINT_09_LARGE-d3cdc49c.png",
+  "name": "法式裝甲",
+  "rarity": "Enhanced"
+ },
+ "C8EEF6DB-5B0C-4DB7-9040-ED9314D19811": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/11/70/U_SMITHWESSON_BATTLEPACKS_UNIQUE_V1_LARGE-0bbafafd.png",
+  "name": "滾開",
+  "rarity": "Superior"
+ },
+ "C903A393-E1ED-4AAF-992B-1409B341E50F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/31/1//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_GENERALLIURIFLE_BATTLEPACKS_Y201_T3S2_LARGE-e1ff428f.png",
+  "name": "濱海努瓦耶勒",
+  "rarity": "Superior"
+ },
+ "C9188F36-CF14-4422-89A4-25FDAE02BDC3": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/116/33/U_BROWNINGA5_BATTLEPACKS_NIGHT_T3S1_LARGE-8cdf8f9d.png",
+  "name": "蝙蝠",
+  "rarity": "Superior"
+ },
+ "C92C35A4-5D85-42A5-9963-C636FE4361A4": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/27/109/u_luger1906_battlepacks_hunter_t3s1_large-e56d14f7.png",
+  "name": "羅明特狩獵小屋",
+  "rarity": "Superior"
+ },
+ "CA28483D-2C82-4332-915E-B38FEB2A1A99": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/16/120/STCHAMOND_FRA_STCHAMOND_PAINT_06_LARGE-f078a770.png",
+  "name": "夜襲",
+  "rarity": "Enhanced"
+ },
+ "CA748758-B615-4B26-9CE8-B044931F2123": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/60/81/U_LUGER1906_BATTLEPACKS_ROYAL_T2S1_LARGE-c4afed40.png",
+  "name": "沙勒羅瓦",
+  "rarity": "Enhanced"
+ },
+ "CAC4AA13-159C-4F6B-A2D1-2907B4AE4417": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/79/70//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_LEBEL1886_BATTLEPACKS_Y201_T3S1_LARGE-4f467559.png",
+  "name": "瑪德蓉",
+  "rarity": "Superior"
+ },
+ "CB08EC19-8219-466B-8E95-E36DA8D2240A": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/81/121/U_LEEENFIELDSMLE_BATTLEPACKS_NIGHT_T1S3_LARGE-5179d8d9.png",
+  "name": "304 號高地戰役",
+  "rarity": "Standard"
+ },
+ "CB5EB5E9-3B2A-4C65-87F1-447D36093CE4": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/125/80/ASTRATORRESU_AIRSHIP_PAINT_02_LARGE-83506d8d.png",
+  "name": "HMA No. 8",
+  "rarity": "Enhanced"
+ },
+ "CB61C70C-6461-42D8-997B-3605A569546F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/58/125/MARKVU_GBR_MARKV_PAINT_08_LARGE-c67d78c4.png",
+  "name": "日式風格",
+  "rarity": "Enhanced"
+ },
+ "CB8C6577-060F-40A4-B2D8-D43CF4308047": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/47/21/U_MONDRAGON_BATTLEPACKS_SCOUT_T1S3_LARGE-2feb78eb.png",
+  "name": "迷彩罩",
+  "rarity": "Standard"
+ },
+ "CBEC0CB5-5163-494B-96E4-72F3BCFBD181": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/53/17/U_LEWISMG_BATTLEPACKS_NIGHT_T1S1_LARGE-3511cfe6.png",
+  "name": "伊塞克希薩立克戰役",
+  "rarity": "Standard"
+ },
+ "CCE4EC81-51E6-4542-B60A-95988B951CEF": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/20/28/U_HUOTAUTORIFLE_BATTLEPACKS_VETERAN_T1S2_LARGE-141cbfe4.png",
+  "name": "老鳥護衛",
+  "rarity": "Standard"
+ },
+ "CD24A585-2300-423B-8699-C02D9617DB04": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/39/54/U_NAGANTM1895_BATTLEPACKS_FABERGE_T1S1_LARGE-d9ca4ea0.png",
+  "name": "格尼拉利帕戰役",
+  "rarity": "Standard"
+ },
+ "CD471C23-4690-4046-AD56-E3413ABFBF2F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/75/52/U_RSCSMG_BATTLEPACKS_BATTLESCARRED_T2S2_LARGE-b5342b49.png",
+  "name": "阿波利奈爾",
+  "rarity": "Enhanced"
+ },
+ "CD4DE17A-9717-43BE-9647-29F7759A8D8C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/86/73/U_BERETTAM1918_BATTLEPACKS_ROYAL_T3S1_LARGE-aa499bf7.png",
+  "name": "薩伏亞",
+  "rarity": "Superior"
+ },
+ "CD6EE07D-68B9-40F1-9507-C3331305981B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/13/89/U_REMINGTONMODEL8_BATTLEPACKS_NIGHT_T1S1_LARGE-0da749fe.png",
+  "name": "伊塞克希薩立克戰役",
+  "rarity": "Standard"
+ },
+ "CE62CEAF-7F08-8637-E223-7817E5855E12": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/47/116/U_HOTCHKISSM1909_BATTLEPACKS_VETERAN_T1S1_LARGE-d174d183.png",
+  "name": "老鳥士兵",
+  "rarity": "Standard"
+ },
+ "CF55E666-226D-4325-BAC7-586B1CD94D5A": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/48/73/U_BARM1918_BATTLEPACKS_NIGHT_T1S4_LARGE-30b78d93.png",
+  "name": "維萊布勒托納戰役",
+  "rarity": "Standard"
+ },
+ "CF6B9CFC-E29E-4E4A-A2B3-D72AA421A6BE": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/81/10/U_STEYRM1912_BATTLEPACKS_ROYAL_T3S1_LARGE-510a26c2.png",
+  "name": "哈布斯堡王朝",
+  "rarity": "Superior"
+ },
+ "CFFD2ED9-5441-4F7E-85CC-6EDD714EB71F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/113/116/U_BROWNINGA5_BATTLEPACKS_NIGHT_T2S2_LARGE-7174314c.png",
+  "name": "夜光",
+  "rarity": "Enhanced"
+ },
+ "D0B61D1A-66FE-72AF-20A2-6471BD000E77": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/38/25/U_MARSAUTOPISTOL_BATTLEPACKS_SCOUT_T1S1_LARGE-2619e647.png",
+  "name": "迷彩圖樣",
+  "rarity": "Standard"
+ },
+ "D110DC28-4C65-427D-876E-F956536DCE59": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/63/116/U_LEWISMG_BATTLEPACKS_NIGHT_T3S1_LARGE-3f8c934b.png",
+  "name": "爆走王",
+  "rarity": "Superior"
+ },
+ "D22D9939-FF17-4E48-8753-C8CE00BDA65C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/76/69/U_BERETTAM1918_BATTLEPACKS_NIGHT_T1S2_LARGE-b4456421.png",
+  "name": "費斯蒂貝爾戰役",
+  "rarity": "Standard"
+ },
+ "D2611E02-BEC1-4732-AD31-781229A82FF1": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/108/119/STCHAMOND_FRA_STCHAMOND_PAINT_07_LARGE-94890b35.png",
+  "name": "藍天",
+  "rarity": "Enhanced"
+ },
+ "D2B207B3-F3C6-4ABC-81B5-A88ADEE146A0": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/43/72/U_SPRINGFIELDM1903_BATTLEPACKS_NIGHT_T1S4_LARGE-d5484fa2.png",
+  "name": "維萊布勒托納戰役",
+  "rarity": "Standard"
+ },
+ "D2E67DC7-2BAA-46F8-972C-332B122BE0EA": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/68/116//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_PERINOM1908_BATTLEPACKS_Y201_T3S2_LARGE-4474eb50.png",
+  "name": "奧提加拉山",
+  "rarity": "Superior"
+ },
+ "D38A6120-C19C-4ABD-8545-06927604411F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/23/16//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_MAXIMSMG_BATTLEPACKS_Y201_T3S2_LARGE-e9f08263.png",
+  "name": "菲力克斯穆勒",
+  "rarity": "Superior"
+ },
+ "D3BDB611-0CFA-460F-AB07-2B187D6C2F40": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/109/113/U_MAUSERSL_BATTLEPACKS_HUNTER_T3S1_LARGE-6d71dbf2.png",
+  "name": "奧丁",
+  "rarity": "Superior"
+ },
+ "D3FB4DA2-5618-4F13-8717-6F104B209F4C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/105/97/u_mp18_battlepacks_hunter_t3s1_large-979fc40e.png",
+  "name": "威瑪獵犬",
+  "rarity": "Superior"
+ },
+ "D4368B2B-EF56-4CD7-899D-E79620EEFB2C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/76/111/U_VETTERLI_BATTLEPACKS_FABERGE_T1S2_LARGE-b46f8f05.png",
+  "name": "戈爾利采·塔爾努夫戰役",
+  "rarity": "Standard"
+ },
+ "D485E470-4843-4D88-AA4C-09A15448B8F3": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/96/62/U_WINCHESTER1897_BATTLEPACKS_VETERAN_T2S2_LARGE-a0c27cbd.png",
+  "name": "戰壕掃帚",
+  "rarity": "Enhanced"
+ },
+ "D499C444-3A1B-45D8-A27A-4DA53FFFA8D3": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/90/13/U_MP18_BATTLEPACKS_SCOUT_T2S2_LARGE-a6f3840e.png",
+  "name": "破陣穆勒",
+  "rarity": "Enhanced"
+ },
+ "D4BAB317-EFB5-48CB-ACBE-16EA66E9392F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/14/110/U_WINCHESTERM1907_BATTLEPACKS_SCOUT_T3S1_LARGE-0e6ea96b.png",
+  "name": "藍魔鬼",
+  "rarity": "Superior"
+ },
+ "D51053C0-D865-423A-8C2D-C2136A02F285": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/125/73/U_BROWNINGA5_BATTLEPACKS_HUNTER_T3S1_LARGE-834923f8.png",
+  "name": "杜魯門",
+  "rarity": "Superior"
+ },
+ "D537AF0C-965C-4C06-B551-33E9DBF0094B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/31/36/U_MONDRAGON_BATTLEPACKS_NIGHT_T1S2_LARGE-1f242b6e.png",
+  "name": "費斯蒂貝爾戰役",
+  "rarity": "Standard"
+ },
+ "D53AD9C5-AB2A-4037-B794-1CF1754424F4": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/82/127/U_HOTCHKISSM1909_BATTLEPACKS_VETERAN_T1S2_LARGE-5281b51b.png",
+  "name": "老鳥護衛",
+  "rarity": "Standard"
+ },
+ "D5C09AF8-C44D-40E8-91CE-629C866B5A83": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/24/84/U_HELLRIEGEL1915_BATTLEPACKS_NIGHT_T2S2_LARGE-e8ac89ad.png",
+  "name": "埃登伯格",
+  "rarity": "Enhanced"
+ },
+ "D6071672-3526-410F-A99D-6404FAD1B67B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/22/104/U_CEIRIGOTTIM1895_BATTLEPACKS_NIGHT_T1S4_LARGE-ea685548.png",
+  "name": "維萊布勒托納戰役",
+  "rarity": "Standard"
+ },
+ "D718DAB3-1C2B-4D97-8287-8286D3B47667": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/37/64/U_RSC1917_BATTLEPACKS_FRENCH_T1S4_LARGE-25c0284a.png",
+  "name": "波拿巴王朝",
+  "rarity": "Standard"
+ },
+ "D745EA09-0978-4BF0-AE61-EB0845E369B3": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/35/45/U_LEWISMG_BATTLEPACKS_ROYAL_T1S3_LARGE-23d3055b.png",
+  "name": "皇家旨令",
+  "rarity": "Standard"
+ },
+ "D767702A-9BB9-482A-8976-31926E62B326": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/37/81/u_madsenmg_battlepacks_hunter_t3s1_large-dbaf36c1.png",
+  "name": "阿道戴",
+  "rarity": "Superior"
+ },
+ "D80054B7-7D8A-09DD-5C9C-53CDF7266502": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/72/2/U_BERGMANN1915MG_BATTLEPACKS_SCOUT_T1S1_LARGE-b8fe0c12.png",
+  "name": "迷彩圖樣",
+  "rarity": "Standard"
+ },
+ "D8516339-6402-42A6-8AAF-040A793428E8": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/112/14/U_REMINGTONMODEL8_BATTLEPACKS_VETERAN_T2S1_LARGE-90f23f87.png",
+  "name": "勃魯西洛夫",
+  "rarity": "Enhanced"
+ },
+ "D87C8628-2AAD-4899-8214-7180E79E5001": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/17/118/U_BORCHARDTC93_BATTLEPACKS_ROYAL_T3S1_LARGE-ef76356f.png",
+  "name": "將軍",
+  "rarity": "Superior"
+ },
+ "D88078A2-CFA4-43EF-837B-7E5C82414AFB": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/52/68/U_HOWELL_BATTLEPACKS_BATTLESCARRED_T2S2_LARGE-ccbc9f7e.png",
+  "name": "希格比",
+  "rarity": "Enhanced"
+ },
+ "D9070819-346F-445F-A365-BD05BF4A34DD": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/83/61/U_BROWNINGA5_BATTLEPACKS_ROYAL_T3S1_LARGE-533ddbfe.png",
+  "name": "駝背",
+  "rarity": "Superior"
+ },
+ "D97C798D-D2E0-4D35-8BBE-0F2FBA86FE11": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/109/37/U_LEWISMG_BATTLEPACKS_ROYAL_T1S4_LARGE-6d257c9e.png",
+  "name": "皇家法規",
+  "rarity": "Standard"
+ },
+ "D9817062-490D-48A3-BF74-5CA869EB73F7": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/90/121/u_remingtonmodel8_battlepacks_hunter_t3s1_large-a687e0e8.png",
+  "name": "阿涅森",
+  "rarity": "Superior"
+ },
+ "D9E0F358-8A37-483B-A32F-B987637816BA": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/8/80/U_MP18_BATTLEPACKS_NIGHT_T3S1_LARGE-08b0f9de.png",
+  "name": "塞勒河",
+  "rarity": "Superior"
+ },
+ "DB158044-9982-49FE-B2D2-60E9FF47A399": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/23/81/U_FN1903_BATTLEPACKS_ROYAL_T2S2_LARGE-17af6152.png",
+  "name": "好鬥者",
+  "rarity": "Enhanced"
+ },
+ "DB494802-2C5F-4EB4-A6A9-BC06757AE5ED": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/22/20/U_HUOTAUTORIFLE_BATTLEPACKS_NIGHT_T1S2_LARGE-ea14b510.png",
+  "name": "費斯蒂貝爾戰役",
+  "rarity": "Standard"
+ },
+ "DBF9496B-9E4C-45CB-B82E-1F23BC8F4488": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/105/82//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_SJOGRENSHOTGUN_BATTLEPACKS_Y201_T3S1_LARGE-97529e97.png",
+  "name": "索得格雷",
+  "rarity": "Superior"
+ },
+ "DC9B8899-075B-44D1-A5FB-496F9C891C8E": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/89/58/U_GENERALLIU_BATTLEPACKS_FABERGE_T2S1_LARGE-a7c6820b.png",
+  "name": "漢陽兵器",
+  "rarity": "Enhanced"
+ },
+ "DC9E4F71-7072-4646-A245-1A76048A2E24": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/103/60/U_BROWNINGA5_BATTLEPACKS_ROYAL_T2S1_LARGE-673c1ab3.png",
+  "name": "阿爾貢",
+  "rarity": "Enhanced"
+ },
+ "DCE6609C-E7D6-4F0A-93E6-CBC8778420B7": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/23/45/U_FARQUHARHILL_BATTLEPACKS_MQT_T1S4_LARGE-172de9a8.png",
+  "name": "奧特朗托海峽戰役",
+  "rarity": "Standard"
+ },
+ "DCE778BA-32E7-42D3-8768-CC27D6F9201C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/60/61/U_LEWISMG_BATTLEPACKS_NIGHT_T1S2_LARGE-3cc38387.png",
+  "name": "費斯蒂貝爾戰役",
+  "rarity": "Standard"
+ },
+ "DD688965-E243-430F-9268-84D61C7DC580": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/112/35/U_MADSENMG_BATTLEPACKS_NIGHT_T1S2_LARGE-7023ac9f.png",
+  "name": "費斯蒂貝爾戰役",
+  "rarity": "Standard"
+ },
+ "DDB55D0F-5C1C-445B-A5F6-F11716ED9E55": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/43/96/U_HELLRIEGEL1915_BATTLEPACKS_NIGHT_T2S1_LARGE-d5602aa2.png",
+  "name": "皮亞諾山",
+  "rarity": "Enhanced"
+ },
+ "DDFED25D-EB6B-40AF-977E-70DF48DD11A4": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/25/5/U_MAUSER1917_BATTLEPACKS_MQT_T3S1_LARGE-19054081.png",
+  "name": "羅爾",
+  "rarity": "Superior"
+ },
+ "DE78D10C-5F33-48B3-AD84-A218F0A36D29": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/11/20/U_FARQUHARHILL_BATTLEPACKS_MQT_T1S2_LARGE-f5ec2ebd.png",
+  "name": "福克蘭群島戰役",
+  "rarity": "Standard"
+ },
+ "DEA56242-CEB4-4266-8375-22450BFAAC50": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/24/112/u_berettam1918_battlepacks_hunter_t3s1_large-e890fa0c.png",
+  "name": "義大利布拉可犬",
+  "rarity": "Superior"
+ },
+ "DF4FE108-14D9-4A03-9BAE-738BE9E47F25": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/105/72/U_REMINGTONMODEL1900_BATTLEPACKS_FABERGE_T2S2_LARGE-69b8cd00.png",
+  "name": "德瓦納",
+  "rarity": "Enhanced"
+ },
+ "DF88E019-A2F6-BD93-6905-BDD9D385773A": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/58/41/U_WINCHESTER1897_BATTLEPACKS_VETERAN_T1S1_LARGE-3a29848d.png",
+  "name": "老鳥士兵",
+  "rarity": "Standard"
+ },
+ "DFBE7E40-6F27-4663-84F5-EE2AF45AF7FD": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/40/125/U_CHAUCHAT_BATTLEPACKS_FRENCH_T2S1_LARGE-287da245.png",
+  "name": "咻咻",
+  "rarity": "Enhanced"
+ },
+ "DFCAC2EB-15DF-4D93-9E2A-2E8C1F861D7E": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/32/30//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_BROWNINGM1917_BATTLEPACKS_Y201_T3S1_LARGE-e01e3241.png",
+  "name": "阿莫斯‧懷德",
+  "rarity": "Superior"
+ },
+ "E027930A-E69A-4ECF-8A66-F016A1C56880": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/6/13/U_REMINGTONM10_BATTLEPACKS_SCOUT_T2S1_LARGE-06f3546c.png",
+  "name": "鬥士",
+  "rarity": "Enhanced"
+ },
+ "E0958A35-A103-4C78-B1A3-A4C6DA2D1244": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/114/98/U_BROWNINGM1917_BATTLEPACKS_MQT_T1S3_LARGE-8e9e55e1.png",
+  "name": "日德蘭戰役",
+  "rarity": "Standard"
+ },
+ "E0E59D62-CA11-4F23-A84F-4E54B24FBADE": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/121/18//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_MOSINNAGANT1891_BATTLEPACKS_Y201_T3S1_LARGE-79eeadba.png",
+  "name": "莫納斯提爾",
+  "rarity": "Superior"
+ },
+ "E0F9C0D2-939A-4E89-AA8B-B3AF5ADA5C86": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/69/107/UIWepGrenadeClub_Final-bb95f480.png",
+  "name": "啞彈棒",
+  "rarity": "Superior"
+ },
+ "E1213A7C-2343-416A-AD20-BD7EC355F211": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/98/104/PUTILOVU_ASSAULTTRUCK_PAINT_08_LARGE-9e68f3be.png",
+  "name": "瑞弗雷斯",
+  "rarity": "Enhanced"
+ },
+ "E12C64A7-9A1D-4886-AFF0-8E120A0D89B3": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/103/26/U_HUOTAUTORIFLE_BATTLEPACKS_VETERAN_T2S2_LARGE-991a2250.png",
+  "name": "十字釘槍",
+  "rarity": "Enhanced"
+ },
+ "E19BA01C-4DC6-49CA-A225-808BBEB14368": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/120/111/U_WEBLEYMK6_BATTLEPACKS_BATTLESCARRED_T1S2_LARGE-8891a823.png",
+  "name": "法奧半島",
+  "rarity": "Standard"
+ },
+ "E1AC7BC8-EAD7-4492-A219-4FBF70C6AD86": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/80/98//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_RIBEYROLLES_BATTLEPACKS_Y201_T3S1_LARGE-b09e2088.png",
+  "name": "佛倫",
+  "rarity": "Superior"
+ },
+ "E2C24B65-1C17-4D95-BB63-B68AC994D2DF": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/86/118/U_MONDRAGON_BATTLEPACKS_NIGHT_T1S4_LARGE-aa764bb6.png",
+  "name": "維萊布勒托納戰役",
+  "rarity": "Standard"
+ },
+ "E2CD7C32-0161-427A-953F-7E5263FB7490": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/30/56/U_PARABELLUM_BATTLEPACKS_FABERGE_T1S1_LARGE-e2388d8c.png",
+  "name": "格尼拉利帕戰役",
+  "rarity": "Standard"
+ },
+ "E2DDD33A-D8C6-4FFC-B720-158B096658D3": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/111/120/U_KOLIBRI_BATTLEPACKS_UNIQUE_V1_LARGE-91886047.png",
+  "name": "某個東西",
+  "rarity": "Superior"
+ },
+ "E3303A44-1B82-CF7C-865C-E14A98563638": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/115/93/U_FN1903_BATTLEPACKS_ROYAL_T1S1_LARGE-73a3ac82.png",
+  "name": "皇家旨意",
+  "rarity": "Standard"
+ },
+ "E3A120F5-AAAE-4A27-9B45-E13EF36660BE": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/8/105/U_LEWISMG_BATTLEPACKS_NIGHT_T2S1_LARGE-f8979491.png",
+  "name": "奈許",
+  "rarity": "Enhanced"
+ },
+ "E3A9E998-2D56-41B8-A67F-28ECF09B1799": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/38/80/U_WINCHESTERM1907_BATTLEPACKS_NIGHT_T1S4_LARGE-dab0400c.png",
+  "name": "維萊布勒托納戰役",
+  "rarity": "Standard"
+ },
+ "E3BF8E80-9DE8-45E5-84AB-BA1C8D04622C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/62/95/U_LANCASTERHOWDAH_BATTLEPACKS_VETERAN_T1S3_LARGE-c2a14aa3.png",
+  "name": "老鳥步兵",
+  "rarity": "Standard"
+ },
+ "E3F263D0-31E1-40EA-8230-077433725E4D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/43/28/U_RIBEYROLLES_BATTLEPACKS_FRENCH_T2S2_LARGE-2be41778.png",
+  "name": "團隊精神",
+  "rarity": "Enhanced"
+ },
+ "E3FC1D0B-090B-432D-AA8D-BDD4A880F22D": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/85/127/U_TYPE38ARISAKA_BATTLEPACKS_MQT_T2S2_LARGE-5581da7c.png",
+  "name": "光臣",
+  "rarity": "Enhanced"
+ },
+ "E41BFE62-8D9D-4AD0-A39C-B5A8B7DC6666": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/16/105/U_FN1903_BATTLEPACKS_ROYAL_T1S4_LARGE-1069768f.png",
+  "name": "皇家法規",
+  "rarity": "Standard"
+ },
+ "E428F71D-5E27-4D3B-3819-3E7767DB4FC8": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/60/62/U_SMITHWESSON_BATTLEPACKS_XMAS_V1_LARGE-3c3e98a1.png",
+  "name": "假日套件 (極稀有)",
+  "rarity": "Superior"
+ },
+ "E43F5576-F95C-404C-99E8-57C355774B75": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/71/19/HANSAU_BOMBER_PAINT_03_LARGE-b9ed3add.png",
+  "name": "橘白",
+  "rarity": "Enhanced"
+ },
+ "E44C3E19-1352-430F-B510-CF0BC7AFDB90": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/105/18/A7VU_GER_A7V_PAINT_06_LARGE-97ee8a98.png",
+  "name": "腓特烈大帝",
+  "rarity": "Enhanced"
+ },
+ "E479D43F-9A98-6AD5-E7BE-5F806904CE05": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/40/81/U_M1911_EAPLAY_T2_LARGE-d851fde7.png",
+  "name": "保護套件 (極稀有)",
+  "rarity": "Superior"
+ },
+ "E486BA75-77B0-433B-8082-3B77E81404E4": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/103/27/U_FN1903_BATTLEPACKS_ROYAL_T3S1_LARGE-991b793a.png",
+  "name": "瑞典人",
+  "rarity": "Superior"
+ },
+ "E4AEB2EB-AB4A-47B8-A471-98FB7B043DDF": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/84/83/SALMSONU_2SEAT_PAINT_09_LARGE-ac53b744.png",
+  "name": "黑白",
+  "rarity": "Enhanced"
+ },
+ "E4BF1FB9-3397-4AEF-ACDB-74766E3757A0": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/29/92/FT_17U_FRA_FT-17_PAINT_08_LARGE-e3a4a2b3.png",
+  "name": "雙色調",
+  "rarity": "Enhanced"
+ },
+ "E4DCB175-29FF-4585-A720-7993AEC5E228": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/61/65/U_BERETTAM1918_BATTLEPACKS_ROYAL_T1S4_LARGE-c341a50a.png",
+  "name": "皇家法規",
+  "rarity": "Standard"
+ },
+ "E53E0F9B-2D7A-43C9-963C-E2D4AF977DB4": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/116/83/U_MONDRAGON_BATTLEPACKS_SCOUT_T1S4_LARGE-74adecaf.png",
+  "name": "迷彩紗",
+  "rarity": "Standard"
+ },
+ "E53EA005-E70E-4311-8771-208543E4F219": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/8/110/PUTILOVU_ASSAULTTRUCK_PAINT_01_LARGE-f892317e.png",
+  "name": "外貝加爾山脈",
+  "rarity": "Enhanced"
+ },
+ "E5866D97-584E-41FE-8652-92F2DD8DB949": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/73/35/U_COLTPOCKET1903_BATTLEPACKS_SCOUT_T1S4_LARGE-b7238333.png",
+  "name": "迷彩紗",
+  "rarity": "Standard"
+ },
+ "E5CA140B-FA3D-44C8-A6A2-14A6BD9C5620": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/11/29/U_MARSAUTOPISTOL_BATTLEPACKS_SCOUT_T1S3_LARGE-f5e325c2.png",
+  "name": "迷彩罩",
+  "rarity": "Standard"
+ },
+ "E6B73238-2854-4648-BC64-ACBEA3071B5F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/53/123/U_LEEENFIELDSMLE_BATTLEPACKS_HUNTER_T3S1_LARGE-357bb187.png",
+  "name": "科貝特",
+  "rarity": "Superior"
+ },
+ "E6D69CA1-B643-4CA1-8AF0-24AB0B8EEF81": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/81/26/UIWepHuntingKnife_Final-afe633e5.png",
+  "name": "法軍屠刀",
+  "rarity": "Superior"
+ },
+ "E7473895-9C21-49A7-928E-7AC1EFEEDAFA": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/29/87//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_FARQUHARHILL_BATTLEPACKS_Y201_T3S2_LARGE-e3a90783.png",
+  "name": "青春誓言",
+  "rarity": "Superior"
+ },
+ "E796B4FB-3746-493F-800D-2BB7D9AFF0E3": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/109/86/U_BULLDOG_BATTLEPACKS_ROYAL_T1S4_LARGE-93aab56c.png",
+  "name": "皇家法規",
+  "rarity": "Standard"
+ },
+ "E7FF2F43-15CC-468F-837F-8ADBDEB87E1A": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/108/115/U_RSC1917_BATTLEPACKS_FRENCH_T1S2_LARGE-6c73ab43.png",
+  "name": "蘭卡斯特王朝",
+  "rarity": "Standard"
+ },
+ "E8009BAA-D939-4791-93EF-E11CA0F09D91": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/51/19/U_GEWEHR98_BATTLEPACKS_NIGHT_T3S1_LARGE-cd13f04d.png",
+  "name": "馮·豪森",
+  "rarity": "Superior"
+ },
+ "E8288A6A-1F08-4611-BB54-1A46B79212D8": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/105/12/U_BERGMANN1915MG_BATTLEPACKS_NIGHT_T2S2_LARGE-69f4c49d.png",
+  "name": "Oigee 望遠鏡",
+  "rarity": "Enhanced"
+ },
+ "E8CDD2F2-A2FC-4259-B23A-D2321B300AAF": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/96/8/U_LANCASTERHOWDAH_BATTLEPACKS_VETERAN_T2S2_LARGE-a008c903.png",
+  "name": "阿布克萊",
+  "rarity": "Enhanced"
+ },
+ "E98BA47F-6341-4526-AE65-21EE1C9CCD40": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/109/67/U_CEIRIGOTTIM1895_BATTLEPACKS_NIGHT_T3S1_LARGE-93436fee.png",
+  "name": "皮亞韋河",
+  "rarity": "Superior"
+ },
+ "EA3637E9-0C29-B855-01B2-D8B61B0BA148": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/46/54/U_GEWEHR98_BATTLEPACKS_SCOUT_T1S1_LARGE-d2362d23.png",
+  "name": "迷彩圖樣",
+  "rarity": "Standard"
+ },
+ "EA494F4A-2106-4C90-BF66-F42B298E0E4C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/107/35/U_BERGMANN1915MG_BATTLEPACKS_NIGHT_T2S1_LARGE-6b237799.png",
+  "name": "F 彈",
+  "rarity": "Enhanced"
+ },
+ "EA7BE996-8FCE-4D28-8C68-6D6B6C747E19": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/93/81/U_HOTCHKISSM1909_BATTLEPACKS_NIGHT_T2S1_LARGE-a3afc5a6.png",
+  "name": "哥倫布",
+  "rarity": "Enhanced"
+ },
+ "EA7E547D-A7DA-4691-885D-F18D9F649C78": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/97/12/U_ROSSMKIII_BATTLEPACKS_BATTLESCARRED_T1S4_LARGE-610c84ec.png",
+  "name": "聖埃魯瓦",
+  "rarity": "Standard"
+ },
+ "EA814018-E253-4F19-A2F6-4206BFCA71B7": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/48/112/U_MARTINIHENRY_BATTLEPACKS_ROYAL_T2S2_LARGE-d09012f2.png",
+  "name": "吉力馬札羅",
+  "rarity": "Enhanced"
+ },
+ "EADD546A-6E09-492D-81F3-62A9E6DEF355": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/34/56//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_MOSINNAGANT1891_BATTLEPACKS_Y201_T3S2_LARGE-de38aa45.png",
+  "name": "科巴丁",
+  "rarity": "Superior"
+ },
+ "EB4C702B-9EA7-4E0D-8A69-6307169BDBBA": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/11/85/MARKVU_GBR_MARKV_PAINT_06_LARGE-f5554e37.png",
+  "name": "庫賓卡",
+  "rarity": "Enhanced"
+ },
+ "EB512A56-CA99-4481-B789-5AB6750D8BFC": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/49/53/FT_17U_FRA_FT-17_PAINT_SILVERVICTORY_LARGE-3135571e.png",
+  "name": "銀色勝利號 (極稀有)",
+  "rarity": "Superior"
+ },
+ "EB615EF3-6FF5-4016-BEDA-9522F8AC1E6F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/104/68/U_ROSSMKIII_BATTLEPACKS_BATTLESCARRED_T1S1_LARGE-68bcd65b.png",
+  "name": "愛國者",
+  "rarity": "Standard"
+ },
+ "EB87E97F-47C9-4296-ACB2-7CE4E87AD483": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/19/79/U_LEBEL_BATTLEPACKS_FRENCH_T2S2_LARGE-ed4f8440.png",
+  "name": "龐加萊",
+  "rarity": "Enhanced"
+ },
+ "EB8AA11A-3781-441D-B608-7E0E9E070183": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/110/82/U_BERETTAM1915_BATTLEPACKS_UNIQUE_V1_LARGE-6e52f719.png",
+  "name": "義大利復興運動",
+  "rarity": "Superior"
+ },
+ "EBF7C744-0335-44C4-BF8B-E869AD46A10B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/90/92/U_BROWNINGA5_BATTLEPACKS_NIGHT_T1S3_LARGE-a65cc31f.png",
+  "name": "304 號高地戰役",
+  "rarity": "Standard"
+ },
+ "EC0309DB-6F2E-455A-B99D-56B350D85DBD": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/93/81/U_MADSENMG_BATTLEPACKS_NIGHT_T1S4_LARGE-5daf5c35.png",
+  "name": "維萊布勒托納戰役",
+  "rarity": "Standard"
+ },
+ "EC14CBE8-AA48-5317-91C1-454442EB6C2A": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/71/43/U_SMITHWESSON_BATTLEPACKS_ROYAL_T1S1_LARGE-472bbf81.png",
+  "name": "皇家旨意",
+  "rarity": "Standard"
+ },
+ "ECE634B5-4DDC-4FCA-9081-9704ACE2D5FC": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/23/20/U_MAUSERSL_BATTLEPACKS_VETERAN_T1S3_LARGE-1714b604.png",
+  "name": "老鳥步兵",
+  "rarity": "Standard"
+ },
+ "ED366942-A15C-44B6-9762-CC4B77B58C70": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/5/64/U_STEYRM1912_BATTLEPACKS_ROYAL_T1S2_LARGE-fb400c99.png",
+  "name": "皇家詔書",
+  "rarity": "Standard"
+ },
+ "ED66EF85-BD65-4253-B9B8-EF83B7B5063F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/124/41/U_MONDRAGON_BATTLEPACKS_SCOUT_T2S1_LARGE-7c299652.png",
+  "name": "美索波隆尼加",
+  "rarity": "Enhanced"
+ },
+ "EE365405-4263-42F2-B887-803E65206BA2": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/116/71/U_WINCHESTERM1895_BATTLEPACKS_HUNTER_T3S1_LARGE-74b9f3df.png",
+  "name": "泰迪",
+  "rarity": "Superior"
+ },
+ "EE8A1170-1449-430B-BFC0-4BD2CE6D0824": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/88/81/U_WEBFOSAUTOREV_BATTLEPACKS_UNIQUE_V2_LARGE-5851aab8.png",
+  "name": "為國捐軀",
+  "rarity": "Superior"
+ },
+ "EF474C52-9454-4402-B1EE-C119069CAA60": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/20/50/U_HAMMERLESS_BATTLEPACKS_UNIQUE_V1_LARGE-1432b4d1.png",
+  "name": "卡薩布蘭卡",
+  "rarity": "Superior"
+ },
+ "EF69F582-2AD4-4459-8CFA-3FDC25284094": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/120/53/U_BORCHARDTC93_BATTLEPACKS_ROYAL_T1S3_LARGE-8835acb2.png",
+  "name": "皇家旨令",
+  "rarity": "Standard"
+ },
+ "EF7B3403-5E5E-4F2F-BB7D-80D5A62666CB": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/85/78/U_COLTPOCKET1903_BATTLEPACKS_SCOUT_T3S1_LARGE-abb237b3.png",
+  "name": "卡彭",
+  "rarity": "Superior"
+ },
+ "EFECFE24-D450-47D6-9735-4BB485DB4F71": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/104/65/U_FARQUHARHILL_BATTLEPACKS_MQT_T2S2_LARGE-68bfee03.png",
+  "name": "亞瑟",
+  "rarity": "Enhanced"
+ },
+ "F0187A56-DF25-41B7-947A-F500C62ABD47": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/44/114/MARKVU_GBR_MARKV_PAINT_BLOODIED_LARGE-2c8ecfd1.png",
+  "name": "血跡斑斑 (極稀有)",
+  "rarity": "Superior"
+ },
+ "F05C387D-A489-45A3-BEA2-EC596383426A": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/56/78/SALMSONU_2SEAT_PAINT_01_LARGE-c8b2a205.png",
+  "name": "紅鷹",
+  "rarity": "Enhanced"
+ },
+ "F05FB843-2483-4258-9285-4582A8222336": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/116/25/U_ROSSMKIII_BATTLEPACKS_BATTLESCARRED_T2S2_LARGE-8c19a622.png",
+  "name": "佩姬",
+  "rarity": "Enhanced"
+ },
+ "F085A55A-D941-44C8-87AA-D3BDCF710AD2": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/106/25/PUTILOVU_ASSAULTTRUCK_PAINT_07_LARGE-6a1997a7.png",
+  "name": "科里瓦涅斯",
+  "rarity": "Enhanced"
+ },
+ "F129EFFC-8F86-424F-966E-35813C05AD22": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/38/57/U_STEYRM1912_P16_BATTLEPACKS_MQT_T1S4_LARGE-26c77e97.png",
+  "name": "奧特朗托海峽戰役",
+  "rarity": "Standard"
+ },
+ "F25FD55C-487A-4CE7-B694-6BAA89F878EE": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/39/25/U_M1911_BATTLEPACKS_VETERAN_T2S1_LARGE-271954db.png",
+  "name": "保護者",
+  "rarity": "Enhanced"
+ },
+ "F2BC6AA8-1DE3-8A75-B3DF-29A06E14429E": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/117/62/U_WINCHESTERM1895_BATTLEPACKS_ROYAL_T1S1_LARGE-8bc2694e.png",
+  "name": "皇家旨意",
+  "rarity": "Standard"
+ },
+ "F36D24AB-7CCE-46C3-A827-D27C8DBA4CAC": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/89/113/U_MAUSERC96_BATTLEPACKS_VETERAN_T3S1_LARGE-598f44cc.png",
+  "name": "盒子砲",
+  "rarity": "Superior"
+ },
+ "F37FDCCA-9C1C-4AB8-9145-0DEA0AB6347A": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/36/19//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_MG0818_BATTLEPACKS_Y201_T3S1_LARGE-dc132dba.png",
+  "name": "法蘭茲·馬克",
+  "rarity": "Superior"
+ },
+ "F393CB90-9BEE-42B3-AFC7-711455EAA7DB": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/49/44/U_MADSENMG_BATTLEPACKS_NIGHT_T1S1_LARGE-31d43129.png",
+  "name": "伊塞克希薩立克戰役",
+  "rarity": "Standard"
+ },
+ "F3AAC6AA-0672-4140-96DD-1E3C039D6E94": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/93/5/U_SPRINGFIELDM1903_BATTLEPACKS_NIGHT_T1S1_LARGE-5dfb7ed3.png",
+  "name": "伊塞克希薩立克戰役",
+  "rarity": "Standard"
+ },
+ "F46DFC41-E7A5-46D2-8A09-9141991A2C3B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/9/109/U_LUGER1906_BATTLEPACKS_NIGHT_T1S4_LARGE-f76dc789.png",
+  "name": "維萊布勒托納戰役",
+  "rarity": "Standard"
+ },
+ "F4803DAC-39F8-4C90-953C-FC9C6456456E": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/5/96/U_LUGERP08_BATTLEPACKS_VETERAN_T1S3_LARGE-05a02b87.png",
+  "name": "老鳥步兵",
+  "rarity": "Standard"
+ },
+ "F4E6C6CE-1E07-47F2-AC85-4C63B0D9433B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/108/61/U_MONDRAGON_BATTLEPACKS_SCOUT_T3S1_LARGE-6c3d8e76.png",
+  "name": "墨西哥人",
+  "rarity": "Superior"
+ },
+ "F547EF95-1A52-422B-9DCF-09355CB47EA3": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/112/58//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_REMINGTONMODEL1900_BATTLEPACKS_Y201_T3S2_LARGE-903a803f.png",
+  "name": "菲姆特",
+  "rarity": "Superior"
+ },
+ "F5DF77A9-1FC5-4DBB-B752-EB2BE884EEBD": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/106/57/U_PERINO_BATTLEPACKS_FABERGE_T2S2_LARGE-96c7855d.png",
+  "name": "卡波",
+  "rarity": "Enhanced"
+ },
+ "F6562220-0D97-49A2-A6B8-D3F6C6259ADD": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/5/65/U_MAUSER1917_BATTLEPACKS_MQT_T2S2_LARGE-05bf33c1.png",
+  "name": "菲德勒",
+  "rarity": "Enhanced"
+ },
+ "F66CEB76-B931-4CC2-A340-982541206D1B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/70/63/U_BARM1918_BATTLEPACKS_ROYAL_T2S2_LARGE-463f3aa5.png",
+  "name": "戰馬",
+  "rarity": "Enhanced"
+ },
+ "F691DBF4-32B2-6342-094F-9D78A9EB5460": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/54/101/U_LANCASTERHOWDAH_BATTLEPACKS_VETERAN_T1S1_LARGE-3665c206.png",
+  "name": "老鳥士兵",
+  "rarity": "Standard"
+ },
+ "F7398DB3-E9FF-4CC8-AADE-29C540BDE180": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/119/64/MARKVU_GBR_MARKV_PAINT_04_LARGE-77406bd9.png",
+  "name": "噴漆",
+  "rarity": "Enhanced"
+ },
+ "F7AAD064-EC1E-4FAB-8FAB-FA105E9B6CAE": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/114/118/U_MG0818_BATTLEPACKS_BATTLESCARRED_T1S4_LARGE-8e8a47ea.png",
+  "name": "霍亨索倫",
+  "rarity": "Standard"
+ },
+ "F7C976BC-5C95-4A67-B4F2-1E4F6C5A2F17": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/30/79/U_KOLIBRI_BATTLEPACKS_ROYAL_T2S2_LARGE-1eb1a3e6.png",
+  "name": "瑪塔·哈里",
+  "rarity": "Enhanced"
+ },
+ "F7E55980-4FA7-4001-94FC-97DCC0AF8159": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/35/94/ASTRATORRESU_AIRSHIP_PAINT_03_LARGE-23a2d77f.png",
+  "name": "HMA No. 16",
+  "rarity": "Enhanced"
+ },
+ "F7E5AEDA-B7CF-4F63-7C6C-9469FAB93950": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/73/64/U_MP18_BATTLEFEST_SKIN_LARGE-49c044fa.png",
+  "name": "胡蒂爾",
+  "rarity": "Superior"
+ },
+ "F7ECA12B-3BCA-4FB2-80B9-EA5AC1D62723": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/88/30/U_STEYRM1912_P16_BATTLEPACKS_MQT_T2S2_LARGE-a8e28350.png",
+  "name": "弗克少校",
+  "rarity": "Enhanced"
+ },
+ "F8406B2D-C45A-463E-80E0-F7D7530E8061": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/68/9/U_BERETTAM1918_BATTLEPACKS_ROYAL_T2S2_LARGE-44091d51.png",
+  "name": "維多利亞",
+  "rarity": "Enhanced"
+ },
+ "F84CA120-66A7-4872-91C0-36DEE7844F35": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/31/10/U_RSC1917_BATTLEPACKS_FRENCH_T2S2_LARGE-1f0a5ef2.png",
+  "name": "約瑟夫·霞飛",
+  "rarity": "Enhanced"
+ },
+ "F8B357AA-EAE2-4FA1-9EA3-AD9B2FC3BCAA": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/96/112/U_BERGMANN1915MG_BATTLEPACKS_SCOUT_T3S1_LARGE-a0901cb6.png",
+  "name": "國王",
+  "rarity": "Superior"
+ },
+ "F93A5DF3-AA71-4DD4-9616-C20149AE495F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/128/36/U_WINCHESTERM1907_BATTLEPACKS_NIGHT_T1S3_LARGE-8024b766.png",
+  "name": "304 號高地戰役",
+  "rarity": "Standard"
+ },
+ "F9983578-E3E9-46FB-BCC5-6640825B7169": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/10/67/UIWepSawtoothKnife-0abd3c70.png",
+  "name": "鋸齒刀",
+  "rarity": "Superior"
+ },
+ "F9A3A0B0-C74F-4760-8B4D-82AFD93C0C6C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/17/20/U_MARTINIHENRY_BATTLEPACKS_ROYAL_T1S2_LARGE-11146931.png",
+  "name": "皇家詔書",
+  "rarity": "Standard"
+ },
+ "F9EB896B-7DEE-4358-B81E-3804FB2CA34E": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/112/100/U_WINCHESTERM1895_BATTLEPACKS_ROYAL_T2S1_LARGE-70648304.png",
+  "name": "潘喬小鎮",
+  "rarity": "Enhanced"
+ },
+ "F9EE0A56-586B-4BBE-8C93-95BD1BBC5F66": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/15/31/U_BERGMANN1915MG_BATTLEPACKS_NIGHT_T1S2_LARGE-f11f853d.png",
+  "name": "費斯蒂貝爾戰役",
+  "rarity": "Standard"
+ },
+ "FA01F566-191E-49BE-A690-3A363D07D1A2": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/81/69/U_BORCHARDTC93_BATTLEPACKS_ROYAL_T1S4_LARGE-5145f89e.png",
+  "name": "皇家法規",
+  "rarity": "Standard"
+ },
+ "FA8DDC9C-8044-4B60-A7B0-3560251E15B1": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/88/65/U_HUOTAUTORIFLE_BATTLEPACKS_NIGHT_T1S3_LARGE-584150cc.png",
+  "name": "304 號高地戰役",
+  "rarity": "Standard"
+ },
+ "FAB61DF0-C7A3-40F5-BFB7-F5DB2975AAA1": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/81/70/U_PARABELLUM_BATTLEPACKS_FABERGE_T1S3_LARGE-af46fbcf.png",
+  "name": "魯特斯克戰役",
+  "rarity": "Standard"
+ },
+ "FB01A74F-D0CB-4EF6-806D-96315C4090FB": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/75/38/U_BERETTAM1918_BATTLEPACKS_NIGHT_T1S1_LARGE-b526f5a1.png",
+  "name": "伊塞克希薩立克戰役",
+  "rarity": "Standard"
+ },
+ "FB89EDEB-3B0C-4991-983A-7242DAA10064": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/35/85/U_BORCHARDTC93_BATTLEPACKS_UNIQUE_V1_LARGE-23ab9a20.png",
+  "name": "憎恨聖歌",
+  "rarity": "Superior"
+ },
+ "FB91F4AC-14A6-98EA-80E8-D141B4EB127B": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/38/39/U_SPRINGFIELDM1903_BATTLEPACKS_VETERAN_T1S1_LARGE-26278cea.png",
+  "name": "老鳥士兵",
+  "rarity": "Standard"
+ },
+ "FBB04C81-26DD-4368-9F11-08DA5EA514CD": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/112/61/ILYAMUROMETSU_HEAVYBOMBER_PAINT_01_LARGE-703dce2f.png",
+  "name": "基輔壯士",
+  "rarity": "Enhanced"
+ },
+ "FCB0B88F-D6D3-40B2-B5A7-4F4A27F2F9CF": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/62/104/U_GENERALLIU_BATTLEPACKS_FABERGE_T1S1_LARGE-c29890a4.png",
+  "name": "格尼拉利帕戰役",
+  "rarity": "Standard"
+ },
+ "FCC2CCEB-4341-4A86-9807-9CAC19C03A18": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/107/68/U_MADSENMG_BATTLEPACKS_NIGHT_T2S2_LARGE-95bcc2bc.png",
+  "name": "薩伊勒塞克",
+  "rarity": "Enhanced"
+ },
+ "FCCC7C85-0988-47F7-87EB-AE89E7F038DA": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/24/64/U_BULLDOG_BATTLEPACKS_ROYAL_T2S1_LARGE-18c04776.png",
+  "name": "大角",
+  "rarity": "Enhanced"
+ },
+ "FDC3F510-2D29-40F3-BD00-53635A142927": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/84/84//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_ROSSMKIII_BATTLEPACKS_Y201_T3S1_LARGE-54accef8.png",
+  "name": "波珀靈厄",
+  "rarity": "Superior"
+ },
+ "FE000C76-DBDE-46FC-8530-FFB574447C6C": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/112/104/U_MADSENMG_BATTLEPACKS_SCOUT_T2S2_LARGE-90980e75.png",
+  "name": "骷髏",
+  "rarity": "Enhanced"
+ },
+ "FE8068AD-BBFB-4BD0-9ACA-775EB7D1B848": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/93/81/ILYAMUROMETSU_HEAVYBOMBER_PAINT_09_LARGE-5d517dba.png",
+  "name": "阿遼沙",
+  "rarity": "Enhanced"
+ },
+ "FEF37C17-68B2-4822-BC47-68C4FDE5F10F": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/85/41/U_WINCHESTERM1895_BATTLEPACKS_ROYAL_T2S2_LARGE-ab29042d.png",
+  "name": "義勇騎兵",
+  "rarity": "Enhanced"
+ },
+ "FEFE1681-FF8D-4251-8B9E-E3592187AD84": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/94/65//mnt/dice-filer-gamedata/3584403/Persistence/Images/Y201/UI/Textures/Persistence/Fancy_Large/U_FEDOROVAVTOMAT_BATTLEPACKS_Y201_T3S1_LARGE-5e414b18.png",
+  "name": "默勒謝什蒂",
+  "rarity": "Superior"
+ },
+ "FF1D7BD9-9C63-43F0-8D7A-71C31602BCF5": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/75/29/U_WINCHESTER1897_BATTLEPACKS_VETERAN_T2S1_LARGE-4b1d706a.png",
+  "name": "謬斯",
+  "rarity": "Enhanced"
+ },
+ "FF362B32-402A-461D-B52C-4FBBCABF9212": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/43/27/U_LUGER1906_BATTLEPACKS_ROYAL_T3S1_LARGE-d5e57a3b.png",
+  "name": "德皇",
+  "rarity": "Superior"
+ },
+ "FF49910F-C9C3-4763-8BA1-F8B87DF7FD66": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/66/77/U_STEYRM1912_BATTLEPACKS_ROYAL_T2S2_LARGE-be4d8564.png",
+  "name": "赫岑朵夫",
+  "rarity": "Enhanced"
+ },
+ "FF9A5F33-75A5-4019-9974-03E9EC4DE8C9": {
+  "image": "[BB_PREFIX]/gamedata/Tunguska/85/87/U_STEYRMANM1895_BATTLEPACKS_NIGHT_T1S2_LARGE-ab575e5c.png",
+  "name": "費斯蒂貝爾戰役",
+  "rarity": "Standard"
+ }
+}

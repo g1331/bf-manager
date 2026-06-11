@@ -5,7 +5,8 @@
  *
  * 数据来自后端真实接口：persona 概要、生涯综合 + 兵种分布、武器、载具、最近
  * 服务器、在线状态、外部封禁、所属战队。武器/载具的 KPM 由前端按 击杀 /
- * (时长/60) 计算（后端该接口不直接给）；皮肤数据暂未接通，相关展示先省略。
+ * (时长/60) 计算（后端该接口不直接给）；已装备皮肤随武器/载具接口下发，
+ * 卡片优先展示皮肤图、皮肤名按稀有度着色。
  */
 
 import * as React from "react";
@@ -19,11 +20,14 @@ import {
 } from "@/components/layout/PageSkeleton";
 import { RarityStar } from "@/components/bf1/visual/RarityStar";
 import { BanBadge } from "@/components/bf1/visual/BanBadge";
+import { EquipmentFilterBar } from "@/components/bf1/EquipmentFilterBar";
 import {
   rarityByKills,
   rarityByRank,
   rarityByStars,
   rarityHex,
+  skinRarityFromName,
+  skinRarityHex,
   starsByKills,
 } from "@/lib/bf1/rarity";
 import { pickBackgroundUrl, FALLBACK_GRADIENT } from "@/lib/bf1/background";
@@ -544,64 +548,125 @@ function OverviewTab({
 
 /* ----------------------------- 武器 / 载具 Tab ----------------------------- */
 
+/** 武器/载具列表的分类 + 名称过滤；分类从数据 distinct 推导并保持出现顺序 */
+function useEquipmentFilter<
+  T extends { name: string | null; category: string | null; skin_name: string | null },
+>(items: T[]) {
+  const [search, setSearch] = React.useState("");
+  const [category, setCategory] = React.useState<string | null>(null);
+  const categories = React.useMemo(
+    () => [...new Set(items.map((i) => i.category).filter((c): c is string => !!c))],
+    [items],
+  );
+  const filtered = React.useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return items.filter(
+      (i) =>
+        (category == null || i.category === category) &&
+        (!q ||
+          (i.name ?? "").toLowerCase().includes(q) ||
+          (i.skin_name ?? "").toLowerCase().includes(q)),
+    );
+  }, [items, category, search]);
+  return { search, setSearch, category, setCategory, categories, filtered };
+}
+
 function WeaponsTab({ weapons, loading }: { weapons: WeaponStat[]; loading: boolean }) {
+  const { search, setSearch, category, setCategory, categories, filtered } =
+    useEquipmentFilter(weapons);
   if (loading) return <CardGridSkeleton />;
   if (weapons.length === 0) return <EmptyState text="暂无武器数据" />;
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {weapons.map((w) => {
-        const kpm = computeKpm(w.kills, w.time_seconds);
-        return (
-          <EquipmentCard
-            key={w.name ?? ""}
-            kind="weapon"
-            name={w.name}
-            subtitle={w.category}
-            image={w.image}
-            kills={w.kills}
-            stats={[
-              ["击杀", fmtNum(w.kills)],
-              ["KPM", kpm != null ? kpm.toFixed(2) : "—"],
-              ["命中", w.accuracy != null ? `${w.accuracy.toFixed(1)}%` : "—"],
-              [
-                "爆头",
-                w.kills && w.headshots != null
-                  ? `${((w.headshots / w.kills) * 100).toFixed(1)}%`
-                  : "—",
-              ],
-              ["时长", formatDuration(w.time_seconds ?? 0)],
-            ]}
-          />
-        );
-      })}
+    <div>
+      <EquipmentFilterBar
+        categories={categories}
+        selected={category}
+        onSelect={setCategory}
+        search={search}
+        onSearch={setSearch}
+        placeholder="搜索武器名 / 皮肤名…"
+      />
+      {filtered.length === 0 ? (
+        <EmptyState text="无匹配结果" />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {filtered.map((w) => {
+            const kpm = computeKpm(w.kills, w.time_seconds);
+            return (
+              <EquipmentCard
+                key={w.name ?? ""}
+                kind="weapon"
+                name={w.name}
+                subtitle={w.category}
+                image={w.image}
+                kills={w.kills}
+                skinName={w.skin_name}
+                skinRarity={w.skin_rarity}
+                skinImage={w.skin_image}
+                stats={[
+                  ["击杀", fmtNum(w.kills)],
+                  ["KPM", kpm != null ? kpm.toFixed(2) : "—"],
+                  ["命中", w.accuracy != null ? `${w.accuracy.toFixed(1)}%` : "—"],
+                  [
+                    "爆头",
+                    w.kills && w.headshots != null
+                      ? `${((w.headshots / w.kills) * 100).toFixed(1)}%`
+                      : "—",
+                  ],
+                  ["时长", formatDuration(w.time_seconds ?? 0)],
+                ]}
+              />
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
 
 function VehiclesTab({ vehicles, loading }: { vehicles: VehicleStat[]; loading: boolean }) {
+  const { search, setSearch, category, setCategory, categories, filtered } =
+    useEquipmentFilter(vehicles);
   if (loading) return <CardGridSkeleton />;
   if (vehicles.length === 0) return <EmptyState text="暂无载具数据" />;
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {vehicles.map((v) => {
-        const kpm = computeKpm(v.kills, v.time_seconds);
-        return (
-          <EquipmentCard
-            key={v.name ?? ""}
-            kind="vehicle"
-            name={v.name}
-            subtitle={v.category}
-            image={v.image}
-            kills={v.kills}
-            stats={[
-              ["击杀", fmtNum(v.kills)],
-              ["KPM", kpm != null ? kpm.toFixed(2) : "—"],
-              ["摧毁", fmtNum(v.destroyed)],
-              ["时长", formatDuration(v.time_seconds ?? 0)],
-            ]}
-          />
-        );
-      })}
+    <div>
+      <EquipmentFilterBar
+        categories={categories}
+        selected={category}
+        onSelect={setCategory}
+        search={search}
+        onSearch={setSearch}
+        placeholder="搜索载具名 / 皮肤名…"
+      />
+      {filtered.length === 0 ? (
+        <EmptyState text="无匹配结果" />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {filtered.map((v) => {
+            const kpm = computeKpm(v.kills, v.time_seconds);
+            return (
+              <EquipmentCard
+                key={v.name ?? ""}
+                kind="vehicle"
+                name={v.name}
+                subtitle={v.category}
+                image={v.image}
+                kills={v.kills}
+                skinName={v.skin_name}
+                skinRarity={v.skin_rarity}
+                skinImage={v.skin_image}
+                stats={[
+                  ["击杀", fmtNum(v.kills)],
+                  ["KPM", kpm != null ? kpm.toFixed(2) : "—"],
+                  ["摧毁", fmtNum(v.destroyed)],
+                  ["时长", formatDuration(v.time_seconds ?? 0)],
+                ]}
+              />
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -613,6 +678,9 @@ function EquipmentCard({
   image,
   kills,
   stats,
+  skinName,
+  skinRarity,
+  skinImage,
 }: {
   kind: "weapon" | "vehicle";
   name: string | null;
@@ -620,12 +688,16 @@ function EquipmentCard({
   image: string | null;
   kills: number | null;
   stats: ReadonlyArray<[string, string]>;
+  skinName?: string | null;
+  skinRarity?: string | null;
+  skinImage?: string | null;
 }) {
   const stars = starsByKills(kills ?? 0);
   const rarity = rarityByKills(kills ?? 0);
   return (
     <Bf1Panel variant="dark" cut={18} className="p-4">
-      <CardArtwork kind={kind} image={image} name={name} />
+      {/* 已装备皮肤时优先展示皮肤图，回退原图 */}
+      <CardArtwork kind={kind} image={skinImage ?? image} name={name} />
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div
@@ -635,6 +707,15 @@ function EquipmentCard({
           >
             {name}
           </div>
+          {skinName ? (
+            <div
+              className="truncate text-[11px] font-medium"
+              style={{ color: skinRarityHex[skinRarityFromName(skinRarity)] }}
+              title={skinName}
+            >
+              {skinName}
+            </div>
+          ) : null}
           {subtitle ? <div className="truncate text-[11px] text-white/45">{subtitle}</div> : null}
         </div>
         <span className="flex shrink-0 items-center gap-1.5">

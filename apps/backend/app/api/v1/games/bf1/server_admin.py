@@ -5,7 +5,6 @@ from __future__ import annotations
 from fastapi import APIRouter, Request
 
 from app.api.deps import CurrentUser, DbDep
-from app.api.errors import ForbiddenError
 from app.schemas.bf1.admin import (
     AdminActionResult,
     BanPlayerRequest,
@@ -98,9 +97,11 @@ async def add_ban(
     request: Request,
 ) -> AdminActionResult:
     authz = ServerAuthzService(db)
-    server = await authz.require_role(user=user, game="bf1", server_id=game_id, min_role="admin")
+    await authz.require_role(user=user, game="bf1", server_id=game_id, min_role="admin")
     service = _admin_service(db, request, user, game_id)
-    await service.add_ban(payload.persona_id, server.server_id)
+    # 名单操作所需的 RSP serverId 由 service 按 game_id 向 EA 实时解析；
+    # servers 表的 server_id 列存的是权限映射用的 gameId，语义不同，不能传给 RSP。
+    await service.add_ban(payload.persona_id)
     return AdminActionResult(success=True, message=f"已封禁玩家 {payload.persona_id}")
 
 
@@ -113,9 +114,9 @@ async def remove_ban(
     request: Request,
 ) -> AdminActionResult:
     authz = ServerAuthzService(db)
-    server = await authz.require_role(user=user, game="bf1", server_id=game_id, min_role="admin")
+    await authz.require_role(user=user, game="bf1", server_id=game_id, min_role="admin")
     service = _admin_service(db, request, user, game_id)
-    await service.remove_ban(persona_id, server.server_id)
+    await service.remove_ban(persona_id)
     return AdminActionResult(success=True, message=f"已解除玩家 {persona_id} 的封禁")
 
 
@@ -128,9 +129,9 @@ async def add_vip(
     request: Request,
 ) -> AdminActionResult:
     authz = ServerAuthzService(db)
-    server = await authz.require_role(user=user, game="bf1", server_id=game_id, min_role="admin")
+    await authz.require_role(user=user, game="bf1", server_id=game_id, min_role="admin")
     service = _admin_service(db, request, user, game_id)
-    await service.add_vip(payload.persona_id, server.server_id)
+    await service.add_vip(payload.persona_id)
     return AdminActionResult(success=True, message=f"已添加 VIP {payload.persona_id}")
 
 
@@ -143,9 +144,9 @@ async def remove_vip(
     request: Request,
 ) -> AdminActionResult:
     authz = ServerAuthzService(db)
-    server = await authz.require_role(user=user, game="bf1", server_id=game_id, min_role="admin")
+    await authz.require_role(user=user, game="bf1", server_id=game_id, min_role="admin")
     service = _admin_service(db, request, user, game_id)
-    await service.remove_vip(persona_id, server.server_id)
+    await service.remove_vip(persona_id)
     return AdminActionResult(success=True, message=f"已移除 VIP {persona_id}")
 
 
@@ -159,9 +160,9 @@ async def add_admin(
     request: Request,
 ) -> AdminActionResult:
     authz = ServerAuthzService(db)
-    server = await authz.require_role(user=user, game="bf1", server_id=game_id, min_role="owner")
+    await authz.require_role(user=user, game="bf1", server_id=game_id, min_role="owner")
     service = _admin_service(db, request, user, game_id)
-    await service.add_admin(payload.persona_id, server.server_id)
+    await service.add_admin(payload.persona_id)
     return AdminActionResult(success=True, message=f"已添加管理员 {payload.persona_id}")
 
 
@@ -174,9 +175,9 @@ async def remove_admin(
     request: Request,
 ) -> AdminActionResult:
     authz = ServerAuthzService(db)
-    server = await authz.require_role(user=user, game="bf1", server_id=game_id, min_role="owner")
+    await authz.require_role(user=user, game="bf1", server_id=game_id, min_role="owner")
     service = _admin_service(db, request, user, game_id)
-    await service.remove_admin(persona_id, server.server_id)
+    await service.remove_admin(persona_id)
     return AdminActionResult(success=True, message=f"已移除管理员 {persona_id}")
 
 
@@ -189,14 +190,12 @@ async def choose_level(
     request: Request,
 ) -> AdminActionResult:
     authz = ServerAuthzService(db)
-    server = await authz.require_role(user=user, game="bf1", server_id=game_id, min_role="admin")
-    # 换图目标以授权服务器自身记录的 persisted_game_id 为准，不接受请求体传入值，
-    # 与 ban/vip/admin 一致地只信任服务端可信标识，避免借他服 guid 越权换图。
-    # 服务器尚未被 serverInfo 回填（persisted_game_id 为空）时无法换图，fail-closed 拒绝。
-    if server.persisted_game_id is None:
-        raise ForbiddenError(message="服务器尚未完成初始化，无法执行换图操作")
+    await authz.require_role(user=user, game="bf1", server_id=game_id, min_role="admin")
+    # 换图目标 persistedGameId 不接受请求体传入值，由 service 按 game_id 向 EA 实时
+    # 解析（与 ban/vip/admin 一致地只信任服务端解析的标识，避免借他服 guid 越权换图）；
+    # 解析不到时 service 内 fail-closed 拒绝。
     service = _admin_service(db, request, user, game_id)
-    await service.choose_level(server.persisted_game_id, payload.level_index)
+    await service.choose_level(payload.level_index)
     return AdminActionResult(
         success=True,
         message=f"已切换到地图序号 {payload.level_index}",

@@ -5,7 +5,7 @@
  *
  * 视觉语言与玩家详情页对齐：以服务器「当前地图大图」作为全屏模糊背景与 Hero 主体，
  * 用 Bf1Panel 切角面板承载信息，amber 下划线 Tab 导航。Tab 内容（玩家 / 轮换 /
- * 成员 / 审计 / 管理）沿用既有数据与操作逻辑，仅置于半透明深色面板内保证可读。
+ * 成员 / 审计）沿用既有数据与操作逻辑，仅置于半透明深色面板内保证可读。
  */
 
 import { useState, type ReactNode } from "react";
@@ -25,7 +25,6 @@ import {
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
 import { ServerDetailSkeleton } from "@/components/layout/PageSkeleton";
 import { ResponsiveTable, type Column } from "@/components/common/ResponsiveTable";
-import { AdminPanel } from "@/components/bf1/AdminPanel";
 import {
   ServerAdminProvider,
   useServerAdmin,
@@ -33,8 +32,7 @@ import {
   TeamSelectAllCheckbox,
   BatchActionBar,
 } from "@/components/bf1/server-admin/InlineServerAdmin";
-import { useMyServerRole } from "@/hooks/useServerAdminActions";
-import { hasAnyServerAdmin } from "@/lib/bf1/server-admin-authz";
+import { MembersPanel } from "@/components/bf1/server-admin/MembersPanel";
 import { useSession } from "@/hooks/useSession";
 import { auditApi, type AuditLogItem } from "@/lib/api/audit";
 import { FALLBACK_GRADIENT } from "@/lib/bf1/background";
@@ -46,7 +44,6 @@ import {
   type ServerSettings,
   type MapRotationItem,
   type ServerExtras,
-  type ServerMember,
   type BlazePlayer,
   type BlazeTeamGroup,
   type ServerPlayersResponse,
@@ -63,7 +60,7 @@ const ACTION_LABEL: Record<string, string> = {
   remove_admin: "移除管理员",
 };
 
-type TabKey = "players" | "rotation" | "members" | "audit" | "admin";
+type TabKey = "players" | "rotation" | "members" | "audit";
 
 export default function ServerDetailPage() {
   const { id, game } = useParams<{ id: string; game: string }>();
@@ -106,9 +103,6 @@ function ServerDetailView({
 }) {
   const session = useSession();
   const isLoggedIn = !!session.data;
-  // 角色查询用于按权限收紧「管理」tab；与 Provider 内部共用同一 queryKey，react-query 去重，仅一次请求。
-  const roleQuery = useMyServerRole(gameId, isLoggedIn);
-  const canManage = hasAnyServerAdmin(roleQuery.data);
   const { summary, map_rotation, extras } = detail;
   const memberCount = extras.admins.length + extras.vips.length + extras.banned.length;
 
@@ -117,8 +111,6 @@ function ServerDetailView({
     { key: "rotation", label: `地图轮换（${map_rotation.length}）` },
     { key: "members", label: `成员名单（${memberCount}）` },
     ...(isLoggedIn ? ([{ key: "audit", label: "本服审计" }] as const) : []),
-    // 「管理」仅对有服管权限（moderator 及以上 / 平台 admin）的用户开放
-    ...(canManage ? ([{ key: "admin", label: "管理" }] as const) : []),
   ];
   const [tab, setTab] = useState<TabKey>("players");
 
@@ -144,7 +136,7 @@ function ServerDetailView({
 
         <div className="mt-6">
           <TabNav tabs={tabs} tab={tab} onTab={setTab} />
-          {/* Provider 包裹整个 tab 区，让玩家列表、地图轮换、管理三个 tab 共享同一份角色查询与确认机制 */}
+          {/* Provider 包裹整个 tab 区，让玩家列表、地图轮换、成员名单三个 tab 共享同一份角色查询与确认机制 */}
           <ServerAdminProvider gameId={gameId}>
             <div className="mt-5">
               {tab === "players" && (
@@ -170,7 +162,6 @@ function ServerDetailView({
                   <ServerAuditTab game={game} gameId={gameId} />
                 </Panel>
               )}
-              {tab === "admin" && canManage && <AdminPanel detail={detail} />}
             </div>
           </ServerAdminProvider>
         </div>
@@ -1058,59 +1049,6 @@ function formatRatio(v: number | null | undefined): string {
 
 function formatHours(v: number | null | undefined): string {
   return v == null ? "—" : v.toFixed(1);
-}
-
-/* ----------------------------- 成员名单 ----------------------------- */
-
-function MembersPanel({ extras }: { extras: ServerExtras }) {
-  return (
-    <div className="space-y-6">
-      <MemberSection title="管理员" hint="/ 50" members={extras.admins} />
-      <MemberSection title="VIP" hint="/ 50" members={extras.vips} />
-      <MemberSection title="封禁名单" hint="/ 200" members={extras.banned} />
-    </div>
-  );
-}
-
-function MemberSection({
-  title,
-  hint,
-  members,
-}: {
-  title: string;
-  hint: string;
-  members: ServerMember[];
-}) {
-  const columns: Column<ServerMember>[] = [
-    {
-      key: "name",
-      header: title,
-      cell: (m) => m.display_name ?? "—",
-      isCardTitle: true,
-    },
-    {
-      key: "platform",
-      header: "平台",
-      cell: (m) => (m.platform ? m.platform.toUpperCase() : "—"),
-    },
-    { key: "id", header: "Persona ID", cell: (m) => m.persona_id },
-  ];
-  return (
-    <section>
-      <div className="mb-2 flex items-baseline gap-2 text-xs text-white/50">
-        <span className="font-medium">{title}</span>
-        <span className="tabular-nums">
-          {members.length} {hint}
-        </span>
-      </div>
-      <ResponsiveTable
-        data={members}
-        columns={columns}
-        rowKey={(m) => m.persona_id}
-        emptyState={`暂无${title}`}
-      />
-    </section>
-  );
 }
 
 /* ----------------------------- 本服审计 ----------------------------- */

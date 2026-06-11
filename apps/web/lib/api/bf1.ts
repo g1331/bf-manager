@@ -92,6 +92,10 @@ export interface WeaponStat {
   accuracy: number | null;
   time_seconds: number | null;
   image: string | null;
+  skin_name: string | null;
+  /** 上游稀有度原名（Superior / Enhanced / Standard），经 skinRarityFromName 归一 */
+  skin_rarity: string | null;
+  skin_image: string | null;
 }
 
 export interface WeaponStats {
@@ -106,6 +110,9 @@ export interface VehicleStat {
   destroyed: number | null;
   time_seconds: number | null;
   image: string | null;
+  skin_name: string | null;
+  skin_rarity: string | null;
+  skin_image: string | null;
 }
 
 export interface VehicleStats {

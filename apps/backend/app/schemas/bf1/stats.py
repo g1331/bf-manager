@@ -71,6 +71,10 @@ class WeaponStat(BaseModel):
     accuracy: float | None = None
     time_seconds: float | None = None
     image: str | None = None
+    skin_name: str | None = None
+    # 原样下发上游稀有度名（Superior / Enhanced / Standard），由前端归一着色
+    skin_rarity: str | None = None
+    skin_image: str | None = None
 
 
 class WeaponStats(BaseModel):
@@ -85,6 +89,9 @@ class VehicleStat(BaseModel):
     destroyed: int | None = None
     time_seconds: float | None = None
     image: str | None = None
+    skin_name: str | None = None
+    skin_rarity: str | None = None
+    skin_image: str | None = None
 
 
 class VehicleStats(BaseModel):

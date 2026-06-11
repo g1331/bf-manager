@@ -23,7 +23,7 @@ export interface Bf1PanelProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const VARIANT_CLASS: Record<Bf1PanelVariant, string> = {
   default: "bg-[rgba(122,122,122,0.85)] backdrop-blur-sm shadow-[2px_2px_5px_rgba(0,0,0,0.5)]",
-  dark: "bg-[rgba(35,27,27,0.6)] backdrop-blur-md",
+  dark: "bg-[rgba(22,22,24,0.6)] backdrop-blur-md",
   transparent: "",
 };
 

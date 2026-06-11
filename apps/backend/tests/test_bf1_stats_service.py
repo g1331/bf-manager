@@ -8,12 +8,20 @@ detailedStats result 字典的提取逻辑：基础值（basicStats）、战斗�
 
 from __future__ import annotations
 
+import pytest
 from app.domain.games.bf1.maps import normalize_emblem_url
 from app.services.bf1.stats_service import (
     _build_platoon,
     _build_soldiers,
     _build_summary,
+    _build_vehicles,
+    _build_weapons,
+    _extract_kit_skin_candidates,
+    _extract_weapon_skin_candidates,
+    _kit_number_for_category,
     _parse_online,
+    _pick_skin,
+    _slot_sorted_guids,
 )
 
 
@@ -232,3 +240,191 @@ def test_normalize_emblem_url_handles_ugc_and_empty() -> None:
     assert normalize_emblem_url(ugc) == "https://x/ugc/453/495/3289737051/512.png?v=1628495354"
     assert normalize_emblem_url(None) is None
     assert normalize_emblem_url("") is None
+
+
+# ----------------------------- 皮肤提取与拼装 -----------------------------
+
+# 皮肤静态表中的真实条目，用于 _pick_skin / _build_* 的命中断言
+_WEAPON_SKIN_GUID = "B05B7722-FEF7-4659-9631-481C66DD5944"  # 普魯士人 / Superior
+_VEHICLE_SKIN_GUID = "6E5FDF7A-B920-4728-8019-056A4AEE130E"  # M1917 獎盃 (極稀有) / Superior
+_FAKE_GUID = "00000000-0000-0000-0000-000000000000"
+
+
+def test_slot_sorted_guids_orders_by_slot_number() -> None:
+    # 上游槽位键无序，按槽位号升序展开
+    assert _slot_sorted_guids({"4": "D", "0": "A", "2": "B"}) == ["A", "B", "D"]
+
+
+def test_slot_sorted_guids_skips_malformed_entries() -> None:
+    assert _slot_sorted_guids({"0": "", "1": None, "2": 3, "3": "G"}) == ["G"]
+    assert _slot_sorted_guids(None) == []
+    assert _slot_sorted_guids(["G"]) == []
+
+
+def test_extract_weapon_skin_candidates_normalizes_guid_case() -> None:
+    result = {"weapons": {"ab-12": {"1": "g1", "0": "g0"}, "cd-34": {}}}
+    assert _extract_weapon_skin_candidates(result) == {"AB-12": ["g0", "g1"]}
+
+
+def test_extract_weapon_skin_candidates_degrades_on_malformed() -> None:
+    assert _extract_weapon_skin_candidates(None) == {}
+    assert _extract_weapon_skin_candidates("网络超时!") == {}
+    assert _extract_weapon_skin_candidates({"weapons": None}) == {}
+    assert _extract_weapon_skin_candidates({"kits": {}}) == {}
+
+
+def test_extract_kit_skin_candidates_takes_first_preset() -> None:
+    result = {"kits": {"17": [{"0": "g0", "1": "g1"}], "12": [{}], "8": "bogus", "5": []}}
+    assert _extract_kit_skin_candidates(result) == {"17": ["g0", "g1"]}
+
+
+def test_extract_kit_skin_candidates_degrades_on_malformed() -> None:
+    assert _extract_kit_skin_candidates(None) == {}
+    assert _extract_kit_skin_candidates({"kits": []}) == {}
+
+
+@pytest.mark.parametrize(
+    ("sort_order", "name", "expected"),
+    [
+        (5, "重型坦克", "17"),
+        (4, "巡航坦克", "12"),
+        (6, "輕型坦克", "14"),
+        (7, "火砲裝甲車", "15"),
+        (8, "攻擊坦克", "20"),
+        (9, "突擊裝甲車", "22"),
+        (1, "轟炸機", "16"),
+        (2, "重型轟炸機", "21"),
+        # 飛船 / 驅逐艦 的 sortOrder 同为 14，靠分类名区分
+        (14, "飛船", "24"),
+        (14, "驅逐艦", "23"),
+        # 无已知 kit 编号的分类不展示皮肤
+        (0, "攻擊機", None),
+        (3, "戰鬥機", None),
+        (10, "地面載具", None),
+        (None, None, None),
+        ("5", "未知分类", None),
+    ],
+)
+def test_kit_number_for_category(sort_order, name, expected) -> None:
+    assert _kit_number_for_category(sort_order, name) == expected
+
+
+def test_pick_skin_returns_first_table_hit() -> None:
+    # 槽位中混有非皮肤物件 guid，应跳过未命中项取第一个命中的
+    skin = _pick_skin([_FAKE_GUID, _WEAPON_SKIN_GUID])
+    assert skin is not None
+    assert skin["name"] == "普魯士人"
+    assert skin["rarity"] == "Superior"
+    assert skin["image"].startswith("https://eaassets-a.akamaihd.net/battlelog/battlebinary/")
+
+
+def test_pick_skin_none_when_no_hit() -> None:
+    assert _pick_skin([_FAKE_GUID]) is None
+    assert _pick_skin([]) is None
+    assert _pick_skin(None) is None
+
+
+def _make_weapons_result() -> list:
+    return [
+        {
+            "name": "輕機槍",
+            "weapons": [
+                {
+                    "name": "帕拉貝倫 MG14/17",
+                    "guid": "ab-12",
+                    "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/1/2/PARABELLUM-123.png",
+                    "stats": {
+                        "values": {
+                            "kills": 500,
+                            "headshots": 50,
+                            "hits": 300,
+                            "shots": 100,
+                            "seconds": 3600,
+                        }
+                    },
+                },
+                {
+                    "name": "無 guid 武器",
+                    "imageUrl": None,
+                    "stats": {"values": {"kills": 10, "shots": 0}},
+                },
+            ],
+        }
+    ]
+
+
+def test_build_weapons_fills_skin_fields_by_guid() -> None:
+    weapons = _build_weapons(_make_weapons_result(), {"AB-12": [_FAKE_GUID, _WEAPON_SKIN_GUID]})
+    assert weapons[0].skin_name == "普魯士人"
+    assert weapons[0].skin_rarity == "Superior"
+    assert weapons[0].skin_image is not None
+    assert weapons[0].skin_image.startswith("https://eaassets-a.akamaihd.net/")
+    # 无 guid / 无候选的武器三字段为 None
+    assert weapons[1].skin_name is None
+    assert weapons[1].skin_rarity is None
+    assert weapons[1].skin_image is None
+
+
+def test_build_weapons_keeps_existing_field_behavior() -> None:
+    # 回归：accuracy 用 hits/shots 自算（霰弹枪多弹丸可 > 100），image 展开占位符
+    weapons = _build_weapons(_make_weapons_result(), {})
+    assert weapons[0].accuracy == 300.0
+    assert weapons[0].image == (
+        "https://eaassets-a.akamaihd.net/battlelog/battlebinary/gamedata/Tunguska/1/2/PARABELLUM-123.png"
+    )
+    assert weapons[0].kills == 500
+    assert weapons[0].category == "輕機槍"
+    assert weapons[1].accuracy is None
+
+
+def _make_vehicles_result() -> list:
+    return [
+        {
+            "name": "重型坦克",
+            "sortOrder": 5,
+            "vehicles": [
+                {
+                    "name": "A7V 重型坦克",
+                    "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/3/4/A7V-456.png",
+                    "stats": {"values": {"kills": 800, "destroyed": 60, "seconds": 7200}},
+                }
+            ],
+        },
+        {
+            "name": "驅逐艦",
+            "sortOrder": 14,
+            "vehicles": [{"name": "L 級驅逐艦", "stats": {"values": {"kills": 5}}}],
+        },
+        {
+            "name": "攻擊機",
+            "sortOrder": 0,
+            "vehicles": [{"name": "哈爾伯施塔特 CL.II 攻擊機", "stats": {"values": {"kills": 30}}}],
+        },
+    ]
+
+
+def test_build_vehicles_fills_skin_by_kit_number() -> None:
+    vehicles = _build_vehicles(
+        _make_vehicles_result(),
+        {"17": [_VEHICLE_SKIN_GUID], "23": [_FAKE_GUID, _VEHICLE_SKIN_GUID]},
+    )
+    # 重型坦克：sortOrder 5 -> kit 17
+    assert vehicles[0].skin_name == "M1917 獎盃 (極稀有)"
+    assert vehicles[0].skin_rarity == "Superior"
+    # 驅逐艦：sortOrder 14 撞号，按分类名 -> kit 23
+    assert vehicles[1].skin_name == "M1917 獎盃 (極稀有)"
+    # 攻擊機：无 kit 映射，不展示皮肤
+    assert vehicles[2].skin_name is None
+    assert vehicles[2].skin_rarity is None
+    assert vehicles[2].skin_image is None
+
+
+def test_build_vehicles_keeps_existing_field_behavior() -> None:
+    vehicles = _build_vehicles(_make_vehicles_result(), {})
+    assert vehicles[0].name == "A7V 重型坦克"
+    assert vehicles[0].category == "重型坦克"
+    assert vehicles[0].kills == 800
+    assert vehicles[0].destroyed == 60
+    assert vehicles[0].image == (
+        "https://eaassets-a.akamaihd.net/battlelog/battlebinary/gamedata/Tunguska/3/4/A7V-456.png"
+    )

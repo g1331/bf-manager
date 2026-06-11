@@ -21,7 +21,7 @@ class ServerMemberRequest(BaseModel):
 
 
 class ChooseLevelRequest(BaseModel):
-    """换图请求。换图目标由后端依授权服务器自身记录派生，请求体仅需地图序号。"""
+    """换图请求。换图目标由服务端按 game_id 向 EA 实时解析，请求体仅需地图序号。"""
 
     level_index: int = Field(..., ge=0, le=100)
 

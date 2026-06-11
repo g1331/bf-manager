@@ -6,7 +6,7 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.errors import EAApiError
+from app.api.errors import EAApiError, ForbiddenError
 from app.domain.games.bf1.client_provider import BF1ClientProvider, PooledBF1ClientProvider
 from app.models import User
 from app.services.audit_service import AuditService
@@ -93,6 +93,40 @@ class BF1ServerAdminService:
             user_agent=self.user_agent,
         )
 
+    async def _resolve_ea_ids(self, client: Any) -> tuple[int | None, str | None]:
+        """按 game_id 实时解析本服的 EA RSP serverId 与 persistedGameId。
+
+        servers 表的 server_id 列存的是平台权限映射用的 gameId（路由路径参数），
+        不是 RSP 名单操作要的 serverId；persisted_game_id 列也没有回填链路。
+        两个标识均以 getFullServerDetails 服务端实时解析为准（与详情页解析同源），
+        不信任客户端传值，横向越权结构性消除。
+        """
+        res = await client.getFullServerDetails(self.game_id)
+        data = _ensure_dict_or_raise(res, "EA_SERVER_DETAIL_FAILED")
+        raw = data.get("result") or {}
+        server_info = raw.get("serverInfo") or {}
+        rsp_server = (raw.get("rspInfo") or {}).get("server") or {}
+        server_id_raw = rsp_server.get("serverId") or server_info.get("serverId")
+        try:
+            server_id = int(server_id_raw) if server_id_raw is not None else None
+        except (TypeError, ValueError):
+            server_id = None
+        persisted_game_id = (
+            server_info.get("persistedGameId")
+            or raw.get("persistedGameId")
+            or server_info.get("guid")
+        )
+        return server_id, persisted_game_id
+
+    async def _resolve_rsp_server_id(self, client: Any) -> int:
+        server_id, _ = await self._resolve_ea_ids(client)
+        if not server_id:
+            raise EAApiError(
+                code="EA_RSP_SERVER_ID_MISSING",
+                message="无法获取该服务器的 RSP serverId，请稍后重试",
+            )
+        return server_id
+
     async def kick_player(self, persona_id: int, reason: str) -> dict[str, Any]:
         payload = {"persona_id": persona_id, "reason": reason}
         try:
@@ -125,83 +159,66 @@ class BF1ServerAdminService:
             await self._audit_failure("move_player", payload, err, target_persona_id=persona_id)
             raise
 
-    async def add_ban(self, persona_id: int, ea_server_id: int) -> dict[str, Any]:
-        """添加 ban（用 EA serverId，不是 game_id）"""
-        payload = {"persona_id": persona_id, "server_id": ea_server_id}
+    async def _member_op(
+        self, action: str, ea_method: str, error_code: str, persona_id: int
+    ) -> dict[str, Any]:
+        """RSP 名单操作（封禁 / VIP / 管理员增删）的共用执行体。
+
+        名单操作以 RSP serverId 寻址（不是 game_id，错传时 EA 返回
+        InvalidServerIdException），执行前在同一连接上实时解析。
+        """
+        payload: dict[str, Any] = {"persona_id": persona_id}
         try:
             async with self.client_provider.acquire() as client:
-                res = await client.addServerBan(persona_id, ea_server_id)
-                data = _ensure_dict_or_raise(res, "EA_ADD_BAN_FAILED")
-            await self._audit_success("add_ban", payload, target_persona_id=persona_id)
+                ea_server_id = await self._resolve_rsp_server_id(client)
+                payload["server_id"] = ea_server_id
+                res = await getattr(client, ea_method)(persona_id, ea_server_id)
+                data = _ensure_dict_or_raise(res, error_code)
+            await self._audit_success(action, payload, target_persona_id=persona_id)
             return data
         except EAApiError as err:
-            await self._audit_failure("add_ban", payload, err, target_persona_id=persona_id)
+            await self._audit_failure(action, payload, err, target_persona_id=persona_id)
             raise
 
-    async def remove_ban(self, persona_id: int, ea_server_id: int) -> dict[str, Any]:
-        payload = {"persona_id": persona_id, "server_id": ea_server_id}
-        try:
-            async with self.client_provider.acquire() as client:
-                res = await client.removeServerBan(persona_id, ea_server_id)
-                data = _ensure_dict_or_raise(res, "EA_REMOVE_BAN_FAILED")
-            await self._audit_success("remove_ban", payload, target_persona_id=persona_id)
-            return data
-        except EAApiError as err:
-            await self._audit_failure("remove_ban", payload, err, target_persona_id=persona_id)
-            raise
+    async def add_ban(self, persona_id: int) -> dict[str, Any]:
+        return await self._member_op("add_ban", "addServerBan", "EA_ADD_BAN_FAILED", persona_id)
 
-    async def add_vip(self, persona_id: int, ea_server_id: int) -> dict[str, Any]:
-        payload = {"persona_id": persona_id, "server_id": ea_server_id}
-        try:
-            async with self.client_provider.acquire() as client:
-                res = await client.addServerVip(persona_id, ea_server_id)
-                data = _ensure_dict_or_raise(res, "EA_ADD_VIP_FAILED")
-            await self._audit_success("add_vip", payload, target_persona_id=persona_id)
-            return data
-        except EAApiError as err:
-            await self._audit_failure("add_vip", payload, err, target_persona_id=persona_id)
-            raise
+    async def remove_ban(self, persona_id: int) -> dict[str, Any]:
+        return await self._member_op(
+            "remove_ban", "removeServerBan", "EA_REMOVE_BAN_FAILED", persona_id
+        )
 
-    async def remove_vip(self, persona_id: int, ea_server_id: int) -> dict[str, Any]:
-        payload = {"persona_id": persona_id, "server_id": ea_server_id}
-        try:
-            async with self.client_provider.acquire() as client:
-                res = await client.removeServerVip(persona_id, ea_server_id)
-                data = _ensure_dict_or_raise(res, "EA_REMOVE_VIP_FAILED")
-            await self._audit_success("remove_vip", payload, target_persona_id=persona_id)
-            return data
-        except EAApiError as err:
-            await self._audit_failure("remove_vip", payload, err, target_persona_id=persona_id)
-            raise
+    async def add_vip(self, persona_id: int) -> dict[str, Any]:
+        return await self._member_op("add_vip", "addServerVip", "EA_ADD_VIP_FAILED", persona_id)
 
-    async def add_admin(self, persona_id: int, ea_server_id: int) -> dict[str, Any]:
-        payload = {"persona_id": persona_id, "server_id": ea_server_id}
-        try:
-            async with self.client_provider.acquire() as client:
-                res = await client.addServerAdmin(persona_id, ea_server_id)
-                data = _ensure_dict_or_raise(res, "EA_ADD_ADMIN_FAILED")
-            await self._audit_success("add_admin", payload, target_persona_id=persona_id)
-            return data
-        except EAApiError as err:
-            await self._audit_failure("add_admin", payload, err, target_persona_id=persona_id)
-            raise
+    async def remove_vip(self, persona_id: int) -> dict[str, Any]:
+        return await self._member_op(
+            "remove_vip", "removeServerVip", "EA_REMOVE_VIP_FAILED", persona_id
+        )
 
-    async def remove_admin(self, persona_id: int, ea_server_id: int) -> dict[str, Any]:
-        payload = {"persona_id": persona_id, "server_id": ea_server_id}
-        try:
-            async with self.client_provider.acquire() as client:
-                res = await client.removeServerAdmin(persona_id, ea_server_id)
-                data = _ensure_dict_or_raise(res, "EA_REMOVE_ADMIN_FAILED")
-            await self._audit_success("remove_admin", payload, target_persona_id=persona_id)
-            return data
-        except EAApiError as err:
-            await self._audit_failure("remove_admin", payload, err, target_persona_id=persona_id)
-            raise
+    async def add_admin(self, persona_id: int) -> dict[str, Any]:
+        return await self._member_op(
+            "add_admin", "addServerAdmin", "EA_ADD_ADMIN_FAILED", persona_id
+        )
 
-    async def choose_level(self, persisted_game_id: str, level_index: int) -> dict[str, Any]:
-        payload = {"persisted_game_id": persisted_game_id, "level_index": level_index}
+    async def remove_admin(self, persona_id: int) -> dict[str, Any]:
+        return await self._member_op(
+            "remove_admin", "removeServerAdmin", "EA_REMOVE_ADMIN_FAILED", persona_id
+        )
+
+    async def choose_level(self, level_index: int) -> dict[str, Any]:
+        """换图。目标 persistedGameId 由服务端实时解析，不接受客户端传值。
+
+        EA 详情尚无 persistedGameId（服务器未完成初始化）时 fail-closed 拒绝，
+        不触达 chooseLevel。
+        """
+        payload: dict[str, Any] = {"level_index": level_index}
         try:
             async with self.client_provider.acquire() as client:
+                _, persisted_game_id = await self._resolve_ea_ids(client)
+                if not persisted_game_id:
+                    raise ForbiddenError(message="服务器尚未完成初始化，无法执行换图操作")
+                payload["persisted_game_id"] = persisted_game_id
                 res = await client.chooseLevel(persisted_game_id, level_index)
                 data = _ensure_dict_or_raise(res, "EA_CHOOSE_LEVEL_FAILED")
             await self._audit_success("choose_level", payload)

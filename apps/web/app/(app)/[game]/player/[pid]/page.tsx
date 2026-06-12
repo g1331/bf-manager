@@ -324,8 +324,18 @@ function HeroBanner({
                 <PlatoonLine platoon={platoon} />
               </div>
               <div className="mt-2.5 flex flex-wrap gap-2">
-                <BanBadge source="bfban" state={ban?.bfban ?? "unknown"} size="sm" />
-                <BanBadge source="bfeac" state={ban?.bfeac ?? "unknown"} size="sm" />
+                <BanBadge
+                  source="bfban"
+                  state={ban?.bfban ?? "unknown"}
+                  size="sm"
+                  href={ban?.bfban_url}
+                />
+                <BanBadge
+                  source="bfeac"
+                  state={ban?.bfeac ?? "unknown"}
+                  size="sm"
+                  href={ban?.bfeac_url}
+                />
               </div>
             </div>
           </div>
@@ -421,9 +431,9 @@ function QuickStat({ label, value, accent }: { label: string; value: string; acc
 }
 
 function BanWarning({ ban }: { ban: BanStatus | undefined }) {
-  const sources: string[] = [];
-  if (ban?.bfban === "hit") sources.push("BFBAN");
-  if (ban?.bfeac === "hit") sources.push("BFEAC");
+  const sources: { label: string; url: string | null }[] = [];
+  if (ban?.bfban === "hit") sources.push({ label: "BFBAN", url: ban.bfban_url });
+  if (ban?.bfeac === "hit") sources.push({ label: "BFEAC", url: ban.bfeac_url });
   return (
     <div
       className="mb-4 flex items-center gap-2 bg-red-600/90 px-4 py-2 text-sm font-bold text-white [box-shadow:0_0_18px_rgba(239,68,68,0.5)]"
@@ -432,7 +442,27 @@ function BanWarning({ ban }: { ban: BanStatus | undefined }) {
       }}
     >
       <span className="text-base leading-none">⚠</span>
-      <span>该账号已被反作弊平台标记（{sources.join(" / ")}）</span>
+      <span>
+        该账号已被反作弊平台标记（
+        {sources.map((s, i) => (
+          <React.Fragment key={s.label}>
+            {i > 0 && " / "}
+            {s.url ? (
+              <a
+                href={s.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-2 hover:text-red-100"
+              >
+                {s.label}
+              </a>
+            ) : (
+              s.label
+            )}
+          </React.Fragment>
+        ))}
+        ）
+      </span>
     </div>
   );
 }

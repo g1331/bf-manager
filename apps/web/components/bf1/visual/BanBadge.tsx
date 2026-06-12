@@ -10,6 +10,8 @@ interface BanBadgeProps {
   source: BanSource;
   state: BanState;
   size?: "sm" | "md";
+  /** 案件页地址（命中时后端透出），传入后徽章整体可点击跳转新窗口 */
+  href?: string | null;
 }
 
 const SOURCE_META: Record<BanSource, { label: string; logoSrc: string; hitText: string }> = {
@@ -32,8 +34,10 @@ const SOURCE_META: Record<BanSource, { label: string; logoSrc: string; hitText: 
  * - 命中（hit）：暗底 + 红色辉光，状态文字"实锤 / 已封禁"红色高亮，承担警示
  * - 未命中（clean）：不再显示"干净"文字，直接用绿色把品牌名 BFBAN / BFEAC 高亮
  * - 无信息（unknown）：品牌名与"无信息"文字均走弱化灰
+ *
+ * 传入 href（命中时后端给出案件页地址）则整体渲染为 <a> 新窗口跳转，hover 提亮。
  */
-export function BanBadge({ source, state, size = "md" }: BanBadgeProps) {
+export function BanBadge({ source, state, size = "md", href }: BanBadgeProps) {
   const meta = SOURCE_META[source];
   const isHit = state === "hit";
 
@@ -44,17 +48,18 @@ export function BanBadge({ source, state, size = "md" }: BanBadgeProps) {
   const labelClass =
     state === "clean" ? "text-emerald-300" : state === "hit" ? "text-white/90" : "text-zinc-300";
 
-  return (
-    <div
-      className={cn(
-        "inline-flex items-center gap-2 pr-3 pl-1 font-bold tracking-wider backdrop-blur-md transition-all",
-        heightClass,
-        isHit ? "bg-black/70 [box-shadow:0_0_14px_rgba(239,68,68,0.55)]" : "bg-black/60",
-      )}
-      style={{
-        clipPath: "polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)",
-      }}
-    >
+  const containerClass = cn(
+    "inline-flex items-center gap-2 pr-3 pl-1 font-bold tracking-wider backdrop-blur-md transition-all",
+    heightClass,
+    isHit ? "bg-black/70 [box-shadow:0_0_14px_rgba(239,68,68,0.55)]" : "bg-black/60",
+    href && "hover:brightness-125",
+  );
+  const containerStyle: React.CSSProperties = {
+    clipPath: "polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)",
+  };
+
+  const content = (
+    <>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={meta.logoSrc}
@@ -72,6 +77,27 @@ export function BanBadge({ source, state, size = "md" }: BanBadgeProps) {
         )}
         {state === "unknown" && <span className="font-medium text-zinc-400">无信息</span>}
       </span>
+    </>
+  );
+
+  if (href) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={containerClass}
+        style={containerStyle}
+        title={`在 ${meta.label} 查看案件详情`}
+      >
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <div className={containerClass} style={containerStyle}>
+      {content}
     </div>
   );
 }

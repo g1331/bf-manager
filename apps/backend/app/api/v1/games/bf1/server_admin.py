@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Request
 
 from app.api.deps import CurrentUser, DbDep
+from app.domain.games.bf1.client_provider import BindingFirstBF1ClientProvider
 from app.schemas.bf1.admin import (
     AdminActionResult,
     BanPlayerRequest,
@@ -39,6 +40,8 @@ def _admin_service(
         user=user,
         game_id=game_id,
         request_meta=_request_meta(request),
+        # 发起者 binding 凭据优先（EA 侧操作者即 admin 本人），不可用时降级账号池
+        client_provider=BindingFirstBF1ClientProvider(db, user=user, game_id=game_id),
     )
 
 

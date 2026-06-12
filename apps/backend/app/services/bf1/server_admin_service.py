@@ -42,8 +42,8 @@ class BF1ServerAdminService:
         self.game_id = game_id
         self.audit = AuditService(db)
         self.authz = ServerAuthzService(db)
-        # 默认走后台账号池；未来引入按发起者 / 群组路由的 provider 时由路由层注入替换。
-        # 详见 https://github.com/g1331/bf-manager/issues/1
+        # 默认走后台账号池；服管路由层注入 BindingFirstBF1ClientProvider 实现
+        # 「发起者 binding 优先、账号池兜底」（https://github.com/g1331/bf-manager/issues/1）。
         self.client_provider: BF1ClientProvider = client_provider or PooledBF1ClientProvider(db)
         meta = request_meta or {}
         self.ip = meta.get("ip")
@@ -54,6 +54,17 @@ class BF1ServerAdminService:
             (b.persona_id for b in user.ea_bindings if b.is_primary and not b.is_frozen),
             0,
         )
+
+    def _tag_credential_source(self, payload: dict[str, Any]) -> None:
+        """把本次实际使用的凭据来源写进审计 payload（用于排查 binding 降级）。
+
+        credential_source 属性不属于 BF1ClientProvider Protocol，软读取保证
+        旧 provider / 测试 fake 兼容；acquire 进入前抛错（如池空）时不会被调用，
+        payload 不带该键，语义为「来源未知」。
+        """
+        source = getattr(self.client_provider, "credential_source", None)
+        if source is not None:
+            payload["credential_source"] = source
 
     async def _audit_success(
         self, action: str, payload: dict[str, Any], target_persona_id: int | None = None
@@ -131,6 +142,7 @@ class BF1ServerAdminService:
         payload = {"persona_id": persona_id, "reason": reason}
         try:
             async with self.client_provider.acquire() as client:
+                self._tag_credential_source(payload)
                 res = await client.kickPlayer(self.game_id, persona_id, reason)
                 data = _ensure_dict_or_raise(res, "EA_KICK_FAILED")
             await self._audit_success("kick_player", payload, target_persona_id=persona_id)
@@ -151,6 +163,7 @@ class BF1ServerAdminService:
         payload = {"persona_id": persona_id, "team_id": team_id, "rsp_team": rsp_team}
         try:
             async with self.client_provider.acquire() as client:
+                self._tag_credential_source(payload)
                 res = await client.movePlayer(self.game_id, persona_id, rsp_team)
                 data = _ensure_dict_or_raise(res, "EA_MOVE_FAILED")
             await self._audit_success("move_player", payload, target_persona_id=persona_id)
@@ -170,6 +183,7 @@ class BF1ServerAdminService:
         payload: dict[str, Any] = {"persona_id": persona_id}
         try:
             async with self.client_provider.acquire() as client:
+                self._tag_credential_source(payload)
                 ea_server_id = await self._resolve_rsp_server_id(client)
                 payload["server_id"] = ea_server_id
                 res = await getattr(client, ea_method)(persona_id, ea_server_id)
@@ -215,6 +229,7 @@ class BF1ServerAdminService:
         payload: dict[str, Any] = {"level_index": level_index}
         try:
             async with self.client_provider.acquire() as client:
+                self._tag_credential_source(payload)
                 _, persisted_game_id = await self._resolve_ea_ids(client)
                 if not persisted_game_id:
                     raise ForbiddenError(message="服务器尚未完成初始化，无法执行换图操作")

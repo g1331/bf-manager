@@ -280,12 +280,14 @@ function HeroBanner({
     <Bf1Panel
       cut={28}
       corners={["topLeft", "bottomRight"]}
-      className="relative"
+      // 英雄区两列布局按面板自身宽度（@container）切换而非视口断点：页面实际可用
+      // 宽度被舞台 min(95vw,200vh) 与左右两条侧栏共同裁剪，视口断点测不准（#48）
+      className="@container relative"
       style={{ background: "rgba(12,12,15,0.78)" }}
     >
       <div className="px-5 py-5 sm:px-8 sm:py-7">
         {banned && <BanWarning ban={ban} />}
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+        <div className="grid gap-6 @4xl:grid-cols-[minmax(0,1fr)_auto] @4xl:items-center">
           <div className="flex items-center gap-4 sm:gap-5">
             {/* 命中封禁时仅灰度化头像与身份文字，BanBadge 作为警示元素保留彩色，
                 故灰度滤镜只施加在头像和昵称信息块上，不覆盖下方的 BanBadge 行 */}
@@ -330,7 +332,7 @@ function HeroBanner({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:w-[440px]">
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 @4xl:w-[440px]">
             <QuickStat label="K/D" value={summary.kd?.toFixed(2) ?? "—"} accent />
             <QuickStat label="KPM" value={summary.kpm?.toFixed(2) ?? "—"} />
             <QuickStat label="胜率" value={computeWinRate(summary.wins, summary.losses)} />

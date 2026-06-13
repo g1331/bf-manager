@@ -187,3 +187,46 @@
     background: transparent;
   }
 }
+
+/* 深色输入框（DarkInput）的 focus 光晕：暖白调，并带轻微的"太阳式"明暗波动。
+   真实阳光不是恒定亮度，会因大气扰动缓慢忽强忽弱——这里用非等距关键帧让光晕
+   强度与扩散半径不规则起伏，营造呼吸般的自然感，而非机械的匀速闪烁。
+   keyframes 只驱动 box-shadow，边框颜色由 :focus-visible 静态设定 + transition 平滑过渡。
+   定义在 @layer 之外（顶层），优先级高于 Tailwind 的 ring utilities，确保覆盖默认双圈。 */
+@keyframes dark-input-sun-glow {
+  0% {
+    box-shadow:
+      0 0 0 1px rgba(255, 238, 209, 0.28),
+      0 0 12px 2px rgba(255, 221, 168, 0.16);
+  }
+  35% {
+    box-shadow:
+      0 0 0 1px rgba(255, 238, 209, 0.44),
+      0 0 22px 5px rgba(255, 221, 168, 0.3);
+  }
+  65% {
+    box-shadow:
+      0 0 0 1px rgba(255, 238, 209, 0.34),
+      0 0 16px 3px rgba(255, 221, 168, 0.2);
+  }
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(255, 238, 209, 0.4),
+      0 0 20px 4px rgba(255, 221, 168, 0.26);
+  }
+}
+
+.dark-input-glow:focus-visible {
+  border-color: rgba(255, 238, 209, 0.5);
+  animation: dark-input-sun-glow 4.5s ease-in-out infinite alternate;
+}
+
+/* 尊重系统「减少动态效果」偏好：关掉波动，退化为静态暖光晕 */
+@media (prefers-reduced-motion: reduce) {
+  .dark-input-glow:focus-visible {
+    animation: none;
+    box-shadow:
+      0 0 0 1px rgba(255, 238, 209, 0.32),
+      0 0 16px 2px rgba(255, 221, 168, 0.2);
+  }
+}

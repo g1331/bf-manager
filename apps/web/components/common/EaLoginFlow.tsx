@@ -158,12 +158,16 @@ function resolveFailureView(task: EALoginTaskResponse): FailureView {
 export function EaLoginFlow({ actor, open, onOpenChange, onSucceeded }: Props) {
   const [task, setTask] = useState<EALoginTaskResponse | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  // useRef 引用最新 task 供轮询循环读取，避免 useEffect 依赖 task 触发频繁重启
+  // useRef 引用最新 task 供轮询循环读取，避免 useEffect 依赖 task 触发频繁重启。
+  // latest-ref 是公认安全模式（render 阶段写 ref 幂等、无副作用），react-compiler 的
+  // refs 规则一律禁止 render 阶段写 ref，对此误报，按行豁免。
   const taskRef = useRef<EALoginTaskResponse | null>(null);
+  // eslint-disable-next-line react-hooks/refs
   taskRef.current = task;
   // onSucceeded 是父组件 props 函数引用，父组件 rerender 会换引用。把它放进 ref
   // 可避免它进 useEffect 依赖数组、避免反复 cancel / restart polling loop。
   const onSucceededRef = useRef(onSucceeded);
+  // eslint-disable-next-line react-hooks/refs
   onSucceededRef.current = onSucceeded;
 
   const loginForm = useForm<LoginValues>({
@@ -180,6 +184,9 @@ export function EaLoginFlow({ actor, open, onOpenChange, onSucceeded }: Props) {
   // 避免父组件 rerender 反复触发本 effect。
   useEffect(() => {
     if (!open) {
+      // 关闭对话框时重置状态属于「响应 prop 变化做清理」，是合理 effect。
+      // react-compiler 的 set-state-in-effect 规则对此误报，按行豁免。
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTask(null);
       setSubmitting(false);
       loginForm.reset({ email: "", password: "" });

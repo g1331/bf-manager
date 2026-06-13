@@ -113,7 +113,9 @@ export default function ServerListPage() {
     placeholderData: keepPreviousData,
   });
 
-  const allItems = servers.data?.items ?? [];
+  // servers.data 为 undefined 时回落空数组；包进 useMemo 保持引用稳定，
+  // 避免每次 render 生成新数组导致下游 filtered useMemo 失效（exhaustive-deps）。
+  const allItems = useMemo(() => servers.data?.items ?? [], [servers.data?.items]);
 
   // 服务端已按地图 / 模式 / 区域 / 规模 / 名称检索，这里只做 EA 无法下推的二次过滤：
   // 空位是实时人数状态、EA searchServers 不支持按其过滤；名称做即时包含过滤以提供打字反馈。

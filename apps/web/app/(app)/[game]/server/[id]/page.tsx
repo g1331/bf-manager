@@ -759,81 +759,86 @@ function TeamColumn({
     // 列容器在 grid 中等高（items-stretch），table 撑满高度后由占位空行把平均行顶到列底，
     // 使两列平均行对齐同一底线；不用 table-fixed，玩家名列才能自适应吃满剩余宽度。
     <div className={cn("h-full", className)}>
-      <table className="h-full w-full border-collapse text-[12.5px] tabular-nums">
-        {/* 自适应布局：数字列按 colgroup 宽取最小宽，名字列由 td 的 w-full+max-w-0 吃满剩余并截断长名 */}
-        <colgroup>
-          <col className="w-6" />
-          <col className="w-10" />
-          <col />
-          <col className="w-12" />
-          <col className="w-11" />
-          <col className="w-11" />
-          <col className="w-14" />
-          <col className="w-12" />
-          <col className="w-8" />
-          {canManage ? <col className="w-16" /> : null}
-        </colgroup>
-        <thead>
-          {/* 阵营标题行：旗帜 + 阵营名 + 人数，跨越序号/等级/玩家三列 */}
-          <tr className="align-bottom">
-            <th colSpan={3} className="pb-2 text-left">
-              <span className="flex items-center gap-2.5 whitespace-nowrap">
-                {slug ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={`/factions/${slug}.png`}
-                    alt={title}
-                    className="h-9 w-9 shrink-0 object-contain drop-shadow"
-                  />
-                ) : null}
-                <span className="text-[17px] leading-none font-bold tracking-wide text-white">
-                  {title}
+      {/* 移动端(<lg)：密集战绩表宽于窄屏，裹 overflow-x-auto 让整表可左右滑动查看，
+          避免右侧「延迟/语言/操作」列被推出视口而看不见、点不到；桌面双列各有空间，
+          lg:overflow-x-visible + lg:min-w-0 完全保持原样不滚动。 */}
+      <div className="h-full overflow-x-auto lg:overflow-x-visible">
+        <table className="h-full w-full min-w-[26rem] border-collapse text-[12.5px] tabular-nums lg:min-w-0">
+          {/* 自适应布局：数字列按 colgroup 宽取最小宽，名字列由 td 的 w-full+max-w-0 吃满剩余并截断长名 */}
+          <colgroup>
+            <col className="w-6" />
+            <col className="w-10" />
+            <col />
+            <col className="w-12" />
+            <col className="w-11" />
+            <col className="w-11" />
+            <col className="w-14" />
+            <col className="w-12" />
+            <col className="w-8" />
+            {canManage ? <col className="w-16" /> : null}
+          </colgroup>
+          <thead>
+            {/* 阵营标题行：旗帜 + 阵营名 + 人数，跨越序号/等级/玩家三列 */}
+            <tr className="align-bottom">
+              <th colSpan={3} className="pb-2 text-left">
+                <span className="flex items-center gap-2.5 whitespace-nowrap">
+                  {slug ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={`/factions/${slug}.png`}
+                      alt={title}
+                      className="h-9 w-9 shrink-0 object-contain drop-shadow"
+                    />
+                  ) : null}
+                  <span className="text-[17px] leading-none font-bold tracking-wide text-white">
+                    {title}
+                  </span>
+                  <span className="text-xs text-white/45 tabular-nums">{team.count}</span>
                 </span>
-                <span className="text-xs text-white/45 tabular-nums">{team.count}</span>
-              </span>
-            </th>
-            <ColHeader className="pl-3">胜率</ColHeader>
-            <ColHeader className="pl-3">K/D</ColHeader>
-            <ColHeader className="pl-3">KPM</ColHeader>
-            <ColHeader className="pl-3">时长</ColHeader>
-            <ColHeader className="text-center">延迟</ColHeader>
-            <ColHeader className="text-center">语言</ColHeader>
-            {canManage ? (
-              // 镜像行内 actions 单元格布局（选择框 + ⋯ 占位），让表头全选框与行内复选框同列对齐
-              <th className="pb-2 align-bottom">
-                <div className="flex items-center justify-end gap-1.5">
-                  <TeamSelectAllCheckbox players={team.players} />
-                  <span className="size-6" aria-hidden />
-                </div>
               </th>
-            ) : null}
-          </tr>
-        </thead>
-        {/* 表头下的整条横线，呼应原图分隔样式 */}
-        <tbody className="border-t border-white/25">
-          {team.players.map((p, i) => (
-            <PlayerRow key={p.persona_id} player={p} seq={i + 1} game={game} />
-          ))}
-          {/* 占位空行吸收剩余高度，把下方平均行顶到列底，实现两列平均行对齐 */}
-          <tr aria-hidden className="h-full">
-            <td colSpan={totalCols} />
-          </tr>
-        </tbody>
-        <tfoot>
-          <tr className="border-t border-white/20 text-[12px] font-semibold text-amber-300/90">
-            <td colSpan={3} className="pt-2 pl-0.5">
-              平均 {avg.rank ?? "—"}
-            </td>
-            <td className="pt-2 pl-3 text-right">{formatPercent(avg.winRate)}</td>
-            <td className="pt-2 pl-3 text-right">{formatRatio(avg.kd)}</td>
-            <td className="pt-2 pl-3 text-right">{formatRatio(avg.kpm)}</td>
-            <td className="pt-2 pl-3 text-right">{formatHours(avg.hours)}</td>
-            <td className="pt-2" />
-            <td className="pt-2" />
-            {canManage ? <td className="pt-2" /> : null}
-          </tr>
-        </tfoot>
-      </table>
+              <ColHeader className="pl-3">胜率</ColHeader>
+              <ColHeader className="pl-3">K/D</ColHeader>
+              <ColHeader className="pl-3">KPM</ColHeader>
+              <ColHeader className="pl-3">时长</ColHeader>
+              <ColHeader className="text-center">延迟</ColHeader>
+              <ColHeader className="text-center">语言</ColHeader>
+              {canManage ? (
+                // 镜像行内 actions 单元格布局（选择框 + ⋯ 占位），让表头全选框与行内复选框同列对齐
+                <th className="pb-2 align-bottom">
+                  <div className="flex items-center justify-end gap-1.5">
+                    <TeamSelectAllCheckbox players={team.players} />
+                    <span className="size-6" aria-hidden />
+                  </div>
+                </th>
+              ) : null}
+            </tr>
+          </thead>
+          {/* 表头下的整条横线，呼应原图分隔样式 */}
+          <tbody className="border-t border-white/25">
+            {team.players.map((p, i) => (
+              <PlayerRow key={p.persona_id} player={p} seq={i + 1} game={game} />
+            ))}
+            {/* 占位空行吸收剩余高度，把下方平均行顶到列底，实现两列平均行对齐 */}
+            <tr aria-hidden className="h-full">
+              <td colSpan={totalCols} />
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr className="border-t border-white/20 text-[12px] font-semibold text-amber-300/90">
+              <td colSpan={3} className="pt-2 pl-0.5">
+                平均 {avg.rank ?? "—"}
+              </td>
+              <td className="pt-2 pl-3 text-right">{formatPercent(avg.winRate)}</td>
+              <td className="pt-2 pl-3 text-right">{formatRatio(avg.kd)}</td>
+              <td className="pt-2 pl-3 text-right">{formatRatio(avg.kpm)}</td>
+              <td className="pt-2 pl-3 text-right">{formatHours(avg.hours)}</td>
+              <td className="pt-2" />
+              <td className="pt-2" />
+              {canManage ? <td className="pt-2" /> : null}
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
   );
 }
@@ -861,14 +866,21 @@ function PlayerRow({ player, seq, game }: { player: BlazePlayer; seq: number; ga
       <td className="py-[5px] text-center">
         <RankBadge rank={player.rank} />
       </td>
-      <td className="w-full max-w-0 py-[5px] pr-2 pl-2">
+      {/* 名字列：移动端(<lg)不设宽度上限、整名 nowrap 完整展示（超出由外层 overflow-x-auto 横滑），
+          桌面(lg)恢复 max-w-0 + truncate，让名字吃满剩余宽度并对超长名省略，维持双列整齐。 */}
+      <td className="w-full py-[5px] pr-2 pl-2 lg:max-w-0">
         <Link
           href={`/${game}/player/${player.persona_id}`}
           className="flex min-w-0 items-center gap-1.5 hover:underline"
           title={player.display_name}
         >
           {dot ? <span className={cn("size-1.5 shrink-0 rounded-full", dot)} /> : null}
-          <span className={cn("min-w-0 truncate font-medium", nameColor(player))}>
+          <span
+            className={cn(
+              "font-medium whitespace-nowrap lg:min-w-0 lg:truncate",
+              nameColor(player),
+            )}
+          >
             {player.display_name}
           </span>
         </Link>

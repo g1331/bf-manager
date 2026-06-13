@@ -79,7 +79,7 @@ function isRetryable(err: unknown): boolean {
 }
 
 const loginSchema = z.object({
-  email: z.string().email("邮箱格式错误"),
+  email: z.email("邮箱格式错误"),
   password: z.string().min(1, "密码必填"),
 });
 type LoginValues = z.infer<typeof loginSchema>;

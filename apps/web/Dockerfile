@@ -2,7 +2,7 @@
 # 通过 release.yml 指定 file: ./apps/web/Dockerfile + context: .
 
 # ===== 依赖安装阶段 =====
-FROM node:20-alpine AS deps
+FROM node:24-alpine AS deps
 
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@9.12.0 --activate
@@ -15,7 +15,7 @@ COPY apps/web/package.json ./apps/web/
 RUN pnpm install --frozen-lockfile --filter @bf-manager/web...
 
 # ===== 构建阶段 =====
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@9.12.0 --activate
@@ -46,7 +46,7 @@ ENV NEXT_PUBLIC_DEFAULT_GAME=$NEXT_PUBLIC_DEFAULT_GAME \
 RUN pnpm --filter @bf-manager/web build
 
 # ===== 运行时阶段 =====
-FROM node:20-alpine AS runtime
+FROM node:24-alpine AS runtime
 
 WORKDIR /app
 

@@ -18,7 +18,7 @@ import {
   Bookmark,
   MapPin,
   Crosshair,
-  Globe2,
+  Globe,
   ShieldCheck,
   ChevronDown,
 } from "lucide-react";
@@ -254,7 +254,7 @@ function ServerHero({ summary }: { summary: ServerSummary }) {
           </div>
 
           <div className="mt-2.5 flex flex-wrap gap-2">
-            {regionLabel ? <StatPill icon={Globe2} text={regionLabel} /> : null}
+            {regionLabel ? <StatPill icon={Globe} text={regionLabel} /> : null}
             {modeLabel ? <StatPill icon={Crosshair} text={modeLabel} /> : null}
             {summary.is_official ? <StatPill text="官方" accent /> : null}
             {summary.is_ranked ? <StatPill text="Ranked" accent /> : null}

@@ -30,7 +30,7 @@ async def get_redis() -> aioredis.Redis:
 async def close_redis() -> None:
     global _redis  # noqa: PLW0603
     if _redis is not None:
-        await _redis.close()
+        await _redis.aclose()
         _redis = None
 
 

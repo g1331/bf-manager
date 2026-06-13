@@ -21,6 +21,11 @@ pre-commit:
       glob: "*.{ts,tsx,js,jsx,json,css,md}"
       run: pnpm prettier --check {staged_files}
 
+    - name: frontend-lint
+      root: apps/web/
+      glob: "*.{ts,tsx,js,jsx}"
+      run: pnpm exec eslint {staged_files}
+
     - name: frontend-typecheck
       root: apps/web/
       glob: "*.{ts,tsx}"
@@ -31,6 +36,10 @@ pre-push:
     - name: backend-ruff
       root: apps/backend/
       run: uv run ruff check . && uv run ruff format --check .
+
+    - name: frontend-lint
+      root: apps/web/
+      run: pnpm lint
 
     - name: frontend-typecheck
       root: apps/web/

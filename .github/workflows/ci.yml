@@ -98,7 +98,7 @@ jobs:
           uv run python -m tests.migration_assert upgraded
 
   frontend:
-    name: Frontend · prettier + typecheck + build
+    name: Frontend · prettier + lint + typecheck + build
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -125,6 +125,9 @@ jobs:
 
       - name: Prettier check
         run: pnpm prettier --check "**/*.{ts,tsx,js,jsx,json,css,md}" --ignore-path ../../.gitignore
+
+      - name: Lint
+        run: pnpm lint
 
       - name: Typecheck
         run: pnpm typecheck

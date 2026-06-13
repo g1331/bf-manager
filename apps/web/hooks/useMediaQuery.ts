@@ -8,6 +8,9 @@ export function useMediaQuery(query: string): boolean {
 
   useEffect(() => {
     const mq = window.matchMedia(query);
+    // SSR 安全：render 阶段访问不到 window.matchMedia，初始 matches 只能在 effect 内补读。
+    // react-compiler 的 set-state-in-effect 规则对这种「挂载后同步外部状态」误报，按行豁免。
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMatches(mq.matches);
     const handler = (e: MediaQueryListEvent) => setMatches(e.matches);
     mq.addEventListener("change", handler);

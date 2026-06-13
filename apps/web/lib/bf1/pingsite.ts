@@ -45,3 +45,49 @@ export function pingSiteLabel(code: string | null | undefined): string | null {
   if (!code) return null;
   return PING_SITE_LABELS[code.toLowerCase()] ?? code.toUpperCase();
 }
+
+/**
+ * ping 节点代号 → ISO 3166-1 alpha-2 国家码（小写，供 flag-icons 用）。
+ *
+ * 与 PING_SITE_LABELS 一一对应，用于服务器 country 字段缺失时（官服多为空）按数据中心
+ * 所在地反推国旗。注意英国用 gb（flag-icons 约定），不是 uk。
+ */
+const PING_SITE_COUNTRY: Record<string, string> = {
+  // 亚太
+  nrt: "jp",
+  kix: "jp",
+  hkg: "hk",
+  sin: "sg",
+  bom: "in",
+  syd: "au",
+  // 欧洲
+  fra: "de",
+  ams: "nl",
+  lhr: "gb",
+  par: "fr",
+  waw: "pl",
+  mad: "es",
+  // 北美（均为美国）
+  iad: "us",
+  sjc: "us",
+  lax: "us",
+  dfw: "us",
+  ord: "us",
+  mia: "us",
+  sea: "us",
+  // 南美
+  brz: "br",
+  gru: "br",
+  scl: "cl",
+  gig: "br",
+  // 中东 / 非洲
+  dxb: "ae",
+  cpt: "za",
+  jnb: "za",
+};
+
+/** ping 节点代号 → ISO2 小写国家码；空值或未收录返回 null */
+export function pingSiteCountry(code: string | null | undefined): string | null {
+  if (!code) return null;
+  return PING_SITE_COUNTRY[code.toLowerCase()] ?? null;
+}

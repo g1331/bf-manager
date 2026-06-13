@@ -4,11 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Check, ChevronDown, Lock, MapPin, RotateCw, Users } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { DarkInput } from "@/components/common/DarkInput";
+import { CountryFlag } from "@/components/common/CountryFlag";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ServerListSkeleton } from "@/components/layout/PageSkeleton";
-import { pingSiteLabel } from "@/lib/bf1/pingsite";
+import { pingSiteLabel, pingSiteCountry } from "@/lib/bf1/pingsite";
 import {
   BF1_MAPS,
   BF1_MODES,
@@ -58,18 +59,6 @@ function emptyBucket(s: ServerSummary): string {
   if (free <= 5) return "1-5";
   if (free <= 10) return "6-10";
   return "10+";
-}
-
-/** ISO 3166-1 alpha-2 国家代码 → 国旗 emoji（区域指示符）；非两位字母返回 null */
-function flagEmoji(cc: string | null): string | null {
-  if (!cc || cc.length !== 2) return null;
-  const base = 0x1f1e6;
-  const codePoints = cc
-    .toUpperCase()
-    .split("")
-    .map((c) => base + (c.charCodeAt(0) - 65));
-  if (codePoints.some((n) => n < base || n > base + 25)) return null;
-  return String.fromCodePoint(...codePoints);
 }
 
 function toggle<T>(arr: T[], val: T): T[] {
@@ -309,7 +298,7 @@ function SubTabs() {
 function ServerRow({ server, onClick }: { server: ServerSummary; onClick: () => void }) {
   const mapLabel = server.map_display_name ?? server.map_name;
   const modeLabel = server.mode_display_name ?? server.game_mode;
-  const flag = flagEmoji(server.country);
+  const flagCode = server.country ?? pingSiteCountry(server.ping_site);
   const node = pingSiteLabel(server.ping_site) ?? server.region_display_name ?? server.region;
   const fill =
     server.max_player_count > 0
@@ -349,7 +338,7 @@ function ServerRow({ server, onClick }: { server: ServerSummary; onClick: () => 
             {server.has_password ? <Lock className="size-3.5 shrink-0 text-white/40" /> : null}
           </div>
           <div className="mt-1 flex items-center gap-1.5 text-xs text-white/45">
-            {flag ? <span className="text-sm leading-none">{flag}</span> : null}
+            <CountryFlag code={flagCode} className="leading-none" />
             {modeLabel ? <span>{modeLabel}</span> : null}
             {mapLabel ? (
               <>
@@ -484,11 +473,10 @@ function FilterPanel({
       </section>
 
       {/* 以名称筛选：结果内二次过滤 */}
-      <Input
+      <DarkInput
         value={filters.nameFilter}
         onChange={(e) => patch({ nameFilter: e.target.value })}
         placeholder="以名称筛选…"
-        className="h-9 border-white/15 bg-black/30 text-white placeholder:text-white/35"
       />
 
       <button

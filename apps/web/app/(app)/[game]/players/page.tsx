@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
-import { Search } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { ChevronRight, Search } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { DarkInput } from "@/components/common/DarkInput";
+import { PlayerAvatar } from "@/components/common/PlayerAvatar";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { toast } from "sonner";
 import { bf1Api, type PersonaBrief } from "@/lib/api/bf1";
@@ -51,14 +52,14 @@ export default function PlayerSearchPage() {
       />
 
       <form onSubmit={submit} className="flex gap-2">
-        <Input
+        <DarkInput
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="输入 EA 昵称（不区分大小写）"
           autoComplete="off"
           autoCapitalize="off"
           spellCheck={false}
-          className="flex-1"
+          className="h-12 flex-1"
         />
         <Button type="submit" disabled={search.isPending} size="lg" className="px-6">
           <Search className="size-4" />
@@ -71,28 +72,33 @@ export default function PlayerSearchPage() {
           <h2 className="text-muted-foreground text-sm font-medium">
             找到 {results.length} 个匹配
           </h2>
-          <ul className="space-y-2">
-            {results.map((p) => (
-              <li key={p.persona_id}>
-                <Card
-                  className="hover:border-primary cursor-pointer transition"
-                  onClick={() => router.push(`/${params.game}/player/${p.persona_id}`)}
-                >
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between text-base">
-                      <span>{p.display_name}</span>
-                      <span className="text-muted-foreground text-xs font-normal">
+          <Card className="divide-y divide-white/[0.06] overflow-hidden">
+            <ul>
+              {results.map((p) => (
+                <li key={p.persona_id}>
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/${params.game}/player/${p.persona_id}`)}
+                    className="group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-white/[0.06]"
+                  >
+                    <PlayerAvatar avatarUrl={p.avatar_url} displayName={p.display_name} size="sm" />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-foreground truncate text-sm font-medium">
+                        {p.display_name}
+                      </div>
+                      <div className="text-muted-foreground text-xs tabular-nums">
                         ID {p.persona_id}
-                      </span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-muted-foreground text-sm">
-                    点击查看战绩详情
-                  </CardContent>
-                </Card>
-              </li>
-            ))}
-          </ul>
+                      </div>
+                    </div>
+                    <span className="text-muted-foreground/70 group-hover:text-foreground flex shrink-0 items-center gap-1 text-xs transition-colors">
+                      查看战绩
+                      <ChevronRight className="size-4" />
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </Card>
         </section>
       ) : null}
     </main>

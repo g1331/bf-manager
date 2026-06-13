@@ -845,7 +845,10 @@ function BestClassCard({
   bestClass: string;
 }) {
   return (
-    <div className="relative pt-10 sm:pt-12">
+    // 按容器自身宽度（@container）切换立绘列与统计列数，而非视口断点：本页在舞台
+    // min(95vw,200vh) 与左右侧栏(AppRail/FriendsRail)共同裁剪下，视口断点测不准实际
+    // 可用宽度，曾导致 360→1024 全程统计被 300px 立绘列挤爆、数值裁成竖条（#48 同源）
+    <div className="@container relative pt-10 sm:pt-12">
       <div
         className="absolute top-7 left-4 z-30 px-3 py-1 text-xs font-black tracking-[0.3em] text-black sm:top-9"
         style={{
@@ -862,8 +865,9 @@ function BestClassCard({
         className="relative"
         style={{ background: "rgba(12,12,15,0.82)" }}
       >
-        <div className="grid grid-cols-[160px_1fr] gap-3 px-4 py-6 sm:grid-cols-[300px_1fr] sm:gap-6 sm:px-8 sm:py-10">
-          <div aria-hidden className="min-h-[14rem] sm:min-h-[18rem]" />
+        <div className="grid grid-cols-1 gap-3 px-4 py-6 @2xl:grid-cols-[300px_1fr] @2xl:gap-6 @2xl:px-8 @2xl:py-10">
+          {/* 立绘占位列仅在容器够宽（@2xl≈672px）时保留；窄容器下立绘隐藏、统计满宽铺开 */}
+          <div aria-hidden className="hidden @2xl:block @2xl:min-h-[18rem]" />
           <div className="flex min-w-0 flex-col justify-center">
             <div className="mb-5 flex items-baseline gap-4">
               <span
@@ -879,7 +883,7 @@ function BestClassCard({
                 }}
               />
             </div>
-            <div className="grid grid-cols-3 gap-x-3 gap-y-4 sm:gap-x-8">
+            <div className="grid grid-cols-2 gap-x-3 gap-y-4 @md:grid-cols-3 @2xl:gap-x-8">
               <SoldierStat label="协助击杀" value={s.assists} icon={Handshake} />
               <SoldierStat label="最高连杀" value={s.max_killstreak} icon={Flame} accent />
               <SoldierStat label="狗牌数" value={s.dogtags} icon={Tag} />
@@ -891,7 +895,7 @@ function BestClassCard({
         </div>
       </Bf1Panel>
 
-      <div className="pointer-events-none absolute bottom-0 left-2 z-20 h-[18rem] w-[150px] sm:left-6 sm:h-[24rem] sm:w-[280px]">
+      <div className="pointer-events-none absolute bottom-0 left-6 z-20 hidden h-[24rem] w-[280px] @2xl:block">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={`/bf1/soldiers/portraits/${bestClass}.png`}

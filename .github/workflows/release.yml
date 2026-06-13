@@ -193,15 +193,22 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          CLIFF_RANGE="${GITHUB_REF_NAME}"
           if [ -n "${{ steps.baseline.outputs.previous_tag }}" ]; then
-            CLIFF_RANGE="${{ steps.baseline.outputs.previous_tag }}..${GITHUB_REF_NAME}"
+            # 增量发版：上一个 tag 到当前 tag
+            git-cliff \
+              --config cliff.toml \
+              --output generated-release-notes.md \
+              --github-repo "${{ github.repository }}" \
+              "${{ steps.baseline.outputs.previous_tag }}..${GITHUB_REF_NAME}"
+          else
+            # 首发无 previous tag：传单个 tag 会被 git-cliff 当 commit OID 解析而报错
+            # （unable to parse OID），改为不传范围，让 git-cliff 处理全部历史
+            # （此时仅当前 tag 一个 release 段）。
+            git-cliff \
+              --config cliff.toml \
+              --output generated-release-notes.md \
+              --github-repo "${{ github.repository }}"
           fi
-          git-cliff \
-            --config cliff.toml \
-            --output generated-release-notes.md \
-            --github-repo "${{ github.repository }}" \
-            "${CLIFF_RANGE}"
 
       - name: Build release body
         shell: bash

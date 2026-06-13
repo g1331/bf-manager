@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { DarkInput } from "@/components/common/DarkInput";
 import { cn } from "@/lib/utils";
 
 /**
@@ -33,11 +33,11 @@ export function EquipmentFilterBar({
     <div className="mb-4 space-y-3">
       <div className="relative">
         <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-white/35" />
-        <Input
+        <DarkInput
           value={search}
           onChange={(e) => onSearch(e.target.value)}
           placeholder={placeholder}
-          className="h-9 border-white/15 bg-black/30 pl-9 text-white placeholder:text-white/35"
+          className="pl-9"
         />
       </div>
       <div className="flex flex-wrap gap-1.5">

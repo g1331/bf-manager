@@ -1,0 +1,59 @@
+# git-cliff 配置：CI 在打 tag 时据此生成分组化的 GitHub Release notes。
+# 按 Conventional Commits 前缀（feat/fix/docs/...）归类；不规范提交不丢弃，统一落入 Other Changes。
+# 走 PR 合并的提交优先用 PR 标题并附 PR 链接。
+# 文档：https://git-cliff.org/docs/configuration
+
+[changelog]
+body = """
+{%- macro remote_url() -%}
+https://github.com/{{ remote.github.owner }}/{{ remote.github.repo }}
+{%- endmacro -%}
+
+{% if commits | length == 0 -%}
+No notable changes.
+{% else -%}
+{% set ordered_groups = ["New Features", "Bug Fixes", "Security", "Performance", "Documentation", "Tests", "Maintenance", "Other Changes"] %}
+{% set grouped_commits = commits | group_by(attribute="group") %}
+{% for group in ordered_groups -%}
+{% if group in grouped_commits -%}
+## {{ group }}
+
+{% for commit in grouped_commits[group] -%}
+{% if commit.remote.pr_title -%}
+{%- set commit_message = commit.remote.pr_title -%}
+{%- else -%}
+{%- set commit_message = commit.message -%}
+{%- endif -%}
+- {{ commit_message | split(pat="\n") | first | trim }}{% if commit.remote.pr_number %} ([#{{ commit.remote.pr_number }}]({{ self::remote_url() }}/pull/{{ commit.remote.pr_number }})){% endif %}
+{% endfor %}
+{% endif -%}
+{% endfor %}
+{% endif -%}
+
+"""
+trim = true
+postprocessors = [
+  { pattern = "(?m)^- (feat|fix|docs?|style|security|perf|refactor|test|ci|build|chore)(\\([^)]+\\))?!?:\\s*", replace = "- " },
+]
+
+[git]
+conventional_commits = true
+filter_unconventional = false
+filter_commits = false
+tag_pattern = "v[0-9].*"
+sort_commits = "oldest"
+
+commit_parsers = [
+  { message = "^Merge pull request", skip = true },
+  { message = "^Merge branch", skip = true },
+  { message = "^feat", group = "New Features" },
+  { message = "^fix", group = "Bug Fixes" },
+  { message = "^security", group = "Security" },
+  { message = "^perf", group = "Performance" },
+  { message = "^docs?", group = "Documentation" },
+  { message = "^test", group = "Tests" },
+  { message = "^refactor", group = "Maintenance" },
+  { message = "^style", group = "Maintenance" },
+  { message = "^(ci|build|chore)", group = "Maintenance" },
+  { message = ".*", group = "Other Changes" },
+]

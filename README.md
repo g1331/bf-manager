@@ -162,6 +162,39 @@ DevTools 中切换到以下 viewport 验证响应式：
 - Android 小屏 (360px) / 中屏 (412px)
 - 桌面 (1280px / 1920px)
 
+## 发版（Release）
+
+版本号的唯一真相源是 **git tag**。源码里所有 `version` 字段（根 / `apps/web` 的 `package.json`、`apps/backend/pyproject.toml`、`app/core/config.py` 的 `app_version`）永远保持 `0.0.0` 占位，发版**不改源码、不产生版本号提交**。真实版本号在 CI 构建时由 tag 派生并注入镜像。
+
+### 发布一个版本
+
+确认要发布的提交已合并进 `main` 且 CI 通过，然后打一个 annotated tag 并推送：
+
+```bash
+git checkout main && git pull origin main
+git tag -a v1.0.0 -m "Release v1.0.0"
+git push origin v1.0.0
+```
+
+打 tag 后由 `release.yml` 全自动完成：
+
+- 并行构建并推送 `ghcr.io/g1331/bf-manager-{backend,web}:v1.0.0` 镜像，版本号经 build-arg 注入（后端 `APP_VERSION`、前端 `NEXT_PUBLIC_APP_VERSION`），运行时 `/api/v1/healthz` 与门户页脚即显示该版本。
+- 自动创建对应的 **GitHub Release**：变更说明由 `git-cliff`（配置见根目录 `cliff.toml`）按 Conventional Commits 前缀分组生成（New Features / Bug Fixes / …），并附 Release Metadata（提交、镜像、digest、对比区间）。
+
+tag 必须打在 `main` 上的提交，否则 `release.yml` 的校验步骤会拒绝发布。版本号遵循 [SemVer](https://semver.org/)（`vMAJOR.MINOR.PATCH`，预发布可用 `-alpha.N` / `-beta.N`）。
+
+### 部署某个版本 / 回滚
+
+发布完成后，在部署机用 `--tag` 锁定版本部署（详见下方「生产部署」）：
+
+```bash
+bash tools/deploy.sh --tag v1.0.0
+```
+
+回滚到上一版本同理，把 `--tag` 指向旧版本即可（旧镜像在 GHCR 永久保留）。注意数据库迁移不会自动回退，回滚前需确认目标版本与当前 schema 兼容。
+
+完整变更记录见仓库 [Releases](https://github.com/g1331/bf-manager/releases) 页面（不单独维护 `CHANGELOG.md`）。
+
 ## 生产部署
 
 镜像由 GitHub Actions `release.yml` 在 push main 或打 tag（`v*`）时构建并推送到 GHCR，部署机只 `pull`，不本地 build。首次部署与日常更新都用同一个一键脚本：

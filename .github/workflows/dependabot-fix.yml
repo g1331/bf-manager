@@ -1,0 +1,66 @@
+name: Dependabot Fix Lockfile
+
+# Dependabot 更新 package.json 后自动重生成 pnpm-lock.yaml。
+# 必要原因：Dependabot 不能正确处理 pnpm workspace，改了 package.json 却不更新根
+# pnpm-lock.yaml，导致其 PR 的 CI（pnpm install --frozen-lockfile）必然失败。
+
+on:
+  pull_request:
+    paths:
+      - "package.json"
+      - "apps/web/package.json"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  fix-lockfile:
+    name: Fix Lockfile
+    runs-on: ubuntu-latest
+    # 仅对 Dependabot 的 PR 触发
+    if: github.actor == 'dependabot[bot]'
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Regenerate pnpm-lock.yaml
+        run: |
+          # 删除现有 lockfile 强制重新生成
+          rm -f pnpm-lock.yaml
+          pnpm install --no-frozen-lockfile
+          echo "Lockfile regenerated successfully"
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet pnpm-lock.yaml; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No changes to pnpm-lock.yaml"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "pnpm-lock.yaml has been updated"
+          fi
+
+      - name: Commit and push changes
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add pnpm-lock.yaml
+          git commit -m "chore: regenerate pnpm-lock.yaml for Dependabot PR"
+          git push

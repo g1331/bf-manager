@@ -33,8 +33,13 @@ ARG NEXT_PUBLIC_DEFAULT_GAME=bf1
 # prod 走 host openresty 在 web 容器前面拦截 /api/v1/*，Next.js 的 rewrite
 # 实际是死代码，这个默认值对其无影响。
 ARG BACKEND_API_URL=http://backend:8000
+# 版本号注入：由 CI 从 git tag 派生（release.yml 的 build-args NEXT_PUBLIC_APP_VERSION=meta.outputs.version）。
+# NEXT_PUBLIC_ 前缀在构建阶段被内联进 client bundle，运行时不可再改；默认 0.0.0 表示开发版。
+# 与后端镜像注入的 APP_VERSION 取同一 metadata.version，保证前后端版本号统一。
+ARG NEXT_PUBLIC_APP_VERSION=0.0.0
 ENV NEXT_PUBLIC_DEFAULT_GAME=$NEXT_PUBLIC_DEFAULT_GAME \
     BACKEND_API_URL=$BACKEND_API_URL \
+    NEXT_PUBLIC_APP_VERSION=$NEXT_PUBLIC_APP_VERSION \
     NEXT_TELEMETRY_DISABLED=1 \
     NODE_ENV=production
 

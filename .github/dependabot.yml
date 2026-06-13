@@ -1,0 +1,82 @@
+# Dependabot 依赖更新配置
+# 文档：https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+# 注意：pnpm workspace 下 Dependabot 改 package.json 不会同步根 pnpm-lock.yaml，
+# 由 .github/workflows/dependabot-fix.yml 在其 PR 上自动重生成 lockfile。
+
+version: 2
+updates:
+  # ============================================================
+  # GitHub Actions —— 安全关键，每日检查
+  # ============================================================
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily
+    commit-message:
+      prefix: "⬆ ci"
+    labels:
+      - dependencies
+      - github-actions
+    open-pull-requests-limit: 5
+
+  # ============================================================
+  # 后端 Python（apps/backend）—— uv 包管理
+  # ============================================================
+  - package-ecosystem: uv
+    directory: /apps/backend
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: "⬆ backend"
+    labels:
+      - dependencies
+      - python
+    open-pull-requests-limit: 10
+    # 合并 minor/patch 更新，减少 PR 噪音
+    groups:
+      python-minor:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
+  # ============================================================
+  # 前端 TypeScript（apps/web）—— pnpm
+  # ============================================================
+  - package-ecosystem: npm
+    directory: /apps/web
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: "⬆ web"
+    labels:
+      - dependencies
+      - npm
+    open-pull-requests-limit: 10
+    versioning-strategy: increase
+    groups:
+      npm-minor:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
+  # ============================================================
+  # Docker 基础镜像（两个 Dockerfile）
+  # ============================================================
+  - package-ecosystem: docker
+    directories:
+      - /apps/backend
+      - /apps/web
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "⬆ docker"
+    labels:
+      - dependencies
+      - docker
+    open-pull-requests-limit: 5

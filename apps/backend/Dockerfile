@@ -28,6 +28,12 @@ COPY tools /app/tools
 # ===== 运行时阶段 =====
 FROM python:3.12-slim AS runtime
 
+# 版本号注入：由 CI 从 git tag 派生（release.yml 的 build-args APP_VERSION=meta.outputs.version）。
+# 默认 0.0.0 与 app/core/config.py 的 app_version 字段占位一致，本地直接 docker build 行为不变。
+# 运行时 pydantic-settings 以 env source 覆盖字段 app_version，/api/v1/healthz 与 OpenAPI 即显真实版本。
+ARG APP_VERSION=0.0.0
+ENV APP_VERSION=${APP_VERSION}
+
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH="/app/.venv/bin:$PATH" \

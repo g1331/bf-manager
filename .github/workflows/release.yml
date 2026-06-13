@@ -22,6 +22,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
 
     steps:
       - uses: actions/checkout@v4
@@ -51,12 +53,17 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: ./apps/backend
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # 版本号注入：tag 构建时 meta.outputs.version 即 tag 名（vX.Y.Z），main 构建为 main。
+          # 镜像内 ENV APP_VERSION 被 pydantic-settings 读取，healthz / OpenAPI 显示真实版本。
+          build-args: |
+            APP_VERSION=${{ steps.meta.outputs.version }}
           cache-from: type=gha,scope=backend
           cache-to: type=gha,scope=backend,mode=max
 
@@ -66,6 +73,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
 
     steps:
       - uses: actions/checkout@v4
@@ -95,6 +104,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -102,5 +112,145 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # 与后端取同一 meta.outputs.version，保证前后端版本号统一；构建时内联进 bundle。
+          build-args: |
+            NEXT_PUBLIC_APP_VERSION=${{ steps.meta.outputs.version }}
           cache-from: type=gha,scope=web
           cache-to: type=gha,scope=web,mode=max
+
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-web]
+    # 仅 push tag v* 时执行；push main / workflow_dispatch 一律跳过
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate release tag
+        id: validate
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          if [[ ! "${TAG}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta)\.[0-9]+)?$ ]]; then
+            echo "::error::Tag ${TAG} 须符合 vMAJOR.MINOR.PATCH（可带 -alpha.N / -beta.N）"
+            exit 1
+          fi
+          # tag 必须打在 main 上的提交，杜绝在野分支误发
+          git fetch origin main
+          if ! git merge-base --is-ancestor "${GITHUB_SHA}" origin/main; then
+            echo "::error::Release tag 必须指向 main 分支上的提交"
+            exit 1
+          fi
+          {
+            echo "release_version=${TAG#v}"
+            echo "package_version=$(jq -r .version package.json)"
+            echo "release_commit=$(git rev-parse "${GITHUB_SHA}")"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Resolve release notes baseline
+        id: baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --tags origin
+          TAG="${GITHUB_REF_NAME}"
+          PREVIOUS_TAG="$(
+            git tag --merged "${GITHUB_SHA}" --sort=v:refname |
+              grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' |
+              grep -v -F "${TAG}" |
+              tail -n 1 || true
+          )"
+          {
+            echo "previous_tag=${PREVIOUS_TAG}"
+            if [ -n "${PREVIOUS_TAG}" ]; then
+              echo "previous_tag_label=${PREVIOUS_TAG}"
+              echo "compare_range=${PREVIOUS_TAG}...${TAG}"
+            else
+              echo "previous_tag_label=none"
+              echo "compare_range=${TAG}"
+            fi
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Install git-cliff
+        uses: taiki-e/install-action@v2
+        with:
+          tool: git-cliff
+
+      - name: Generate release notes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          CLIFF_RANGE="${GITHUB_REF_NAME}"
+          if [ -n "${{ steps.baseline.outputs.previous_tag }}" ]; then
+            CLIFF_RANGE="${{ steps.baseline.outputs.previous_tag }}..${GITHUB_REF_NAME}"
+          fi
+          git-cliff \
+            --config cliff.toml \
+            --output generated-release-notes.md \
+            --github-repo "${{ github.repository }}" \
+            "${CLIFF_RANGE}"
+
+      - name: Build release body
+        shell: bash
+        run: |
+          set -euo pipefail
+          BACKEND_IMAGE="${{ env.REGISTRY }}/${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}-backend"
+          WEB_IMAGE="${{ env.REGISTRY }}/${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}-web"
+          cat > release-body.md <<EOF
+          ## Release Metadata
+
+          - Tag: \`${GITHUB_REF_NAME}\`
+          - Release version: \`${{ steps.validate.outputs.release_version }}\`
+          - Package version: \`${{ steps.validate.outputs.package_version }}\`
+          - Commit: \`${{ steps.validate.outputs.release_commit }}\`
+          - Previous tag: \`${{ steps.baseline.outputs.previous_tag_label }}\`
+          - Compare range: \`${{ steps.baseline.outputs.compare_range }}\`
+          - Backend image: \`${BACKEND_IMAGE}:${GITHUB_REF_NAME}\`
+          - Backend digest: \`${{ needs.build-backend.outputs.digest }}\`
+          - Web image: \`${WEB_IMAGE}:${GITHUB_REF_NAME}\`
+          - Web digest: \`${{ needs.build-web.outputs.digest }}\`
+
+          ## Generated Notes
+
+          EOF
+          cat generated-release-notes.md >> release-body.md
+          if [ -n "${{ steps.baseline.outputs.previous_tag }}" ]; then
+            cat >> release-body.md <<EOF
+
+          ## Changelog
+
+          Full Changelog: ${{ github.server_url }}/${{ github.repository }}/compare/${{ steps.baseline.outputs.compare_range }}
+          EOF
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          body_path: release-body.md
+          generate_release_notes: false
+          prerelease: ${{ contains(steps.validate.outputs.release_version, '-') }}
+
+      - name: Write workflow summary
+        shell: bash
+        run: |
+          {
+            echo "## Release Published"
+            echo
+            echo "- Tag: \`${GITHUB_REF_NAME}\`"
+            echo "- Release version: \`${{ steps.validate.outputs.release_version }}\`"
+            echo "- Commit: \`${{ steps.validate.outputs.release_commit }}\`"
+            echo "- Previous tag: \`${{ steps.baseline.outputs.previous_tag_label }}\`"
+            echo "- Backend digest: \`${{ needs.build-backend.outputs.digest }}\`"
+            echo "- Web digest: \`${{ needs.build-web.outputs.digest }}\`"
+            echo "- Release URL: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${GITHUB_REF_NAME}"
+          } >> "${GITHUB_STEP_SUMMARY}"

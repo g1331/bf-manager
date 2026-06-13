@@ -42,6 +42,10 @@ const FEATURES = [
   },
 ];
 
+// 应用版本号：生产镜像构建时由 CI 注入（NEXT_PUBLIC_APP_VERSION，源自 git tag）；
+// 本地 next dev 无注入时回落 "dev"。展示值直接取注入原文（tag 构建为 vX.Y.Z，main 构建为 main）。
+const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || "dev";
+
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-black">
@@ -51,6 +55,7 @@ export default function HomePage() {
       <footer className="border-t border-white/10 bg-[#0d0a04] px-4 py-8 text-center">
         <p className="inline-action text-xs text-white/30">
           BF-Manager · Battlefield 系列服务器管理平台 · MIT License
+          <span className="ml-2 font-mono text-white/20">{APP_VERSION}</span>
         </p>
       </footer>
     </div>

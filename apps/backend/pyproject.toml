@@ -21,7 +21,7 @@ dependencies = [
     # Redis
     "redis>=5.2.0",
     # 安全
-    "cryptography>=44.0.0",
+    "cryptography>=49.0.0",
     "python-jose[cryptography]>=3.5.0",
     "bcrypt>=4.0",
     # HTTP 客户端（EA Gateway 调用）

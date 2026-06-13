@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -321,7 +321,9 @@ export default function EAAccountsAdminPage() {
   });
 
   const form = useForm<CreateValues>({
-    resolver: zodResolver(createSchema),
+    // zod 4 起 z.coerce 的 input 类型为 unknown，与 useForm 的 output 泛型不一致；
+    // resolver 运行时仍照常 coerce，这里按 output 形态断言以对齐 RHF 类型
+    resolver: zodResolver(createSchema) as Resolver<CreateValues>,
     defaultValues: CREATE_DEFAULTS,
   });
 

@@ -10,9 +10,9 @@ authors = [{ name = "g1331" }]
 dependencies = [
     # Web 框架
     "fastapi>=0.115.0",
-    "uvicorn[standard]>=0.32.0",
+    "uvicorn[standard]>=0.49.0",
     # 数据库
-    "sqlalchemy[asyncio]>=2.0.36",
+    "sqlalchemy[asyncio]>=2.0.50",
     "asyncpg>=0.30.0",
     "alembic>=1.14.0",
     # Pydantic

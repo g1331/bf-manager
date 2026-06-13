@@ -160,7 +160,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git fetch --tags origin
+          # --force：本步在 tag push 时运行，checkout 已检出当前 tag、本地已存在它，
+          # 不加 --force 时 git fetch 会因 "would clobber existing tag" 返回非零，
+          # 在 set -e 下使整个步骤失败。
+          git fetch --tags --force origin
           TAG="${GITHUB_REF_NAME}"
           PREVIOUS_TAG="$(
             git tag --merged "${GITHUB_SHA}" --sort=v:refname |

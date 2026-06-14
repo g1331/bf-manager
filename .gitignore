@@ -110,3 +110,6 @@ packages/shared-types/src/api.d.ts
 
 # ===== Docker =====
 .docker/
+
+# ===== README 截图原图（只提交压缩后的 docs/images/*.webp） =====
+docs/images/_raw/

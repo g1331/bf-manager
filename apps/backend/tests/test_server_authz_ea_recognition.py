@@ -74,6 +74,54 @@ async def test_no_match_no_role_and_no_membership(user_client, test_session, mon
     assert membership is None
 
 
+async def test_stale_auto_membership_revoked_when_unlisted(user_client, test_session, monkeypatch):
+    """曾被识别为服主（落 auto membership）后，EA 不再列其为 owner/admin → 撤权 + 删除过期记录。
+
+    回归保护：auto membership 是 EA 状态缓存，撤权时必须失效，否则卖服 / 被踢出管理后仍能操作。
+    """
+    _, user = user_client
+    pid = user.ea_bindings[0].persona_id
+
+    _patch_identity(monkeypatch, owner_pid=pid, admin_pids=[])
+    role, _ = await ServerAuthzService(test_session).resolve_role(
+        user=user, game="bf1", server_id=GAME_ID
+    )
+    assert role == "owner"
+
+    # EA 不再把该用户列入名单
+    _patch_identity(monkeypatch, owner_pid=999, admin_pids=[888])
+    role2, _ = await ServerAuthzService(test_session).resolve_role(
+        user=user, game="bf1", server_id=GAME_ID
+    )
+    assert role2 is None
+    server = await test_session.scalar(select(Server).where(Server.server_id == SERVER_ID))
+    membership = await test_session.scalar(
+        select(ServerMembership).where(ServerMembership.server_pk == server.id)
+    )
+    assert membership is None, "过期 auto membership 必须被删除"
+
+
+async def test_manual_membership_preserved_when_unlisted(user_client, test_session, monkeypatch):
+    """人工授权（granted_by 非空）即使用户不在 EA 名单也应保留，作为委派 / 兜底。"""
+    _, user = user_client
+    _patch_identity(monkeypatch, owner_pid=999, admin_pids=[888])  # 用户始终不在 EA 名单
+    authz = ServerAuthzService(test_session)
+
+    # 首次解析建 Server（无角色）
+    role0, _ = await authz.resolve_role(user=user, game="bf1", server_id=GAME_ID)
+    assert role0 is None
+    server = await test_session.scalar(select(Server).where(Server.server_id == SERVER_ID))
+
+    # 平台 admin 人工授予 moderator
+    test_session.add(
+        ServerMembership(user_id=user.id, server_pk=server.id, role="moderator", granted_by=999)
+    )
+    await test_session.commit()
+
+    role1, _ = await authz.resolve_role(user=user, game="bf1", server_id=GAME_ID)
+    assert role1 == "moderator", "人工授权不应被自动逻辑删除"
+
+
 async def test_platform_admin_bypasses_without_ea_call(admin_client, test_session, monkeypatch):
     _, admin = admin_client
 

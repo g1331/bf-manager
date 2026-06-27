@@ -124,13 +124,19 @@ class ServerAuthzService:
             await self._upsert_auto_membership(user_id=user.id, server_pk=server.id, role=role)
             return role, True
 
-        # 未在 EA 名单：回退到对该稳定 server 的人工授权
+        # 未命中 EA 名单：自动授予的记录（granted_by 为空）是 EA 状态的缓存，此刻应失效——
+        # 用户已非该服 EA 服主 / 管理员，删除以保证撤权及「我的服务器」与 EA 现状一致
+        # （若仅为 EA 短暂抽风，下次正确返回时会重新识别落库，自愈）。人工授权作为委派保留。
         membership = await self.db.scalar(
             select(ServerMembership).where(
                 ServerMembership.user_id == user.id,
                 ServerMembership.server_pk == server.id,
             )
         )
+        if membership is not None and membership.granted_by is None:
+            await self.db.delete(membership)
+            await self.db.commit()
+            membership = None
         return (membership.role if membership else None), True
 
     async def resolve_role(

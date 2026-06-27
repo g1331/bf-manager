@@ -69,7 +69,9 @@ export default function MyServersPage() {
 
       <ServerSubTabs game={params.game} active="mine" />
 
-      {!isLoggedIn ? (
+      {session.isLoading ? (
+        <div className="py-16 text-center text-sm text-white/45">加载中…</div>
+      ) : !isLoggedIn ? (
         <EmptyNote text="请先登录后查看你管理的服务器。" />
       ) : q.isLoading ? (
         <div className="py-16 text-center text-sm text-white/45">加载中…</div>
@@ -83,7 +85,7 @@ export default function MyServersPage() {
             <MyServerCard
               key={s.server_pk}
               item={s}
-              onOpen={() => s.game_id && router.push(`/${params.game}/server/${s.game_id}`)}
+              onOpen={() => s.game_id != null && router.push(`/${params.game}/server/${s.game_id}`)}
             />
           ))}
         </ul>

@@ -14,9 +14,10 @@
 from __future__ import annotations
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.errors import ForbiddenError
+from app.api.errors import EAApiError, ForbiddenError
 from app.models import Server, ServerMembership, User
 from app.services.bf1.server_service import BF1ServerService
 
@@ -32,17 +33,6 @@ ROLE_LEVEL = {
 class ServerAuthzService:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
-
-    async def get_or_register_server(self, *, game: str, server_id: int) -> Server:
-        """按 game + EA serverId 查或注册一条服务器记录"""
-        stmt = select(Server).where(Server.game == game, Server.server_id == server_id)
-        server = await self.db.scalar(stmt)
-        if server is None:
-            server = Server(game=game, server_id=server_id)
-            self.db.add(server)
-            await self.db.commit()
-            await self.db.refresh(server)
-        return server
 
     def _bound_persona_ids(self, user: User) -> set[int]:
         """user 当前可用（未冻结）的绑定 persona 集合"""
@@ -83,7 +73,12 @@ class ServerAuthzService:
             self.db.add(
                 ServerMembership(user_id=user_id, server_pk=server_pk, role=role, granted_by=None)
             )
-            await self.db.commit()
+            try:
+                await self.db.commit()
+            except IntegrityError:
+                # 并发请求（如详情页 my-role 与一次操作同时触发）可能都读到 None 后各自插入，
+                # 唯一约束 uq_server_memberships_user_server 让第二次冲突；视作幂等、回滚即可。
+                await self.db.rollback()
         elif membership.granted_by is None and membership.role != role:
             membership.role = role
             await self.db.commit()
@@ -102,7 +97,9 @@ class ServerAuthzService:
             return None, False
         try:
             info = await BF1ServerService(self.db).get_admin_identity(game_id)
-        except Exception:
+        except EAApiError:
+            # 仅 EA 不可用（无账号 / 网关失败）时降级走 legacy 回退；其余异常（解析 bug 等）
+            # 不吞，避免把代码缺陷伪装成「EA 不可用」而静默拒绝授权
             return None, False
         if info is None:
             return None, False

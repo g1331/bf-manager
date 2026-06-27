@@ -9,6 +9,8 @@ EA 调用（BF1ServerService.get_admin_identity）一律 monkeypatch，不发真
 
 from __future__ import annotations
 
+import pytest
+from app.api.errors import ForbiddenError
 from app.models import Server, ServerMembership
 from app.services.authz_service import ServerAuthzService
 from app.services.bf1 import server_service as ss_module
@@ -120,6 +122,26 @@ async def test_manual_membership_preserved_when_unlisted(user_client, test_sessi
 
     role1, _ = await authz.resolve_role(user=user, game="bf1", server_id=GAME_ID)
     assert role1 == "moderator", "人工授权不应被自动逻辑删除"
+
+
+async def test_require_role_enforces_threshold_on_auto_recognized(
+    user_client, test_session, monkeypatch
+):
+    """自动识别出的 admin 必须被 require_role 卡在 owner 级操作之外（越权边界保护）。
+
+    EA adminList 命中只给 admin；设/撤管理员要求 owner。若 require_role 对自动识别角色不正确
+    比较 ROLE_LEVEL，admin 就能越权调用 owner-only 端点。
+    """
+    _, user = user_client
+    pid = user.ea_bindings[0].persona_id
+    _patch_identity(monkeypatch, owner_pid=999, admin_pids=[pid])  # 识别为 admin
+    authz = ServerAuthzService(test_session)
+
+    # admin 可过 admin 级（封禁 / VIP / 换图）——不抛即通过
+    await authz.require_role(user=user, game="bf1", server_id=GAME_ID, min_role="admin")
+    # 但不可过 owner 级（设/撤管理员）
+    with pytest.raises(ForbiddenError):
+        await authz.require_role(user=user, game="bf1", server_id=GAME_ID, min_role="owner")
 
 
 async def test_platform_admin_bypasses_without_ea_call(admin_client, test_session, monkeypatch):

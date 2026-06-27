@@ -45,3 +45,22 @@ class MyServerRoleResult(BaseModel):
 
     role: str | None = None
     is_platform_admin: bool = False
+
+
+class MyServerItem(BaseModel):
+    """「我的服务器」列表项：当前用户有服管角色的一台服务器。
+
+    game_id 为末次解析到的 EA gameId（详情页据此寻址），可能为空（尚未在线时识别）或已过期
+    （服务器重启后变化），前端据此决定链接是否可点。
+    """
+
+    server_pk: int
+    game: str
+    server_id: int
+    game_id: int | None = None
+    name: str | None = None
+    role: str
+
+
+class MyServersResponse(BaseModel):
+    items: list[MyServerItem]

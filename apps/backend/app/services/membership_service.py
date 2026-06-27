@@ -8,6 +8,7 @@ from sqlalchemy.orm import selectinload
 
 from app.api.errors import NotFoundError, ValidationError
 from app.models import EaBinding, Server, ServerMembership, User
+from app.schemas.bf1.admin import MyServerItem
 from app.schemas.membership import MembershipItem
 
 _ALLOWED_ROLES = {"viewer", "moderator", "admin", "owner"}
@@ -67,6 +68,28 @@ class MembershipService:
 
         items = [_build_item(m, u, s) for m, u, s in rows]
         return items, int(total)
+
+    async def list_mine(self, *, user_id: int, game: str) -> list[MyServerItem]:
+        """当前用户有服管角色的服务器列表（供「我的服务器」页面），最近授予在前。"""
+        rows = (
+            await self.db.execute(
+                select(ServerMembership, Server)
+                .join(Server, Server.id == ServerMembership.server_pk)
+                .where(ServerMembership.user_id == user_id, Server.game == game)
+                .order_by(ServerMembership.created_at.desc())
+            )
+        ).all()
+        return [
+            MyServerItem(
+                server_pk=s.id,
+                game=s.game,
+                server_id=s.server_id,
+                game_id=s.game_id,
+                name=s.name,
+                role=m.role,
+            )
+            for m, s in rows
+        ]
 
     async def upsert(
         self,

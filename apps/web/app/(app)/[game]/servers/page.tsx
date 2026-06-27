@@ -9,6 +9,7 @@ import { CountryFlag } from "@/components/common/CountryFlag";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ServerListSkeleton } from "@/components/layout/PageSkeleton";
+import { ServerSubTabs } from "@/components/bf1/ServerSubTabs";
 import { pingSiteLabel, pingSiteCountry } from "@/lib/bf1/pingsite";
 import {
   BF1_MAPS,
@@ -192,9 +193,8 @@ export default function ServerListPage() {
         </div>
       </header>
 
-      {/* 子标签：复刻游戏「遊戲 / 我的最愛 / 最近遊玩 / 您的伺服器」。
-          后三者依赖玩家账号维度的收藏 / 历史 / 自有服务器数据，本应用暂未接入，置灰不可点。 */}
-      <SubTabs />
+      {/* 子标签：游戏（本页）/ 您的服务器（可点）；我的最爱 / 最近游玩 暂未接入置灰 */}
+      <ServerSubTabs game={params.game} active="browse" />
 
       {/* 主体：左密集表格 + 右筛选面板。桌面端整块填满剩余高度，仅列表内部滚动 */}
       <div className="grid grid-cols-1 gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_300px]">
@@ -258,40 +258,6 @@ export default function ServerListPage() {
         />
       </div>
     </main>
-  );
-}
-
-/* ----------------------------- 子标签 ----------------------------- */
-
-function SubTabs() {
-  const tabs = [
-    { label: "游戏", active: true, enabled: true },
-    { label: "我的最爱", active: false, enabled: false },
-    { label: "最近游玩", active: false, enabled: false },
-    { label: "您的服务器", active: false, enabled: false },
-  ];
-  return (
-    <nav className="flex items-center gap-6 border-b border-white/10 pb-2 text-sm lg:shrink-0">
-      {tabs.map((t) => (
-        <span
-          key={t.label}
-          title={t.enabled ? undefined : "需玩家账号维度数据，暂未接入"}
-          className={cn(
-            "relative font-medium tracking-wide",
-            t.active
-              ? "text-white"
-              : t.enabled
-                ? "cursor-pointer text-white/55 hover:text-white"
-                : "cursor-default text-white/30",
-          )}
-        >
-          {t.label}
-          {t.active ? (
-            <span className="absolute -bottom-2 left-0 h-0.5 w-full bg-amber-400" />
-          ) : null}
-        </span>
-      ))}
-    </nav>
   );
 }
 

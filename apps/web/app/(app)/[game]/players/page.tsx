@@ -12,6 +12,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { toast } from "sonner";
 import { bf1Api, type PersonaBrief } from "@/lib/api/bf1";
 import { ApiException } from "@/lib/api-client";
+import { cn } from "@/lib/utils";
 
 export default function PlayerSearchPage() {
   const params = useParams<{ game: string }>();
@@ -83,8 +84,25 @@ export default function PlayerSearchPage() {
                   >
                     <PlayerAvatar avatarUrl={p.avatar_url} displayName={p.display_name} size="sm" />
                     <div className="min-w-0 flex-1">
-                      <div className="text-foreground truncate text-sm font-medium">
-                        {p.display_name}
+                      <div className="flex items-center gap-2">
+                        <span className="text-foreground truncate text-sm font-medium">
+                          {p.display_name}
+                        </span>
+                        {/* 同名消歧徽标：仅当结果出现重名时后端回填 time_played_hours，帮你区分真号与空号 */}
+                        {p.time_played_hours != null ? (
+                          <span
+                            className={cn(
+                              "shrink-0 rounded-sm px-1.5 py-0.5 text-[11px] tabular-nums",
+                              p.time_played_hours > 0
+                                ? "bg-emerald-500/15 text-emerald-300"
+                                : "bg-red-500/15 text-red-300",
+                            )}
+                          >
+                            {p.time_played_hours > 0
+                              ? `BF1 ${p.time_played_hours} 小时`
+                              : "未玩过 BF1（空号）"}
+                          </span>
+                        ) : null}
                       </div>
                       <div className="text-muted-foreground text-xs tabular-nums">
                         ID {p.persona_id}

@@ -279,6 +279,28 @@ class BF1ServerService:
             items = [_to_summary(s) for s in game_servers]
             return ServerListResponse(total=len(items), items=items)
 
+    async def get_admin_identity(
+        self, game_id: int
+    ) -> tuple[int | None, list[int], int | None, str | None] | None:
+        """轻量取该服的 (owner_pid, admin_pids, server_id, name)，供鉴权按 EA 名单识别服主/管理员。
+
+        只拉一次 getFullServerDetails 并复用 _to_extras 解析，不构造完整 ServerDetail。
+        EA 不可用 / 无 rspInfo 时返回 None，调用方据此判定无法识别（降级为无权限）。
+        """
+        async with get_bf1_client(self.db) as client:
+            res = await client.getFullServerDetails(game_id)
+            if not isinstance(res, dict):
+                return None
+            raw = res.get("result") or {}
+            if not raw:
+                return None
+            extras = _to_extras(raw)
+            owner_pid = extras.owner.persona_id if extras.owner else None
+            admin_pids = [m.persona_id for m in extras.admins]
+            server_info = raw.get("serverInfo") or {}
+            name = server_info.get("name") or raw.get("name")
+            return owner_pid, admin_pids, extras.server_id, name
+
     async def get_detail(self, game_id: int) -> ServerDetail:
         async with get_bf1_client(self.db) as client:
             res = await client.getFullServerDetails(game_id)

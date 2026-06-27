@@ -16,9 +16,12 @@ class Server(Base, TimestampMixin):
     # 游戏标识：'bf1' / 'bfv' / 'bf2042'
     game: Mapped[str] = mapped_column(String(16), index=True, nullable=False)
 
-    # EA serverId（与 game 组合唯一）
+    # EA serverId（与 game 组合唯一）——稳定身份，鉴权与成员关系一律以此为准
     server_id: Mapped[int] = mapped_column(BigInteger, index=True, nullable=False)
     persisted_game_id: Mapped[str | None] = mapped_column(String(64), index=True)
+
+    # 末次解析到的 EA gameId：易变（服务器重启即变），不参与鉴权，仅供「我的服务器」生成可点击链接
+    game_id: Mapped[int | None] = mapped_column(BigInteger, index=True)
 
     name: Mapped[str | None] = mapped_column(String(255))
 

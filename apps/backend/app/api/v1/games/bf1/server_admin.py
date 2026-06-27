@@ -13,12 +13,28 @@ from app.schemas.bf1.admin import (
     KickPlayerRequest,
     MovePlayerRequest,
     MyServerRoleResult,
+    MyServersResponse,
     ServerMemberRequest,
 )
 from app.services.authz_service import ServerAuthzService
 from app.services.bf1.server_admin_service import BF1ServerAdminService
+from app.services.membership_service import MembershipService
 
 router = APIRouter()
+
+
+@router.get("/mine", response_model=MyServersResponse)
+async def my_servers(
+    db: DbDep,
+    user: CurrentUser,
+) -> MyServersResponse:
+    """返回当前登录用户有服管角色的服务器列表（自动识别的服主 / 管理员 + 人工授权）。
+
+    访问自己的服务器详情时会触发 EA 服主 / 管理员识别并落库，此后即出现在本列表。
+    路由置于 `/{game_id}/...` 之前，避免 "mine" 被当作 game_id 解析。
+    """
+    items = await MembershipService(db).list_mine(user_id=user.id, game="bf1")
+    return MyServersResponse(items=items)
 
 
 def _request_meta(request: Request) -> dict[str, str | None]:

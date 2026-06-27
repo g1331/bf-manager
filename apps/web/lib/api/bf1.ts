@@ -7,6 +7,11 @@ export interface PersonaBrief {
   persona_id: number;
   display_name: string;
   avatar_url: string | null;
+  /**
+   * BF1 生涯时长（小时，取整）。仅在搜索结果出现重名时为消歧回填：
+   * 0 = 未玩过 BF1（空号，服管会报玩家不存在），>0 = 真号；null = 未查询（无重名）。
+   */
+  time_played_hours?: number | null;
 }
 
 export interface PersonaSearchResult {
@@ -369,6 +374,21 @@ export interface MyServerRole {
   is_platform_admin: boolean;
 }
 
+/** 「我的服务器」列表项：当前用户有服管角色的一台服务器 */
+export interface MyServerItem {
+  server_pk: number;
+  game: string;
+  server_id: number;
+  /** 末次解析到的 EA gameId，详情页据此寻址；null = 尚未在线时识别，链接不可点 */
+  game_id: number | null;
+  name: string | null;
+  role: "viewer" | "moderator" | "admin" | "owner";
+}
+
+export interface MyServersResponse {
+  items: MyServerItem[];
+}
+
 export const bf1Api = {
   searchPlayers: (name: string) =>
     api.get<PersonaSearchResult>(`/bf1/players/search?name=${encodeURIComponent(name)}`),
@@ -417,6 +437,9 @@ export const bf1Api = {
 
   // 当前登录用户对该服务器的角色，供前端按角色 gating 内联服管入口
   getMyServerRole: (gameId: number) => api.get<MyServerRole>(`/bf1/server-admin/${gameId}/my-role`),
+
+  // 当前登录用户有服管角色的服务器列表（自动识别的服主 / 管理员 + 人工授权）
+  getMyServers: () => api.get<MyServersResponse>(`/bf1/server-admin/mine`),
 
   // ===== 服管操作（需登录 + 权限）=====
   adminKick: (gameId: number, personaId: number, reason: string) =>

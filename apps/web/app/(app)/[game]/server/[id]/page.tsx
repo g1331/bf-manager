@@ -871,8 +871,10 @@ function PlayerRow({ player, seq, game }: { player: BlazePlayer; seq: number; ga
       <td className="w-full py-[5px] pr-2 pl-2 lg:max-w-0">
         <Link
           href={`/${game}/player/${player.persona_id}`}
+          target="_blank"
+          rel="noopener noreferrer"
           className="flex min-w-0 items-center gap-1.5 hover:underline"
-          title={player.display_name}
+          title={`${player.display_name}（在新标签查看战绩）`}
         >
           {dot ? <span className={cn("size-1.5 shrink-0 rounded-full", dot)} /> : null}
           <span
@@ -981,6 +983,8 @@ function SidePlayerGroup({
           <Link
             key={p.persona_id}
             href={`/${game}/player/${p.persona_id}`}
+            target="_blank"
+            rel="noopener noreferrer"
             className={cn(
               "inline-flex items-center gap-1.5 text-[11px] hover:underline",
               nameColor(p),
@@ -1098,6 +1102,8 @@ function ServerAuditTab({ game, gameId }: { game: string; gameId: number }) {
         l.target_persona_id ? (
           <Link
             href={`/${game}/player/${l.target_persona_id}`}
+            target="_blank"
+            rel="noopener noreferrer"
             className="text-white tabular-nums hover:text-amber-300 hover:underline"
           >
             {l.target_persona_id}

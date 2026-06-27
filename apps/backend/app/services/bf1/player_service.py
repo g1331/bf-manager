@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
+from collections import Counter
+
 import httpx
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -63,6 +66,20 @@ async def _fetch_gametools_avatar(persona_id: int) -> str | None:
     return avatar or None
 
 
+async def _playtime_hours(client: BF1GatewayClient, persona_id: int) -> int | None:
+    """取该 persona 的 BF1 生涯时长（小时，取整）。无生涯 / 异常返回 None。"""
+    try:
+        data = await client.detailedStatsByPersonaId(persona_id)
+    except Exception:
+        return None
+    if not isinstance(data, dict):
+        return None
+    seconds = (data.get("result") or {}).get("basicStats", {}).get("timePlayed")
+    if not isinstance(seconds, (int, float)):
+        return None
+    return int(seconds // 3600)
+
+
 class BF1PlayerService:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
@@ -85,7 +102,22 @@ class BF1PlayerService:
                 for p in personas_raw
                 if (p.get("personaId") or p.get("pidId"))
             ]
+            await self._annotate_playtime_for_duplicates(client, personas)
             return PersonaSearchResult(query=name, personas=personas)
+
+    async def _annotate_playtime_for_duplicates(
+        self, client: BF1GatewayClient, personas: list[PersonaBrief]
+    ) -> None:
+        """EA 允许多账号共用同一昵称：仅当结果出现重名时，为每个重名候选回填 BF1 生涯时长，
+        帮管理员区分真号（>0）与空号（0，对其加 V / 服管会报玩家不存在）。无重名则不查，省开销。
+        """
+        counts = Counter(p.display_name.lower() for p in personas if p.display_name)
+        dups = [p for p in personas if p.display_name and counts[p.display_name.lower()] > 1]
+        if not dups:
+            return
+        hours = await asyncio.gather(*[_playtime_hours(client, p.persona_id) for p in dups])
+        for persona, h in zip(dups, hours, strict=True):
+            persona.time_played_hours = h
 
     async def get_by_id(self, persona_id: int) -> PersonaBrief:
         async with get_bf1_client(self.db) as client:

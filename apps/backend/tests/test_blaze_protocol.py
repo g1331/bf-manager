@@ -146,3 +146,15 @@ async def test_user_unauthenticated_closes_connection() -> None:
     assert not sock.connect
     with pytest.raises(ConnectionError):
         futures[9].result()
+
+
+async def test_encode_error_keeps_connection() -> None:
+    # 键名必须定宽（"ID   0"），写错只让这次请求失败，不能断开连接、殃及其他在途请求
+    sock, futures = _socket_with_pending(10)
+    with pytest.raises(ValueError):
+        await sock.send(
+            {"method": "GameManager.getGameDataByUser", "type": "Command", "data": {"ID 0": 1}}
+        )
+    assert sock.connect
+    assert not futures[10].done()
+    assert list(sock.map) == [10]

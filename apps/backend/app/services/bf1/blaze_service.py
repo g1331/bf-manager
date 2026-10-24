@@ -618,6 +618,9 @@ async def get_server_players(
             code="BLAZE_QUERY_FAILED",
             message=f"Blaze 查询超时或连接中断: {exc}",
         ) from exc
+    except ValueError as exc:
+        # 单帧解码失败：连接本身仍可用，不必重建
+        raise EAApiError(code="BLAZE_QUERY_FAILED", message=str(exc)) from exc
 
     parsed = BlazeData.player_list_handle(roster_response)
     if isinstance(parsed, str):

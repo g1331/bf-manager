@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import ssl
 from typing import Union
 
@@ -68,17 +69,24 @@ class BlazeServerREQ:
             return host, port
 
 
-class BlazeSocket:
-    readable = True
+# Blaze 帧头固定 16 字节：[0:4] 长度 + [4:6] 扩展长度 + 组件 / 命令 / ID / 类型
+HEADER_SIZE = 16
+# 单帧上限：超出视为流已错位（或对端异常），断开连接而不是无限缓冲
+MAX_FRAME_SIZE = 64 * 1024 * 1024
 
-    def __init__(self, host: str, port: int, callback=None):
+
+class BlazeSocket:
+    def __init__(self, host: str, port: int, callback=None, readable: bool = True):
         self.callback = callback
+        self.readable = readable
         self.connect = False
-        self.finish = True
         self.authenticated = False
-        self.map = {}
+        self.map: dict[int, asyncio.Future] = {}
         self.id = 1
-        self.temp = {}
+        # TCP 是字节流：一次 read 可能含半个帧，也可能含多个帧，统一进缓冲区按帧头切分
+        self._buffer = bytearray()
+        # 持有后台任务引用，避免被 GC 回收（asyncio.create_task 文档要求）
+        self._tasks: set[asyncio.Task] = set()
         self.ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
         self.ssl_context.check_hostname = False
         self.ssl_context.verify_mode = ssl.CERT_NONE
@@ -92,8 +100,13 @@ class BlazeSocket:
     async def create(cls, host: str = "diceprodblapp-08.ea.com", port: int = 10539, callback=None):
         self = BlazeSocket(host, port, callback)
         await self.connect_to_server()
-        _ = asyncio.create_task(self.keepalive())
+        self._spawn(self.keepalive())
         return self
+
+    def _spawn(self, coro) -> None:
+        task = asyncio.create_task(coro)
+        self._tasks.add(task)
+        task.add_done_callback(self._tasks.discard)
 
     async def connect_to_server(self):
         # 异步连接到服务器
@@ -102,7 +115,7 @@ class BlazeSocket:
         )
         self.connect = True
         logger.success(f"已连接到Blaze服务器 {self.host}:{self.port}")
-        _ = asyncio.create_task(self.receive_data())
+        self._spawn(self.receive_data())
 
     def _is_writer_valid(self) -> bool:
         """检查writer是否有效可用"""
@@ -142,6 +155,19 @@ class BlazeSocket:
         self.writer = None
         self.reader = None
 
+    def _mark_disconnected(self, reason: str) -> None:
+        """标记连接断开，并让所有等待中的请求立即失败，而不是各自干等到超时。"""
+        self.connect = False
+        if self.writer is not None:
+            with contextlib.suppress(Exception):
+                self.writer.close()
+        self._cleanup_connection()
+        self._buffer.clear()
+        pending, self.map = self.map, {}
+        for future in pending.values():
+            if not future.done():
+                future.set_exception(ConnectionError(reason))
+
     async def close(self):
         # 关闭连接
         self.connect = False
@@ -154,7 +180,12 @@ class BlazeSocket:
                 logger.warning(f"SSL关闭连接时出现错误 (可忽略): {e}")
             except Exception as e:
                 logger.exception(f"关闭连接时出现错误: {e}")
-        self._cleanup_connection()
+        self._mark_disconnected("连接已关闭")
+        # close 可能在接收任务内部被调用（会话过期分支），不能取消自己
+        current = asyncio.current_task()
+        for task in list(self._tasks):
+            if task is not current:
+                task.cancel()
         logger.success(f"已断开与Blaze服务器 {self.host}:{self.port} 的连接")
 
     async def keepalive(self):
@@ -167,18 +198,15 @@ class BlazeSocket:
                     await self.writer.drain()  # 确保数据发送
                 except Exception as e:
                     logger.exception(f"Keepalive发送失败，连接可能已断开: {e}")
-                    self.connect = False
-                    self._cleanup_connection()
+                    self._mark_disconnected("Keepalive 发送失败")
                     break
             elif self.connect:
                 # 连接标志为True但writer无效，说明连接已断开
                 logger.warning("检测到连接异常，writer无效，停止keepalive")
-                self.connect = False
-                self._cleanup_connection()
+                self._mark_disconnected("writer 无效")
                 break
 
-    async def send(self, packet, timeout=60, readable: bool = True):
-        BlazeSocket.readable = readable
+    async def send(self, packet, timeout=60):
         # 发送数据包
         if not self.connect:
             raise ConnectionError("连接已关闭")
@@ -196,11 +224,15 @@ class BlazeSocket:
             self.id += 1
         self.map[packet["id"]] = future
         self.id += 1
-        await self.request(packet)
+        try:
+            await self.request(packet)
+        except BaseException:
+            self.map.pop(packet["id"], None)
+            raise
         try:
             return await asyncio.wait_for(future, timeout)
         except asyncio.TimeoutError as e:
-            del self.map[packet["id"]]
+            self.map.pop(packet["id"], None)
             raise TimeoutError(f"Timeout waiting for response to packet ID: {packet['id']}") from e
 
     async def request(self, packet):
@@ -219,56 +251,64 @@ class BlazeSocket:
             await self.writer.drain()  # 确保数据发送
         except Exception as e:
             logger.exception(f"发送数据包失败: {e}")
-            self.connect = False
-            self._cleanup_connection()
+            self._mark_disconnected(f"发送数据包失败: {e}")
             raise ConnectionError(f"发送数据包失败: {e}") from e
 
     async def receive_data(self):
-        # 接收数据
-        while self.connect:
-            try:
-                data = await self.reader.read(65565)
-            except ConnectionResetError:
-                logger.warning("连接被重置，正在清理资源")
-                self.connect = False
-                self._cleanup_connection()
-                break
-            except Exception as e:
-                logger.exception(f"接收数据时发生错误: {e}")
-                self.connect = False
-                self._cleanup_connection()
-                break
-            if not data:
-                logger.warning("连接已断开，没有更多数据")
-                self.connect = False
-                self._cleanup_connection()
-                break
-            await self.concat(data)
+        # 接收数据；无论因何退出（含意外异常），都把连接标记为断开，避免连接池误判可用
+        reason = "接收循环退出"
+        try:
+            while self.connect:
+                try:
+                    data = await self.reader.read(65565)
+                except ConnectionResetError:
+                    logger.warning("连接被重置，正在清理资源")
+                    reason = "连接被重置"
+                    break
+                except Exception as e:
+                    logger.exception(f"接收数据时发生错误: {e}")
+                    reason = f"接收数据出错: {e}"
+                    break
+                if not data:
+                    logger.warning("连接已断开，没有更多数据")
+                    reason = "连接已断开"
+                    break
+                await self.concat(data)
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:
+            logger.exception(f"处理接收数据时发生错误: {e}")
+            reason = f"处理接收数据出错: {e}"
+        finally:
+            if self.connect:
+                self._mark_disconnected(reason)
 
-    async def concat(self, buffer):
-        if self.finish:
-            header = Blaze(buffer[:16]).decode()
-            # logger.debug(f"Header received: {header}")
-            if len(buffer) - 16 < header["length"]:
-                self.temp["data"] = bytearray(header["length"] + 16)
-                self.temp["length"] = len(buffer)
-                self.temp["origin"] = header["length"] + 16
-                self.finish = False
-                self.temp["data"][: len(buffer)] = buffer
-            else:
-                await self.response(Blaze(buffer).decode(BlazeSocket.readable))
-                self.temp = {}
-        elif self.temp["length"] >= self.temp["origin"]:
-            # 超长了
-            self.finish = True
-            self.temp = {}
-        else:
-            self.temp["data"][self.temp["length"] : self.temp["length"] + len(buffer)] = buffer
-            self.temp["length"] += len(buffer)
-            if self.temp["length"] >= self.temp["origin"]:
-                self.finish = True
-                await self.response(Blaze(self.temp["data"]).decode(BlazeSocket.readable))
-                self.temp = {}
+    async def concat(self, data: bytes) -> None:
+        """把收到的字节追加到缓冲区，切出所有完整帧逐个处理，剩余半帧留待下次。"""
+        self._buffer += data
+        while len(self._buffer) >= HEADER_SIZE:
+            frame_size = (
+                HEADER_SIZE
+                + int.from_bytes(self._buffer[0:4], "big")
+                + int.from_bytes(self._buffer[4:6], "big")
+            )
+            if frame_size > MAX_FRAME_SIZE:
+                raise ConnectionError(f"Blaze 帧长度异常: {frame_size}")
+            if len(self._buffer) < frame_size:
+                return
+            frame = bytes(self._buffer[:frame_size])
+            del self._buffer[:frame_size]
+            try:
+                packet = Blaze(frame).decode(self.readable)
+            except Exception as e:
+                # 单帧解码失败不影响后续帧：让对应请求立即失败，继续处理下一帧
+                packet_id = int.from_bytes(frame[11:13], "big")
+                logger.exception(f"Blaze 帧解码失败 (ID {packet_id}, {frame_size} 字节): {e}")
+                future = self.map.pop(packet_id, None)
+                if future is not None and not future.done():
+                    future.set_exception(ValueError(f"Blaze 响应解码失败: {e}"))
+                continue
+            await self.response(packet)
 
     async def response(self, packet):
         # 处理接收到的数据包
@@ -276,9 +316,9 @@ class BlazeSocket:
             return
         if packet["id"] in self.map:
             # logger.debug(f"Response received for packet ID: {packet['id']}")
-            future = self.map[packet["id"]]
-            future.set_result(packet)
-            del self.map[packet["id"]]
+            future = self.map.pop(packet["id"])
+            if not future.done():
+                future.set_result(packet)
         elif packet["method"] == "UserSessions.getPermissions":
             logger.error(f"用户登录信息已过期，请重新登录/连接！\n{packet}")
             await self.close()

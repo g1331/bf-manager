@@ -60,14 +60,12 @@ keepalive[13] = 128
 
 class Blaze:
     packet = None
-    readable = False
 
     def __init__(self, data):
         self.packet = data
 
     def decode(self, readable: bool = False) -> dict:
         byte_data = self.packet
-        Blaze.readable = readable
         offset = 16
         length = int.from_bytes(byte_data[:4], byteorder="big") + int.from_bytes(
             byte_data[4:6], byteorder="big"
@@ -77,13 +75,16 @@ class Blaze:
         component = int.from_bytes(byte_data[6:8], byteorder="big")
         command = int.from_bytes(byte_data[8:10], byteorder="big")
         id_ = int.from_bytes(byte_data[11:13], byteorder="big")
+        # 推送（Message）与命令共用编号空间但含义不同，须查各自的表；Result / Error 是命令的应答
+        table = "Message" if type_ == "Message" else "Command"
         method = (
             type_
-            if type_ in ["KeepAlive", "Pong"]
+            if type_ in ["KeepAlive", "Ping", "Pong"]
             else f"{Components.get(component, str(component))}."
-            + Commands[Components.get(component)][QType.get(q_type, "Command")].get(
-                str(command), str(command)
-            )
+            # 未登记的组件 / 命令回退为数字，避免收到陌生推送时 KeyError
+            + Commands.get(Components.get(component), {})
+            .get(table, {})
+            .get(str(command), str(command))
         )
 
         # if QType.get(str(type_)):
@@ -112,7 +113,7 @@ class Blaze:
         #     )
 
         if offset < len(byte_data):
-            data = self.parse_struct(byte_data, offset, Blaze.readable)
+            data = self.parse_struct(byte_data, offset, readable)
         else:
             data = {"struct": {}}
         return {
@@ -136,20 +137,20 @@ class Blaze:
     @staticmethod
     def parse_integer(byte_data, offset):
         """Integer 不定长整数
-        每个字节的第一位表示是否继续读取，将所有字节的后7位连起来，组成一个有符号整数（Little Endian）。
+        首字节：0x80 为续读标志，0x40 为符号位，低 6 位为数值最低位；
+        后续字节：0x80 为续读标志，低 7 位依次拼到更高位（Little Endian）。
         """
-        i, n = 1, byte_data[offset]
-        negative = n & 0x40
-        if n > 0x7F:
-            n &= 0x7F
-            while byte_data[offset] > 0x7F:
-                offset += 1
-                n += (byte_data[offset] & 0x7F) * (128**i * 0.5)
-                i += 1
+        byte = byte_data[offset]
         offset += 1
-        n = int(n)
-        n = -n if negative else n
-        return n, offset
+        negative = byte & 0x40
+        n = byte & 0x3F
+        shift = 6
+        while byte & 0x80:
+            byte = byte_data[offset]
+            offset += 1
+            n |= (byte & 0x7F) << shift
+            shift += 7
+        return (-n if negative else n), offset
 
     @staticmethod
     def parse_string(byte_data, offset):
@@ -174,12 +175,13 @@ class Blaze:
         """Blob 二进制
         Blob数据与String相似，也由两部分组成：第一部分是一个整数（Integer，0x00），第二部分是一个长度等于该整数值的二进制数据。"""
         length, offset = Blaze.parse_integer(byte_data, offset)
-        value = byte_data[offset : offset + length - 1].hex()
+        # Blob 没有字符串那样的 \0 结尾，长度即全部内容
+        value = byte_data[offset : offset + length].hex()
         offset += length
         return value, offset
 
     @staticmethod
-    def parse_list(byte_data, header, offset):
+    def parse_list(byte_data, header, offset, readable: bool = False):
         """List 列表
         List 数据包含多个相同类型的数据项。
         List 数据的第一个字节是 Type，表示存储的数据类型。之后是一个 Integer 类型的值，表示列表中包含的数据项的个数。最后是列表中的数据项。"""
@@ -193,13 +195,13 @@ class Blaze:
             header["type"] += "2"
         for _ in range(size):
             item_value, offset = Blaze.parse_block(
-                byte_data, {"type": str(type_)}, offset, Blaze.readable
+                byte_data, {"type": str(type_)}, offset, readable
             )
             data.append(item_value)
         return data, offset
 
     @staticmethod
-    def parse_map(byte_data, header, offset):
+    def parse_map(byte_data, header, offset, readable: bool = False):
         """Map 键值对
         Map 数据包含多个键值对，每个键值对包含一个键和一个值。Map 数据的前两个字节分别表示键和值的类型。
         之后是一个 Integer 类型的值，表示 Map 中包含的键值对的个数。接下来是按照键-值键-值的结构排列的数据项。
@@ -211,17 +213,13 @@ class Blaze:
         size, offset = Blaze.parse_integer(byte_data, offset)
         data = {}
         for _ in range(size):
-            key_value, offset = Blaze.parse_block(
-                byte_data, {"type": key_type}, offset, Blaze.readable
-            )
-            val_value, offset = Blaze.parse_block(
-                byte_data, {"type": val_type}, offset, Blaze.readable
-            )
+            key_value, offset = Blaze.parse_block(byte_data, {"type": key_type}, offset, readable)
+            val_value, offset = Blaze.parse_block(byte_data, {"type": val_type}, offset, readable)
             data[key_value] = val_value
         return data, offset
 
     @staticmethod
-    def parse_union(byte_data, header, offset):
+    def parse_union(byte_data, header, offset, readable: bool = False):
         """Union 联合体"""
         data = {}
         union_type = byte_data[offset]
@@ -234,7 +232,7 @@ class Blaze:
             "type": str(byte_data[offset + 3]),
         }
         offset += 4
-        result, offset = Blaze.parse_block(byte_data, u_header, offset, Blaze.readable)
+        result, offset = Blaze.parse_block(byte_data, u_header, offset, readable)
         data[f"{u_header['tag'].ljust(4)} {u_header['type']}"] = result
         return data, offset
 
@@ -308,11 +306,11 @@ class Blaze:
         elif type_ == "Blob":
             value, offset = Blaze.parse_blob(byte_data, offset)
         elif type_ == "List":
-            value, offset = Blaze.parse_list(byte_data, header, offset)
+            value, offset = Blaze.parse_list(byte_data, header, offset, readable)
         elif type_ == "Map":
-            value, offset = Blaze.parse_map(byte_data, header, offset)
+            value, offset = Blaze.parse_map(byte_data, header, offset, readable)
         elif type_ == "Union":
-            value, offset = Blaze.parse_union(byte_data, header, offset)
+            value, offset = Blaze.parse_union(byte_data, header, offset, readable)
         elif type_ == "Double":
             value, offset = Blaze.parse_double(byte_data, offset)
         elif type_ == "Tripple":

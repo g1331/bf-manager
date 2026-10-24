@@ -21,12 +21,14 @@ import json
 import time
 from collections.abc import Iterable
 from pathlib import Path
+from typing import Any
 
 from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.errors import EAApiError, NotFoundError
+from app.core.cache import Cache, get_cache
 from app.core.config import get_settings
 from app.domain.ea.account_pool import EACredentials
 from app.domain.ea.blaze_protocol.socket import BlazeServerREQ, BlazeSocket
@@ -50,6 +52,12 @@ CONNECTION_MAX_AGE_SECONDS = 300
 BLAZE_QUERY_TIMEOUT = 20
 # 并发查询生涯战绩的上限，控制对 EA Gateway 的瞬时压力，避免触发限流。
 STATS_CONCURRENCY = 8
+# 生涯战绩按 personaId 缓存的时长（秒）。生涯数据几分钟内几乎不变，刷新同一服务器时
+# 大部分玩家直接命中缓存，不再逐个打 EA。
+STATS_CACHE_TTL_SECONDS = 600
+STATS_CACHE_PREFIX = "bf1:basic_stats"
+# 只缓存计算胜率 / KD / KPM / 时长 / 估算等级所需的字段。
+_CACHED_BASIC_FIELDS = ("kills", "deaths", "wins", "losses", "timePlayed", "kpm", "spm")
 # BF1 满级。
 RANK_MAX = 150
 # Blaze TIDX 中表示「排队 / 旁观」而非真实队伍的哨兵值。
@@ -406,6 +414,34 @@ def _stats_from_basic(basic: dict) -> BlazePlayerStats:
     )
 
 
+async def _stats_cache() -> Cache | None:
+    try:
+        return await get_cache()
+    except Exception as exc:
+        logger.warning(f"战绩缓存不可用，直接查询 EA: {exc}")
+        return None
+
+
+async def _cache_get(cache: Cache | None, pid: int) -> dict[str, Any] | None:
+    if cache is None:
+        return None
+    try:
+        cached = await cache.get(f"{STATS_CACHE_PREFIX}:{pid}")
+    except Exception as exc:
+        logger.warning(f"玩家 {pid} 战绩缓存读取失败: {exc}")
+        return None
+    return cached if isinstance(cached, dict) else None
+
+
+async def _cache_set(cache: Cache | None, pid: int, basic: dict[str, Any]) -> None:
+    if cache is None:
+        return
+    try:
+        await cache.set(f"{STATS_CACHE_PREFIX}:{pid}", basic, ttl=STATS_CACHE_TTL_SECONDS)
+    except Exception as exc:
+        logger.warning(f"玩家 {pid} 战绩缓存写入失败: {exc}")
+
+
 async def _gather_stats(
     client: object, pids: list[int]
 ) -> tuple[dict[int, BlazePlayerStats], dict[int, int]]:
@@ -417,20 +453,25 @@ async def _gather_stats(
     if not pids:
         return {}, {}
     semaphore = asyncio.Semaphore(STATS_CONCURRENCY)
+    cache = await _stats_cache()
 
     async def _one(pid: int) -> tuple[int, BlazePlayerStats | None, int | None]:
-        async with semaphore:
-            try:
-                res = await client.detailedStatsByPersonaId(pid)  # type: ignore[attr-defined]
-            except Exception as exc:
-                logger.warning(f"玩家 {pid} 战绩查询失败，降级为无战绩: {exc}")
-                return pid, None, None
+        basic = await _cache_get(cache, pid)
+        if basic is None:
+            async with semaphore:
+                try:
+                    res = await client.detailedStatsByPersonaId(pid)  # type: ignore[attr-defined]
+                except Exception as exc:
+                    logger.warning(f"玩家 {pid} 战绩查询失败，降级为无战绩: {exc}")
+                    return pid, None, None
             if not isinstance(res, dict):
                 return pid, None, None
             basic = (res.get("result") or {}).get("basicStats") or {}
             if not basic:
                 return pid, None, None
-            return pid, _stats_from_basic(basic), _rank_from_basic(basic)
+            basic = {k: basic.get(k) for k in _CACHED_BASIC_FIELDS}
+            await _cache_set(cache, pid, basic)
+        return pid, _stats_from_basic(basic), _rank_from_basic(basic)
 
     results = await asyncio.gather(*[_one(pid) for pid in pids])
     stats_map = {pid: stats for pid, stats, _ in results if stats is not None}

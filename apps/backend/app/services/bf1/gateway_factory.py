@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import contextlib
+import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,6 +15,42 @@ from app.domain.games.bf1.gateway import BF1GatewayClient
 from app.models import EaBinding
 from app.services.ea_account_service import EAAccountService
 from app.services.ea_binding_service import EaBindingService
+
+# access_token 到期前提前这么多秒视为过期，避免请求途中失效。
+LOGIN_STATE_EXPIRY_MARGIN_SECONDS = 120
+# client 每次请求新建，登录态（access_token / gateway session）存进程内缓存跨请求复用，
+# 省掉每次请求前 4 次串行的 EA 登录往返。键含 remid，凭据更换后旧登录态自然不再命中。
+_LOGIN_STATE_FIELDS = (
+    "sid",
+    "session",
+    "check_login",
+    "access_token",
+    "access_token_time",
+    "access_token_expires_time",
+    "desktop_access_token",
+    "desktop_access_token_expires_at",
+)
+_login_states: dict[tuple[int, str | None], dict[str, Any]] = {}
+
+
+def _restore_login_state(client: BF1GatewayClient, pid: int, remid: str | None) -> None:
+    state = _login_states.get((pid, remid))
+    if state is None:
+        return
+    age = time.time() - state["access_token_time"]
+    if age >= int(state["access_token_expires_time"]) - LOGIN_STATE_EXPIRY_MARGIN_SECONDS:
+        _login_states.pop((pid, remid), None)
+        return
+    for field, value in state.items():
+        setattr(client, field, value)
+
+
+def _save_login_state(client: BF1GatewayClient, pid: int, remid: str | None) -> None:
+    # error_handle 遇 session 失效且重登失败时 check_login 为 False，此时丢弃缓存，下次重新登录。
+    if getattr(client, "check_login", False) and getattr(client, "access_token", None):
+        _login_states[(pid, remid)] = {f: getattr(client, f) for f in _LOGIN_STATE_FIELDS}
+    else:
+        _login_states.pop((pid, remid), None)
 
 
 @asynccontextmanager
@@ -37,10 +75,11 @@ async def get_bf1_client(db: AsyncSession) -> AsyncIterator[BF1GatewayClient]:
         session=creds.session,
         on_session_refreshed=_on_refresh,
     )
-    # BF1GatewayClient 每次请求新建，access_token 不在内存中持久存在；
+    # BF1GatewayClient 每次请求新建，先从进程缓存恢复登录态；
     # 走 api_call() 的 JSON-RPC 方法靠 get_session() 自动登录，但走独立 HTTP
     # GET 的 getPersonasByName 等会直接判 access_token 为空返回错误。
     # 在工厂层统一确保拿到 client 时已经登录过一次。
+    _restore_login_state(client, creds.persona_id, creds.remid)
     try:
         if not client.access_token and creds.remid and creds.sid:
             await client.login(creds.remid, creds.sid)
@@ -50,6 +89,7 @@ async def get_bf1_client(db: AsyncSession) -> AsyncIterator[BF1GatewayClient]:
         await account_service.mark_failure(creds.persona_id)
         raise
     finally:
+        _save_login_state(client, creds.persona_id, creds.remid)
         with contextlib.suppress(Exception):
             http_session = getattr(client, "http_session", None)
             if http_session is not None:
@@ -89,6 +129,7 @@ async def get_bf1_client_for_binding(
         session=session,
         on_session_refreshed=_on_refresh,
     )
+    _restore_login_state(client, binding.persona_id, remid)
     try:
         # 与池工厂相同的预热语义：保证拿到 client 时已经登录过一次。
         # login() 失败不抛异常，调用方须检查 client.access_token 判定是否登录成功。
@@ -96,6 +137,7 @@ async def get_bf1_client_for_binding(
             await client.login(remid, sid)
         yield client
     finally:
+        _save_login_state(client, binding.persona_id, remid)
         with contextlib.suppress(Exception):
             http_session = getattr(client, "http_session", None)
             if http_session is not None:

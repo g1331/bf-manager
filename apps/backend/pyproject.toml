@@ -84,6 +84,7 @@ select = [
 ignore = [
     "E501",     # line too long（由 formatter 处理）
     "PLR0913",  # too many arguments
+    "PLR0917",  # too many positional arguments（FastAPI 路由的查询参数天然是位置参数）
     "S101",     # assert（测试中必要）
     "S105",     # hardcoded password string（误报多）
     "S106",     # hardcoded password func arg（误报多）

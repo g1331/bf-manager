@@ -241,15 +241,18 @@ class BlazeSocket:
         # 请求数据包
         if not self.connect:
             raise ConnectionError("连接已关闭")
+        if isinstance(packet, dict):
+            # 编码失败是请求体写错，连接本身完好，不能走下面的断线分支
+            try:
+                packet = Blaze(packet).encode()
+            except Exception as e:
+                raise ValueError(f"数据包编码失败: {e}") from e
+        elif not isinstance(packet, bytes):
+            raise TypeError("packet must be dict or bytes")
         if not self._is_writer_valid():
             raise ConnectionError("Writer无效，连接可能已断开")
         try:
-            if isinstance(packet, dict):
-                self.writer.write(Blaze(packet).encode())
-            elif isinstance(packet, bytes):
-                self.writer.write(packet)
-            else:
-                raise TypeError("packet must be dict or bytes")
+            self.writer.write(packet)
             await self.writer.drain()  # 确保数据发送
         except Exception as e:
             logger.exception(f"发送数据包失败: {e}")

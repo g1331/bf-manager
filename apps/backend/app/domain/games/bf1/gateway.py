@@ -316,6 +316,34 @@ class _BF1GatewayBase:
         return self.api_header
 
     async def api_call(self, body: dict, proxied=False) -> dict | str:
+        data = await self._post_jsonrpc(body, proxied)
+        # -32501 表示 EA 因 session 无效拒绝了请求（未执行），重新登录后用新 session 重放一次。
+        # 登录态跨请求缓存后，EA 端提前作废的 session 靠这里自愈。
+        if (
+            isinstance(data, dict)
+            and (data.get("error") or {}).get("code") == -32501
+            and self.remid
+            and self.sid
+        ):
+            logger.warning(f"BF1账号{self.pid}session失效,重新登录后重放请求")
+            self.check_login = False
+            try:
+                await self.login(self.remid, self.sid)
+            except Exception as e:
+                logger.exception(f"BF1账号{self.pid}重新登录异常: {e}")
+            if self.check_login:
+                data = await self._post_jsonrpc(body, proxied)
+        return data if isinstance(data, str) else await self._handle_response(data)
+
+    async def _handle_response(self, data: dict[str, Any]) -> dict[str, Any] | str:
+        try:
+            return await self.error_handle(data)
+        except Exception as e:
+            logger.exception(f"EA API请求异常: {e}")
+            return "EA API请求时发生未知错误"
+
+    async def _post_jsonrpc(self, body: dict[str, Any], proxied: bool = False) -> Any:
+        """发送 JSON-RPC 请求，返回原始 JSON；网络或格式错误返回错误描述字符串。"""
         try:
             async with self.http_session.post(
                 url=self.api_url if not proxied else self.proxied_api_url,
@@ -333,7 +361,7 @@ class _BF1GatewayBase:
                     logger.debug(f"响应内容: {response_text[:500]}...")
                     return "EA API返回格式错误"
 
-                return await self.error_handle(await response.json())
+                return await response.json()
         except asyncio.exceptions.TimeoutError:
             return "网络超时!"
         except Exception as e:
@@ -362,7 +390,7 @@ class _BF1GatewayBase:
             url=url, headers=header, timeout=10, ssl=False, proxy=_get_proxy()
         )
         try:
-            res = eval(await response.text())
+            res = json.loads(await response.text())
             logger.debug(res)
             self.access_token = res["access_token"]
             self.access_token_expires_time = res["expires_in"]
@@ -383,7 +411,7 @@ class _BF1GatewayBase:
             logger.error(e)
             logger.error(await response.text())
             try:
-                error_data = eval(await response.text())
+                error_data = json.loads(await response.text())
                 if error_data.get("error") == "login_required":
                     logger.warning(
                         f"BF1账号:{self.pid}已经失效，正在尝试第{self.auto_login_count + 1}次刷新"

@@ -55,14 +55,7 @@ type PlayerRef = Pick<BlazePlayer, "persona_id" | "display_name"> & { team?: num
 
 /** 单人操作种类（与菜单项 / 名单管理项对应） */
 type SingleKind =
-  | "kick"
-  | "move"
-  | "ban"
-  | "unban"
-  | "addVip"
-  | "removeVip"
-  | "addAdmin"
-  | "removeAdmin";
+  "kick" | "move" | "ban" | "unban" | "addVip" | "removeVip" | "addAdmin" | "removeAdmin";
 /** 批量操作种类（仅高频的踢 / 换边 / 封支持批量） */
 type BatchKind = "kick" | "move" | "ban";
 

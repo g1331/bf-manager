@@ -8,16 +8,29 @@ import pytest
 from app.domain.ea.blaze_protocol.protocol import Blaze
 from app.domain.ea.blaze_protocol.socket import BlazeSocket
 
+RESULT, MESSAGE = 0x20, 0x40
 
-def _frame(packet_id: int, game_id: int = 1) -> bytes:
-    return Blaze(
-        {
-            "method": "GameManager.getGameDataFromId",
-            "type": "Command",
-            "id": packet_id,
-            "data": {"DNAM 1": "csFullGameList", "GLST 40": [game_id]},
-        }
-    ).encode()
+
+def _frame(
+    packet_id: int,
+    game_id: int = 1,
+    *,
+    method: str = "GameManager.getGameDataFromId",
+    qtype: int = RESULT,
+) -> bytes:
+    """构造服务端发来的帧；编码器只会写命令类型，这里改写帧头第 13 字节的包类型。"""
+    frame = bytearray(
+        Blaze(
+            {
+                "method": method,
+                "type": "Command",
+                "id": packet_id,
+                "data": {"DNAM 1": "csFullGameList", "GLST 40": [game_id]},
+            }
+        ).encode()
+    )
+    frame[13] = qtype
+    return bytes(frame)
 
 
 def _socket_with_pending(*ids: int) -> tuple[BlazeSocket, dict[int, asyncio.Future]]:
@@ -100,3 +113,36 @@ async def test_receive_loop_marks_disconnected_on_corrupt_stream() -> None:
     assert not sock.connect
     with pytest.raises(ConnectionError):
         futures[8].result()
+
+
+def test_message_decoded_with_notification_table() -> None:
+    # 推送与命令共用编号：GameManager 201 作推送是 NotifyGameListUpdate，作命令是另一回事
+    frame = _frame(0, method="GameManager.NotifyGameListUpdate", qtype=MESSAGE)
+    assert Blaze(frame).decode()["method"] == "GameManager.NotifyGameListUpdate"
+    reply = _frame(1, method="GameManager.getGameDataFromId", qtype=RESULT)
+    assert Blaze(reply).decode()["method"] == "GameManager.getGameDataFromId"
+
+
+async def test_notification_does_not_resolve_pending_request() -> None:
+    # 登录请求 ID 为 0，EA 同时推送的 UserAuthenticated ID 也是 0，不能被当成登录应答
+    sock, futures = _socket_with_pending(0)
+    await sock.concat(_frame(0, method="UserSessions.UserAuthenticated", qtype=MESSAGE))
+    assert not futures[0].done()
+    await sock.concat(_frame(0, method="Authentication.login", qtype=RESULT))
+    assert futures[0].result()["method"] == "Authentication.login"
+
+
+async def test_bad_notification_frame_keeps_pending_request() -> None:
+    sock, futures = _socket_with_pending(0)
+    bad = bytearray(_frame(0, method="UserSessions.UserAuthenticated", qtype=MESSAGE))
+    bad[16:] = b"\xff" * (len(bad) - 16)
+    await sock.concat(bytes(bad))
+    assert not futures[0].done()
+
+
+async def test_user_unauthenticated_closes_connection() -> None:
+    sock, futures = _socket_with_pending(9)
+    await sock.concat(_frame(0, method="UserSessions.UserUnauthenticated", qtype=MESSAGE))
+    assert not sock.connect
+    with pytest.raises(ConnectionError):
+        futures[9].result()

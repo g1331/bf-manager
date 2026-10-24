@@ -142,7 +142,7 @@ class _BlazeConnectionPool:
                 message=f"Blaze 登录返回异常: {response}",
             )
         socket.authenticated = True
-        name = response.get("data", {}).get("DSNM")
+        name = ((response.get("data", {}).get("SESS") or {}).get("PDTL") or {}).get("DSNM")
         logger.success(f"Blaze 登录成功，账号 {creds.persona_id}（{name}）")
         return socket
 

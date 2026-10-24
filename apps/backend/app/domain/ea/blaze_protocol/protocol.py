@@ -75,13 +75,15 @@ class Blaze:
         component = int.from_bytes(byte_data[6:8], byteorder="big")
         command = int.from_bytes(byte_data[8:10], byteorder="big")
         id_ = int.from_bytes(byte_data[11:13], byteorder="big")
+        # 推送（Message）与命令共用编号空间但含义不同，须查各自的表；Result / Error 是命令的应答
+        table = "Message" if type_ == "Message" else "Command"
         method = (
             type_
-            if type_ in ["KeepAlive", "Pong"]
+            if type_ in ["KeepAlive", "Ping", "Pong"]
             else f"{Components.get(component, str(component))}."
             # 未登记的组件 / 命令回退为数字，避免收到陌生推送时 KeyError
             + Commands.get(Components.get(component), {})
-            .get(QType.get(q_type, "Command"), {})
+            .get(table, {})
             .get(str(command), str(command))
         )
 

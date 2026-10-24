@@ -6,7 +6,7 @@ from typing import Union
 import httpx
 from loguru import logger
 
-from app.domain.ea.blaze_protocol.protocol import Blaze, keepalive
+from app.domain.ea.blaze_protocol.protocol import QType, Blaze, keepalive
 
 context = ssl.create_default_context()
 context.check_hostname = False
@@ -73,6 +73,8 @@ class BlazeServerREQ:
 HEADER_SIZE = 16
 # 单帧上限：超出视为流已错位（或对端异常），断开连接而不是无限缓冲
 MAX_FRAME_SIZE = 64 * 1024 * 1024
+# 能匹配等待中请求的包类型（命令的应答）
+_REPLY_TYPES = ("Result", "Error")
 
 
 class BlazeSocket:
@@ -270,7 +272,9 @@ class BlazeSocket:
                     reason = f"接收数据出错: {e}"
                     break
                 if not data:
-                    logger.warning("连接已断开，没有更多数据")
+                    # 主动 close() 后读到 EOF 属正常收尾，不告警
+                    if self.connect:
+                        logger.warning("连接已断开，没有更多数据")
                     reason = "连接已断开"
                     break
                 await self.concat(data)
@@ -301,12 +305,13 @@ class BlazeSocket:
             try:
                 packet = Blaze(frame).decode(self.readable)
             except Exception as e:
-                # 单帧解码失败不影响后续帧：让对应请求立即失败，继续处理下一帧
+                # 单帧解码失败不影响后续帧：若是应答则让对应请求立即失败，继续处理下一帧
                 packet_id = int.from_bytes(frame[11:13], "big")
                 logger.exception(f"Blaze 帧解码失败 (ID {packet_id}, {frame_size} 字节): {e}")
-                future = self.map.pop(packet_id, None)
-                if future is not None and not future.done():
-                    future.set_exception(ValueError(f"Blaze 响应解码失败: {e}"))
+                if QType.get(str(frame[13])) in _REPLY_TYPES:
+                    future = self.map.pop(packet_id, None)
+                    if future is not None and not future.done():
+                        future.set_exception(ValueError(f"Blaze 响应解码失败: {e}"))
                 continue
             await self.response(packet)
 
@@ -314,21 +319,22 @@ class BlazeSocket:
         # 处理接收到的数据包
         if packet["method"] == "KeepAlive":
             return
-        if packet["id"] in self.map:
-            # logger.debug(f"Response received for packet ID: {packet['id']}")
+        # 只有应答能匹配等待中的请求：推送的 ID 与请求无关（登录时的 UserAuthenticated 推送 ID 同为 0），
+        # 按 ID 匹配会让推送抢先充当登录应答
+        if packet["type"] in _REPLY_TYPES and packet["id"] in self.map:
             future = self.map.pop(packet["id"])
             if not future.done():
                 future.set_result(packet)
-        elif packet["method"] == "UserSessions.getPermissions":
-            logger.error(f"用户登录信息已过期，请重新登录/连接！\n{packet}")
+        elif packet["method"] == "UserSessions.UserUnauthenticated":
+            logger.error(f"Blaze 会话已被注销，请重新登录/连接！\n{packet}")
             await self.close()
-        elif packet["type"] in ["Message", "Result"]:
-            logger.info(f"Message received:\n{packet}")
+        elif packet["type"] == "Message":
+            # 推送体可能很大（游戏列表快照数 MB），只记方法名
+            logger.debug(f"Blaze 推送: {packet['method']}")
         elif packet["type"] == "Pong":
-            # logger.debug("BlazeSocket working normally")
             pass
         else:
-            logger.warning(f"No matching request found for packet ID: {packet['id']}\n{packet}")
+            logger.warning(f"Blaze 应答无对应请求: {packet['method']} (ID {packet['id']})")
         if self.callback:
             self.callback(packet)
 

@@ -1,0 +1,2455 @@
+{
+  "gameModes": [
+    {
+      "name": "Rush",
+      "shortName": "R",
+      "prettyName": "RUSH",
+      "filterKey": "Rush",
+      "shortFilterKey": "R",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/74/45/mode_rush.jpg-4a2d4478.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/84/2/mode_rush.jpg-acfe9ca7.jpg",
+        "Png480xANY": "[BB_PREFIX]/gamedata/Tunguska/98/122/mode_rush.jpg-627a86c6.png",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/100/86/mode_rush.jpg-9caaccd0.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/74/45/mode_rush.jpg-4a2d4478.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/74/45/mode_rush.jpg-4a2d4478.jpg",
+        "Png100xANY": "[BB_PREFIX]/gamedata/Tunguska/75/66/mode_rush.jpg-4b426d8d.png",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/100/86/mode_rush.jpg-9caaccd0.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/84/2/mode_rush.jpg-acfe9ca7.jpg"
+      },
+      "description": "Attack or defend the telegraphs. The attackers need to destroy the telegraphs to progress through enemy territory.\nThe defenders can use their telegraphs to call in powerful artillery strikes on enemies that have been spotted.",
+      "objectives": [],
+      "header": "ATTACK OR DEFEND THE TELEGRAPHS",
+      "body": "The attackers need to destroy the telegraphs to progress through enemy territory. The defenders can use their telegraphs to call in powerful artillery strikes on enemies that have been spotted.",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "name": "Conquest",
+      "shortName": "CQ",
+      "prettyName": "CONQUEST",
+      "filterKey": "Conquest",
+      "shortFilterKey": "CQ",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/120/119/mode_conquest.jpg-88891a59.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/75/18/mode_conquest.jpg-b5ee46eb.jpg",
+        "Png480xANY": "[BB_PREFIX]/gamedata/Tunguska/9/112/mode_conquest.jpg-f7907c5b.png",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/70/118/mode_conquest.jpg-ba8aea96.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/120/119/mode_conquest.jpg-88891a59.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/120/119/mode_conquest.jpg-88891a59.jpg",
+        "Png100xANY": "[BB_PREFIX]/gamedata/Tunguska/70/78/mode_conquest.jpg-46b2b727.png",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/70/118/mode_conquest.jpg-ba8aea96.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/75/18/mode_conquest.jpg-b5ee46eb.jpg"
+      },
+      "description": "Capture and hold the flags. Massive all-out war: Hold the majority of the flags and eliminate enemy troops to win.",
+      "objectives": [],
+      "header": "CAPTURE AND HOLD THE FLAGS",
+      "body": "Massive all-out war: hold the majority of flags and eliminate enemy troops to win.",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "name": "TeamDeathMatch",
+      "shortName": "TDM",
+      "prettyName": "TEAM DEATHMATCH",
+      "filterKey": "TeamDeathMatch",
+      "shortFilterKey": "TDM",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/37/57/mode_tdm.jpg-dbc7d1ed.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/112/20/mode_tdm.jpg-7014c81b.jpg",
+        "Png480xANY": "[BB_PREFIX]/gamedata/Tunguska/54/28/mode_tdm.jpg-cae4e138.png",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/27/26/mode_tdm.jpg-1b1a5fd0.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/37/57/mode_tdm.jpg-dbc7d1ed.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/37/57/mode_tdm.jpg-dbc7d1ed.jpg",
+        "Png100xANY": "[BB_PREFIX]/gamedata/Tunguska/88/44/mode_tdm.jpg-58d4e821.png",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/27/26/mode_tdm.jpg-1b1a5fd0.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/112/20/mode_tdm.jpg-7014c81b.jpg"
+      },
+      "description": "A battle for survival. The side with the most kills will be victorious.",
+      "objectives": [],
+      "header": "A BATTLE FOR SURVIVAL",
+      "body": "The side with the most kills will be victorious.",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "name": "Breakthrough",
+      "shortName": "BT",
+      "prettyName": "SHOCK OPERATIONS",
+      "filterKey": "Breakthrough",
+      "shortFilterKey": "BT",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/122/98/mode_breakthrough.jpg-8662a6ef.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/43/79/mode_breakthrough.jpg-2bb14f16.jpg",
+        "Png480xANY": "[BB_PREFIX]/gamedata/Tunguska/60/16/mode_breakthrough.jpg-c4105580.png",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/86/66/mode_breakthrough.jpg-56be1950.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/122/98/mode_breakthrough.jpg-8662a6ef.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/122/98/mode_breakthrough.jpg-8662a6ef.jpg",
+        "Png100xANY": "[BB_PREFIX]/gamedata/Tunguska/35/39/mode_breakthrough.jpg-23274fd8.png",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/86/66/mode_breakthrough.jpg-56be1950.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/43/79/mode_breakthrough.jpg-2bb14f16.jpg"
+      },
+      "description": "Breakthrough or defend the sectors. An epic journey with battles from the Great War. Attackers need to capture the flags & break through the enemy lines held by the defenders.",
+      "objectives": [],
+      "header": "BREAKTHROUGH OR DEFEND THE SECTORS",
+      "body": "An epic journey with battles from the Great War. Attackers need to capture the flags & break through the enemy lines held by the defenders.",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "name": "Domination",
+      "shortName": "DOM",
+      "prettyName": "DOMINATION",
+      "filterKey": "Domination",
+      "shortFilterKey": "DOM",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/29/20/mode_domination.jpg-1d14b750.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/119/6/mode_domination.jpg-77068c97.jpg",
+        "Png480xANY": "[BB_PREFIX]/gamedata/Tunguska/112/119/mode_domination.jpg-9077a8bd.png",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/119/119/mode_domination.jpg-77777615.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/29/20/mode_domination.jpg-1d14b750.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/29/20/mode_domination.jpg-1d14b750.jpg",
+        "Png100xANY": "[BB_PREFIX]/gamedata/Tunguska/81/27/mode_domination.jpg-af1b6ebc.png",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/119/119/mode_domination.jpg-77777615.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/119/6/mode_domination.jpg-77068c97.jpg"
+      },
+      "description": "Capture and hold the flags. Intense infantry-focused action. Hold the majority of the flags and eliminate enemy troops to win.",
+      "objectives": [],
+      "header": "CAPTURE AND HOLD THE FLAGS",
+      "body": "Intense infantry-focused action. Hold the majority of flags and eliminate enemy troops to win.",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "name": "Possession",
+      "shortName": "POS",
+      "prettyName": "WAR PIGEONS",
+      "filterKey": "Possession",
+      "shortFilterKey": "POS",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/114/99/mode_warpigeon.jpg-729d21b4.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/64/65/mode_warpigeon.jpg-c0bf7cda.jpg",
+        "Png480xANY": "[BB_PREFIX]/gamedata/Tunguska/89/63/mode_warpigeon.jpg-593f3aba.png",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/44/91/mode_warpigeon.jpg-2ca5536f.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/114/99/mode_warpigeon.jpg-729d21b4.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/114/99/mode_warpigeon.jpg-729d21b4.jpg",
+        "Png100xANY": "[BB_PREFIX]/gamedata/Tunguska/120/62/mode_warpigeon.jpg-883e557b.png",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/44/91/mode_warpigeon.jpg-2ca5536f.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/64/65/mode_warpigeon.jpg-c0bf7cda.jpg"
+      },
+      "description": "Retrieve and release pigeons. Find messenger pigeons and send messages to your supporting artillery to take out the enemies.",
+      "objectives": [],
+      "header": "RETRIEVE AND RELEASE PIGEONS",
+      "body": "Find messenger pigeons and send messages to your supporting artillery to take out the enemies.",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "name": "BreakthroughLarge",
+      "shortName": "BT",
+      "prettyName": "OPERATIONS",
+      "filterKey": "BreakthroughLarge",
+      "shortFilterKey": "BTL",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/122/98/mode_breakthrough.jpg-8662a6ef.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/43/79/mode_breakthrough.jpg-2bb14f16.jpg",
+        "Png480xANY": "[BB_PREFIX]/gamedata/Tunguska/60/16/mode_breakthrough.jpg-c4105580.png",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/86/66/mode_breakthrough.jpg-56be1950.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/122/98/mode_breakthrough.jpg-8662a6ef.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/122/98/mode_breakthrough.jpg-8662a6ef.jpg",
+        "Png100xANY": "[BB_PREFIX]/gamedata/Tunguska/35/39/mode_breakthrough.jpg-23274fd8.png",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/86/66/mode_breakthrough.jpg-56be1950.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/43/79/mode_breakthrough.jpg-2bb14f16.jpg"
+      },
+      "description": "Breakthrough or defend the sectors. An epic journey with battles from the Great War. Attackers need to capture the flags & break through the enemy lines held by the defenders.",
+      "objectives": [],
+      "header": "BREAKTHROUGH OR DEFEND THE SECTORS",
+      "body": "An epic journey with battles from the Great War. Attackers need to capture the flags & break through the enemy lines held by the defenders.",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "name": "TugOfWar",
+      "shortName": "FRN",
+      "prettyName": "FRONTLINES",
+      "filterKey": "TugOfWar",
+      "shortFilterKey": "TOW",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/71/35/mode_tugofwar.jpg-b923eb04.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/103/45/mode_tugofwar.jpg-99d3c99a.jpg",
+        "Png480xANY": "[BB_PREFIX]/gamedata/Tunguska/26/94/mode_tugofwar.jpg-e65eb18a.png",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/21/91/mode_tugofwar.jpg-155bc2ae.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/71/35/mode_tugofwar.jpg-b923eb04.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/71/35/mode_tugofwar.jpg-b923eb04.jpg",
+        "Png100xANY": "[BB_PREFIX]/gamedata/Tunguska/62/85/mode_tugofwar.jpg-3eab3e50.png",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/21/91/mode_tugofwar.jpg-155bc2ae.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/103/45/mode_tugofwar.jpg-99d3c99a.jpg"
+      },
+      "description": "A symmetrical, head-on conflict where the contested frontline can move in both directions. Conquering a Flag Objective allows a team to advance closer to the enemy base.\nOnce a team loses the Flag Objective closest to their base, they will have to defend 2 Telegraph Posts inside their base. The game ends when one team has destroyed both enemy Telegraphs or when the time runs out.",
+      "objectives": [],
+      "header": "CAPTURE THE FLAGS THEN ATTACK THE TELEGRAPHS",
+      "body": "A symmetrical, head-on conflict where the contested frontline can move in both directions. Conquering a Flag Objective allows a team to advance closer to the enemy base.\nOnce a team loses the Flag Objective closest to their base, they will have to defend 2 Telegraph Posts inside their base.",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "name": "ZoneControl",
+      "shortName": "ZC",
+      "prettyName": "SUPPLY DROP",
+      "filterKey": "ZoneControl",
+      "shortFilterKey": "ZC",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/86/30/mode_zonecontrol.jpg-561ef72a.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/117/45/mode_zonecontrol.jpg-8b2d9e75.jpg",
+        "Png480xANY": "[BB_PREFIX]/gamedata/Tunguska/73/86/mode_zonecontrol.jpg-49566d10.png",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/114/117/mode_zonecontrol.jpg-8e8b8536.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/86/30/mode_zonecontrol.jpg-561ef72a.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/86/30/mode_zonecontrol.jpg-561ef72a.jpg",
+        "Png100xANY": "[BB_PREFIX]/gamedata/Tunguska/26/74/mode_zonecontrol.jpg-e64a9cc9.png",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/114/117/mode_zonecontrol.jpg-8e8b8536.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/117/45/mode_zonecontrol.jpg-8b2d9e75.jpg"
+      },
+      "description": "Recover airdropped supplies. A desperate fight for resources: Secure the majority of the supplies to win.",
+      "objectives": [],
+      "header": "RECOVER AIRDROPPED SUPPLIES",
+      "body": "A desperate fight for resources: Secure the majority of the supplies to win. ",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "name": "AirAssault",
+      "shortName": "AAS",
+      "prettyName": "AIR ASSAULT",
+      "filterKey": "AirAssault",
+      "shortFilterKey": "AA",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/77/74/airsuperiority.jpg-4db6a534.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/3/47/airsuperiority.jpg-fdd1fae1.jpg",
+        "Png480xANY": "[BB_PREFIX]/gamedata/Tunguska/51/5/airsuperiority.jpg-33fb6aa1.png",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/0/112/airsuperiority.jpg-0090e3bc.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/77/74/airsuperiority.jpg-4db6a534.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/77/74/airsuperiority.jpg-4db6a534.jpg",
+        "Png100xANY": "[BB_PREFIX]/gamedata/Tunguska/68/75/airsuperiority.jpg-444b96ef.png",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/0/112/airsuperiority.jpg-0090e3bc.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/3/47/airsuperiority.jpg-fdd1fae1.jpg"
+      },
+      "description": "Massive dogfights in the clouds.",
+      "objectives": [],
+      "header": "AIR ASSAULT",
+      "body": "Massive all out plane warfare",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    }
+  ],
+  "maps": [
+    {
+      "assetName": "FrontEnd",
+      "name": "MENU",
+      "prettyName": "",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/128/10/1080p_TEMP_level_image-800a88bc.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/112/77/1080p_TEMP_level_image-704da97d.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Casablanca/117/49/1080p_TEMP_level_image-75cfcefb.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/25/67/1080p_TEMP_level_image-19bd54a8.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/128/10/1080p_TEMP_level_image-800a88bc.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/128/10/1080p_TEMP_level_image-800a88bc.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/25/67/1080p_TEMP_level_image-19bd54a8.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/112/77/1080p_TEMP_level_image-704da97d.jpg"
+      },
+      "filterKey": "FrontEnd",
+      "levelType": "SP",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "assetName": "MP_MountainFort",
+      "name": "MONTE GRAPPA",
+      "prettyName": "Monte Grappa",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/118/81/MP_MountainFort_LandscapeLarge-8a517533.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/115/56/MP_MountainFort_LandscapeLarge-73c87a96.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/1/5/MP_MountainFort_LandscapeLarge-fffb9633.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/109/46/MP_MountainFort_LandscapeLarge-6d2e2950.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/118/81/MP_MountainFort_LandscapeLarge-8a517533.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/118/81/MP_MountainFort_LandscapeLarge-8a517533.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/109/46/MP_MountainFort_LandscapeLarge-6d2e2950.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/115/56/MP_MountainFort_LandscapeLarge-73c87a96.jpg"
+      },
+      "filterKey": "MP_MountainFort",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "assetName": "MP_Forest",
+      "name": "ARGONNE FOREST",
+      "prettyName": "Argonne Forest",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/33/69/MP_Forest_LandscapeLarge-dfbbe910.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/26/115/MP_Forest_LandscapeLarge-1a73e7a8.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/70/63/MP_Forest_LandscapeLarge-bac1d37e.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/76/42/MP_Forest_LandscapeLarge-4c2ad497.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/33/69/MP_Forest_LandscapeLarge-dfbbe910.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/33/69/MP_Forest_LandscapeLarge-dfbbe910.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/76/42/MP_Forest_LandscapeLarge-4c2ad497.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/26/115/MP_Forest_LandscapeLarge-1a73e7a8.jpg"
+      },
+      "filterKey": "MP_Forest",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "assetName": "MP_ItalianCoast",
+      "name": "EMPIRE'S EDGE",
+      "prettyName": "Empire's Edge",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/21/3/MP_ItalianCoast_LandscapeLarge-1503eec7.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/49/70/MP_ItalianCoast_LandscapeLarge-31468213.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/64/103/MP_ItalianCoast_LandscapeLarge-c067ef07.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/116/126/MP_ItalianCoast_LandscapeLarge-74827e43.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/21/3/MP_ItalianCoast_LandscapeLarge-1503eec7.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/21/3/MP_ItalianCoast_LandscapeLarge-1503eec7.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/116/126/MP_ItalianCoast_LandscapeLarge-74827e43.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/49/70/MP_ItalianCoast_LandscapeLarge-31468213.jpg"
+      },
+      "filterKey": "MP_ItalianCoast",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "assetName": "MP_Chateau",
+      "name": "BALLROOM BLITZ",
+      "prettyName": "Ballroom Blitz",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/36/77/MP_Chateau_LandscapeLarge-244d5987.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/10/0/MP_Chateau_LandscapeLarge-0a00a456.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/53/103/MP_Chateau_LandscapeLarge-3567def7.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/120/16/MP_Chateau_LandscapeLarge-88f0cc19.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/36/77/MP_Chateau_LandscapeLarge-244d5987.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/36/77/MP_Chateau_LandscapeLarge-244d5987.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/120/16/MP_Chateau_LandscapeLarge-88f0cc19.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/10/0/MP_Chateau_LandscapeLarge-0a00a456.jpg"
+      },
+      "filterKey": "MP_Chateau",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "assetName": "MP_Scar",
+      "name": "ST. QUENTIN SCAR",
+      "prettyName": "St Quentin Scar",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/18/37/MP_Scar_LandscapeLarge-ee25fbd6.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/32/13/MP_Scar_LandscapeLarge-200d9f9a.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/47/50/MP_Scar_LandscapeLarge-d132f6ce.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/123/23/MP_Scar_LandscapeLarge-85e915b5.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/18/37/MP_Scar_LandscapeLarge-ee25fbd6.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/18/37/MP_Scar_LandscapeLarge-ee25fbd6.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/123/23/MP_Scar_LandscapeLarge-85e915b5.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/32/13/MP_Scar_LandscapeLarge-200d9f9a.jpg"
+      },
+      "filterKey": "MP_Scar",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "assetName": "MP_Desert",
+      "name": "SINAI DESERT",
+      "prettyName": "Sinai Desert",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/40/9/MP_Desert_LandscapeLarge-d8f749da.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/28/30/MP_Desert_LandscapeLarge-e4e27fec.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/80/62/MP_Desert_LandscapeLarge-50c2f5c1.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/94/77/MP_Desert_LandscapeLarge-a2b3fde7.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/40/9/MP_Desert_LandscapeLarge-d8f749da.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/40/9/MP_Desert_LandscapeLarge-d8f749da.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/94/77/MP_Desert_LandscapeLarge-a2b3fde7.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/28/30/MP_Desert_LandscapeLarge-e4e27fec.jpg"
+      },
+      "filterKey": "MP_Desert",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "assetName": "MP_Amiens",
+      "name": "AMIENS",
+      "prettyName": "Amiens",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/31/107/MP_Amiens_LandscapeLarge-e195589d.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/100/27/MP_Amiens_LandscapeLarge-9c1b0a9e.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/41/74/MP_Amiens_LandscapeLarge-29b65582.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/75/16/MP_Amiens_LandscapeLarge-4b103313.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/31/107/MP_Amiens_LandscapeLarge-e195589d.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/31/107/MP_Amiens_LandscapeLarge-e195589d.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/75/16/MP_Amiens_LandscapeLarge-4b103313.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/100/27/MP_Amiens_LandscapeLarge-9c1b0a9e.jpg"
+      },
+      "filterKey": "MP_Amiens",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "assetName": "MP_Suez",
+      "name": "SUEZ",
+      "prettyName": "Suez",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/10/48/MP_Suez_LandscapeLarge-f630fc76.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/104/46/MP_Suez_LandscapeLarge-982e2282.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/54/121/MP_Suez_LandscapeLarge-3679ab09.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/100/60/MP_Suez_LandscapeLarge-9c3c6c5b.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/10/48/MP_Suez_LandscapeLarge-f630fc76.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/10/48/MP_Suez_LandscapeLarge-f630fc76.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/100/60/MP_Suez_LandscapeLarge-9c3c6c5b.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/104/46/MP_Suez_LandscapeLarge-982e2282.jpg"
+      },
+      "filterKey": "MP_Suez",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "assetName": "MP_FaoFortress",
+      "name": "FAO FORTRESS",
+      "prettyName": "Fao Fortress",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/54/47/MP_FaoFortress_LandscapeLarge-cad1748e.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/76/84/MP_FaoFortress_LandscapeLarge-4cac6e58.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/64/2/MP_FaoFortress_LandscapeLarge-40022d63.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/116/20/MP_FaoFortress_LandscapeLarge-74ec53b3.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/54/47/MP_FaoFortress_LandscapeLarge-cad1748e.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/54/47/MP_FaoFortress_LandscapeLarge-cad1748e.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/116/20/MP_FaoFortress_LandscapeLarge-74ec53b3.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/76/84/MP_FaoFortress_LandscapeLarge-4cac6e58.jpg"
+      },
+      "filterKey": "MP_FaoFortress",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "assetName": "MP_Giant",
+      "name": "GIANT'S SHADOW",
+      "prettyName": "Giant's Shadow",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/35/11/MP_Giant_LandscapeLarge-dd0b93ef.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/60/66/MP_Giant_LandscapeLarge-c4bea4ca.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/28/104/MP_Giant_LandscapeLarge-e46882d0.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/52/59/MP_Giant_LandscapeLarge-34c521f1.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/35/11/MP_Giant_LandscapeLarge-dd0b93ef.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/35/11/MP_Giant_LandscapeLarge-dd0b93ef.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/52/59/MP_Giant_LandscapeLarge-34c521f1.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/60/66/MP_Giant_LandscapeLarge-c4bea4ca.jpg"
+      },
+      "filterKey": "MP_Giant",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "XPACK0",
+          "mask": 2,
+          "license": "xp0",
+          "prettyName": "Giant’s Shadow"
+        }
+      ]
+    },
+    {
+      "assetName": "MP_Fields",
+      "name": "SOISSONS",
+      "prettyName": "Soissons",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/95/83/MP_Fields_LandscapeLarge-5f53ddc4.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/22/65/MP_Fields_LandscapeLarge-ea41183a.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/7/111/MP_Fields_LandscapeLarge-f9916c6a.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/117/52/MP_Fields_LandscapeLarge-8b34e53b.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/95/83/MP_Fields_LandscapeLarge-5f53ddc4.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/95/83/MP_Fields_LandscapeLarge-5f53ddc4.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/117/52/MP_Fields_LandscapeLarge-8b34e53b.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/22/65/MP_Fields_LandscapeLarge-ea41183a.jpg"
+      },
+      "filterKey": "MP_Fields",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "XPACK1",
+          "mask": 4,
+          "license": "xp1",
+          "prettyName": "They Shall not Pass"
+        }
+      ]
+    },
+    {
+      "assetName": "MP_Graveyard",
+      "name": "RUPTURE",
+      "prettyName": "Rupture",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/67/16/MP_Graveyard_LandscapeLarge-bd1012e6.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/97/106/MP_Graveyard_LandscapeLarge-619640f3.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/96/73/MP_Graveyard_LandscapeLarge-60b7a1b6.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/41/47/MP_Graveyard_LandscapeLarge-29d143e6.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/67/16/MP_Graveyard_LandscapeLarge-bd1012e6.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/67/16/MP_Graveyard_LandscapeLarge-bd1012e6.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/41/47/MP_Graveyard_LandscapeLarge-29d143e6.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/97/106/MP_Graveyard_LandscapeLarge-619640f3.jpg"
+      },
+      "filterKey": "MP_Graveyard",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "assetName": "MP_Underworld",
+      "name": "FORT DE VAUX",
+      "prettyName": "Fort De Vaux",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/74/59/MP_Underworld_LandscapeLarge-b6c5c7e7.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/40/71/MP_Underworld_LandscapeLarge-28b972c6.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/68/80/MP_Underworld_LandscapeLarge-44b097f4.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/68/2/MP_Underworld_LandscapeLarge-4402c410.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/74/59/MP_Underworld_LandscapeLarge-b6c5c7e7.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/74/59/MP_Underworld_LandscapeLarge-b6c5c7e7.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/68/2/MP_Underworld_LandscapeLarge-4402c410.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/40/71/MP_Underworld_LandscapeLarge-28b972c6.jpg"
+      },
+      "filterKey": "MP_Underworld",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "XPACK1",
+          "mask": 4,
+          "license": "xp1",
+          "prettyName": "They Shall not Pass"
+        }
+      ]
+    },
+    {
+      "assetName": "MP_Verdun",
+      "name": "VERDUN HEIGHTS",
+      "prettyName": "Verdun Heights",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/26/54/MP_Verdun_LandscapeLarge-1a364063.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/31/31/MP_Verdun_LandscapeLarge-1fe10141.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/54/12/MP_Verdun_LandscapeLarge-360cd8f6.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/57/106/MP_Verdun_LandscapeLarge-396a4d66.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/26/54/MP_Verdun_LandscapeLarge-1a364063.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/26/54/MP_Verdun_LandscapeLarge-1a364063.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/57/106/MP_Verdun_LandscapeLarge-396a4d66.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/31/31/MP_Verdun_LandscapeLarge-1fe10141.jpg"
+      },
+      "filterKey": "MP_Verdun",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "XPACK1",
+          "mask": 4,
+          "license": "xp1",
+          "prettyName": "They Shall not Pass"
+        }
+      ]
+    },
+    {
+      "assetName": "MP_Trench",
+      "name": "NIVELLE NIGHTS",
+      "prettyName": "Nivelle Nights",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/37/47/MP_Trench_LandscapeLarge-dbd1248f.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/53/71/MP_Trench_LandscapeLarge-35471bf0.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/50/103/MP_Trench_LandscapeLarge-32678989.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/13/126/MP_Trench_LandscapeLarge-f382af96.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/37/47/MP_Trench_LandscapeLarge-dbd1248f.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/37/47/MP_Trench_LandscapeLarge-dbd1248f.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/13/126/MP_Trench_LandscapeLarge-f382af96.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/53/71/MP_Trench_LandscapeLarge-35471bf0.jpg"
+      },
+      "filterKey": "MP_Trench",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "XPACK1",
+          "mask": 4,
+          "license": "xp1",
+          "prettyName": "They Shall not Pass"
+        }
+      ]
+    },
+    {
+      "assetName": "MP_ShovelTown",
+      "name": "PRISE DE TAHURE",
+      "prettyName": "Prise de Tahure",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/48/86/MP_Shoveltown_LandscapeLarge-d0aa5920.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/67/46/MP_Shoveltown_LandscapeLarge-43d27e66.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/120/96/MP_Shoveltown_LandscapeLarge-7860136a.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/109/67/MP_Shoveltown_LandscapeLarge-93bd1a04.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/48/86/MP_Shoveltown_LandscapeLarge-d0aa5920.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/48/86/MP_Shoveltown_LandscapeLarge-d0aa5920.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/109/67/MP_Shoveltown_LandscapeLarge-93bd1a04.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/67/46/MP_Shoveltown_LandscapeLarge-43d27e66.jpg"
+      },
+      "filterKey": "MP_ShovelTown",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "assetName": "MP_Bridge",
+      "name": "BRUSILOV KEEP",
+      "prettyName": "Brusilov Keep",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/91/127/MP_Bridge_LandscapeLarge-5b7f1b62.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/14/27/MP_Bridge_LandscapeLarge-0ee5b3c5.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/99/90/MP_Bridge_LandscapeLarge-63a6104e.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/91/89/MP_Bridge_LandscapeLarge-a5a74593.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/91/127/MP_Bridge_LandscapeLarge-5b7f1b62.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/91/127/MP_Bridge_LandscapeLarge-5b7f1b62.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/91/89/MP_Bridge_LandscapeLarge-a5a74593.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/14/27/MP_Bridge_LandscapeLarge-0ee5b3c5.jpg"
+      },
+      "filterKey": "MP_Bridge",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "XPACK2",
+          "mask": 8,
+          "license": "xp2",
+          "prettyName": "In the Name of the Tsar"
+        }
+      ]
+    },
+    {
+      "assetName": "MP_Islands",
+      "name": "ALBION",
+      "prettyName": "Albion",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/55/40/MP_Islands_LandscapeLarge-c9d8272b.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/48/71/MP_Islands_LandscapeLarge-d0476a10.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/42/36/MP_Islands_LandscapeLarge-d6dcff9e.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/109/123/MP_Islands_LandscapeLarge-6d7b1fc2.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/55/40/MP_Islands_LandscapeLarge-c9d8272b.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/55/40/MP_Islands_LandscapeLarge-c9d8272b.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/109/123/MP_Islands_LandscapeLarge-6d7b1fc2.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/48/71/MP_Islands_LandscapeLarge-d0476a10.jpg"
+      },
+      "filterKey": "MP_Islands",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "XPACK2",
+          "mask": 8,
+          "license": "xp2",
+          "prettyName": "In the Name of the Tsar"
+        }
+      ]
+    },
+    {
+      "assetName": "MP_Ravines",
+      "name": "ŁUPKÓW PASS",
+      "prettyName": "Łupków Pass",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/31/32/MP_Ravines_LandscapeLarge-1fe0d3f6.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/76/86/MP_Ravines_LandscapeLarge-b456c00f.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/9/9/MP_Ravines_LandscapeLarge-09f73832.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/42/23/MP_Ravines_LandscapeLarge-2a17e1ec.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/31/32/MP_Ravines_LandscapeLarge-1fe0d3f6.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/31/32/MP_Ravines_LandscapeLarge-1fe0d3f6.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/42/23/MP_Ravines_LandscapeLarge-2a17e1ec.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/76/86/MP_Ravines_LandscapeLarge-b456c00f.jpg"
+      },
+      "filterKey": "MP_Ravines",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "XPACK2",
+          "mask": 8,
+          "license": "xp2",
+          "prettyName": "In the Name of the Tsar"
+        }
+      ]
+    },
+    {
+      "assetName": "MP_Valley",
+      "name": "GALICIA",
+      "prettyName": "Galicia",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/115/63/MP_Valley_LandscapeLarge-8dc1c7ca.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/42/13/MP_Valley_LandscapeLarge-2af39950.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/106/123/MP_Valley_LandscapeLarge-96859da1.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/65/63/MP_Valley_LandscapeLarge-41c1366c.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/115/63/MP_Valley_LandscapeLarge-8dc1c7ca.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/115/63/MP_Valley_LandscapeLarge-8dc1c7ca.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/65/63/MP_Valley_LandscapeLarge-41c1366c.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/42/13/MP_Valley_LandscapeLarge-2af39950.jpg"
+      },
+      "filterKey": "MP_Valley",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "XPACK2",
+          "mask": 8,
+          "license": "xp2",
+          "prettyName": "In the Name of the Tsar"
+        }
+      ]
+    },
+    {
+      "assetName": "MP_Tsaritsyn",
+      "name": "TSARITSYN",
+      "prettyName": "Tsaritsyn",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/45/67/MP_Tsaritsyn_LandscapeLarge-2dbd3bf5.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/109/24/MP_Tsaritsyn_LandscapeLarge-6d183f74.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/111/83/MP_Tsaritsyn_LandscapeLarge-91ad8178.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/41/110/MP_Tsaritsyn_LandscapeLarge-296e11d8.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/45/67/MP_Tsaritsyn_LandscapeLarge-2dbd3bf5.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/45/67/MP_Tsaritsyn_LandscapeLarge-2dbd3bf5.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/41/110/MP_Tsaritsyn_LandscapeLarge-296e11d8.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/109/24/MP_Tsaritsyn_LandscapeLarge-6d183f74.jpg"
+      },
+      "filterKey": "MP_Tsaritsyn",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "XPACK2",
+          "mask": 8,
+          "license": "xp2",
+          "prettyName": "In the Name of the Tsar"
+        }
+      ]
+    },
+    {
+      "assetName": "MP_Volga",
+      "name": "VOLGA RIVER",
+      "prettyName": "Volga River",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/106/60/MP_Volga_LandscapeLarge-6ac49c25.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/87/43/MP_Volga_LandscapeLarge-a92b66c5.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/98/86/MP_Volga_LandscapeLarge-9e56438e.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/99/121/MP_Volga_LandscapeLarge-9d790268.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/106/60/MP_Volga_LandscapeLarge-6ac49c25.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/106/60/MP_Volga_LandscapeLarge-6ac49c25.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/99/121/MP_Volga_LandscapeLarge-9d790268.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/87/43/MP_Volga_LandscapeLarge-a92b66c5.jpg"
+      },
+      "filterKey": "MP_Volga",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "XPACK2",
+          "mask": 8,
+          "license": "xp2",
+          "prettyName": "In the Name of the Tsar"
+        }
+      ]
+    },
+    {
+      "assetName": "MP_Beachhead",
+      "name": "CAPE HELLES",
+      "prettyName": "Cape Helles",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/90/19/MP_Beachhead_LandscapeLarge-5a13c655.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/76/105/MP_Beachhead_LandscapeLarge-4c69bc91.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/63/62/MP_Beachhead_LandscapeLarge-3f3eeb20.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/45/115/MP_Beachhead_LandscapeLarge-d38dd324.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/90/19/MP_Beachhead_LandscapeLarge-5a13c655.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/90/19/MP_Beachhead_LandscapeLarge-5a13c655.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/45/115/MP_Beachhead_LandscapeLarge-d38dd324.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/76/105/MP_Beachhead_LandscapeLarge-4c69bc91.jpg"
+      },
+      "filterKey": "MP_Beachhead",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "XPACK3",
+          "mask": 16,
+          "license": "xp3",
+          "prettyName": "Turning Tides"
+        }
+      ]
+    },
+    {
+      "assetName": "MP_Harbor",
+      "name": "ZEEBRUGGE",
+      "prettyName": "Zeebrugge",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/45/126/MP_Harbor_LandscapeLarge-d382c7ea.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/100/65/MP_Harbor_LandscapeLarge-9c41f1cd.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/23/118/MP_Harbor_LandscapeLarge-178a858e.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/48/9/MP_Harbor_LandscapeLarge-d0f72820.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/45/126/MP_Harbor_LandscapeLarge-d382c7ea.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/45/126/MP_Harbor_LandscapeLarge-d382c7ea.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/48/9/MP_Harbor_LandscapeLarge-d0f72820.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/100/65/MP_Harbor_LandscapeLarge-9c41f1cd.jpg"
+      },
+      "filterKey": "MP_Harbor",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "XPACK3",
+          "mask": 16,
+          "license": "xp3",
+          "prettyName": "Turning Tides"
+        }
+      ]
+    },
+    {
+      "assetName": "MP_Naval",
+      "name": "HELIGOLAND BIGHT",
+      "prettyName": "Heligoland Bight",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/36/46/MP_Naval_LandscapeLarge-dc2e8daf.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/33/107/MP_Naval_LandscapeLarge-df6ba834.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/31/16/MP_Naval_LandscapeLarge-e1f07bc8.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/19/105/MP_Naval_LandscapeLarge-1369d646.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/36/46/MP_Naval_LandscapeLarge-dc2e8daf.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/36/46/MP_Naval_LandscapeLarge-dc2e8daf.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/19/105/MP_Naval_LandscapeLarge-1369d646.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/33/107/MP_Naval_LandscapeLarge-df6ba834.jpg"
+      },
+      "filterKey": "MP_Naval",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "XPACK3",
+          "mask": 16,
+          "license": "xp3",
+          "prettyName": "Turning Tides"
+        }
+      ]
+    },
+    {
+      "assetName": "MP_Ridge",
+      "name": "ACHI BABA",
+      "prettyName": "Achi Baba",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/116/5/MP_Ridge_LandscapeLarge-8c057a19.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/89/74/MP_Ridge_LandscapeLarge-59b62c0e.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/68/112/MP_Ridge_LandscapeLarge-4490b2f0.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/90/73/MP_Ridge_LandscapeLarge-a649c6e5.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/116/5/MP_Ridge_LandscapeLarge-8c057a19.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/116/5/MP_Ridge_LandscapeLarge-8c057a19.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/90/73/MP_Ridge_LandscapeLarge-a649c6e5.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/89/74/MP_Ridge_LandscapeLarge-59b62c0e.jpg"
+      },
+      "filterKey": "MP_Ridge",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "XPACK3",
+          "mask": 16,
+          "license": "xp3",
+          "prettyName": "Turning Tides"
+        }
+      ]
+    },
+    {
+      "assetName": "MP_Offensive",
+      "name": "RIVER SOMME",
+      "prettyName": "River Somme",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/109/85/MP_Offensive_LandscapeLarge-6dabdea3.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/32/16/MP_Offensive_LandscapeLarge-e0f02d98.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/45/32/MP_Offensive_LandscapeLarge-d3e0ef0f.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/83/34/MP_Offensive_LandscapeLarge-53de8cdc.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/109/85/MP_Offensive_LandscapeLarge-6dabdea3.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/109/85/MP_Offensive_LandscapeLarge-6dabdea3.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/83/34/MP_Offensive_LandscapeLarge-53de8cdc.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/32/16/MP_Offensive_LandscapeLarge-e0f02d98.jpg"
+      },
+      "filterKey": "MP_Offensive",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "XPACK4",
+          "mask": 32,
+          "license": "xp4",
+          "prettyName": "Apocalypse"
+        }
+      ]
+    },
+    {
+      "assetName": "MP_Hell",
+      "name": "PASSCHENDAELE",
+      "prettyName": "Passchendaele",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/113/118/MP_Hell_LandscapeLarge-7176911c.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/111/32/MP_Hell_LandscapeLarge-91e060c9.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/45/113/MP_Hell_LandscapeLarge-2d719868.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/109/66/MP_Hell_LandscapeLarge-93be0a37.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/113/118/MP_Hell_LandscapeLarge-7176911c.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/113/118/MP_Hell_LandscapeLarge-7176911c.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/109/66/MP_Hell_LandscapeLarge-93be0a37.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/111/32/MP_Hell_LandscapeLarge-91e060c9.jpg"
+      },
+      "filterKey": "MP_Hell",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "XPACK4",
+          "mask": 32,
+          "license": "xp4",
+          "prettyName": "Apocalypse"
+        }
+      ]
+    },
+    {
+      "assetName": "MP_River",
+      "name": "CAPORETTO",
+      "prettyName": "Caporetto",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/33/68/MP_River_LandscapeLarge-21443ae9.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/73/17/MP_River_LandscapeLarge-49ef5486.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/9/13/MP_River_LandscapeLarge-f70d4f42.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/122/123/MP_River_LandscapeLarge-7a7b34e2.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/33/68/MP_River_LandscapeLarge-21443ae9.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/33/68/MP_River_LandscapeLarge-21443ae9.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/122/123/MP_River_LandscapeLarge-7a7b34e2.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/73/17/MP_River_LandscapeLarge-49ef5486.jpg"
+      },
+      "filterKey": "MP_River",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "XPACK4",
+          "mask": 32,
+          "license": "xp4",
+          "prettyName": "Apocalypse"
+        }
+      ]
+    },
+    {
+      "assetName": "MP_Alps",
+      "name": "RAZOR'S EDGE",
+      "prettyName": "Razor's Edge",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/122/77/MP_Alps_LandscapeLarge-7ab30e3e.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/40/7/MP_Alps_LandscapeLarge-d807a91b.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/113/64/MP_Alps_LandscapeLarge-71c03654.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/79/51/MP_Alps_LandscapeLarge-4fcd205c.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/122/77/MP_Alps_LandscapeLarge-7ab30e3e.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/122/77/MP_Alps_LandscapeLarge-7ab30e3e.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/79/51/MP_Alps_LandscapeLarge-4fcd205c.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/40/7/MP_Alps_LandscapeLarge-d807a91b.jpg"
+      },
+      "filterKey": "MP_Alps",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "XPACK4",
+          "mask": 32,
+          "license": "xp4",
+          "prettyName": "Apocalypse"
+        }
+      ]
+    },
+    {
+      "assetName": "MP_Blitz",
+      "name": "LONDON CALLING: RAIDERS",
+      "prettyName": "London Calling: Raiders",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/94/38/MP_Blitz_LandscapeLarge-5e26212f.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/93/89/MP_Blitz_LandscapeLarge-5da77f18.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/62/123/MP_Blitz_LandscapeLarge-3e7bbf1c.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/126/57/MP_Blitz_LandscapeLarge-82c7557e.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/94/38/MP_Blitz_LandscapeLarge-5e26212f.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/94/38/MP_Blitz_LandscapeLarge-5e26212f.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/126/57/MP_Blitz_LandscapeLarge-82c7557e.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/93/89/MP_Blitz_LandscapeLarge-5da77f18.jpg"
+      },
+      "filterKey": "MP_Blitz",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "XPACK4",
+          "mask": 32,
+          "license": "xp4",
+          "prettyName": "Apocalypse"
+        }
+      ]
+    },
+    {
+      "assetName": "MP_London",
+      "name": "LONDON CALLING: SCOURGE",
+      "prettyName": "London Calling: Scourge",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/11/81/MP_London_LandscapeLarge-0b51fe46.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/43/24/MP_London_LandscapeLarge-2be86749.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Tunguska/92/60/MP_London_LandscapeLarge-a4c4348b.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/1/17/MP_London_LandscapeLarge-ffef2b93.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/11/81/MP_London_LandscapeLarge-0b51fe46.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/11/81/MP_London_LandscapeLarge-0b51fe46.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/1/17/MP_London_LandscapeLarge-ffef2b93.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/43/24/MP_London_LandscapeLarge-2be86749.jpg"
+      },
+      "filterKey": "MP_London",
+      "levelType": "MP",
+      "expansions": [
+        {
+          "name": "XPACK4",
+          "mask": 32,
+          "license": "xp4",
+          "prettyName": "Apocalypse"
+        }
+      ]
+    },
+    {
+      "assetName": "SP_Prologue",
+      "name": "BREAK OF DAWN",
+      "prettyName": "Break of Dawn",
+      "imageUrl": "",
+      "images": {
+        "Jpg1000xANY": "",
+        "JpgAny": "",
+        "Jpg100xANY": "",
+        "Medium": "",
+        "Jpg480xANY": "",
+        "Small": "",
+        "Large": ""
+      },
+      "filterKey": "SP_Prologue",
+      "levelType": "SP",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "assetName": "SP_FlightSchool",
+      "name": "TEST FLIGHT",
+      "prettyName": "Test Flight",
+      "imageUrl": "",
+      "images": {
+        "Jpg1000xANY": "",
+        "JpgAny": "",
+        "Jpg100xANY": "",
+        "Medium": "",
+        "Jpg480xANY": "",
+        "Small": "",
+        "Large": ""
+      },
+      "filterKey": "SP_FlightSchool",
+      "levelType": "SP",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "assetName": "SP_TotalWar",
+      "name": "TOTAL WAR",
+      "prettyName": "Total War",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/128/10/1080p_TEMP_level_image-800a88bc.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/112/77/1080p_TEMP_level_image-704da97d.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Casablanca/117/49/1080p_TEMP_level_image-75cfcefb.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/25/67/1080p_TEMP_level_image-19bd54a8.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/128/10/1080p_TEMP_level_image-800a88bc.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/128/10/1080p_TEMP_level_image-800a88bc.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/25/67/1080p_TEMP_level_image-19bd54a8.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/112/77/1080p_TEMP_level_image-704da97d.jpg"
+      },
+      "filterKey": "SP_TotalWar",
+      "levelType": "SP",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "assetName": "SP_CarryYourFriend",
+      "name": "FALL FROM GRACE",
+      "prettyName": "Fall from Grace",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/128/10/1080p_TEMP_level_image-800a88bc.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/112/77/1080p_TEMP_level_image-704da97d.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Casablanca/117/49/1080p_TEMP_level_image-75cfcefb.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/25/67/1080p_TEMP_level_image-19bd54a8.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/128/10/1080p_TEMP_level_image-800a88bc.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/128/10/1080p_TEMP_level_image-800a88bc.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/25/67/1080p_TEMP_level_image-19bd54a8.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/112/77/1080p_TEMP_level_image-704da97d.jpg"
+      },
+      "filterKey": "SP_CarryYourFriend",
+      "levelType": "SP",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "assetName": "SP_Blitz",
+      "name": "FORTE ET FIDELE",
+      "prettyName": "Forte et fidele",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/128/10/1080p_TEMP_level_image-800a88bc.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/112/77/1080p_TEMP_level_image-704da97d.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Casablanca/117/49/1080p_TEMP_level_image-75cfcefb.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/25/67/1080p_TEMP_level_image-19bd54a8.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/128/10/1080p_TEMP_level_image-800a88bc.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/128/10/1080p_TEMP_level_image-800a88bc.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/25/67/1080p_TEMP_level_image-19bd54a8.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/112/77/1080p_TEMP_level_image-704da97d.jpg"
+      },
+      "filterKey": "SP_Blitz",
+      "levelType": "SP",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "assetName": "SP_HiddenInPlainSight",
+      "name": "HIDDEN IN PLAIN SIGHT",
+      "prettyName": "Hidden in Plain Sight",
+      "imageUrl": "",
+      "images": {
+        "Jpg1000xANY": "",
+        "JpgAny": "",
+        "Jpg100xANY": "",
+        "Medium": "",
+        "Jpg480xANY": "",
+        "Small": "",
+        "Large": ""
+      },
+      "filterKey": "SP_HiddenInPlainSight",
+      "levelType": "SP",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "assetName": "SP_YoungMensWork",
+      "name": "YOUNG MEN'S WORK",
+      "prettyName": "Young Men's Work",
+      "imageUrl": "",
+      "images": {
+        "Jpg1000xANY": "",
+        "JpgAny": "",
+        "Jpg100xANY": "",
+        "Medium": "",
+        "Jpg480xANY": "",
+        "Small": "",
+        "Large": ""
+      },
+      "filterKey": "SP_YoungMensWork",
+      "levelType": "SP",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "assetName": "SP_HearTheDesert",
+      "name": "HEAR THE DESERT",
+      "prettyName": "Hear the Desert",
+      "imageUrl": "",
+      "images": {
+        "Jpg1000xANY": "",
+        "JpgAny": "",
+        "Jpg100xANY": "",
+        "Medium": "",
+        "Jpg480xANY": "",
+        "Small": "",
+        "Large": ""
+      },
+      "filterKey": "SP_HearTheDesert",
+      "levelType": "SP",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "assetName": "SP_TankAssault",
+      "name": "OVER THE TOP",
+      "prettyName": "Over the Top",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/128/10/1080p_TEMP_level_image-800a88bc.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/112/77/1080p_TEMP_level_image-704da97d.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Casablanca/117/49/1080p_TEMP_level_image-75cfcefb.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/25/67/1080p_TEMP_level_image-19bd54a8.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/128/10/1080p_TEMP_level_image-800a88bc.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/128/10/1080p_TEMP_level_image-800a88bc.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/25/67/1080p_TEMP_level_image-19bd54a8.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/112/77/1080p_TEMP_level_image-704da97d.jpg"
+      },
+      "filterKey": "SP_TankAssault",
+      "levelType": "SP",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "assetName": "SP_FogOfWar",
+      "name": "FOG OF WAR",
+      "prettyName": "Fog of War",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/128/10/1080p_TEMP_level_image-800a88bc.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/112/77/1080p_TEMP_level_image-704da97d.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Casablanca/117/49/1080p_TEMP_level_image-75cfcefb.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/25/67/1080p_TEMP_level_image-19bd54a8.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/128/10/1080p_TEMP_level_image-800a88bc.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/128/10/1080p_TEMP_level_image-800a88bc.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/25/67/1080p_TEMP_level_image-19bd54a8.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/112/77/1080p_TEMP_level_image-704da97d.jpg"
+      },
+      "filterKey": "SP_FogOfWar",
+      "levelType": "SP",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "assetName": "SP_OutOfGas",
+      "name": "BREAKDOWN",
+      "prettyName": "Breakdown",
+      "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/128/10/1080p_TEMP_level_image-800a88bc.jpg",
+      "images": {
+        "Jpg1000xANY": "[BB_PREFIX]/gamedata/Tunguska/112/77/1080p_TEMP_level_image-704da97d.jpg",
+        "JpgAny": "[BB_PREFIX]/gamedata/Casablanca/117/49/1080p_TEMP_level_image-75cfcefb.jpg",
+        "Jpg100xANY": "[BB_PREFIX]/gamedata/Tunguska/25/67/1080p_TEMP_level_image-19bd54a8.jpg",
+        "Medium": "[BB_PREFIX]/gamedata/Tunguska/128/10/1080p_TEMP_level_image-800a88bc.jpg",
+        "Jpg480xANY": "[BB_PREFIX]/gamedata/Tunguska/128/10/1080p_TEMP_level_image-800a88bc.jpg",
+        "Small": "[BB_PREFIX]/gamedata/Tunguska/25/67/1080p_TEMP_level_image-19bd54a8.jpg",
+        "Large": "[BB_PREFIX]/gamedata/Tunguska/112/77/1080p_TEMP_level_image-704da97d.jpg"
+      },
+      "filterKey": "SP_OutOfGas",
+      "levelType": "SP",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "assetName": "SP_SteelOnSteel",
+      "name": "STEEL ON STEEL",
+      "prettyName": "Steel on Steel",
+      "imageUrl": "",
+      "images": {
+        "Jpg1000xANY": "",
+        "JpgAny": "",
+        "Jpg100xANY": "",
+        "Medium": "",
+        "Jpg480xANY": "",
+        "Small": "",
+        "Large": ""
+      },
+      "filterKey": "SP_SteelOnSteel",
+      "levelType": "SP",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "assetName": "SP_Arditi",
+      "name": "O LA VITTORIA",
+      "prettyName": "O La Vittoria",
+      "imageUrl": "",
+      "images": {
+        "Jpg1000xANY": "",
+        "JpgAny": "",
+        "Jpg100xANY": "",
+        "Medium": "",
+        "Jpg480xANY": "",
+        "Small": "",
+        "Large": ""
+      },
+      "filterKey": "SP_Arditi",
+      "levelType": "SP",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "assetName": "SP_SearchRescue",
+      "name": "O TUTTI ACCOPPATI",
+      "prettyName": "O Tutti Accoppati",
+      "imageUrl": "",
+      "images": {
+        "Jpg1000xANY": "",
+        "JpgAny": "",
+        "Jpg100xANY": "",
+        "Medium": "",
+        "Jpg480xANY": "",
+        "Small": "",
+        "Large": ""
+      },
+      "filterKey": "SP_SearchRescue",
+      "levelType": "SP",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "assetName": "SP_Gallipoli",
+      "name": "CAPE HELLES",
+      "prettyName": "Cape Helles",
+      "imageUrl": "",
+      "images": {
+        "Jpg1000xANY": "",
+        "JpgAny": "",
+        "Jpg100xANY": "",
+        "Medium": "",
+        "Jpg480xANY": "",
+        "Small": "",
+        "Large": ""
+      },
+      "filterKey": "SP_Gallipoli",
+      "levelType": "SP",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "assetName": "SP_TheRunaround",
+      "name": "THE RUNNER",
+      "prettyName": "The Runner",
+      "imageUrl": "",
+      "images": {
+        "Jpg1000xANY": "",
+        "JpgAny": "",
+        "Jpg100xANY": "",
+        "Medium": "",
+        "Jpg480xANY": "",
+        "Small": "",
+        "Large": ""
+      },
+      "filterKey": "SP_TheRunaround",
+      "levelType": "SP",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "assetName": "SP_SavingALife",
+      "name": "BE SAFE",
+      "prettyName": "Be Safe",
+      "imageUrl": "",
+      "images": {
+        "Jpg1000xANY": "",
+        "JpgAny": "",
+        "Jpg100xANY": "",
+        "Medium": "",
+        "Jpg480xANY": "",
+        "Small": "",
+        "Large": ""
+      },
+      "filterKey": "SP_SavingALife",
+      "levelType": "SP",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    },
+    {
+      "assetName": "SP_Epilogue",
+      "name": "REMEMBER US",
+      "prettyName": "Remember Us",
+      "imageUrl": "",
+      "images": {
+        "Jpg1000xANY": "",
+        "JpgAny": "",
+        "Jpg100xANY": "",
+        "Medium": "",
+        "Jpg480xANY": "",
+        "Small": "",
+        "Large": ""
+      },
+      "filterKey": "SP_Epilogue",
+      "levelType": "SP",
+      "expansions": [
+        {
+          "name": "DEFAULT",
+          "mask": 1,
+          "license": "",
+          "prettyName": ""
+        }
+      ]
+    }
+  ],
+  "tutorials": {
+    "AAS": "http://eaassets-a.akamaihd.net/battlelog/battlefield-1/tutorial/BF1_Air_Assault_ENG_UK-ff88ab05.webm",
+    "AA": "http://eaassets-a.akamaihd.net/battlelog/battlefield-1/tutorial/BF1_Air_Assault_ENG_UK-ff88ab05.webm",
+    "DOM": "http://eaassets-a.akamaihd.net/battlelog/battlefield-1/tutorial/BF1_TutorialAsset_Domination_ENG_720-e8dde01b.mkv",
+    "POS": "http://eaassets-a.akamaihd.net/battlelog/battlefield-1/tutorial/BF1_TutorialAsset_Pigeon_ENG_720-273ae00f.mkv",
+    "TOW": "http://eaassets-a.akamaihd.net/battlelog/battlefield-1/tutorial/BF1_Frontlines_Tutorial_Sparta_ENG_UK_720-5d38767b.mkv",
+    "TDM": "http://eaassets-a.akamaihd.net/battlelog/battlefield-1/tutorial/BF1_TutorialAsset_TDM_ENG_720-1a012f0f.mkv",
+    "BT": "http://eaassets-a.akamaihd.net/battlelog/battlefield-1/tutorial/BF1_TutorialAsset_Operations_ENG_720-ef413be3.mkv",
+    "R": "http://eaassets-a.akamaihd.net/battlelog/battlefield-1/tutorial/BF1_TutorialAsset_Rush_ENG_720-dda018d4.mkv",
+    "BTL": "http://eaassets-a.akamaihd.net/battlelog/battlefield-1/tutorial/BF1_TutorialAsset_Operations_ENG_720-ef413be3.mkv",
+    "ZC": "http://eaassets-a.akamaihd.net/battlelog/battlefield-1/tutorial/BF1_SupplyDropTutorialVideo_v12_Final_ProResHQ_Webm-de9245f7.webm",
+    "FRN": "http://eaassets-a.akamaihd.net/battlelog/battlefield-1/tutorial/BF1_Frontlines_Tutorial_Sparta_ENG_UK_720-5d38767b.mkv",
+    "CQ": "http://eaassets-a.akamaihd.net/battlelog/battlefield-1/tutorial/BF1_TutorialAsset_Conquest_ENG_720-2ebbee00.mkv"
+  },
+  "settings": {
+    "Misc": [
+      {
+        "filterKey": "KC",
+        "name": "KILL CAM",
+        "prettyName": "KILL CAM",
+        "description": "The Kill Cam highlights the stats of the killer and shows his whereabouts.",
+        "type": "bool",
+        "defaultValue": 1,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "MM",
+        "name": "HUD",
+        "prettyName": "HUD",
+        "description": "Control visibility of basic HUD elements such as crosshairs, health & ammo, minimap, damage- and hit indicators. Suited for Hardcore type gameplay.",
+        "type": "bool",
+        "defaultValue": 1,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "FF",
+        "name": "FRIENDLY FIRE",
+        "prettyName": "FRIENDLY FIRE",
+        "description": "Friendly fire means you can injure or kill your team members.",
+        "type": "bool",
+        "defaultValue": 0,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "RH",
+        "name": "REGENERATE HEALTH",
+        "prettyName": "REGENERATE HEALTH",
+        "description": "After being injured, the player's health will regenerate when staying in cover.",
+        "type": "bool",
+        "defaultValue": 1,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "3S",
+        "name": "3D SPOTTING",
+        "prettyName": "3D SPOTTING",
+        "description": "Enable 3D player spotting.",
+        "type": "bool",
+        "defaultValue": 1,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "MS",
+        "name": "MINIMAP SPOTTING",
+        "prettyName": "MINIMAP SPOTTING",
+        "description": "Spotted players will appear on the minimap.",
+        "type": "bool",
+        "defaultValue": 1,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "F",
+        "name": "ALWAYS FOG",
+        "prettyName": "ALWAYS FOG",
+        "description": "Permanently enables fog on the Battlefield.",
+        "type": "bool",
+        "defaultValue": 0,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "NT",
+        "name": "NAMETAGS",
+        "prettyName": "NAMETAGS",
+        "description": "Player names will appear over their head.",
+        "type": "bool",
+        "defaultValue": 1,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "3VC",
+        "name": "VEHICLE 3P CAMERA",
+        "prettyName": "VEHICLE 3P CAMERA",
+        "description": "Allow players to use the third person camera view when using vehicles",
+        "type": "bool",
+        "defaultValue": 1,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "SLSO",
+        "name": "ONLY SQUAD LEADER SPAWN",
+        "prettyName": "ONLY SQUAD LEADER SPAWN",
+        "description": "If enabled the squad leader will be the only valid squad spawn when playing in a squad.",
+        "type": "bool",
+        "defaultValue": 0,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "BH",
+        "name": "BEHEMOTHS",
+        "prettyName": "BEHEMOTHS",
+        "description": "Enable or disable Behemoths on the maps in the rotation (Operations and Conquest only).",
+        "type": "bool",
+        "defaultValue": 1,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "RWM",
+        "name": "RELOAD FULL MAGS",
+        "prettyName": "RELOAD FULL MAGS",
+        "description": "If set to YES you will replace the existing magazine with a new one, even if there are bullets left in the previous one.",
+        "type": "bool",
+        "defaultValue": 0,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "MV",
+        "name": "MAP VOTING",
+        "prettyName": "MAP VOTING",
+        "description": "Enable map voting in the EOR screen",
+        "type": "bool",
+        "defaultValue": 1,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "BPL",
+        "name": "DISABLE PRE-ROUND",
+        "prettyName": "DISABLE PRE-ROUND",
+        "description": "Disable pre-round",
+        "type": "bool",
+        "defaultValue": 0,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "AAR",
+        "name": "AIM ASSIST AUTO ROTATION",
+        "prettyName": "AIM ASSIST AUTO ROTATION",
+        "description": "Choose whether zooming in with your infantry weapon snaps to a nearby enemy target.",
+        "type": "bool",
+        "defaultValue": 1,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "AAS",
+        "name": "AIM ASSIST SLOWDOWN",
+        "prettyName": "AIM ASSIST SLOWDOWN",
+        "description": "Choose whether infantry weapon aim slows down when the reticle is over an enemy target.",
+        "type": "bool",
+        "defaultValue": 1,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "LL",
+        "name": "LATENCY LOCK",
+        "prettyName": "LATENCY LOCK",
+        "description": "Choose whether to use a cap on latency.",
+        "type": "bool",
+        "defaultValue": 0,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "LNL",
+        "name": "LENIENT LATENCY",
+        "prettyName": "LENIENT LATENCY",
+        "description": "If enabled will allow a larger latency to hit enemies without having to lead.",
+        "type": "bool",
+        "defaultValue": 0,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "UM",
+        "name": "UNLIMITED MAGAZINES",
+        "prettyName": "UNLIMITED MAGAZINES",
+        "description": "Choose to enable unlimited magazine reloading.",
+        "type": "bool",
+        "defaultValue": 0,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "DSD",
+        "name": "DISABLE SPECTATOR DELAY",
+        "prettyName": "DISABLE SPECTATOR DELAY",
+        "description": "Remove the delay that spectators experience so that what is seen is happening as close to real-time as possible",
+        "type": "bool",
+        "defaultValue": 0,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "DTB",
+        "name": "DISABLE TEAM BALANCER",
+        "prettyName": "DISABLE TEAM BALANCER",
+        "description": "Disable team balancer so no players are moved automatically from one team to another",
+        "type": "bool",
+        "defaultValue": 0,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      }
+    ],
+    "Scales": [
+      {
+        "filterKey": "BulletDamage",
+        "name": "BULLET DAMAGE",
+        "prettyName": "BULLET DAMAGE",
+        "description": "The amount of damage each bullet does.",
+        "type": "scale",
+        "defaultValue": 0,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": "BD2",
+        "options": {
+          "BD1": 0.5,
+          "BD2": 1.0,
+          "BD3": 2.0,
+          "BD4": 1.25
+        }
+      },
+      {
+        "filterKey": "TicketCount",
+        "name": "TICKET COUNT",
+        "prettyName": "TICKET COUNT",
+        "description": "Tickets decide how long the game is. More tickets means longer games.",
+        "type": "scale",
+        "defaultValue": 0,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": "TC2",
+        "options": {
+          "TC1": 0.5,
+          "TC2": 1.0,
+          "TC3": 2.0
+        }
+      },
+      {
+        "filterKey": "SoldierRespawnTime",
+        "name": "RESPAWN TIME",
+        "prettyName": "RESPAWN TIME",
+        "description": "The time it takes for a killed player to be able to deploy again.",
+        "type": "scale",
+        "defaultValue": 0,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": "SR2",
+        "options": {
+          "SR1": 0.5,
+          "SR2": 1.0,
+          "SR3": 2.0
+        }
+      },
+      {
+        "filterKey": "VehicleRespawnTime",
+        "name": "VEHICLE RESPAWN TIME",
+        "prettyName": "VEHICLE RESPAWN TIME",
+        "description": "The time it takes for a destroyed vehicle to be available again in the base.",
+        "type": "scale",
+        "defaultValue": 0,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": "VR2",
+        "options": {
+          "VR1": 0.5,
+          "VR2": 1.0,
+          "VR3": 2.0
+        }
+      },
+      {
+        "filterKey": "RoundTimeLimit",
+        "name": "ROUND TIME LIMIT",
+        "prettyName": "ROUND TIME LIMIT",
+        "description": "Round time limit applies a multiplier on the default time limits of games. A value of 0 will use the default time limit for Frontlines and place no time limits on all other game modes.",
+        "type": "scale",
+        "defaultValue": 0,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": "RT1",
+        "options": {
+          "RT3": 1.0,
+          "RT1": 0.0,
+          "RT5": 5.0,
+          "RT2": 0.5,
+          "RT4": 2.0
+        }
+      }
+    ],
+    "Weapons": [
+      {
+        "filterKey": "M",
+        "name": "MELEE",
+        "prettyName": "MELEE",
+        "description": "Allow players to use Melee weapons.",
+        "type": "bool",
+        "defaultValue": 1,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "S",
+        "name": "SHOTGUN",
+        "prettyName": "SHOTGUN",
+        "description": "Allow players to use Shotguns.",
+        "type": "bool",
+        "defaultValue": 1,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "H",
+        "name": "HANDGUN",
+        "prettyName": "HANDGUN",
+        "description": "Allow players to use Handguns.",
+        "type": "bool",
+        "defaultValue": 1,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "E",
+        "name": "EXPLOSIVES",
+        "prettyName": "EXPLOSIVES",
+        "description": "Allow players to use explosives such as grenades.",
+        "type": "bool",
+        "defaultValue": 1,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "LMG",
+        "name": "LMG",
+        "prettyName": "LMG",
+        "description": "Allow players to use Light Machine Guns.",
+        "type": "bool",
+        "defaultValue": 1,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "SMG",
+        "name": "SMG",
+        "prettyName": "SMG",
+        "description": "Allow players to use Submachine Guns.",
+        "type": "bool",
+        "defaultValue": 1,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "SAR",
+        "name": "SELF-LOADING RIFLES",
+        "prettyName": "SELF-LOADING RIFLES",
+        "description": "Allow players to use Self-Loading Rifles.",
+        "type": "bool",
+        "defaultValue": 1,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "SR",
+        "name": "SINGLE-ACTION RIFLES",
+        "prettyName": "SINGLE-ACTION RIFLES",
+        "description": "Allow players to use Single-Action Rifles.",
+        "type": "bool",
+        "defaultValue": 1,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "KG",
+        "name": "CLASS GADGETS",
+        "prettyName": "CLASS GADGETS",
+        "description": "Allow players to use class-specific gadgets.",
+        "type": "bool",
+        "defaultValue": 1,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "SIR",
+        "name": "STANDARD ISSUE RIFLES",
+        "prettyName": "STANDARD ISSUE RIFLES",
+        "description": "Allow players to use Standard Issue Rifles.",
+        "type": "bool",
+        "defaultValue": 0,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      }
+    ],
+    "Vehicles": [
+      {
+        "filterKey": "L",
+        "name": "LAND VEHICLES",
+        "prettyName": "LAND VEHICLES",
+        "description": "Allow the use of Land Vehicles.",
+        "type": "bool",
+        "defaultValue": 1,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "A",
+        "name": "AIR VEHICLES",
+        "prettyName": "AIR VEHICLES",
+        "description": "Allow the use of Air Vehicles.",
+        "type": "bool",
+        "defaultValue": 1,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      }
+    ],
+    "Kits": [
+      {
+        "filterKey": "1",
+        "name": "ASSAULT",
+        "prettyName": "ASSAULT",
+        "description": "Allow players to select the Assault class.",
+        "type": "bool",
+        "defaultValue": 1,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "2",
+        "name": "MEDIC",
+        "prettyName": "MEDIC",
+        "description": "Allow players to select the Medic class.",
+        "type": "bool",
+        "defaultValue": 1,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "3",
+        "name": "SUPPORT",
+        "prettyName": "SUPPORT",
+        "description": "Allow players to select the Support class",
+        "type": "bool",
+        "defaultValue": 1,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "4",
+        "name": "SCOUT",
+        "prettyName": "SCOUT",
+        "description": "Allow players to select the Scout class",
+        "type": "bool",
+        "defaultValue": 1,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "HERO",
+        "name": "ELITE CLASSES",
+        "prettyName": "ELITE CLASSES",
+        "description": "Allow players to use elite classes.",
+        "type": "bool",
+        "defaultValue": 1,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      }
+    ]
+  },
+  "experiences": [],
+  "factions": [
+    {
+      "id": "BFFactionId_FactionAHU",
+      "key": "AHU",
+      "name": "Austro-Hungarian Empire",
+      "shortName": "AHU",
+      "images": {
+        "Png160xANY": "[BB_PREFIX]/gamedata/Tunguska/30/21/FactionsColorAustroHungarianEmpireLarge-e2ebe691.png"
+      }
+    },
+    {
+      "id": "BFFactionId_FactionGER",
+      "key": "GER",
+      "name": "German Empire",
+      "shortName": "GER",
+      "images": {
+        "Png160xANY": "[BB_PREFIX]/gamedata/Tunguska/117/41/FactionsColorGermanEmpireLarge-8bd7e888.png"
+      }
+    },
+    {
+      "id": "BFFactionId_FactionITA",
+      "key": "ITA",
+      "name": "Kingdom Of Italy",
+      "shortName": "ITA",
+      "images": {
+        "Png160xANY": "[BB_PREFIX]/gamedata/Tunguska/22/73/FactionsColorKingdomOfItalyLarge-eab7049b.png"
+      }
+    },
+    {
+      "id": "BFFactionId_FactionOTM",
+      "key": "OTM",
+      "name": "Ottoman Empire",
+      "shortName": "OTM",
+      "images": {
+        "Png160xANY": "[BB_PREFIX]/gamedata/Tunguska/69/73/FactionsColorOttomanEmpireLarge-45b70933.png"
+      }
+    },
+    {
+      "id": "BFFactionId_FactionUK",
+      "key": "UK",
+      "name": "British Empire",
+      "shortName": "UK",
+      "images": {
+        "Png160xANY": "[BB_PREFIX]/gamedata/Tunguska/103/37/FactionsColorUnitedKingdomLarge-672527a9.png"
+      }
+    },
+    {
+      "id": "BFFactionId_FactionUSA",
+      "key": "USA",
+      "name": "United States Of America",
+      "shortName": "USA",
+      "images": {
+        "Png160xANY": "[BB_PREFIX]/gamedata/Tunguska/10/110/FactionsColorUnitedStatesOfAmericaLarge-0a6e66a7.png"
+      }
+    },
+    {
+      "id": "BFFactionId_FactionFRA",
+      "key": "FRA",
+      "name": "French Republic",
+      "shortName": "FRA",
+      "images": {
+        "Png160xANY": "[BB_PREFIX]/gamedata/Tunguska/93/43/FactionsColorFranceLarge-a3d5b514.png"
+      }
+    },
+    {
+      "id": "BFFactionId_FactionRUS",
+      "key": "RUS",
+      "name": "Russian Empire",
+      "shortName": "RUS",
+      "images": {
+        "Png160xANY": "[BB_PREFIX]/gamedata/Tunguska/113/64/FactionsColorRussia-8f40526a.png"
+      }
+    },
+    {
+      "id": "BFFactionId_FactionBOL",
+      "key": "BOL",
+      "name": "Red Army",
+      "shortName": "BOL",
+      "images": {
+        "Png160xANY": "[BB_PREFIX]/gamedata/Tunguska/63/106/FactionsLargeColorBolshevik-3f6ac72d.png"
+      }
+    },
+    {
+      "id": "BFFactionId_FactionWA",
+      "key": "WA",
+      "name": "White Army",
+      "shortName": "WA",
+      "images": {
+        "Png160xANY": "[BB_PREFIX]/gamedata/Tunguska/113/64/FactionsColorRussia-8f40526a.png"
+      }
+    },
+    {
+      "id": "BFFactionId_FactionOTT",
+      "key": "OTT",
+      "name": "Ottoman Empire",
+      "shortName": "OTM",
+      "images": {
+        "Png160xANY": "[BB_PREFIX]/gamedata/Tunguska/69/73/FactionsColorOttomanEmpireLarge-45b70933.png"
+      }
+    },
+    {
+      "id": "BFFactionId_FactionUKG",
+      "key": "UKG",
+      "name": "British Empire",
+      "shortName": "UK",
+      "images": {
+        "Png160xANY": "[BB_PREFIX]/gamedata/Tunguska/103/37/FactionsColorUnitedKingdomLarge-672527a9.png"
+      }
+    },
+    {
+      "id": "BFFactionId_FactionUKM",
+      "key": "UKM",
+      "name": "Royal Marines",
+      "shortName": "UKM",
+      "images": {
+        "Png160xANY": "[BB_PREFIX]/gamedata/Tunguska/25/95/FactionsLargeColorBritishRoyalMarines-e75f358e.png"
+      }
+    }
+  ],
+  "attributes": {
+    "regions": [
+      {
+        "filterKey": "NAm",
+        "name": "North America",
+        "prettyName": "North America",
+        "description": "",
+        "type": "bool",
+        "defaultValue": 0,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "SAm",
+        "name": "South America",
+        "prettyName": "South America",
+        "description": "",
+        "type": "bool",
+        "defaultValue": 0,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "AC",
+        "name": "Antarctica",
+        "prettyName": "Antarctica",
+        "description": "",
+        "type": "bool",
+        "defaultValue": 0,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "Afr",
+        "name": "Africa",
+        "prettyName": "Africa",
+        "description": "",
+        "type": "bool",
+        "defaultValue": 0,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "EU",
+        "name": "Europe",
+        "prettyName": "Europe",
+        "description": "",
+        "type": "bool",
+        "defaultValue": 0,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "Asia",
+        "name": "Asia",
+        "prettyName": "Asia",
+        "description": "",
+        "type": "bool",
+        "defaultValue": 0,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "OC",
+        "name": "Oceania",
+        "prettyName": "Oceania",
+        "description": "",
+        "type": "bool",
+        "defaultValue": 0,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      }
+    ],
+    "serverType": [
+      {
+        "filterKey": "OFFICIAL",
+        "name": "OFFICIAL",
+        "prettyName": "OFFICIAL",
+        "description": "An official server allows awards, scores and unlocks to be applied towards players' career progressions. Players can join the server via Quick Match.",
+        "type": "bool",
+        "defaultValue": 0,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "RANKED",
+        "name": "RANKED",
+        "prettyName": "RANKED",
+        "description": "A ranked server allows awards, scores and unlocks to be applied towards players' career progressions, but will not receive players from Quick Match.",
+        "type": "bool",
+        "defaultValue": 0,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "PRIVATE",
+        "name": "PRIVATE",
+        "prettyName": "PRIVATE",
+        "description": "A private server is an unranked server that is password-protected.",
+        "type": "bool",
+        "defaultValue": 0,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "UNRANKED",
+        "name": "UNRANKED",
+        "prettyName": "UNRANKED",
+        "description": "An unranked server does not allow awards, scores and unlocks to be applied towards players' career progressions.",
+        "type": "bool",
+        "defaultValue": 0,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      }
+    ],
+    "tickRates": [
+      {
+        "filterKey": "30",
+        "name": "Normal (30 Hz)",
+        "prettyName": "Normal (30 Hz)",
+        "description": "",
+        "type": "bool",
+        "defaultValue": 0,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "60",
+        "name": "High (60 Hz)",
+        "prettyName": "High (60 Hz)",
+        "description": "",
+        "type": "bool",
+        "defaultValue": 0,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "120",
+        "name": "Very High (120 Hz)",
+        "prettyName": "Very High (120 Hz)",
+        "description": "",
+        "type": "bool",
+        "defaultValue": 0,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      },
+      {
+        "filterKey": "144",
+        "name": "Ultra High (144 Hz)",
+        "prettyName": "Ultra High (144 Hz)",
+        "description": "",
+        "type": "bool",
+        "defaultValue": 0,
+        "minValue": 0,
+        "maxValue": 0,
+        "defaultOption": null,
+        "options": {}
+      }
+    ]
+  },
+  "game": "tunguska"
+}

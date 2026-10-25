@@ -1,76 +1,74 @@
-"""BF1 站内登记服务器的人数时序
+"""BF1 私服人数与地图时序
 
-全服统计每轮拿到全服摘要后，为 ``servers`` 表里已登记、且本轮出现在摘要中的服务器各写
-一个人数点，并清理超过保留期的旧点；服务器详情页据此画 24 小时人数曲线。
+全服统计每 60 秒拿到一轮快照摘要，这里每 5 分钟为其中所有私服各写一个点（人数 + 当前地图 /
+模式），并清理超过保留期的旧点；服务器详情页据此画 24 小时人数曲线，地图字段留给热门地图统计。
 """
 
 from __future__ import annotations
 
-from collections import Counter
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.bf1.server_player_count import Bf1ServerPlayerCount
-from app.models.server import Server
 from app.schemas.bf1.server import ServerPlayerCountPoint, ServerSummary
 
 RETENTION = timedelta(days=7)
+# 轮询每分钟一次，采样隔 5 分钟一次；留 10 秒余量，免得轮询抖动把采样拖到 10 分钟
+SAMPLE_INTERVAL = timedelta(minutes=5) - timedelta(seconds=10)
 
 
 async def record_player_counts(db: AsyncSession, summaries: list[ServerSummary]) -> int:
-    """写入本轮人数点并清理过期点，返回写入条数。
-
-    先按 servers.game_id 匹配；对不上时按服名回退（服务器重启会换 gameId，而 game_id 只在
-    鉴权识别时回填），命中后把新 gameId 写回登记表。本轮同名的多个服不参与名称匹配。
-    shortcut: 服主改名后名称回退失效，要等鉴权识别更新名称；快照若能拿到 serverId /
-    persistedGameId 再改用稳定键。
-    """
+    """距上次采样满 5 分钟时，为本轮所有私服写一个点并清理过期点，返回写入条数。"""
     now = datetime.now(UTC)
-    by_gid = {s.game_id: s for s in summaries if s.game_id}
-    name_counts = Counter(s.name for s in summaries if s.name)
-    by_name = {s.name: s for s in summaries if s.name and name_counts[s.name] == 1}
-    written = 0
-    for server in await db.scalars(select(Server).where(Server.game == "bf1")):
-        s = by_gid.get(server.game_id) if server.game_id else None
-        if s is None and server.name:
-            s = by_name.get(server.name)
-            if s is not None:
-                server.game_id = s.game_id
-        if s is None:
-            continue
-        db.add(
-            Bf1ServerPlayerCount(
-                server_pk=server.id,
-                player_count=s.player_count,
-                queue_count=s.queue_count,
-                spectator_count=s.spectator_count,
-                max_player_count=s.max_player_count,
-                sampled_at=now,
-            )
+    last = await db.scalar(select(func.max(Bf1ServerPlayerCount.sampled_at)))
+    # sqlite 读回的是无时区时间，按写入时的 UTC 补上
+    if last is not None and now - last.replace(tzinfo=last.tzinfo or UTC) < SAMPLE_INTERVAL:
+        return 0
+    rows = [
+        Bf1ServerPlayerCount(
+            game_id=s.game_id,
+            name=s.name,
+            map_name=s.map_name,
+            game_mode=s.game_mode,
+            player_count=s.player_count,
+            queue_count=s.queue_count,
+            spectator_count=s.spectator_count,
+            max_player_count=s.max_player_count,
+            sampled_at=now,
         )
-        written += 1
+        for s in summaries
+        if not s.is_official and s.game_id and s.name
+    ]
+    db.add_all(rows)
     await db.execute(
         delete(Bf1ServerPlayerCount).where(Bf1ServerPlayerCount.sampled_at < now - RETENTION)
     )
     await db.commit()
-    return written
+    return len(rows)
 
 
 async def list_player_counts(
     db: AsyncSession, game_id: int, *, hours: int = 24
 ) -> list[ServerPlayerCountPoint]:
-    """某服务器最近 hours 小时的人数点，按时间升序。未登记的服务器返回空列表。"""
+    """某私服最近 hours 小时的人数点，按时间升序。
+
+    先由 game_id 找到这个服的名字，再按名字取点，服务器重启换了 gameId 曲线也能连上。
+    shortcut: 按服名归并，改名后历史会断、同名私服会混在一起；快照能拿到稳定 serverId 再换键。
+    """
+    name = await db.scalar(
+        select(Bf1ServerPlayerCount.name)
+        .where(Bf1ServerPlayerCount.game_id == game_id)
+        .order_by(Bf1ServerPlayerCount.sampled_at.desc())
+        .limit(1)
+    )
+    if name is None:
+        return []
     since = datetime.now(UTC) - timedelta(hours=hours)
     rows = await db.scalars(
         select(Bf1ServerPlayerCount)
-        .join(Server, Server.id == Bf1ServerPlayerCount.server_pk)
-        .where(
-            Server.game == "bf1",
-            Server.game_id == game_id,
-            Bf1ServerPlayerCount.sampled_at >= since,
-        )
+        .where(Bf1ServerPlayerCount.name == name, Bf1ServerPlayerCount.sampled_at >= since)
         .order_by(Bf1ServerPlayerCount.sampled_at)
     )
     return [

@@ -184,7 +184,7 @@ export interface ServerListQuery {
   limit?: number;
 }
 
-/** 站内登记服务器的人数采样点，ts 为 unix 秒 */
+/** 私服的人数采样点，ts 为 unix 秒 */
 export interface ServerPlayerCountPoint {
   ts: number;
   players: number;

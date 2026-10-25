@@ -6,7 +6,6 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 from app.api.errors import ValidationError
-from app.models import Server
 from app.models.bf1.server_player_count import Bf1ServerPlayerCount
 from app.schemas.bf1.server import ServerSummary
 from app.services.bf1 import server_service
@@ -124,45 +123,52 @@ async def test_search_by_keyword_uses_ea(monkeypatch: pytest.MonkeyPatch) -> Non
     assert [s.game_id for s in res.items] == [9]
 
 
-async def test_record_player_counts_writes_registered_and_prunes(test_session) -> None:
-    registered = Server(game="bf1", server_id=100, game_id=1, name="mine")
-    other_game = Server(game="bfv", server_id=200, game_id=2)
-    test_session.add_all([registered, other_game])
-    await test_session.flush()
+async def test_record_player_counts_samples_private_servers(test_session) -> None:
     stale = Bf1ServerPlayerCount(
-        server_pk=registered.id,
+        game_id=1,
+        name="mine",
         player_count=1,
         sampled_at=datetime.now(UTC) - timedelta(days=8),
     )
     test_session.add(stale)
     await test_session.commit()
 
-    summaries = [_s(1, "mine", players=42), _s(2, "bfv same gid"), _s(3, "unregistered")]
-    assert await record_player_counts(test_session, summaries) == 1
+    summaries = [
+        _s(1, "mine", players=42, map_name="MP_Forest"),
+        _s(2, "official", is_official=True),
+        _s(3, "other", players=7),
+    ]
+    assert await record_player_counts(test_session, summaries) == 2
 
     rows = (await test_session.scalars(select(Bf1ServerPlayerCount))).all()
-    assert [(r.server_pk, r.player_count, r.max_player_count) for r in rows] == [
-        (registered.id, 42, 64)
+    assert sorted((r.game_id, r.name, r.map_name, r.player_count) for r in rows) == [
+        (1, "mine", "MP_Forest", 42),
+        (3, "other", "MP_Amiens", 7),
     ]
+    # 不满 5 分钟的下一轮不采样
+    assert await record_player_counts(test_session, summaries) == 0
 
     points = await list_player_counts(test_session, 1)
     assert [p.players for p in points] == [42]
     assert abs(points[0].ts - datetime.now(UTC).timestamp()) < 60
-    assert await list_player_counts(test_session, 3) == []
+    assert await list_player_counts(test_session, 2) == []
 
 
-async def test_record_player_counts_falls_back_to_name(test_session) -> None:
-    # 服务器重启换了 gameId：按服名接回并写回新 gameId；同名多服不猜
-    restarted = Server(game="bf1", server_id=100, game_id=1, name="mine")
-    dup = Server(game="bf1", server_id=101, game_id=5, name="dup")
-    test_session.add_all([restarted, dup])
+async def test_list_player_counts_joins_restarts_by_name(test_session) -> None:
+    # 服务器重启换了 gameId：用新 gameId 查也能拿到重启前的点
+    now = datetime.now(UTC)
+    test_session.add_all(
+        [
+            Bf1ServerPlayerCount(
+                game_id=1, name="mine", player_count=10, sampled_at=now - timedelta(hours=2)
+            ),
+            Bf1ServerPlayerCount(
+                game_id=9, name="mine", player_count=20, sampled_at=now - timedelta(hours=1)
+            ),
+            Bf1ServerPlayerCount(
+                game_id=5, name="other", player_count=99, sampled_at=now - timedelta(hours=1)
+            ),
+        ]
+    )
     await test_session.commit()
-
-    summaries = [_s(9, "mine", players=30), _s(7, "dup"), _s(8, "dup")]
-    assert await record_player_counts(test_session, summaries) == 1
-
-    await test_session.refresh(restarted)
-    await test_session.refresh(dup)
-    assert restarted.game_id == 9
-    assert dup.game_id == 5
-    assert [p.players for p in await list_player_counts(test_session, 9)] == [30]
+    assert [p.players for p in await list_player_counts(test_session, 9)] == [10, 20]

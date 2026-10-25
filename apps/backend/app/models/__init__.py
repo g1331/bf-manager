@@ -3,6 +3,7 @@
 from app.models.audit_log import AuditLog
 from app.models.base import Base
 from app.models.bf1 import (
+    Bf1ExchangeSnapshot,
     Bf1Match,
     Bf1MatchIdCache,
     Bf1ServerAdmin,
@@ -20,6 +21,7 @@ from app.models.user import User
 __all__ = [
     "AuditLog",
     "Base",
+    "Bf1ExchangeSnapshot",
     "Bf1Match",
     "Bf1MatchIdCache",
     "Bf1ServerAdmin",

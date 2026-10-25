@@ -24,6 +24,7 @@ from app.domain.ea.login.task_manager import close_task_manager, init_task_manag
 # 触发游戏 profile 注册
 from app.domain.games import GameRegistry  # noqa: F401
 from app.services.bf1.blaze_service import close_blaze_pool
+from app.services.bf1.exchange_service import exchange_poller
 from app.services.bf1.overview_service import overview_poller
 from app.services.ea_login_finalizer import EALoginFinalizer
 from app.services.metrics_service import record_request, user_id_from_token
@@ -51,18 +52,19 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     # EA 邮箱密码登录任务管理器：注入 finalizer 后纳入进程级单例
     init_task_manager(EALoginFinalizer().finalize)
 
-    # BF1 全服统计后台轮询：仅在启用 bf1 时启动，拉取 EA 聚合写 Redis 供 /bf1/overview 只读
-    overview_task: asyncio.Task[None] | None = None
+    # BF1 后台轮询：仅在启用 bf1 时启动。全服统计写 Redis 供 /bf1/overview 只读；
+    # 交换每小时检查一次换期，入库后供历史查询
+    pollers: list[asyncio.Task[None]] = []
     if "bf1" in settings.games:
-        overview_task = asyncio.create_task(overview_poller())
+        pollers = [asyncio.create_task(overview_poller()), asyncio.create_task(exchange_poller())]
 
     yield
 
     logger.info("Shutting down")
-    if overview_task is not None:
-        overview_task.cancel()
+    for task in pollers:
+        task.cancel()
         with contextlib.suppress(asyncio.CancelledError):
-            await overview_task
+            await task
     await close_task_manager()
     await close_blaze_pool()
     await close_redis()

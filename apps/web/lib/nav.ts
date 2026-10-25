@@ -88,6 +88,8 @@ function gameModule(g: GameMeta): RailModule {
         { label: "概况", code: "Overview", href: "/stats", exact: true },
         { label: "服务器", code: "Servers", href: "/bf1/servers", match: ["/bf1/server"] },
         { label: "战绩查询", code: "Career", href: "/bf1/players", match: ["/bf1/player"] },
+        { label: "交换", code: "Exchange", href: "/bf1/exchange" },
+        { label: "行动", code: "Operations", href: "/bf1/campaign" },
       ],
     };
   }

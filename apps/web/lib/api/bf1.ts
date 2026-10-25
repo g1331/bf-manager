@@ -420,6 +420,30 @@ export interface MyServersResponse {
   items: MyServerItem[];
 }
 
+/** 交换物品。rarity 为 EA rarenessLevel.name（Superior / Enhanced / Standard） */
+export interface ExchangeItem {
+  key: string;
+  name: string;
+  parent_name: string | null;
+  category: string | null;
+  rarity: string;
+  price: number;
+  image_url: string | null;
+}
+
+export interface ExchangeSnapshot {
+  captured_at: string;
+  items: ExchangeItem[];
+}
+
+export interface Campaign {
+  name: string;
+  description: string;
+  ends_at: string;
+  daily_reset_at: string;
+  operations: { name: string; image_url: string | null }[];
+}
+
 export const bf1Api = {
   searchPlayers: (name: string) =>
     api.get<PersonaSearchResult>(`/bf1/players/search?name=${encodeURIComponent(name)}`),
@@ -477,6 +501,14 @@ export const bf1Api = {
     ),
 
   getOverview: () => api.get<BF1Overview>(`/bf1/overview`),
+
+  /** date 为北京时间 YYYY-MM-DD，取当天生效的那一期；不传为最新一期 */
+  getExchange: (date?: string) =>
+    api.get<ExchangeSnapshot>(`/bf1/exchange${date ? `?date=${date}` : ""}`),
+  /** 全部历史期的开始时间，新的在前 */
+  getExchangePeriods: () => api.get<string[]>(`/bf1/exchange/periods`),
+  /** 当前行动；没有进行中的行动时为 null */
+  getCampaign: () => api.get<Campaign | null>(`/bf1/campaign`),
 
   // 当前登录用户对该服务器的角色，供前端按角色 gating 内联服管入口
   getMyServerRole: (gameId: number) => api.get<MyServerRole>(`/bf1/server-admin/${gameId}/my-role`),

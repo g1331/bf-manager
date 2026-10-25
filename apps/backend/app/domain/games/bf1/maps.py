@@ -114,6 +114,26 @@ class MapData:
     }
 
 
+# 多图行动的地图顺序（单图行动不列）。分组已对照 Blaze ATTR operationindex 实测；
+# shortcut: 图内先后顺序取自社区换图工具 ChangeMapTool-KAF 的 opNextMap，官服轮询确认后再修正。
+OPERATION_MAPS: tuple[tuple[str, ...], ...] = (
+    ("MP_Chateau", "MP_Forest"),
+    ("MP_Scar", "MP_Amiens"),
+    ("MP_MountainFort", "MP_ItalianCoast"),
+    ("MP_FaoFortress", "MP_Suez", "MP_Desert"),
+    ("MP_Fields", "MP_Graveyard"),
+    ("MP_Verdun", "MP_Underworld"),
+    ("MP_Valley", "MP_Bridge"),
+    ("MP_Volga", "MP_Tsaritsyn"),
+    ("MP_Beachhead", "MP_Ridge"),
+)
+
+
+def operation_maps(map_name: str) -> tuple[str, ...]:
+    """当前地图所属行动的全部地图（按进行顺序）；不在表内的按单图行动处理"""
+    return next((ops for ops in OPERATION_MAPS if map_name in ops), (map_name,))
+
+
 _BB_PREFIX = "[BB_PREFIX]"
 _BB_CDN = "https://eaassets-a.akamaihd.net/battlelog/battlebinary"
 

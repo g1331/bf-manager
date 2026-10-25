@@ -4,7 +4,12 @@ import { Bookmark, Clock4, Eye, Lock, SkipForward, UserRound } from "lucide-reac
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
 import { CountUp } from "@/components/bf1/visual/CountUp";
 import { CountryFlag } from "@/components/common/CountryFlag";
-import type { MapRotationItem, ServerExtras, ServerSummary } from "@/lib/api/bf1";
+import type {
+  MapRotationItem,
+  OperationProgress,
+  ServerExtras,
+  ServerSummary,
+} from "@/lib/api/bf1";
 import { pingSiteCountry } from "@/lib/bf1/pingsite";
 import { cn } from "@/lib/utils";
 import { formatDuration } from "./history";
@@ -15,17 +20,20 @@ const PLAYERS_PER_SLOT = 2;
 /**
  * 首屏横幅：当前地图实景铺底，左侧服务器名与在线人数，右下角「正在进行」的地图卡。
  * elapsedMinutes 是当前这张图已进行的分钟数（由人数采样推得，没有采样时为 null）。
+ * operation 是行动模式进度（来自实时名单的 Blaze ATTR），非行动模式为 null。
  */
 export function ServerHeroBanner({
   summary,
   extras,
   rotation,
   elapsedMinutes,
+  operation,
 }: {
   summary: ServerSummary;
   extras: ServerExtras;
   rotation: MapRotationItem[];
   elapsedMinutes: number | null;
+  operation: OperationProgress | null;
 }) {
   const mapLabel = summary.map_display_name ?? summary.map_name;
   const modeLabel = summary.mode_display_name ?? summary.game_mode;
@@ -167,6 +175,23 @@ export function ServerHeroBanner({
               <span className="tabular-nums">已进行 {formatDuration(elapsedMinutes)}</span>
             ) : null}
           </div>
+          {operation ? (
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-white/45 lg:justify-end">
+              {operation.maps.length > 1
+                ? operation.maps.map((name, i) => (
+                    <span key={name} className="flex items-center gap-1.5">
+                      {i > 0 ? <span aria-hidden>›</span> : null}
+                      <span className={cn(i === operation.map_index && "text-white/85")}>
+                        {name}
+                      </span>
+                    </span>
+                  ))
+                : null}
+              <span className="tabular-nums">
+                {operation.maps.length > 1 ? "· " : ""}已推进 {operation.sectors_taken} 区
+              </span>
+            </div>
+          ) : null}
           {next ? (
             <div className="mt-5 flex items-center gap-3 border-t border-white/15 pt-3 lg:flex-row-reverse">
               {next.map_image_url ? (

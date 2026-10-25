@@ -149,6 +149,14 @@ class ServerPlayersSummary(BaseModel):
     rank_150_count: int = 0
 
 
+class OperationProgress(BaseModel):
+    """行动模式进度，取自 Blaze ATTR（level / progress）。"""
+
+    maps: list[str]  # 本行动全部地图的中文名，按进行顺序
+    map_index: int  # 当前地图在 maps 中的下标
+    sectors_taken: int  # ATTR progress：进攻方在当前地图已推进的区域数，换图归零
+
+
 class ServerPlayersResponse(BaseModel):
     """服务器实时玩家列表（Blaze roster + RSP 名单 + 可选生涯战绩）。"""
 
@@ -162,6 +170,7 @@ class ServerPlayersResponse(BaseModel):
     queued: list[BlazePlayer] = []
     spectators: list[BlazePlayer] = []
     summary: ServerPlayersSummary = ServerPlayersSummary()
+    operation: OperationProgress | None = None
     stats_included: bool = False
     is_mock: bool = False
 

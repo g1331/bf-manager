@@ -137,7 +137,7 @@ function ServerDetailView({
     staleTime: 5 * 60_000,
   });
   // 实时名单要等 Blaze 与战绩好几秒，进页就在后台预取，切到「玩家」分区时直接可用
-  useQuery({
+  const players = useQuery({
     queryKey: ["bf1-server-players", gameId],
     queryFn: () => bf1Api.getServerPlayers(gameId),
     staleTime: 15_000,
@@ -189,6 +189,7 @@ function ServerDetailView({
           extras={extras}
           rotation={map_rotation}
           elapsedMinutes={elapsedMinutes}
+          operation={players.data?.operation ?? null}
         />
 
         <SectionNav tabs={tabs} tab={tab} onTab={setTab} />
@@ -712,7 +713,7 @@ function LatencyCell({ latency }: { latency: number }) {
   );
 }
 
-/** 排队 / 旁观玩家组，使用与队伍列一致的高亮规则，但不拆队、不展示战绩 */
+/** 排队 / 旁观玩家组，使用与队伍列一致的高亮规则，但不拆队、不展示战绩；服管可逐个操作 */
 function SidePlayerGroup({
   title,
   players,
@@ -722,6 +723,7 @@ function SidePlayerGroup({
   players: BlazePlayer[];
   game: string;
 }) {
+  const { canManage } = useServerAdmin();
   return (
     <div>
       <div className="mb-1.5 flex items-baseline gap-2 text-xs text-white/50">
@@ -730,19 +732,21 @@ function SidePlayerGroup({
       </div>
       <div className="flex flex-wrap gap-x-4 gap-y-1.5">
         {players.map((p) => (
-          <Link
-            key={p.persona_id}
-            href={`/${game}/player/${p.persona_id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={cn(
-              "inline-flex items-center gap-1.5 text-[11px] hover:underline",
-              nameColor(p),
-            )}
-          >
-            <RankBadge rank={p.rank} />
-            <span className="max-w-[140px] truncate">{p.display_name}</span>
-          </Link>
+          <span key={p.persona_id} className="inline-flex items-center gap-1">
+            <Link
+              href={`/${game}/player/${p.persona_id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                "inline-flex items-center gap-1.5 text-[11px] hover:underline",
+                nameColor(p),
+              )}
+            >
+              <RankBadge rank={p.rank} />
+              <span className="max-w-[140px] truncate">{p.display_name}</span>
+            </Link>
+            {canManage ? <PlayerRowActions player={p} /> : null}
+          </span>
         ))}
       </div>
     </div>

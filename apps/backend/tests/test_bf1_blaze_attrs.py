@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from app.domain.games.bf1.maps import MapData
-from app.services.bf1.blaze_service import _attr_ids, _faction_map
+from app.services.bf1.blaze_service import _attr_ids, _faction_map, _operation_progress
 
 
 def test_attr_ids_joins_slices_cut_mid_number():
@@ -25,3 +25,19 @@ def test_faction_map_from_level():
 def test_faction_map_unknown_map_falls_back():
     assert _faction_map("MP_NoSuchMap") == {}
     assert _faction_map(None) == {}
+
+
+def test_operation_progress_multi_map():
+    op = _operation_progress({"mode": "BreakthroughLarge", "level": "MP_Amiens", "progress": "3"})
+    assert op is not None
+    assert op.maps == ["圣康坦的伤痕", "亚眠"]
+    assert (op.map_index, op.sectors_taken) == (1, 3)
+
+
+def test_operation_progress_single_map_and_non_operation():
+    op = _operation_progress(
+        {"mode": "BreakthroughLarge", "level": "MP_Offensive", "progress": "0"}
+    )
+    assert op is not None and op.maps == ["索姆河"] and op.map_index == 0
+    assert _operation_progress({"mode": "Conquest", "level": "MP_Amiens", "progress": "1"}) is None
+    assert _operation_progress({"mode": "BreakthroughLarge", "level": "MP_Amiens"}) is None

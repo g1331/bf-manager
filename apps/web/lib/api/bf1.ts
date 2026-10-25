@@ -271,6 +271,14 @@ export interface ServerPlayersSummary {
   rank_150_count: number;
 }
 
+export interface OperationProgress {
+  /** 本行动全部地图的中文名，按进行顺序 */
+  maps: string[];
+  map_index: number;
+  /** 进攻方在当前地图已推进的区域数 */
+  sectors_taken: number;
+}
+
 export interface ServerPlayersResponse {
   game_id: number;
   server_name: string | null;
@@ -282,6 +290,7 @@ export interface ServerPlayersResponse {
   queued: BlazePlayer[];
   spectators: BlazePlayer[];
   summary: ServerPlayersSummary;
+  operation: OperationProgress | null;
   stats_included: boolean;
   is_mock: boolean;
 }

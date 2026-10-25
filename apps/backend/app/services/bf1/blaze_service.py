@@ -33,12 +33,13 @@ from app.core.config import get_settings
 from app.domain.ea.account_pool import EACredentials
 from app.domain.ea.blaze_protocol.socket import BlazeServerREQ, BlazeSocket
 from app.domain.ea.data_handle import BlazeData
-from app.domain.games.bf1.maps import MapData
+from app.domain.games.bf1.maps import MapData, operation_maps, translate_map_name
 from app.models.ea_binding import EaBinding
 from app.schemas.bf1.server import (
     BlazePlayer,
     BlazePlayerStats,
     BlazeTeamGroup,
+    OperationProgress,
     ServerPlayersResponse,
     ServerPlayersSummary,
 )
@@ -544,6 +545,20 @@ def _faction_map(map_name: str | None) -> dict[int, str]:
     return {0: entry["Team1"], 1: entry["Team2"]}
 
 
+def _operation_progress(attrs: dict[str, Any]) -> OperationProgress | None:
+    """行动模式服务器的当前进度；非行动模式或 ATTR 缺字段时返回 None。"""
+    level = attrs.get("level")
+    progress = str(attrs.get("progress", ""))
+    if attrs.get("mode") != "BreakthroughLarge" or not level or not progress.isdigit():
+        return None
+    maps = operation_maps(level)
+    return OperationProgress(
+        maps=[translate_map_name(m) or m for m in maps],
+        map_index=maps.index(level),
+        sectors_taken=int(progress),
+    )
+
+
 def _build_team_groups(
     players: list[BlazePlayer], faction_by_team: dict[int, str]
 ) -> list[BlazeTeamGroup]:
@@ -688,6 +703,7 @@ async def get_server_players(
         queued=queued_players,
         spectators=spectator_players,
         summary=summary,
+        operation=_operation_progress(attrs),
         stats_included=include_stats,
         is_mock=False,
     )

@@ -375,6 +375,10 @@ export function TeamSelectAllCheckbox({ players }: { players: PlayerRef[] }) {
   );
 }
 
+function isInTeam(player: BlazePlayer): boolean {
+  return player.team === 0 || player.team === 1;
+}
+
 /** 玩家行 ⋯ 操作菜单，按角色与玩家当前状态（是否已 VIP / 管理）决定菜单项 */
 export function PlayerActionMenu({ player }: { player: BlazePlayer }) {
   const { act, can } = useServerAdmin();
@@ -396,7 +400,8 @@ export function PlayerActionMenu({ player }: { player: BlazePlayer }) {
       </DropdownMenuItem>,
     );
   }
-  if (can("move")) {
+  // 排队 / 旁观玩家不在任何一队（TIDX 65535），没有换边可言
+  if (can("move") && isInTeam(player)) {
     items.push(
       <DropdownMenuItem key="move" className={itemCls} onSelect={() => act("move", ref)}>
         <ArrowLeftRight className="size-3.5" />
@@ -517,7 +522,7 @@ export function BatchActionBar({ players }: { players: BlazePlayer[] }) {
             variant="outline"
             size="sm"
             className="compact-action"
-            onClick={() => actBatch("move", selectedPlayers)}
+            onClick={() => actBatch("move", selectedPlayers.filter(isInTeam))}
           >
             <ArrowLeftRight className="size-3.5" />
             批量换边

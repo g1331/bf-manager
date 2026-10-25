@@ -53,6 +53,39 @@ class MapData:
         "MP_London": {"Chinese": "伦敦的呼唤：灾祸", "Team1": GER, "Team2": UK},
     }
 
+    # 地图封面（Gateway mapImageUrl 原值）。Blaze 快照不带图片 URL，文件名含哈希无法拼出，
+    # 只能固化：2026-10-25 从 searchServers / getFullServerDetails 采集。
+    # shortcut: MP_Bridge / Ravines / Valley / Alps / Blitz / London 当时无服在跑未采到，
+    # 这几张图在快照路径下无封面；采到后补进来即可。
+    MapImageDict = {
+        "MP_Amiens": "[BB_PREFIX]/gamedata/Tunguska/31/107/MP_Amiens_LandscapeLarge-e195589d.jpg",
+        "MP_Beachhead": "[BB_PREFIX]/gamedata/Tunguska/90/19/MP_Beachhead_LandscapeLarge-5a13c655.jpg",
+        "MP_Chateau": "[BB_PREFIX]/gamedata/Tunguska/36/77/MP_Chateau_LandscapeLarge-244d5987.jpg",
+        "MP_Desert": "[BB_PREFIX]/gamedata/Tunguska/40/9/MP_Desert_LandscapeLarge-d8f749da.jpg",
+        "MP_FaoFortress": "[BB_PREFIX]/gamedata/Tunguska/54/47/MP_FaoFortress_LandscapeLarge-cad1748e.jpg",
+        "MP_Fields": "[BB_PREFIX]/gamedata/Tunguska/95/83/MP_Fields_LandscapeLarge-5f53ddc4.jpg",
+        "MP_Forest": "[BB_PREFIX]/gamedata/Tunguska/33/69/MP_Forest_LandscapeLarge-dfbbe910.jpg",
+        "MP_Giant": "[BB_PREFIX]/gamedata/Tunguska/35/11/MP_Giant_LandscapeLarge-dd0b93ef.jpg",
+        "MP_Graveyard": "[BB_PREFIX]/gamedata/Tunguska/67/16/MP_Graveyard_LandscapeLarge-bd1012e6.jpg",
+        "MP_Harbor": "[BB_PREFIX]/gamedata/Tunguska/45/126/MP_Harbor_LandscapeLarge-d382c7ea.jpg",
+        "MP_Hell": "[BB_PREFIX]/gamedata/Tunguska/113/118/MP_Hell_LandscapeLarge-7176911c.jpg",
+        "MP_Islands": "[BB_PREFIX]/gamedata/Tunguska/55/40/MP_Islands_LandscapeLarge-c9d8272b.jpg",
+        "MP_ItalianCoast": "[BB_PREFIX]/gamedata/Tunguska/21/3/MP_ItalianCoast_LandscapeLarge-1503eec7.jpg",
+        "MP_MountainFort": "[BB_PREFIX]/gamedata/Tunguska/118/81/MP_MountainFort_LandscapeLarge-8a517533.jpg",
+        "MP_Naval": "[BB_PREFIX]/gamedata/Tunguska/36/46/MP_Naval_LandscapeLarge-dc2e8daf.jpg",
+        "MP_Offensive": "[BB_PREFIX]/gamedata/Tunguska/109/85/MP_Offensive_LandscapeLarge-6dabdea3.jpg",
+        "MP_Ridge": "[BB_PREFIX]/gamedata/Tunguska/116/5/MP_Ridge_LandscapeLarge-8c057a19.jpg",
+        "MP_River": "[BB_PREFIX]/gamedata/Tunguska/33/68/MP_River_LandscapeLarge-21443ae9.jpg",
+        "MP_Scar": "[BB_PREFIX]/gamedata/Tunguska/18/37/MP_Scar_LandscapeLarge-ee25fbd6.jpg",
+        "MP_ShovelTown": "[BB_PREFIX]/gamedata/Tunguska/48/86/MP_Shoveltown_LandscapeLarge-d0aa5920.jpg",
+        "MP_Suez": "[BB_PREFIX]/gamedata/Tunguska/10/48/MP_Suez_LandscapeLarge-f630fc76.jpg",
+        "MP_Trench": "[BB_PREFIX]/gamedata/Tunguska/37/47/MP_Trench_LandscapeLarge-dbd1248f.jpg",
+        "MP_Tsaritsyn": "[BB_PREFIX]/gamedata/Tunguska/45/67/MP_Tsaritsyn_LandscapeLarge-2dbd3bf5.jpg",
+        "MP_Underworld": "[BB_PREFIX]/gamedata/Tunguska/74/59/MP_Underworld_LandscapeLarge-b6c5c7e7.jpg",
+        "MP_Verdun": "[BB_PREFIX]/gamedata/Tunguska/26/54/MP_Verdun_LandscapeLarge-1a364063.jpg",
+        "MP_Volga": "[BB_PREFIX]/gamedata/Tunguska/106/60/MP_Volga_LandscapeLarge-6ac49c25.jpg",
+    }
+
     ModeDict = {
         "Rush": "突袭",
         "Conquest": "征服",

@@ -1,13 +1,24 @@
 """BF1 全服统计聚合的纯函数单测
 
 覆盖 build_overview 的官方/私服拆分、亚洲/欧洲/其他地区分桶、热门地图模式与模式分布排序，
-不依赖 EA 网络与数据库。
+Blaze 快照推送的聚合与去重、快照收包，以及快照失败回退 searchServers，不依赖 EA 网络与数据库。
 """
 
 from __future__ import annotations
 
+import asyncio
+
+import pytest
+from app.api.errors import EAApiError
+from app.schemas.bf1.overview import BF1Overview
 from app.schemas.bf1.server import ServerSummary
-from app.services.bf1.overview_service import _region_key, build_overview
+from app.services.bf1 import blaze_service, overview_service
+from app.services.bf1.overview_service import (
+    _region_key,
+    _snapshot_mode,
+    build_overview,
+    build_overview_from_snapshot,
+)
 
 
 def _summary(
@@ -134,3 +145,171 @@ def test_build_overview_empty() -> None:
     assert ov.servers.total == 0
     assert ov.top_map_modes == []
     assert ov.mode_distribution == []
+
+
+# ---- Blaze 快照路径 ----
+
+
+def _game(
+    gid: int,
+    *,
+    servertype: str = "RANKED",
+    region: str = "Asia",
+    pcnt: list[int] | None = None,
+    qcnt: int = 0,
+    level: str = "MP_Amiens",
+    mode_attrs: dict[str, str] | None = None,
+) -> dict:
+    attrs = {"servertype": servertype, "region": region, "level": level, "HNET": "secret"}
+    attrs.update(mode_attrs if mode_attrs is not None else {"mode": "Conquest0"})
+    return {"GID": gid, "PCNT": pcnt or [0, 0, 0, 0], "QCNT": qcnt, "ATTR": attrs}
+
+
+def test_build_overview_from_snapshot_aggregates_and_dedupes() -> None:
+    updates = [
+        {"GAM": _game(1, servertype="OFFICIAL", region="Asia", pcnt=[60, 2, 1, 1], qcnt=3)},
+        _game(2, region="EU", pcnt=[30, 0, 0, 0], qcnt=1),
+        {"GAM": _game(3, region="NAm", pcnt=[5, 0, 2, 0])},
+        # 同一 GID 的后续更新覆盖前者，不重复计数
+        {"GAM": _game(2, region="EU", pcnt=[32, 0, 0, 0], qcnt=1)},
+    ]
+    ov = build_overview_from_snapshot(updates)
+
+    assert ov.sample_pulls == 1
+    assert ov.raw_count == 4
+    assert ov.servers.total == 3
+    assert (ov.servers.official, ov.servers.private) == (1, 2)
+    assert (ov.servers.asia, ov.servers.eu, ov.servers.other) == (1, 1, 1)
+    assert ov.players.total == 62 + 32 + 5
+    assert ov.players.official == 62
+    assert ov.players.eu == 32
+    assert ov.spectators.total == 2 + 2
+    assert ov.queues.total == 4
+    assert ov.queues.official == 3
+
+    # 标签与 searchServers 路径同口径：ModeDict / MapTeamDict 中文名 + 固化的地图封面
+    top = ov.top_map_modes[0]
+    assert top.label == "征服 · 亚眠"
+    assert top.image is not None
+    assert top.image.startswith("https://eaassets-a.akamaihd.net/battlelog/battlebinary/")
+    assert ov.mode_distribution[0].label == "征服"
+
+
+def test_snapshot_mode_normalizes_codes() -> None:
+    assert _snapshot_mode({"mode": "Conquest"}) == "Conquest"
+    assert _snapshot_mode({"gamemode": "BreakthroughLarge0"}) == "BreakthroughLarge"
+    assert _snapshot_mode({"levellocation": "MP_Amiens_TugOfWar0"}) == "TugOfWar"
+    assert _snapshot_mode({"mode": "ConquestLarge0"}) == "Conquest"
+    assert _snapshot_mode({"level": "MP_Amiens", "servertype": "RANKED"}) is None
+
+
+def test_build_overview_from_snapshot_rejects_unknown_mode() -> None:
+    with pytest.raises(ValueError) as exc:
+        build_overview_from_snapshot([{"GAM": _game(1, mode_attrs={})}])
+    # 诊断信息只含键名与模式 / 地图相关值，隐私字段的值不外泄
+    assert "HNET" in str(exc.value)
+    assert "secret" not in str(exc.value)
+
+
+def test_build_overview_from_snapshot_rejects_empty() -> None:
+    with pytest.raises(ValueError):
+        build_overview_from_snapshot([])
+
+
+async def test_fetch_overview_prefers_snapshot(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def fake_snapshot(_db: object) -> list[dict]:
+        return [{"GAM": _game(1, pcnt=[10, 0, 0, 0])}]
+
+    async def no_search(_db: object) -> BF1Overview:
+        raise AssertionError("快照成功时不应走 searchServers")
+
+    monkeypatch.setattr(overview_service, "fetch_game_list_snapshot", fake_snapshot)
+    monkeypatch.setattr(overview_service, "_fetch_overview_by_search", no_search)
+    ov = await overview_service.fetch_overview(object())  # type: ignore[arg-type]
+    assert ov.players.total == 10
+    assert ov.sample_pulls == 1
+
+
+@pytest.mark.parametrize(
+    "failure",
+    [TimeoutError("timeout"), ConnectionError("kicked"), ValueError("bad mode")],
+)
+async def test_fetch_overview_falls_back_to_search(
+    monkeypatch: pytest.MonkeyPatch, failure: Exception
+) -> None:
+    async def failing_snapshot(_db: object) -> list[dict]:
+        raise failure
+
+    fallback = BF1Overview(available=True, sample_pulls=50, raw_count=9000)
+
+    async def fake_search(_db: object) -> BF1Overview:
+        return fallback
+
+    monkeypatch.setattr(overview_service, "fetch_game_list_snapshot", failing_snapshot)
+    monkeypatch.setattr(overview_service, "_fetch_overview_by_search", fake_search)
+    assert await overview_service.fetch_overview(object()) is fallback  # type: ignore[arg-type]
+
+
+class _FakeSocket:
+    """模拟 Blaze 连接：send 时先回 Result，再按批推送 NotifyGameListUpdate。"""
+
+    def __init__(self, pushes: list[dict], reply_type: str = "Result") -> None:
+        self.callback = None
+        self.pushes = pushes
+        self.reply_type = reply_type
+        self.sent: list[dict] = []
+
+    async def send(self, packet: dict, timeout: float = 60) -> dict:
+        self.sent.append(packet)
+        reply = {"method": packet["method"], "type": self.reply_type, "data": {"ERRC": 0x40040000}}
+        if self.callback:
+            self.callback(reply)  # 回调也会收到应答，须被过滤
+            # 其它请求的推送也要被过滤
+            self.callback({"method": "UserSessions.UserAdded", "type": "Message", "data": {}})
+
+        async def deliver() -> None:
+            for push in self.pushes:
+                await asyncio.sleep(0)
+                if self.callback:
+                    self.callback(push)
+
+        asyncio.get_running_loop().create_task(deliver())
+        return reply
+
+
+def _push(updt: list[dict], *, done: bool) -> dict:
+    return {
+        "method": "GameManager.NotifyGameListUpdate",
+        "type": "Message",
+        "data": {"UPDT": updt, "DONE": int(done)},
+    }
+
+
+async def test_fetch_game_list_snapshot_collects_pushes(monkeypatch: pytest.MonkeyPatch) -> None:
+    socket = _FakeSocket(
+        [_push([{"GAM": _game(1)}], done=False), _push([{"GAM": _game(2)}], done=True)]
+    )
+
+    async def fake_get_socket(_db: object) -> _FakeSocket:
+        return socket
+
+    monkeypatch.setattr(blaze_service._pool, "get_socket", fake_get_socket)
+    updates = await blaze_service.fetch_game_list_snapshot(object())  # type: ignore[arg-type]
+
+    assert [u["GAM"]["GID"] for u in updates] == [1, 2]
+    assert socket.sent[0]["method"] == "GameManager.getGameListSnapshot"
+    assert socket.callback is None  # 回调已还原
+
+
+async def test_fetch_game_list_snapshot_raises_on_error_reply(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    socket = _FakeSocket([], reply_type="Error")
+
+    async def fake_get_socket(_db: object) -> _FakeSocket:
+        return socket
+
+    monkeypatch.setattr(blaze_service._pool, "get_socket", fake_get_socket)
+    with pytest.raises(EAApiError, match="0x40040000"):
+        await blaze_service.fetch_game_list_snapshot(object())  # type: ignore[arg-type]
+    assert socket.callback is None

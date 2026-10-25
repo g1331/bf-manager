@@ -61,6 +61,8 @@ _CACHED_BASIC_FIELDS = ("kills", "deaths", "wins", "losses", "timePlayed", "kpm"
 RANK_MAX = 150
 # Blaze TIDX 中表示「排队 / 旁观」而非真实队伍的哨兵值。
 TEAM_SENTINEL = 65535
+# 全服快照从发请求到收齐推送的总超时（实测约 2s）。
+GAME_LIST_SNAPSHOT_TIMEOUT = 18
 
 _MOCK_FIXTURE = (
     Path(__file__).resolve().parents[2]
@@ -163,6 +165,8 @@ class _BlazeConnectionPool:
 
 
 _pool = _BlazeConnectionPool()
+# 快照经 socket.callback 收推送，同一时间只能有一个快照占用回调。
+_snapshot_lock = asyncio.Lock()
 
 
 async def close_blaze_pool() -> None:
@@ -686,3 +690,69 @@ async def get_server_players(
         stats_included=include_stats,
         is_mock=False,
     )
+
+
+async def fetch_game_list_snapshot(db: AsyncSession) -> list[dict[str, Any]]:
+    """在连接池的已登录连接上拉一次全服快照，返回 NotifyGameListUpdate 的 UPDT 原始项。
+
+    Result 只有 NGD/UPIN，游戏数据经推送分批到达，``DONE`` 为真表示结束。推送靠临时挂到
+    ``socket.callback`` 上收集；回调也会收到其它请求（如玩家列表）的应答，按方法与类型过滤，
+    不影响它们按 ID 匹配的 future。原始项含 HNET 等隐私字段，只留在内存交给调用方聚合，
+    不得写日志或缓存。超时或任何异常向上抛，由调用方回退。
+    """
+    async with _snapshot_lock:
+        socket = await _pool.get_socket(db)
+        done = asyncio.get_running_loop().create_future()
+        updates: list[dict[str, Any]] = []
+
+        def _on_packet(packet: dict[str, Any]) -> None:
+            if (
+                packet.get("method") != "GameManager.NotifyGameListUpdate"
+                or packet.get("type") != "Message"
+            ):
+                return
+            data = packet.get("data") or {}
+            updates.extend(data.get("UPDT") or [])
+            if data.get("DONE") and not done.done():
+                done.set_result(None)
+
+        packet = {
+            "method": "GameManager.getGameListSnapshot",
+            "type": "Command",
+            "data": {
+                "CMGD 3": {"GGTY 0": 0, "GVER 1": "3779779"},
+                "DNAM 1": "csFullGameList",
+                "IGNO 0": 1,
+                "LCAP 0": 65535,
+                # PMIN 1 只要有人的服（约 140 个、1.8MB）；PMIN 0 会带上九千多个空服。
+                "MMLC 3": {
+                    "FRES 3": {"MAXS 0": 65535, "MINS 0": 0},
+                    "RSZR 3": {"PCAP 0": 64, "PMIN 0": 1},
+                },
+            },
+        }
+        previous = socket.callback
+        # BlazeSocket 把 callback 声明成静态方法、实例上按属性覆盖，mypy 认不出这种用法
+        socket.callback = _on_packet  # type: ignore[method-assign]
+        try:
+            async with asyncio.timeout(GAME_LIST_SNAPSHOT_TIMEOUT):
+                response = await socket.send(  # type: ignore[no-untyped-call]
+                    packet, timeout=GAME_LIST_SNAPSHOT_TIMEOUT
+                )
+                if response.get("type") == "Error":
+                    errc = (response.get("data") or {}).get("ERRC")
+                    errc_text = hex(errc) if isinstance(errc, int) else errc
+                    raise EAApiError(
+                        code="BLAZE_QUERY_FAILED",
+                        message=f"Blaze 快照返回错误 ERRC={errc_text}",
+                    )
+                await done
+        except TimeoutError:
+            # 收不齐推送不代表连接坏了；若在此重建，推送一直不来时每轮轮询都会重新登录
+            raise
+        except (ConnectionError, OSError):
+            await _pool.invalidate()
+            raise
+        finally:
+            socket.callback = previous  # type: ignore[method-assign]
+        return updates

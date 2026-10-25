@@ -8,13 +8,14 @@
  * 成员 / 审计）沿用既有数据与操作逻辑，仅置于半透明深色面板内保证可读。
  */
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useMemo, useState, type ReactNode } from "react";
+import { motion } from "framer-motion";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, MapPin } from "lucide-react";
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
+import { DetailBackground, DetailNote } from "@/components/bf1/visual/DetailBackground";
 import { ServerDetailSkeleton } from "@/components/layout/PageSkeleton";
 import { ResponsiveTable, type Column } from "@/components/common/ResponsiveTable";
 import {
@@ -24,6 +25,7 @@ import {
   TeamSelectAllCheckbox,
   BatchActionBar,
 } from "@/components/bf1/server-admin/InlineServerAdmin";
+import { SectionNav, useTabHash } from "@/components/bf1/SectionNav";
 import { MembersPanel } from "@/components/bf1/server-admin/MembersPanel";
 import { MapStatsPanel } from "@/components/bf1/server-detail/MapStatsPanel";
 import { ServerAboutPanel } from "@/components/bf1/server-detail/ServerAboutPanel";
@@ -40,7 +42,6 @@ import {
 } from "@/components/bf1/server-detail/history";
 import { useSession } from "@/hooks/useSession";
 import { auditApi, type AuditLogItem } from "@/lib/api/audit";
-import { FALLBACK_GRADIENT } from "@/lib/bf1/background";
 import { cn } from "@/lib/utils";
 import {
   bf1Api,
@@ -64,7 +65,8 @@ const ACTION_LABEL: Record<string, string> = {
   remove_admin: "移除管理员",
 };
 
-type TabKey = "overview" | "players" | "maps" | "rules" | "members" | "audit";
+const TAB_KEYS = ["overview", "players", "maps", "rules", "members", "audit"] as const;
+type TabKey = (typeof TAB_KEYS)[number];
 
 export default function ServerDetailPage() {
   const { id, game } = useParams<{ id: string; game: string }>();
@@ -81,7 +83,7 @@ export default function ServerDetailPage() {
     return <ServerDetailSkeleton />;
   }
   if (!detail.data) {
-    return <CenterNote text="未找到该服务器，请返回列表重试" />;
+    return <DetailNote text="未找到该服务器，请返回列表重试" />;
   }
 
   return (
@@ -118,7 +120,10 @@ function ServerDetailView({
     { key: "members", label: "成员", count: memberCount },
     ...(isLoggedIn ? ([{ key: "audit", label: "审计" }] as const) : []),
   ];
-  const [tab, setTab] = useTabHash(tabs.map((t) => t.key));
+  const [tab, setTab] = useTabHash(
+    TAB_KEYS,
+    tabs.map((t) => t.key),
+  );
 
   // 人数采样只有私服有；空列表时战况与热门地图整块不渲染
   const counts = useQuery({
@@ -167,7 +172,7 @@ function ServerDetailView({
 
   return (
     <div className="relative min-h-screen w-full text-white">
-      <ServerBackgroundLayer url={summary.map_image_url} />
+      <DetailBackground url={summary.map_image_url} />
 
       <div className="relative z-10 max-w-[1600px] px-6 py-5 sm:px-10 sm:py-8">
         <button
@@ -251,83 +256,6 @@ function ServerDetailView({
             )}
           </motion.div>
         </ServerAdminProvider>
-      </div>
-    </div>
-  );
-}
-
-const TAB_KEYS: TabKey[] = ["overview", "players", "maps", "rules", "members", "audit"];
-
-/**
- * 当前分区记在地址栏 hash 里（#players），刷新、分享链接都能回到同一分区。
- * 详情数据到手后才挂载这个视图（纯客户端），初始值可以直接读 window。
- */
-function useTabHash(available: TabKey[]): [TabKey, (t: TabKey) => void] {
-  const [tab, setTabState] = useState<TabKey>(() => {
-    const fromHash = window.location.hash.slice(1) as TabKey;
-    return TAB_KEYS.includes(fromHash) ? fromHash : "overview";
-  });
-  const setTab = (t: TabKey) => {
-    setTabState(t);
-    window.history.replaceState(null, "", t === "overview" ? window.location.pathname : `#${t}`);
-  };
-  // 审计等分区要登录后才出现，未出现时先落在概览
-  return [available.includes(tab) ? tab : "overview", setTab];
-}
-
-/* ----------------------------- 背景与外壳 ----------------------------- */
-
-/** 背景层挂载时整体淡入，盖住全站轮换背景；地图图片下载完再淡入，换图时新旧交叉淡化 */
-function ServerBackgroundLayer({ url }: { url: string | null }) {
-  const reduceMotion = useReducedMotion();
-  const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!url) return;
-    const img = new Image();
-    img.onload = () => setLoadedUrl(url);
-    img.src = url;
-    return () => {
-      img.onload = null;
-    };
-  }, [url]);
-
-  const shownUrl = url ? loadedUrl : null;
-  const fade = { duration: reduceMotion ? 0 : 0.8, ease: "easeInOut" } as const;
-
-  return (
-    <motion.div
-      className="pointer-events-none fixed inset-0 z-0"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={fade}
-    >
-      <div className="absolute inset-0" style={{ background: FALLBACK_GRADIENT }} />
-      <AnimatePresence>
-        {shownUrl ? (
-          <motion.div
-            key={shownUrl}
-            className="absolute inset-0 scale-110 bg-cover bg-center bg-no-repeat blur-[2px]"
-            style={{ backgroundImage: `url(${shownUrl})` }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={fade}
-          />
-        ) : null}
-      </AnimatePresence>
-      <div className="absolute inset-0 bg-black/55" />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/35 to-black/90" />
-    </motion.div>
-  );
-}
-
-function CenterNote({ text }: { text: string }) {
-  return (
-    <div className="relative min-h-screen w-full overflow-hidden text-white">
-      <ServerBackgroundLayer url={null} />
-      <div className="relative z-10 flex min-h-screen items-center justify-center px-4">
-        <span className="text-sm text-white/60">{text}</span>
       </div>
     </div>
   );
@@ -417,53 +345,6 @@ function SettingValue({ value, kind }: { value: string; kind: "toggle" | "scale"
 }
 
 /* ----------------------------- Tab 导航与通用面板 ----------------------------- */
-
-function SectionNav({
-  tabs,
-  tab,
-  onTab,
-}: {
-  tabs: ReadonlyArray<{ key: TabKey; label: string; count?: number }>;
-  tab: TabKey;
-  onTab: (t: TabKey) => void;
-}) {
-  return (
-    // 吸顶：翻长名单时也能随时切分区
-    <nav className="sticky top-0 z-20 mt-6 border-b border-white/10 bg-black/70 backdrop-blur-md">
-      <div className="flex gap-1 overflow-x-auto">
-        {tabs.map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => onTab(t.key)}
-            className={cn(
-              "relative flex shrink-0 items-baseline gap-1.5 px-4 py-3.5 text-[15px] font-semibold tracking-[0.15em] transition-colors",
-              tab === t.key ? "text-white" : "text-white/45 hover:text-white/80",
-            )}
-          >
-            {t.label}
-            {t.count != null ? (
-              <span
-                className={cn(
-                  "text-[11px] font-medium tracking-normal tabular-nums",
-                  tab === t.key ? "text-amber-400" : "text-white/35",
-                )}
-              >
-                {t.count}
-              </span>
-            ) : null}
-            {tab === t.key ? (
-              <motion.span
-                layoutId="server-section-underline"
-                className="absolute inset-x-3 -bottom-px h-0.5 bg-amber-400"
-              />
-            ) : null}
-          </button>
-        ))}
-      </div>
-    </nav>
-  );
-}
 
 function Panel({ children }: { children: React.ReactNode }) {
   return (

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
+from app.schemas.bf1.server import ServerSummary
+
 
 class CountBreakdown(BaseModel):
     """同一指标在不同维度上的拆分。
@@ -57,3 +59,6 @@ class BF1Overview(BaseModel):
 
     # 最近 24h 的在线人数/服务器数趋势，按时间升序；历史单独存于 Redis list，读取时拼装
     history: list[TrendPoint] = Field(default_factory=list)
+
+    # 在线人数最多的服务器，按人数、排队数降序
+    top_servers: list[ServerSummary] = Field(default_factory=list)

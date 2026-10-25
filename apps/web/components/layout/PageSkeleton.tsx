@@ -40,21 +40,15 @@ export function RowsSkeleton({ rows = 8, className }: { rows?: number; className
 /** 全服统计（战情板）骨架：左列数字带 + 趋势 + 双分布面板，右列热门地图排行。 */
 export function StatsOverviewSkeleton() {
   return (
-    <section className="grid grid-cols-1 gap-5 xl:grid-cols-12">
-      <div className="space-y-5 xl:col-span-8">
-        <div className="grid grid-cols-2 gap-5 lg:grid-cols-4">
-          {Array.from({ length: 4 }, (_, i) => (
-            <Skeleton key={i} className="h-40 w-full" />
-          ))}
-        </div>
-        <Skeleton className="h-72 w-full" />
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-          <Skeleton className="h-56 w-full" />
-          <Skeleton className="h-56 w-full" />
-        </div>
+    <section className="space-y-5">
+      <Skeleton className="h-[22rem] w-full" />
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
+        <Skeleton className="h-[34rem] w-full xl:col-span-7" />
+        <Skeleton className="h-[34rem] w-full xl:col-span-5" />
       </div>
-      <div className="xl:col-span-4">
-        <Skeleton className="h-full min-h-96 w-full" />
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <Skeleton className="h-56 w-full" />
+        <Skeleton className="h-56 w-full" />
       </div>
     </section>
   );

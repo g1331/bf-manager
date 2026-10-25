@@ -139,6 +139,20 @@ def test_build_overview_top_map_modes_carry_map_image() -> None:
     assert by_label["行动模式 · B"].image is None
 
 
+def test_build_overview_top_servers_by_players_then_queue() -> None:
+    summaries = [
+        _summary(region="EU", official=False, players=n, queue=q)
+        for n, q in [(10, 0), (64, 2), (64, 8), (0, 0)] + [(1, 0)] * 10
+    ]
+    ov = build_overview(summaries, sample_pulls=1, raw_count=len(summaries))
+    assert len(ov.top_servers) == 10
+    assert [(s.player_count, s.queue_count) for s in ov.top_servers[:3]] == [
+        (64, 8),
+        (64, 2),
+        (10, 0),
+    ]
+
+
 def test_build_overview_empty() -> None:
     ov = build_overview([], sample_pulls=1, raw_count=0)
     assert ov.available is True

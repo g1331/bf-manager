@@ -47,7 +47,7 @@ export function SectionNav<K extends string>({
             {tab === t.key ? (
               <motion.span
                 layoutId="section-nav-underline"
-                className="absolute inset-x-3 -bottom-px h-0.5 bg-amber-400"
+                className="absolute inset-x-3 bottom-0 h-0.5 bg-amber-400"
               />
             ) : null}
           </button>

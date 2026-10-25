@@ -341,6 +341,7 @@ class EALoginTaskManager:
                 task_id=state.task_id,
                 error_code=e.code,
                 stage=getattr(e, "stage", None),
+                message=e.message,
                 snippet=getattr(e, "snippet", "") or None,
             ).warning("ea_login.task.error_detail")
             await self._mark_failed(state, code=e.code, message=e.message)

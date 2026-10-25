@@ -131,10 +131,16 @@ def get_email_method_masked_destination(html_text: str) -> str:
 
 
 def extract_page_error(html_text: str) -> str | None:
-    """从错误页（密码错、风控、邮箱不存在等）中抽取面向用户的提示。
+    """从错误页（密码错、风控、邮箱不存在等）中抽取 EA 服务端回填的提示。
 
-    EA 把错误信息塞在 ``class`` 含 ``error`` / ``alert``、``role="alert"`` 或 ``id``
-    含 ``error`` 的元素里。剔除与按钮文案重合的噪音词后，按出现顺序去重拼接。
+    juno 登录页常驻几段隐藏模板：``#offline-general-error`` / ``#offline-auth-error``
+    （离线登录才由前端 JS 显示，文案恰好是「credentials are incorrect or have
+    expired」）和国家区号下拉。旧实现把它们当成错误，导致每次都误判为凭据过期。
+
+    - 页面有 ``#online-general-error``（juno）：只认它的文本与隐藏的 ``#errorCode``，
+      两者都空就是没有错误；
+    - 其它页面：扫 ``class`` 含 ``error`` / ``alert``、``role="alert"`` 或 ``id`` 含
+      ``error`` 的元素，跳过 ``offline-*`` 模板，剔除噪音词后去重拼接。
 
     Returns:
         最多 300 字符的错误文案；无错误返回 ``None``。
@@ -143,10 +149,18 @@ def extract_page_error(html_text: str) -> str | None:
         tree = lxml_html.fromstring(html_text)
     except (ValueError, lxml_html.etree.ParserError):
         return None
+    online = tree.xpath('//*[@id="online-general-error"]')
+    if online:
+        text = " ".join(online[0].text_content().split())
+        code = "".join(tree.xpath('//input[@id="errorCode"]/@value')).strip()
+        if text:
+            return (f"{text} (错误码 {code})" if code else text)[:300]
+        return f"EA 错误码 {code}" if code else None
     raw_texts: Iterable[str] = tree.xpath(
         "//div["
-        'contains(@class,"error") or contains(@class,"alert") '
-        'or @role="alert" or contains(@id,"error")'
+        '(contains(@class,"error") or contains(@class,"alert") '
+        'or @role="alert" or contains(@id,"error")) '
+        'and not(ancestor-or-self::*[starts-with(@id,"offline-")])'
         "]//text()"
     )
     cleaned: list[str] = []
@@ -162,6 +176,27 @@ def extract_page_error(html_text: str) -> str | None:
     if not cleaned:
         return None
     return " ".join(cleaned)[:300]
+
+
+def page_diagnostic(html_text: str, *, limit: int = 300) -> str:
+    """把 EA 返回页面压成一行诊断文本：标题 + 可见正文。
+
+    只取元素文本、不取 ``value`` 属性，回填在输入框里的邮箱 / 密码不会进入结果；
+    脚本、样式、国家区号下拉与离线错误模板整段丢弃。用于 ``FormStructureChangedError`` 的 snippet。
+    """
+    try:
+        tree = lxml_html.fromstring(html_text)
+    except (ValueError, lxml_html.etree.ParserError):
+        return ""
+    for node in tree.xpath(
+        "//script|//style|//noscript|//select"
+        '|//*[contains(@class,"region-select")]|//*[starts-with(@id,"offline-")]'
+    ):
+        node.drop_tree()
+    title = " ".join("".join(tree.xpath("//title//text()")).split())
+    body = tree.find("body")
+    text = " ".join((body if body is not None else tree).text_content().split())
+    return f"[{title}] {text}"[:limit]
 
 
 def extract_redirect_url(html_text: str) -> str | None:

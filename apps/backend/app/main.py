@@ -23,6 +23,7 @@ from app.domain.ea.login.task_manager import close_task_manager, init_task_manag
 
 # 触发游戏 profile 注册
 from app.domain.games import GameRegistry  # noqa: F401
+from app.services.bf1.auto_switch_service import auto_switch_poller
 from app.services.bf1.blaze_service import close_blaze_pool
 from app.services.bf1.exchange_service import exchange_poller
 from app.services.bf1.overview_service import overview_poller
@@ -53,10 +54,14 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     init_task_manager(EALoginFinalizer().finalize)
 
     # BF1 后台轮询：仅在启用 bf1 时启动。全服统计写 Redis 供 /bf1/overview 只读；
-    # 交换每小时检查一次换期，入库后供历史查询
+    # 交换每小时检查一次换期，入库后供历史查询；行动服自动换图每 5 秒检查开启的服
     pollers: list[asyncio.Task[None]] = []
     if "bf1" in settings.games:
-        pollers = [asyncio.create_task(overview_poller()), asyncio.create_task(exchange_poller())]
+        pollers = [
+            asyncio.create_task(overview_poller()),
+            asyncio.create_task(exchange_poller()),
+            asyncio.create_task(auto_switch_poller()),
+        ]
 
     yield
 

@@ -610,6 +610,39 @@ def _load_mock(game_id: int) -> ServerPlayersResponse:
     return response
 
 
+async def get_operation_states(db: AsyncSession, game_ids: list[int]) -> dict[int, dict[str, Any]]:
+    """一次 Blaze 查询取多台服的当前地图与行动进度，供自动换图轮询。查不到的服不在结果里。"""
+    if not game_ids:
+        return {}
+    socket = await _pool.get_socket(db)
+    packet = {
+        "method": "GameManager.getGameDataFromId",
+        "type": "Command",
+        "data": {"DNAM 1": "csFullGameList", "GLST 40": [int(g) for g in game_ids]},
+    }
+    try:
+        response = await socket.send(packet, timeout=BLAZE_QUERY_TIMEOUT)
+    except (TimeoutError, ConnectionError, OSError) as exc:
+        await _pool.invalidate()
+        raise EAApiError(
+            code="BLAZE_QUERY_FAILED", message=f"Blaze 查询超时或连接中断: {exc}"
+        ) from exc
+    parsed = BlazeData.player_list_handle(response)
+    if isinstance(parsed, str):
+        raise EAApiError(code="BLAZE_QUERY_FAILED", message=parsed)
+    result: dict[int, dict[str, Any]] = {}
+    for gid, room in parsed.items():
+        attrs = room.get("attributes") or {}
+        result[int(gid)] = {
+            "map": attrs.get("level"),
+            "mode": attrs.get("mode"),
+            "progress": attrs.get("progress"),
+            "state": attrs.get("operationstate"),
+            "players": len(room.get("players") or []),
+        }
+    return result
+
+
 async def get_server_players(
     db: AsyncSession,
     game_id: int,

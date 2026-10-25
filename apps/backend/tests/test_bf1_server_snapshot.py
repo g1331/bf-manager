@@ -6,13 +6,15 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 from app.api.errors import ValidationError
+from app.models import Server
 from app.models.bf1.server_player_count import Bf1ServerPlayerCount
 from app.schemas.bf1.server import ServerSummary
-from app.services.bf1 import server_service
+from app.services.bf1 import server_player_count_service, server_service
 from app.services.bf1.server_filters import filter_summaries
 from app.services.bf1.server_player_count_service import (
     list_player_counts,
     record_player_counts,
+    resolve_server_ids,
 )
 from app.services.bf1.server_service import BF1ServerService
 from sqlalchemy import select
@@ -191,22 +193,69 @@ async def test_list_player_counts_separates_same_name_servers(test_session) -> N
     assert [p.players for p in await list_player_counts(test_session, 3)] == [30]
 
 
-async def test_list_player_counts_prefers_persisted_game_id(test_session) -> None:
-    # 有 persistedGameId 时按它归并：改名后仍连得上，同名的别家服不混进来
+async def test_list_player_counts_prefers_server_id(test_session) -> None:
+    # 解析到 serverId 后按它归并：改名后仍连得上，同名的别家服不混进来
     now = datetime.now(UTC)
     t0, t1 = now - timedelta(hours=2), now - timedelta(hours=1)
     test_session.add_all(
         [
             Bf1ServerPlayerCount(
-                game_id=1, persisted_game_id="g-a", name="old", player_count=10, sampled_at=t0
+                game_id=1, server_id=11, name="old", player_count=10, sampled_at=t0
             ),
             Bf1ServerPlayerCount(
-                game_id=2, persisted_game_id="g-b", name="new", player_count=99, sampled_at=t0
+                game_id=2, server_id=22, name="new", player_count=99, sampled_at=t0
             ),
             Bf1ServerPlayerCount(
-                game_id=3, persisted_game_id="g-a", name="new", player_count=20, sampled_at=t1
+                game_id=3, server_id=11, name="new", player_count=20, sampled_at=t1
             ),
         ]
     )
     await test_session.commit()
     assert [p.players for p in await list_player_counts(test_session, 3)] == [10, 20]
+
+
+async def test_resolve_server_ids_caches_and_backfills(test_session, monkeypatch) -> None:
+    class _Cache:
+        def __init__(self) -> None:
+            self.data: dict = {"bf1:gid_server_id:3": 33}
+
+        async def get(self, key):
+            return self.data.get(key)
+
+        async def set(self, key, value, ttl=None):
+            self.data[key] = value
+
+    cache = _Cache()
+    asked: list[int] = []
+
+    async def fake_get_cache():
+        return cache
+
+    async def fake_identity(self, gid):
+        asked.append(gid)
+        return (None, [], {1: 11}.get(gid), "x") if gid != 2 else None
+
+    monkeypatch.setattr(server_player_count_service, "get_cache", fake_get_cache)
+    monkeypatch.setattr(BF1ServerService, "get_admin_identity", fake_identity)
+    monkeypatch.setattr(server_player_count_service, "RESOLVE_PER_ROUND", 2)
+    registered = Server(game="bf1", server_id=11, game_id=999, name="mine")
+    test_session.add_all([registered, Bf1ServerPlayerCount(game_id=1, name="mine", player_count=5)])
+    await test_session.commit()
+
+    summaries = [
+        _s(1, "mine"),
+        _s(2, "no rsp"),
+        _s(3, "cached"),
+        _s(4, "over budget"),
+        _s(5, "official", is_official=True),
+    ]
+    assert await resolve_server_ids(test_session, summaries) == {1: 11, 3: 33}
+    # 每轮最多问 2 个；查不到的记 0，下一轮不再占名额
+    assert asked == [1, 2]
+    assert cache.data["bf1:gid_server_id:2"] == 0
+    row = await test_session.scalar(select(Bf1ServerPlayerCount))
+    await test_session.refresh(registered)
+    assert (row.server_id, registered.game_id) == (11, 1)
+
+    assert await resolve_server_ids(test_session, summaries) == {1: 11, 3: 33}
+    assert asked == [1, 2, 4]

@@ -96,23 +96,12 @@ export function PlayerDetailSkeleton() {
   return (
     <div className="relative min-h-screen w-full overflow-hidden text-white">
       <div className="relative z-10 max-w-[1600px] px-6 py-5 sm:px-10 sm:py-8">
-        <div className="flex items-center gap-4">
-          <Skeleton className="size-16 rounded-full sm:size-20" />
-          <div className="space-y-2">
-            <Skeleton className="h-7 w-48" />
-            <Skeleton className="h-4 w-32" />
-          </div>
-        </div>
-        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {Array.from({ length: 8 }, (_, i) => (
-            <Skeleton key={i} className="h-24 w-full" />
-          ))}
-        </div>
-        <div className="mt-8 space-y-3">
-          <Skeleton className="h-6 w-32" />
-          {Array.from({ length: 4 }, (_, i) => (
-            <Skeleton key={i} className="h-14 w-full" />
-          ))}
+        <Skeleton className="mb-4 h-5 w-28" />
+        <Skeleton className="h-80 w-full" />
+        <Skeleton className="mt-6 h-12 w-full" />
+        <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+          <Skeleton className="h-72 w-full" />
+          <Skeleton className="h-72 w-full" />
         </div>
       </div>
     </div>

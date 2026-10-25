@@ -54,9 +54,7 @@ class MapData:
     }
 
     # 地图封面（Gateway mapImageUrl 原值）。Blaze 快照不带图片 URL，文件名含哈希无法拼出，
-    # 只能固化：2026-10-25 从 searchServers / getFullServerDetails 采集。
-    # shortcut: MP_Bridge / Ravines / Valley / Alps / Blitz / London 当时无服在跑未采到，
-    # 这几张图在快照路径下无封面；采到后补进来即可。
+    # 只能固化：2026-10-25 从 Gamedata.getGameData 的 maps[].imageUrl 采集，32 张多人图齐全。
     MapImageDict = {
         "MP_Amiens": "[BB_PREFIX]/gamedata/Tunguska/31/107/MP_Amiens_LandscapeLarge-e195589d.jpg",
         "MP_Beachhead": "[BB_PREFIX]/gamedata/Tunguska/90/19/MP_Beachhead_LandscapeLarge-5a13c655.jpg",
@@ -84,6 +82,12 @@ class MapData:
         "MP_Underworld": "[BB_PREFIX]/gamedata/Tunguska/74/59/MP_Underworld_LandscapeLarge-b6c5c7e7.jpg",
         "MP_Verdun": "[BB_PREFIX]/gamedata/Tunguska/26/54/MP_Verdun_LandscapeLarge-1a364063.jpg",
         "MP_Volga": "[BB_PREFIX]/gamedata/Tunguska/106/60/MP_Volga_LandscapeLarge-6ac49c25.jpg",
+        "MP_Bridge": "[BB_PREFIX]/gamedata/Tunguska/91/127/MP_Bridge_LandscapeLarge-5b7f1b62.jpg",
+        "MP_Ravines": "[BB_PREFIX]/gamedata/Tunguska/31/32/MP_Ravines_LandscapeLarge-1fe0d3f6.jpg",
+        "MP_Valley": "[BB_PREFIX]/gamedata/Tunguska/115/63/MP_Valley_LandscapeLarge-8dc1c7ca.jpg",
+        "MP_Alps": "[BB_PREFIX]/gamedata/Tunguska/122/77/MP_Alps_LandscapeLarge-7ab30e3e.jpg",
+        "MP_Blitz": "[BB_PREFIX]/gamedata/Tunguska/94/38/MP_Blitz_LandscapeLarge-5e26212f.jpg",
+        "MP_London": "[BB_PREFIX]/gamedata/Tunguska/11/81/MP_London_LandscapeLarge-0b51fe46.jpg",
     }
 
     ModeDict = {

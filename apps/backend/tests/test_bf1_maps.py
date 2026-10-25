@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 
 from app.domain.games.bf1.maps import (
+    MapData,
     _warned_unknown_maps,
     _warned_unknown_modes,
     _warned_unknown_regions,
@@ -89,3 +90,8 @@ def test_normalize_map_image_url_passes_absolute_url_through() -> None:
 def test_normalize_map_image_url_none() -> None:
     assert normalize_map_image_url(None) is None
     assert normalize_map_image_url("") is None
+
+
+def test_every_map_has_image():
+    """快照路径的地图封面只来自 MapImageDict，缺一张热门榜就少一张图。"""
+    assert set(MapData.MapTeamDict) <= set(MapData.MapImageDict)

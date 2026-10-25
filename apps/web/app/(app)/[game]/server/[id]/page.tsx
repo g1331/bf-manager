@@ -13,7 +13,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRightLeft, SkipForward } from "lucide-react";
+import { ArrowLeft, ArrowRightLeft } from "lucide-react";
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
 import { DetailBackground, DetailNote } from "@/components/bf1/visual/DetailBackground";
 import { ServerDetailSkeleton } from "@/components/layout/PageSkeleton";
@@ -40,12 +40,7 @@ import {
   toMapSegments,
   useNowSeconds,
 } from "@/components/bf1/server-detail/history";
-import {
-  nextMap,
-  nextOperationStart,
-  operationKey,
-  operationStep,
-} from "@/components/bf1/server-detail/operation";
+import { nextMap, operationKey, operationStep } from "@/components/bf1/server-detail/operation";
 import { useSession } from "@/hooks/useSession";
 import { auditApi, type AuditLogItem } from "@/lib/api/audit";
 import { FACTION_SLUG } from "@/lib/bf1/factions";
@@ -937,7 +932,6 @@ function RotationGrid({
   }
   const statByKey = new Map(stats.map((m) => [mapKey(m.map_name, m.game_mode), m]));
   const topPlayerMinutes = Math.max(...stats.map((m) => m.player_minutes), 1);
-  const currentIdx = items.findIndex((m) => m.is_current);
   const nm = nextMap(items);
   // 行动服的「下一张」是本战役的下一张图（攻破后进入），不是轮换里的下一项
   const nextIdx =
@@ -946,9 +940,6 @@ function RotationGrid({
       : nm?.kind === "breakthrough"
         ? items.findIndex((m) => m.map_name === nm.map.map_name && m.operation)
         : -1;
-  const nextOpIdx =
-    currentIdx >= 0 && items[currentIdx].operation ? nextOperationStart(items, currentIdx) : -1;
-
   // 行动条目按战役分组（按首次出现的顺序），组内按战役进行顺序；单图行动与其它模式各归一组
   const groups: { key: string; title: string; entries: { m: MapRotationItem; i: number }[] }[] = [];
   items.forEach((m, i) => {
@@ -968,6 +959,15 @@ function RotationGrid({
   });
   for (const g of groups) g.entries.sort((a, b) => operationStep(a.m) - operationStep(b.m));
   const grouped = groups.some((g) => g.key !== "other");
+  // 图池里的战役，点一下换到该战役开头（组内已按进行顺序排好，取第一项）；单图行动各算一个
+  const shortcuts = groups
+    .filter((g) => g.key !== "other")
+    .flatMap((g) => (g.key === "single" ? g.entries.map((e) => [e]) : [g.entries]))
+    .map((entries) => ({
+      ...entries[0],
+      label: entries[0].m.operation!.map((o) => o.name).join(" → "),
+      current: entries.some((e) => e.m.is_current),
+    }));
 
   const renderCard = ({ m, i }: { m: MapRotationItem; i: number }) => {
     const mapLabel = m.map_display_name ?? m.map_name ?? "未知地图";
@@ -1004,9 +1004,9 @@ function RotationGrid({
                 type="button"
                 aria-label={`换到 ${mapLabel}`}
                 onClick={() => chooseLevel(i, mapLabel)}
-                className="absolute inset-0 hidden items-center justify-center bg-black/45 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:hover)]:flex"
+                className="absolute inset-0 hidden items-center justify-center bg-black/35 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:hover)]:flex"
               >
-                <span className="inline-flex items-center gap-1.5 bg-amber-400 px-4 py-2 text-sm font-bold text-black shadow-lg">
+                <span className="inline-flex items-center gap-1.5 bg-white/90 px-4 py-2 text-sm font-semibold text-black shadow-lg">
                   <ArrowRightLeft className="size-4" />
                   换到这张图
                 </span>
@@ -1065,10 +1065,10 @@ function RotationGrid({
                 disabled={!serverInitialized}
                 title={serverInitialized ? "切换到此地图" : "服务器尚未初始化，暂不可换图"}
                 onClick={() => chooseLevel(i, mapLabel)}
-                className="inline-flex shrink-0 items-center gap-1.5 border border-amber-400/70 bg-amber-400/10 px-3 py-1.5 text-xs font-semibold text-amber-200 transition-colors hover:bg-amber-400 hover:text-black disabled:border-white/15 disabled:bg-transparent disabled:text-white/40"
+                className="compact-action inline-flex h-8 shrink-0 items-center gap-1.5 bg-white/[0.08] px-3 text-xs font-medium text-white/85 ring-1 ring-white/15 transition-colors group-hover:bg-white/15 hover:!bg-white hover:text-black disabled:bg-transparent disabled:text-white/35"
               >
                 <ArrowRightLeft className="size-3.5" />
-                换到这张
+                换图
               </button>
             ) : null}
           </div>
@@ -1086,32 +1086,37 @@ function RotationGrid({
         </span>
         {stats.length > 0 ? <span>热度条为近 7 天人·分钟，越长越受欢迎</span> : null}
       </div>
-      {canSwitch && nextOpIdx >= 0 ? (
-        <div className="mb-5 flex flex-wrap items-center gap-x-4 gap-y-2 border-l-2 border-sky-400 bg-sky-500/10 px-4 py-3">
-          <SkipForward className="size-5 shrink-0 text-sky-300" />
-          <div className="min-w-0 flex-1">
-            <div className="text-sm font-semibold text-white">
-              下一个战役从「{items[nextOpIdx].map_display_name ?? items[nextOpIdx].map_name}」开始
-            </div>
-            <div className="text-xs text-white/50">
-              私服打完一个战役常落到别的战役第二张，可在这里直接换到下一个战役开头
-            </div>
+      {canSwitch && shortcuts.length > 0 ? (
+        <div className="mb-5 bg-black/40 px-4 py-3 ring-1 ring-white/10 backdrop-blur-sm">
+          <div className="mb-2 text-xs text-white/45">从头开始一个战役</div>
+          <div className="flex flex-wrap gap-2">
+            {shortcuts.map(({ m, i, label, current }) => (
+              <button
+                key={i}
+                type="button"
+                disabled={!serverInitialized}
+                title={
+                  serverInitialized
+                    ? `${current ? "重开" : "换到"} ${m.map_display_name ?? m.map_name}`
+                    : "服务器尚未初始化，暂不可换图"
+                }
+                onClick={() => chooseLevel(i, m.map_display_name ?? m.map_name ?? "")}
+                className={cn(
+                  "compact-action inline-flex h-9 items-center gap-2 pr-3 text-xs ring-1 transition-colors",
+                  current
+                    ? "text-amber-200 ring-amber-400/70 hover:bg-amber-400 hover:text-black"
+                    : "bg-white/[0.06] text-white/80 ring-white/10 hover:bg-white hover:text-black disabled:opacity-40 disabled:hover:bg-white/[0.06] disabled:hover:text-white/80",
+                )}
+              >
+                {m.map_image_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={m.map_image_url} alt="" className="h-full w-14 object-cover" />
+                ) : null}
+                <span className="truncate">{label}</span>
+                {current ? <span className="text-[10px] text-amber-300">进行中</span> : null}
+              </button>
+            ))}
           </div>
-          <button
-            type="button"
-            disabled={!serverInitialized}
-            title={serverInitialized ? undefined : "服务器尚未初始化，暂不可换图"}
-            onClick={() =>
-              chooseLevel(
-                nextOpIdx,
-                items[nextOpIdx].map_display_name ?? items[nextOpIdx].map_name ?? "",
-              )
-            }
-            className="inline-flex shrink-0 items-center gap-1.5 bg-sky-500 px-4 py-2 text-sm font-bold text-black transition-colors hover:bg-sky-400 disabled:opacity-40"
-          >
-            <SkipForward className="size-4" />
-            换到下一个战役
-          </button>
         </div>
       ) : null}
       {grouped ? (

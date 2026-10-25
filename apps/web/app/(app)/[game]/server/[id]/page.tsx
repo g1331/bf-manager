@@ -130,7 +130,7 @@ function ServerDetailView({
 
         <ServerHero summary={summary} />
 
-        <SettingsMatrix settings={detail.settings} />
+        <SettingsMatrix settings={detail.settings} descriptions={detail.setting_descriptions} />
 
         <ServerInfoPanel extras={extras} />
 
@@ -343,12 +343,18 @@ function QuickStat({ label, value, accent }: { label: string; value: string; acc
 /* ----------------------------- 自定义设置矩阵 ----------------------------- */
 
 /**
- * 复刻游戏「伺服器資訊」的四列设置矩阵。数据来自 detail.settings，EA 已按网关账号
- * 语言把条目键译为中文（繁体），值为 on/off；Scales 组的值是小数字符串（"1.0"=100%）。
- * 列标题为本应用自有文案，沿用全站简体；条目标签是 EA 来源数据，原样保留繁体。
+ * 复刻游戏「伺服器資訊」的四列设置矩阵。数据来自 detail.settings，后端已把 EA 的繁体
+ * 条目名换成简体，值为 on/off；Scales 组的值是小数字符串（"1.0"=100%）。
+ * descriptions 是条目名 → EA 官方说明，作悬停提示；后端查不到的条目保留繁体、无说明。
  * 某一组整组缺失时（非 RSP 服务器）跳过该列；全部缺失时整块不渲染。
  */
-function SettingsMatrix({ settings }: { settings: ServerSettings }) {
+function SettingsMatrix({
+  settings,
+  descriptions,
+}: {
+  settings: ServerSettings;
+  descriptions: Record<string, string>;
+}) {
   const columns = (
     [
       {
@@ -388,7 +394,13 @@ function SettingsMatrix({ settings }: { settings: ServerSettings }) {
                 <dl className="space-y-1.5">
                   {col.entries.map(([label, value]) => (
                     <div key={label} className="flex items-baseline justify-between gap-3 text-sm">
-                      <dt className="min-w-0 truncate text-white/65" title={label}>
+                      <dt
+                        className={cn(
+                          "min-w-0 truncate text-white/65",
+                          descriptions[label] && "cursor-help",
+                        )}
+                        title={descriptions[label] ?? label}
+                      >
                         {label}
                       </dt>
                       <dd className="shrink-0">
@@ -421,7 +433,7 @@ function SettingValue({ value, kind }: { value: string; kind: "toggle" | "scale"
   const on = value.toLowerCase() === "on";
   return (
     <span className={cn("font-medium tabular-nums", on ? "text-amber-300" : "text-white/35")}>
-      {on ? "開" : "關"}
+      {on ? "开" : "关"}
     </span>
   );
 }

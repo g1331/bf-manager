@@ -230,6 +230,8 @@ class ServerDetail(BaseModel):
     summary: ServerSummary
     description: str | None = None
     settings: dict[str, Any] = {}
+    # settings 条目简体名 → EA 官方说明，供前端悬停提示；条目名各组间不重复
+    setting_descriptions: dict[str, str] = {}
     map_rotation: list[MapRotationItem] = []
     players: list[ServerPlayer] = []
     extras: ServerExtras = ServerExtras()

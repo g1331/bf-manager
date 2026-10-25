@@ -55,7 +55,8 @@ async def list_player_counts(
     """某私服最近 hours 小时的人数点，按时间升序。
 
     先由 game_id 找到这个服的名字，再按名字取点，服务器重启换了 gameId 曲线也能连上。
-    shortcut: 按服名归并，改名后历史会断、同名私服会混在一起；快照能拿到稳定 serverId 再换键。
+    同一时刻有多个同名私服时（生产上真有），只取本 game_id 的点，分不清归属的时刻跳过。
+    shortcut: 按服名归并，改名后历史会断；快照能拿到稳定 serverId 再换键。
     """
     name = await db.scalar(
         select(Bf1ServerPlayerCount.name)
@@ -71,6 +72,14 @@ async def list_player_counts(
         .where(Bf1ServerPlayerCount.name == name, Bf1ServerPlayerCount.sampled_at >= since)
         .order_by(Bf1ServerPlayerCount.sampled_at)
     )
+    by_time: dict[datetime, list[Bf1ServerPlayerCount]] = {}
+    for row in rows:
+        by_time.setdefault(row.sampled_at, []).append(row)
+    picked = []
+    for same_time in by_time.values():
+        own = [r for r in same_time if r.game_id == game_id]
+        if own or len(same_time) == 1:
+            picked.append((own or same_time)[0])
     return [
         ServerPlayerCountPoint(
             # sqlite 读回的是无时区时间，按写入时的 UTC 补上
@@ -80,5 +89,5 @@ async def list_player_counts(
             spectators=p.spectator_count,
             max_players=p.max_player_count,
         )
-        for p in rows
+        for p in picked
     ]

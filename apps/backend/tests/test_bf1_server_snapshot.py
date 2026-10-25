@@ -172,3 +172,20 @@ async def test_list_player_counts_joins_restarts_by_name(test_session) -> None:
     )
     await test_session.commit()
     assert [p.players for p in await list_player_counts(test_session, 9)] == [10, 20]
+
+
+async def test_list_player_counts_separates_same_name_servers(test_session) -> None:
+    # 两个同名私服同时在线：各查各的；重启前分不清归属的时刻跳过
+    now = datetime.now(UTC)
+    t0, t1 = now - timedelta(hours=2), now - timedelta(hours=1)
+    test_session.add_all(
+        [
+            Bf1ServerPlayerCount(game_id=1, name="dup", player_count=10, sampled_at=t0),
+            Bf1ServerPlayerCount(game_id=2, name="dup", player_count=20, sampled_at=t0),
+            Bf1ServerPlayerCount(game_id=3, name="dup", player_count=30, sampled_at=t1),
+            Bf1ServerPlayerCount(game_id=2, name="dup", player_count=40, sampled_at=t1),
+        ]
+    )
+    await test_session.commit()
+    assert [p.players for p in await list_player_counts(test_session, 2)] == [20, 40]
+    assert [p.players for p in await list_player_counts(test_session, 3)] == [30]

@@ -1,6 +1,6 @@
 """BF1 私服人数与地图时序
 
-全服统计每 60 秒拿到一轮快照摘要，这里每 5 分钟为其中所有私服各写一个点（人数 + 当前地图 /
+全服统计每 60 秒拿到一轮快照摘要，这里每分钟为其中所有私服各写一个点（人数 + 当前地图 /
 模式），并清理超过保留期的旧点；服务器详情页据此画 24 小时人数曲线，地图字段留给热门地图统计。
 
 快照只有随重启变化的 gameId，稳定的 RSP serverId 要拿 gameId 问 Gateway。解析结果按 gameId
@@ -23,8 +23,8 @@ from app.schemas.bf1.server import ServerPlayerCountPoint, ServerSummary
 from app.services.bf1.server_service import BF1ServerService
 
 RETENTION = timedelta(days=7)
-# 轮询每分钟一次，采样隔 5 分钟一次；留 10 秒余量，免得轮询抖动把采样拖到 10 分钟
-SAMPLE_INTERVAL = timedelta(minutes=5) - timedelta(seconds=10)
+# 每轮轮询采一次；留 10 秒余量，免得轮询抖动把间隔拖成 2 分钟。同一轮被重复触发时只记一次
+SAMPLE_INTERVAL = timedelta(minutes=1) - timedelta(seconds=10)
 
 SERVER_ID_CACHE_KEY = "bf1:gid_server_id:{}"
 # 号池只有两三个号，首轮 150 多个私服分批解析，约 15 分钟解析完
@@ -87,7 +87,7 @@ async def resolve_server_ids(db: AsyncSession, summaries: list[ServerSummary]) -
 async def record_player_counts(
     db: AsyncSession, summaries: list[ServerSummary], server_ids: dict[int, int] | None = None
 ) -> int:
-    """距上次采样满 5 分钟时，为本轮所有私服写一个点并清理过期点，返回写入条数。"""
+    """距上次采样满 1 分钟时，为本轮所有私服写一个点并清理过期点，返回写入条数。"""
     now = datetime.now(UTC)
     last = await db.scalar(select(func.max(Bf1ServerPlayerCount.sampled_at)))
     # sqlite 读回的是无时区时间，按写入时的 UTC 补上

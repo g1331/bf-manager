@@ -147,7 +147,7 @@ async def test_record_player_counts_samples_private_servers(test_session) -> Non
         (1, "mine", "MP_Forest", 42),
         (3, "other", "MP_Amiens", 7),
     ]
-    # 不满 5 分钟的下一轮不采样
+    # 同一分钟内重复触发不重复采样
     assert await record_player_counts(test_session, summaries) == 0
 
     points = await list_player_counts(test_session, 1)

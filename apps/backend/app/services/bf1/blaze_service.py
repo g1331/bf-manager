@@ -7,7 +7,7 @@ Blaze 是 EA 后端的二进制长连接协议，提供 Gateway 拿不到的房�
    主动重建，避免每次查询都付出建连 + TLS + 登录的冷启动成本。
 2. 封装 Blaze 登录序列：用账号池凭据取 Blaze authcode，经 redirector 拿到 Blaze 服务器
    地址，建立加密连接并完成 ``Authentication.login``。
-3. 组装玩家列表：Blaze roster 叠加 RSP 管理 / VIP 名单、平台已绑定用户标记，以及可选的
+3. 组装玩家列表：Blaze roster 叠加 ATTR 里的管理 / VIP 名单、平台已绑定用户标记，以及可选的
    生涯战绩（并发限流合并）。
 
 连接池为进程级单例，``close_blaze_pool`` 在 FastAPI lifespan 关闭时调用。
@@ -43,7 +43,6 @@ from app.schemas.bf1.server import (
     ServerPlayersSummary,
 )
 from app.services.bf1.gateway_factory import get_bf1_client
-from app.services.bf1.server_service import _to_extras
 from app.services.ea_account_service import EAAccountService
 
 # Blaze 单条连接的最大存活时间（秒）。超龄主动重建，规避 EA 端静默断开后我方仍误判可用。
@@ -479,18 +478,14 @@ async def _gather_stats(
     return stats_map, rank_map
 
 
-def _extract_member_ids(detail_res: object) -> tuple[set[int], set[int]]:
-    """从 getFullServerDetails 响应解析在线判定所需的 admin / vip persona 集合。"""
-    if not isinstance(detail_res, dict):
-        return set(), set()
-    raw = detail_res.get("result") or {}
-    if not raw:
-        return set(), set()
-    extras = _to_extras(raw)
-    return (
-        {member.persona_id for member in extras.admins},
-        {member.persona_id for member in extras.vips},
-    )
+def _attr_ids(attrs: dict[str, Any], key: str) -> set[int]:
+    """解析 Blaze ATTR 里的 PID 名单（如 admins / vips）。
+
+    长串按长度切成 ``key1``…``key4``，切口可能落在数字中间，须按序拼接后再按 ``;`` 拆分。
+    名单与 Gateway rspInfo.adminList / vipList 一致，服主不在 admins 内。
+    """
+    joined = "".join(attrs.get(f"{key}{i}") or "" for i in range(1, 5))
+    return {int(pid) for pid in joined.split(";") if pid.strip().isdigit()}
 
 
 async def _fetch_registered_ids(db: AsyncSession, pids: Iterable[int]) -> set[int]:
@@ -532,17 +527,13 @@ def _build_player(
     )
 
 
-def _faction_map(detail_res: object) -> dict[int, str]:
+def _faction_map(map_name: str | None) -> dict[int, str]:
     """从服务器当前地图查 BF1 阵营对阵表，得出 {team_id: 阵营名}。
 
-    BF1 的对阵阵营（法国 / 德意志帝国等）由当前地图固定决定，不在 Blaze roster 内，
-    需用 `getFullServerDetails` 返回的 `serverInfo.mapName` 查 `MapData.MapTeamDict`：
+    BF1 的对阵阵营（法国 / 德意志帝国等）由当前地图固定决定，用 Blaze ATTR ``level``
+    （与 Gateway ``serverInfo.mapName`` 同格式）查 ``MapData.MapTeamDict``：
     Blaze TIDX 0 对应该图 Team1，TIDX 1 对应 Team2。未知地图返回空映射，前端回退「队伍 N」。
     """
-    if not isinstance(detail_res, dict):
-        return {}
-    raw = detail_res.get("result") or {}
-    map_name = (raw.get("serverInfo") or {}).get("mapName")
     entry = MapData.MapTeamDict.get(map_name) if map_name else None
     if not entry:
         return {}
@@ -631,19 +622,22 @@ async def get_server_players(
     if not room:
         raise NotFoundError(resource=f"服务器 gameId={game_id} 的实时玩家数据")
 
-    # 2. RSP 管理 / VIP 名单与可选战绩（走 Gateway HTTP，与 roster 串行避免共用 db 并发）。
+    # 2. 管理 / VIP 名单与阵营取自 roster 的 ATTR；可选战绩走 Gateway HTTP
+    #    （与 roster 串行避免共用 db 并发）。
     raw_normal = room.get("players") or []
     raw_queues = room.get("queues") or []
     raw_spectators = room.get("spectators") or []
     normal_pids = [int(p["pid"]) for p in raw_normal]
 
-    async with get_bf1_client(db) as client:
-        detail_res = await client.getFullServerDetails(int(game_id))
-        admin_ids, vip_ids = _extract_member_ids(detail_res)
-        faction_by_team = _faction_map(detail_res)
-        stats_map, rank_map = (
-            await _gather_stats(client, normal_pids) if include_stats else ({}, {})
-        )
+    attrs = room.get("attributes") or {}
+    admin_ids = _attr_ids(attrs, "admins")
+    vip_ids = _attr_ids(attrs, "vips")
+    faction_by_team = _faction_map(attrs.get("level"))
+    stats_map: dict[int, BlazePlayerStats] = {}
+    rank_map: dict[int, int] = {}
+    if include_stats:
+        async with get_bf1_client(db) as client:
+            stats_map, rank_map = await _gather_stats(client, normal_pids)
 
     # 3. 平台已绑定用户标记（db 此时已空闲）。
     all_pids = (

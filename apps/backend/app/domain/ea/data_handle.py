@@ -876,5 +876,6 @@ class BlazeData:
                 "max_player": max_player,
                 "time": time.time(),
                 "operation_info": operation_info,
+                "attributes": server_attribute,
             }
         return result

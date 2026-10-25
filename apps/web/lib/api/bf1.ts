@@ -588,4 +588,38 @@ export const bf1Api = {
     api.delete<{ success: boolean; message: string | null }>(
       `/bf1/server-admin/${gameId}/admin/${personaId}`,
     ),
+
+  getAutoSwitch: (gameId: number) =>
+    api.get<AutoSwitchView>(`/bf1/server-admin/${gameId}/auto-switch`),
+  saveAutoSwitchPlan: (gameId: number, plan: AutoSwitchPlan) =>
+    api.put<AutoSwitchView>(`/bf1/server-admin/${gameId}/auto-switch/plan`, plan),
+  enableAutoSwitch: (gameId: number) =>
+    api.post<AutoSwitchView>(`/bf1/server-admin/${gameId}/auto-switch/enable`),
+  disableAutoSwitch: (gameId: number) =>
+    api.post<AutoSwitchView>(`/bf1/server-admin/${gameId}/auto-switch/disable`),
 };
+
+/** 自动换图编排的一项：operation 从这张图打完整个战役算一次，map 打完这一张算一次 */
+export interface AutoSwitchItem {
+  map: string;
+  scope: "operation" | "map";
+  repeat: number;
+}
+
+export interface AutoSwitchPlan {
+  items: AutoSwitchItem[];
+  /** 整轮循环次数，0 为一直循环 */
+  loops: number;
+}
+
+export interface AutoSwitchView {
+  enabled: boolean;
+  plan: AutoSwitchPlan;
+  cursor: number;
+  done: number;
+  loop: number;
+  pending_map: string | null;
+  enabled_by: string | null;
+  enabled_at: number | null;
+  events: { ts: number; kind: string; message: string }[];
+}

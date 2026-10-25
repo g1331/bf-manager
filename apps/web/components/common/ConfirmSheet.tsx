@@ -30,6 +30,8 @@ interface ConfirmSheetProps {
   onConfirm: () => void | Promise<void>;
   variant?: "default" | "destructive";
   loading?: boolean;
+  /** 确认按钮额外禁用（如倒计时未结束） */
+  confirmDisabled?: boolean;
   children?: ReactNode;
 }
 
@@ -48,6 +50,7 @@ export function ConfirmSheet({
   onConfirm,
   variant = "default",
   loading,
+  confirmDisabled,
   children,
 }: ConfirmSheetProps) {
   const isDesktop = useIsDesktop();
@@ -68,7 +71,7 @@ export function ConfirmSheet({
             <Button
               variant={variant === "destructive" ? "destructive" : "default"}
               onClick={() => void onConfirm()}
-              disabled={loading}
+              disabled={loading || confirmDisabled}
             >
               {loading ? "执行中…" : confirmText}
             </Button>
@@ -91,7 +94,7 @@ export function ConfirmSheet({
             variant={variant === "destructive" ? "destructive" : "default"}
             size="lg"
             onClick={() => void onConfirm()}
-            disabled={loading}
+            disabled={loading || confirmDisabled}
           >
             {loading ? "执行中…" : confirmText}
           </Button>

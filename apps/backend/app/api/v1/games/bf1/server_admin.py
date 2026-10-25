@@ -16,7 +16,9 @@ from app.schemas.bf1.admin import (
     MyServersResponse,
     ServerMemberRequest,
 )
+from app.schemas.bf1.auto_switch import AutoSwitchPlan, AutoSwitchView
 from app.services.authz_service import ServerAuthzService
+from app.services.bf1.auto_switch_service import AutoSwitchService
 from app.services.bf1.server_admin_service import BF1ServerAdminService
 from app.services.membership_service import MembershipService
 
@@ -219,3 +221,37 @@ async def choose_level(
         success=True,
         message=f"已切换到地图序号 {payload.level_index}",
     )
+
+
+@router.get("/{game_id}/auto-switch", response_model=AutoSwitchView)
+async def get_auto_switch(game_id: int, db: DbDep, user: CurrentUser) -> AutoSwitchView:
+    await ServerAuthzService(db).require_role(
+        user=user, game="bf1", server_id=game_id, min_role="moderator"
+    )
+    return await AutoSwitchService(db).get(game_id)
+
+
+@router.put("/{game_id}/auto-switch/plan", response_model=AutoSwitchView)
+async def save_auto_switch_plan(
+    game_id: int, payload: AutoSwitchPlan, db: DbDep, user: CurrentUser
+) -> AutoSwitchView:
+    await ServerAuthzService(db).require_role(
+        user=user, game="bf1", server_id=game_id, min_role="admin"
+    )
+    return await AutoSwitchService(db).save_plan(game_id, payload)
+
+
+@router.post("/{game_id}/auto-switch/enable", response_model=AutoSwitchView)
+async def enable_auto_switch(game_id: int, db: DbDep, user: CurrentUser) -> AutoSwitchView:
+    await ServerAuthzService(db).require_role(
+        user=user, game="bf1", server_id=game_id, min_role="admin"
+    )
+    return await AutoSwitchService(db).enable(game_id, user)
+
+
+@router.post("/{game_id}/auto-switch/disable", response_model=AutoSwitchView)
+async def disable_auto_switch(game_id: int, db: DbDep, user: CurrentUser) -> AutoSwitchView:
+    await ServerAuthzService(db).require_role(
+        user=user, game="bf1", server_id=game_id, min_role="admin"
+    )
+    return await AutoSwitchService(db).disable(game_id, user)

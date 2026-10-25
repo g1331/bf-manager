@@ -27,6 +27,7 @@ import {
 } from "@/components/bf1/server-admin/InlineServerAdmin";
 import { SectionNav, useTabHash } from "@/components/bf1/SectionNav";
 import { MembersPanel } from "@/components/bf1/server-admin/MembersPanel";
+import { AutoSwitchPanel } from "@/components/bf1/server-detail/AutoSwitchPanel";
 import { MapStatsPanel } from "@/components/bf1/server-detail/MapStatsPanel";
 import { ServerAboutPanel } from "@/components/bf1/server-detail/ServerAboutPanel";
 import { ServerProfilePanel } from "@/components/bf1/server-detail/ServerProfilePanel";
@@ -41,9 +42,11 @@ import {
   useNowSeconds,
 } from "@/components/bf1/server-detail/history";
 import { nextMap, operationKey, operationStep } from "@/components/bf1/server-detail/operation";
+import { useMyServerRole } from "@/hooks/useServerAdminActions";
 import { useSession } from "@/hooks/useSession";
 import { auditApi, type AuditLogItem } from "@/lib/api/audit";
 import { FACTION_SLUG } from "@/lib/bf1/factions";
+import { canDo } from "@/lib/bf1/server-admin-authz";
 import { cn } from "@/lib/utils";
 import {
   bf1Api,
@@ -65,9 +68,19 @@ const ACTION_LABEL: Record<string, string> = {
   remove_vip: "移除 VIP",
   add_admin: "添加管理员",
   remove_admin: "移除管理员",
+  auto_switch_enable: "开启自动换图",
+  auto_switch_disable: "关闭自动换图",
 };
 
-const TAB_KEYS = ["overview", "players", "maps", "rules", "members", "audit"] as const;
+const TAB_KEYS = [
+  "overview",
+  "players",
+  "maps",
+  "autoswitch",
+  "rules",
+  "members",
+  "audit",
+] as const;
 type TabKey = (typeof TAB_KEYS)[number];
 
 export default function ServerDetailPage() {
@@ -113,11 +126,16 @@ function ServerDetailView({
   const isLoggedIn = !!session.data;
   const { summary, map_rotation, extras } = detail;
   const memberCount = extras.admins.length + extras.vips.length + extras.banned.length;
+  // 自动换图只对行动服的服管开放
+  const isOperationServer = map_rotation.some((m) => m.operation);
+  const myRole = useMyServerRole(gameId, isLoggedIn && isOperationServer);
+  const canAutoSwitch = canDo("kick", myRole.data);
 
   const tabs: ReadonlyArray<{ key: TabKey; label: string; count?: number }> = [
     { key: "overview", label: "概览" },
     { key: "players", label: "玩家", count: summary.player_count },
     { key: "maps", label: "地图", count: map_rotation.length },
+    ...(canAutoSwitch ? ([{ key: "autoswitch", label: "自动换图" }] as const) : []),
     { key: "rules", label: "规则" },
     { key: "members", label: "成员", count: memberCount },
     ...(isLoggedIn ? ([{ key: "audit", label: "审计" }] as const) : []),
@@ -239,6 +257,13 @@ function ServerDetailView({
                 stats={stats}
                 colors={colors}
                 serverInitialized={summary.persisted_game_id != null}
+              />
+            )}
+            {tab === "autoswitch" && canAutoSwitch && (
+              <AutoSwitchPanel
+                gameId={gameId}
+                rotation={map_rotation}
+                canEdit={canDo("chooseLevel", myRole.data)}
               />
             )}
             {tab === "rules" && (
@@ -856,7 +881,11 @@ function ServerAuditTab({ game, gameId }: { game: string; gameId: number }) {
           "—"
         ),
     },
-    { key: "actor", header: "操作人", cell: (l) => String(l.acting_persona_id) },
+    {
+      key: "actor",
+      header: "操作人",
+      cell: (l) => (l.payload?.auto_switch ? "自动换图" : String(l.acting_persona_id)),
+    },
   ];
 
   const totalPages =

@@ -19,6 +19,30 @@ def _ensure_dict_or_raise(data: Any, error_code: str) -> dict[str, Any]:
     raise EAApiError(code=error_code, message=str(data)[:256])
 
 
+async def resolve_ea_ids(client: Any, game_id: int) -> tuple[int | None, str | None]:
+    """按 game_id 实时解析本服的 EA RSP serverId 与 persistedGameId。
+
+    servers 表的 server_id 列存的是平台权限映射用的 gameId（路由路径参数），
+    不是 RSP 名单操作要的 serverId；persisted_game_id 列也没有回填链路。
+    两个标识均以 getFullServerDetails 服务端实时解析为准（与详情页解析同源），
+    不信任客户端传值，横向越权结构性消除。
+    """
+    res = await client.getFullServerDetails(game_id)
+    data = _ensure_dict_or_raise(res, "EA_SERVER_DETAIL_FAILED")
+    raw = data.get("result") or {}
+    server_info = raw.get("serverInfo") or {}
+    rsp_server = (raw.get("rspInfo") or {}).get("server") or {}
+    server_id_raw = rsp_server.get("serverId") or server_info.get("serverId")
+    try:
+        server_id = int(server_id_raw) if server_id_raw is not None else None
+    except (TypeError, ValueError):
+        server_id = None
+    persisted_game_id = (
+        server_info.get("persistedGameId") or raw.get("persistedGameId") or server_info.get("guid")
+    )
+    return server_id, persisted_game_id
+
+
 class BF1ServerAdminService:
     """BF1 服管操作 + 审计写入。
 
@@ -105,29 +129,7 @@ class BF1ServerAdminService:
         )
 
     async def _resolve_ea_ids(self, client: Any) -> tuple[int | None, str | None]:
-        """按 game_id 实时解析本服的 EA RSP serverId 与 persistedGameId。
-
-        servers 表的 server_id 列存的是平台权限映射用的 gameId（路由路径参数），
-        不是 RSP 名单操作要的 serverId；persisted_game_id 列也没有回填链路。
-        两个标识均以 getFullServerDetails 服务端实时解析为准（与详情页解析同源），
-        不信任客户端传值，横向越权结构性消除。
-        """
-        res = await client.getFullServerDetails(self.game_id)
-        data = _ensure_dict_or_raise(res, "EA_SERVER_DETAIL_FAILED")
-        raw = data.get("result") or {}
-        server_info = raw.get("serverInfo") or {}
-        rsp_server = (raw.get("rspInfo") or {}).get("server") or {}
-        server_id_raw = rsp_server.get("serverId") or server_info.get("serverId")
-        try:
-            server_id = int(server_id_raw) if server_id_raw is not None else None
-        except (TypeError, ValueError):
-            server_id = None
-        persisted_game_id = (
-            server_info.get("persistedGameId")
-            or raw.get("persistedGameId")
-            or server_info.get("guid")
-        )
-        return server_id, persisted_game_id
+        return await resolve_ea_ids(client, self.game_id)
 
     async def _resolve_rsp_server_id(self, client: Any) -> int:
         server_id, _ = await self._resolve_ea_ids(client)

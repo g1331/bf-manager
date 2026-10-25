@@ -5,7 +5,7 @@ import { TrendPanel } from "@/components/bf1/visual/TrendPanel";
 import { bf1Api } from "@/lib/api/bf1";
 
 /**
- * 服务器详情页的 24 小时人数曲线。只有私服才有采样（全服统计每 5 分钟一点，空服不记），
+ * 服务器详情页的 24 小时人数曲线。只有私服才有采样（全服统计每分钟一点，空服不记），
  * 没有任何采样时整块不渲染，避免给官服和一直没人的服展示空面板。
  */
 export function ServerPlayerTrend({ gameId }: { gameId: number }) {

@@ -66,5 +66,5 @@ async def get_server_players_route(
 
 @router.get("/{game_id}/player-counts", response_model=list[ServerPlayerCountPoint])
 async def get_server_player_counts(game_id: int, db: DbDep) -> list[ServerPlayerCountPoint]:
-    # 只有私服有人数点，由全服统计轮询每 5 分钟写入一次
+    # 只有私服有人数点，由全服统计轮询每分钟写入一次
     return await list_player_counts(db, game_id)

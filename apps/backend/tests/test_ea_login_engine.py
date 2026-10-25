@@ -15,6 +15,7 @@ from app.domain.ea.login.exceptions import (
     CredentialsExpiredError,
     FormStructureChangedError,
     RiskBlockedError,
+    UpstreamError,
     WrongPasswordError,
 )
 from app.domain.ea.login.login_engine import EALoginEngine
@@ -232,3 +233,38 @@ async def test_legacy_two_step_pure_password_page_reposts():
     engine = _engine_with_script([_JUNO_START_PAGE, _LEGACY_PASSWORD_PAGE, _TWO_FA_MULTI_PAGE])
     outcome = await engine.start()
     assert outcome.next_step == "need_method"
+
+
+class _TimeoutSession(_FakeSession):
+    """首个 GET 读响应体时抛裸 TimeoutError，模拟 aiohttp total timeout。"""
+
+    async def get(self, url, allow_redirects=True):
+        resp = _FakeResponse("")
+
+        async def _timeout() -> str:
+            raise TimeoutError
+
+        resp.text = _timeout  # type: ignore[method-assign]
+        return resp
+
+
+@pytest.mark.asyncio
+async def test_network_timeout_maps_to_upstream_error():
+    """网络超时必须是 UpstreamError，不能漏成 TimeoutError 被当作「等待用户 2FA 超时」。"""
+    engine = EALoginEngine(task_id="t-test", email="user@example.com", password="pw")
+    session = _TimeoutSession([])
+
+    async def _fake_ensure_session():
+        return session
+
+    engine._ensure_session = _fake_ensure_session  # type: ignore[method-assign]
+    with pytest.raises(UpstreamError):
+        await engine.start()
+
+
+@pytest.mark.asyncio
+async def test_aclose_drops_plaintext_credentials():
+    engine = EALoginEngine(task_id="t-test", email="user@example.com", password="pw")
+    await engine.aclose()
+    assert engine._email == ""
+    assert engine._password == ""

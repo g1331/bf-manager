@@ -70,6 +70,13 @@ _DEFAULT_HEADERS = {
     ),
 }
 
+# 单次 HTTP 请求上限。aiohttp 默认 total=300s，EA 卡住时任务会挂 5 分钟才失败。
+_HTTP_TIMEOUT = aiohttp.ClientTimeout(total=30)
+
+# 网络层异常：aiohttp 的超时有的继承 ClientError，有的只是 TimeoutError（读响应体时）。
+# 必须在引擎内转成 UpstreamError，否则会被 task_manager 当成「等待用户 2FA 超时」。
+_NETWORK_ERRORS = (aiohttp.ClientError, TimeoutError)
+
 # 用于识别风控关键词的小列表。匹配中英双语避免漏判。
 _RISK_KEYWORDS = (
     "unusual",
@@ -331,7 +338,12 @@ class EALoginEngine:
         return FinalizeOutcome(cookies=cookies)
 
     async def aclose(self) -> None:
-        """关闭 aiohttp 会话；多次调用安全。"""
+        """关闭 aiohttp 会话并丢弃明文邮箱 / 密码；多次调用安全。
+
+        终态任务还会在 task_manager 内存里保留 TTL 时长供状态查询，提前清掉明文。
+        """
+        self._email = ""
+        self._password = ""
         if self._session is not None:
             with contextlib.suppress(Exception):
                 await self._session.close()
@@ -346,9 +358,9 @@ class EALoginEngine:
         t0 = loop.time()
         try:
             resp = await session.get(EA_START_URL)
-        except aiohttp.ClientError as e:
+            text = await resp.text()
+        except _NETWORK_ERRORS as e:
             raise UpstreamError(f"GET start failed: {type(e).__name__}", stage="email") from e
-        text = await resp.text()
         self._log("get_start", http_status=resp.status, duration_ms=_ms(loop, t0))
         return resp, text
 
@@ -438,7 +450,7 @@ class EALoginEngine:
         t0 = loop.time()
         try:
             resp = await session.get(url, allow_redirects=False)
-        except aiohttp.ClientError as e:
+        except _NETWORK_ERRORS as e:
             raise UpstreamError(f"GET redirect failed: {type(e).__name__}", stage=stage) from e
 
         remid, sid = _extract_remid_sid(resp)
@@ -458,7 +470,7 @@ class EALoginEngine:
         t0 = loop.time()
         try:
             follow_resp = await session.get(location)
-        except aiohttp.ClientError as e:
+        except _NETWORK_ERRORS as e:
             raise UpstreamError(f"GET final follow failed: {type(e).__name__}", stage=stage) from e
         gw_session = _extract_gateway_session(follow_resp)
         self._log(
@@ -483,9 +495,9 @@ class EALoginEngine:
     ) -> tuple[aiohttp.ClientResponse, str]:
         try:
             resp = await session.post(url, data=payload)
-        except aiohttp.ClientError as e:
+            text = await resp.text()
+        except _NETWORK_ERRORS as e:
             raise UpstreamError(f"POST {stage} failed: {type(e).__name__}", stage=stage) from e
-        text = await resp.text()
         return resp, text
 
     # ===== 基础 =====
@@ -506,6 +518,7 @@ class EALoginEngine:
             self._session = aiohttp.ClientSession(
                 connector=connector,
                 headers=_DEFAULT_HEADERS,
+                timeout=_HTTP_TIMEOUT,
                 trust_env=True,
             )
         return self._session

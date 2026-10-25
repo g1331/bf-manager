@@ -60,6 +60,7 @@ class EALoginFinalizer:
         actor_kind: ActorKind,
         actor_id: int,
         cookies: LoginCookies,
+        target_account_id: int | None = None,
     ) -> EALoginTaskResultData:
         """``FinalizerFunc`` 的标准入口。
 
@@ -68,7 +69,7 @@ class EALoginFinalizer:
         """
         async with get_sessionmaker()() as db:
             try:
-                return await self._run(db, actor_kind, actor_id, cookies)
+                return await self._run(db, actor_kind, actor_id, cookies, target_account_id)
             except Exception:
                 await db.rollback()
                 raise
@@ -79,6 +80,7 @@ class EALoginFinalizer:
         actor_kind: ActorKind,
         actor_id: int,
         cookies: LoginCookies,
+        target_account_id: int | None,
     ) -> EALoginTaskResultData:
         client = BF1GatewayClient(pid=0, remid=cookies.remid, sid=cookies.sid)
         try:
@@ -123,6 +125,7 @@ class EALoginFinalizer:
             sid=refreshed_sid,
             session=session,
             access_token=access_token,
+            expected_account_id=target_account_id,
         )
         return EALoginTaskResultData(
             persona_id=persona_id,

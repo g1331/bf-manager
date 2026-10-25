@@ -58,13 +58,13 @@ def _redis_key(task_id: str) -> str:
 
 
 FinalizerFunc = Callable[
-    [ActorKind, int, LoginCookies],
+    [ActorKind, int, LoginCookies, int | None],
     Awaitable[EALoginTaskResultData],
 ]
 """登录引擎完成后回填账号体系的回调签名。
 
 参数依次为：actor 类型（``user`` / ``admin``）、actor 主键（``users.id``）、登录引擎
-抓到的 cookies。返回值由调用方组装成 :class:`EALoginTaskResultData` 写入任务状态。
+抓到的 cookies、重新登录的目标账号 id（仅 admin 路径，``None`` 表示按 persona 新增 / 更新）。返回值由调用方组装成 :class:`EALoginTaskResultData` 写入任务状态。
 回调内部应当自行管理数据库会话与异常，抛出的非 :class:`EALoginError` 异常会被本模块
 按 ``EA_LOGIN_FINALIZE_FAILED`` 统一处理。
 """
@@ -96,6 +96,7 @@ class _TaskState:
     actor_kind: ActorKind
     actor_id: int
     engine: EALoginEngine
+    target_account_id: int | None = None
     status: EALoginTaskStatus = EALoginTaskStatus.PENDING
     version: int = 0
     available_methods: list[str] = field(default_factory=list)
@@ -150,6 +151,7 @@ class EALoginTaskManager:
         actor_id: int,
         email: str,
         password: str,
+        target_account_id: int | None = None,
     ) -> EALoginTaskResponse:
         """启动一次新登录任务。
 
@@ -165,6 +167,7 @@ class EALoginTaskManager:
             actor_kind=actor_kind,
             actor_id=actor_id,
             engine=engine,
+            target_account_id=target_account_id,
         )
         self._tasks[task_id] = state
         state.runner = asyncio.create_task(self._run(state))
@@ -357,7 +360,9 @@ class EALoginTaskManager:
         self._bump(state)
         await self._persist(state)
         try:
-            result = await self._finalizer(state.actor_kind, state.actor_id, cookies)
+            result = await self._finalizer(
+                state.actor_kind, state.actor_id, cookies, state.target_account_id
+            )
         except EALoginError as e:
             await self._mark_failed(state, code=e.code, message=e.message)
             return

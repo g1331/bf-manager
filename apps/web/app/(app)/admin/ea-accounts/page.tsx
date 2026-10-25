@@ -7,7 +7,7 @@ import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { KeyRound, Pencil, PlugZap, Power, Trash2 } from "lucide-react";
+import { KeyRound, LogIn, Pencil, PlugZap, Power, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -32,7 +32,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { AdminPageSkeleton } from "@/components/layout/PageSkeleton";
 import { SectionHeading } from "@/components/layout/SectionHeading";
 import { ConfirmSheet } from "@/components/common/ConfirmSheet";
-import { EaLoginFlow } from "@/components/common/EaLoginFlow";
+import { EaLoginFlow, type EaLoginTarget } from "@/components/common/EaLoginFlow";
 import { ResponsiveTable, type Column } from "@/components/common/ResponsiveTable";
 
 import { useSession } from "@/hooks/useSession";
@@ -311,6 +311,19 @@ export default function EAAccountsAdminPage() {
   const [editing, setEditing] = useState<EAAccountItem | null>(null);
   const [renaming, setRenaming] = useState<EAAccountItem | null>(null);
   const [loginFlowOpen, setLoginFlowOpen] = useState(false);
+  // 关闭面板时保留 target，避免关闭动画期间标题跳回「新增」
+  const [reloginTarget, setReloginTarget] = useState<EaLoginTarget | null>(null);
+
+  const openLoginFlow = (account: EAAccountItem | null) => {
+    setReloginTarget(
+      account && {
+        accountId: account.id,
+        personaId: account.persona_id,
+        label: account.display_name ?? `Persona ${account.persona_id}`,
+      },
+    );
+    setLoginFlowOpen(true);
+  };
 
   const isAdmin = session.data?.role === "admin";
 
@@ -482,6 +495,15 @@ export default function EAAccountsAdminPage() {
             改备注
           </Button>
           <Button
+            variant={!a.enabled || a.failure_count > 0 ? "outline" : "ghost"}
+            size="sm"
+            className="compact-action"
+            onClick={() => openLoginFlow(a)}
+          >
+            <LogIn className="size-3.5" />
+            重新登录
+          </Button>
+          <Button
             variant="ghost"
             size="sm"
             className="compact-action"
@@ -512,7 +534,7 @@ export default function EAAccountsAdminPage() {
           title="EA 服管账号管理"
           description="维护平台代查询用的 EA 账号池。凭据写入后即加密存储，列表只展示健康状态，任何明文都不会回显。同一个 persona_id 只能存在一条记录。"
           action={
-            <Button onClick={() => setLoginFlowOpen(true)} size="sm">
+            <Button onClick={() => openLoginFlow(null)} size="sm">
               邮箱密码登录添加
             </Button>
           }
@@ -662,6 +684,7 @@ export default function EAAccountsAdminPage() {
 
         <EaLoginFlow
           actor="admin"
+          target={reloginTarget}
           open={loginFlowOpen}
           onOpenChange={setLoginFlowOpen}
           onSucceeded={() => qc.invalidateQueries({ queryKey: ["ea-accounts"] })}

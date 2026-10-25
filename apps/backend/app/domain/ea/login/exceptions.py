@@ -152,6 +152,20 @@ class CookieExtractionFailedError(EALoginError):
     message = "登录链路完成但未能拿到 EA 凭据，请重试"
 
 
+class PersonaMismatchError(EALoginError):
+    """重新登录指定账号时，EA 返回的 persona 与目标账号不一致。凭据不写入任何账号。"""
+
+    code = "EA_LOGIN_PERSONA_MISMATCH"
+    message = "登录的 EA 账号与目标账号不一致，未写入任何凭据"
+
+
+class TargetAccountNotFoundError(EALoginError):
+    """重新登录的目标账号在登录过程中被删除。"""
+
+    code = "EA_LOGIN_TARGET_NOT_FOUND"
+    message = "目标账号已不存在，未写入任何凭据"
+
+
 class UpstreamError(EALoginError):
     """非业务原因的上游异常：网络错误、TLS 失败、5xx 等。"""
 
@@ -169,8 +183,10 @@ __all__ = [
     "Invalid2FAMethodError",
     "Need2FACodeError",
     "Need2FAMethodSelectionError",
+    "PersonaMismatchError",
     "PrivacyAcceptRequiredError",
     "RiskBlockedError",
+    "TargetAccountNotFoundError",
     "UpstreamError",
     "WrongPasswordError",
 ]

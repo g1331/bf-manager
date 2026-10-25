@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 import pytest
+from app.domain.ea.login.exceptions import PersonaMismatchError
 from app.domain.ea.login.login_engine import (
     FinalizeOutcome,
     LoginCookies,
@@ -88,7 +89,7 @@ def _make_manager(
     wait: int = 2,
     long_poll: float = 1,
 ) -> EALoginTaskManager:
-    async def _default_finalizer(actor_kind, actor_id, cookies):
+    async def _default_finalizer(actor_kind, actor_id, cookies, target_account_id):
         return EALoginTaskResultData(
             persona_id=42,
             display_name="P42",
@@ -249,6 +250,48 @@ async def test_wait_for_change_returns_immediately_when_version_advanced(monkeyp
         created.task_id, actor_kind="user", actor_id=9, since_version=0
     )
     assert resp.version > 0
+    await mgr.close_all()
+
+
+@pytest.mark.asyncio
+async def test_target_account_id_passed_to_finalizer(monkeypatch):
+    """管理员重新登录：创建任务时的 target_account_id 原样交给 finalizer 做 persona 校验。"""
+    engine = StubEngine(_Scenario(next_step="done"))
+    _patch_engine(monkeypatch, engine)
+    seen: list[int | None] = []
+
+    async def _finalizer(actor_kind, actor_id, cookies, target_account_id):
+        seen.append(target_account_id)
+        return EALoginTaskResultData(persona_id=42, account_id=target_account_id)
+
+    mgr = _make_manager(finalizer=_finalizer)
+    created = await mgr.create_task(
+        actor_kind="admin", actor_id=3, email="a@b.com", password="pw", target_account_id=77
+    )
+    await asyncio.wait_for(_wait_terminal(mgr, created.task_id, 3, "admin"), timeout=2)
+    final = await mgr.get_state(created.task_id, actor_kind="admin", actor_id=3)
+    assert final.status == EALoginTaskStatus.SUCCEEDED
+    assert seen == [77]
+    await mgr.close_all()
+
+
+@pytest.mark.asyncio
+async def test_persona_mismatch_fails_task_with_clear_code(monkeypatch):
+    """finalizer 抛 PersonaMismatchError 时任务失败，错误码透传给前端而非笼统的回填失败。"""
+    engine = StubEngine(_Scenario(next_step="done"))
+    _patch_engine(monkeypatch, engine)
+
+    async def _finalizer(actor_kind, actor_id, cookies, target_account_id):
+        raise PersonaMismatchError(stage="finalize")
+
+    mgr = _make_manager(finalizer=_finalizer)
+    created = await mgr.create_task(
+        actor_kind="admin", actor_id=4, email="a@b.com", password="pw", target_account_id=1
+    )
+    await asyncio.wait_for(_wait_terminal(mgr, created.task_id, 4, "admin"), timeout=2)
+    final = await mgr.get_state(created.task_id, actor_kind="admin", actor_id=4)
+    assert final.status == EALoginTaskStatus.FAILED
+    assert final.error_code == "EA_LOGIN_PERSONA_MISMATCH"
     await mgr.close_all()
 
 

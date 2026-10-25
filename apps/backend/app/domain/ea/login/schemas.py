@@ -59,6 +59,16 @@ class EALoginTaskCreateRequest(BaseModel):
     password: SecretStr = Field(..., description="EA 账号密码（仅内存中流转）")
 
 
+class EAAccountLoginTaskCreateRequest(EALoginTaskCreateRequest):
+    """管理员登录任务的请求体：可指定要重新登录的已有账号。
+
+    提供 ``target_account_id`` 时，登录得到的 persona 必须与该账号一致才会写入，
+    否则任务失败且不新建 / 不覆盖任何账号；缺省时按 persona 新增或更新账号池。
+    """
+
+    target_account_id: int | None = Field(None, ge=1, description="要重新登录的 ea_accounts.id")
+
+
 class EALoginTaskSelectMethodRequest(BaseModel):
     """选择 2FA 方式的请求体。
 
@@ -123,6 +133,7 @@ class EALoginTaskCreateResponse(BaseModel):
 
 __all__ = [
     "TERMINAL_STATUSES",
+    "EAAccountLoginTaskCreateRequest",
     "EALoginTaskCreateRequest",
     "EALoginTaskCreateResponse",
     "EALoginTaskResponse",

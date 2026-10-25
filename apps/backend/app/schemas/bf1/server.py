@@ -54,6 +54,23 @@ class ServerPlayerCountPoint(BaseModel):
     queue: int = 0
     spectators: int = 0
     max_players: int = 0
+    map_name: str | None = None
+    game_mode: str | None = None
+
+
+class ServerMapStat(BaseModel):
+    """某张地图（按地图 + 模式区分）在统计窗口内的累计情况，last_seen 为 unix 秒"""
+
+    map_name: str
+    game_mode: str | None = None
+    map_display_name: str | None = None
+    mode_display_name: str | None = None
+    map_image_url: str | None = None
+    minutes: int
+    player_minutes: int
+    avg_players: float
+    rounds: int
+    last_seen: int
 
 
 class MapRotationItem(BaseModel):

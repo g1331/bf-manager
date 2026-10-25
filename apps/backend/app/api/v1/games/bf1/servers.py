@@ -8,11 +8,12 @@ from app.api.deps import DbDep
 from app.schemas.bf1.server import (
     ServerDetail,
     ServerListResponse,
+    ServerMapStat,
     ServerPlayerCountPoint,
     ServerPlayersResponse,
 )
 from app.services.bf1.blaze_service import get_server_players
-from app.services.bf1.server_player_count_service import list_player_counts
+from app.services.bf1.server_player_count_service import list_map_stats, list_player_counts
 from app.services.bf1.server_service import BF1ServerService
 
 router = APIRouter()
@@ -68,3 +69,11 @@ async def get_server_players_route(
 async def get_server_player_counts(game_id: int, db: DbDep) -> list[ServerPlayerCountPoint]:
     # 只有私服有人数点，由全服统计轮询每分钟写入一次
     return await list_player_counts(db, game_id)
+
+
+@router.get("/{game_id}/map-stats", response_model=list[ServerMapStat])
+async def get_server_map_stats(
+    game_id: int, db: DbDep, days: int = Query(7, ge=1, le=7)
+) -> list[ServerMapStat]:
+    # 由人数采样里的地图字段聚合，采样保留 7 天，days 最多 7
+    return await list_map_stats(db, game_id, days=days)

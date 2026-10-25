@@ -12,6 +12,7 @@ from app.schemas.bf1.server import ServerSummary
 from app.services.bf1 import server_player_count_service, server_service
 from app.services.bf1.server_filters import filter_summaries
 from app.services.bf1.server_player_count_service import (
+    list_map_stats,
     list_player_counts,
     record_player_counts,
     resolve_server_ids,
@@ -259,3 +260,42 @@ async def test_resolve_server_ids_caches_and_backfills(test_session, monkeypatch
 
     assert await resolve_server_ids(test_session, summaries) == {1: 11, 3: 33}
     assert asked == [1, 2, 4]
+
+
+async def test_list_map_stats_aggregates_minutes_and_rounds(test_session) -> None:
+    # 亚眠 3 分钟 → 西奈 2 分钟 → 空服 30 分钟 → 亚眠 1 分钟：亚眠两轮，西奈一轮
+    base = datetime.now(UTC) - timedelta(hours=1)
+
+    def at(minute: int, map_name: str, players: int) -> Bf1ServerPlayerCount:
+        return Bf1ServerPlayerCount(
+            game_id=1,
+            name="mine",
+            map_name=map_name,
+            game_mode="Conquest",
+            player_count=players,
+            sampled_at=base + timedelta(minutes=minute),
+        )
+
+    test_session.add_all(
+        [
+            at(0, "MP_Amiens", 60),
+            at(1, "MP_Amiens", 60),
+            at(2, "MP_Amiens", 60),
+            at(3, "MP_Desert", 30),
+            at(4, "MP_Desert", 30),
+            at(35, "MP_Amiens", 10),
+        ]
+    )
+    await test_session.commit()
+
+    stats = await list_map_stats(test_session, 1)
+    amiens, desert = stats
+    assert (amiens.map_name, amiens.rounds, amiens.minutes) == ("MP_Amiens", 2, 4)
+    assert amiens.player_minutes == 190
+    assert amiens.avg_players == 47.5
+    assert amiens.map_display_name and amiens.map_image_url
+    # 西奈第二个点后间隔 31 分钟，只按封顶的 2 分钟计
+    assert (desert.rounds, desert.minutes, desert.player_minutes) == (1, 3, 90)
+
+    points = await list_player_counts(test_session, 1)
+    assert [p.map_name for p in points][:4] == ["MP_Amiens"] * 3 + ["MP_Desert"]

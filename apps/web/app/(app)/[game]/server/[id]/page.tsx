@@ -455,7 +455,7 @@ function SectionNav({
             {tab === t.key ? (
               <motion.span
                 layoutId="server-section-underline"
-                className="absolute inset-x-3 -bottom-px h-0.5 bg-amber-400"
+                className="absolute inset-x-3 bottom-0 h-0.5 bg-amber-400"
               />
             ) : null}
           </button>

@@ -33,7 +33,10 @@ from app.schemas.bf1.overview import BF1Overview, CountBreakdown, NamedCount, Tr
 from app.schemas.bf1.server import ServerSummary
 from app.services.bf1.blaze_service import fetch_game_list_snapshot
 from app.services.bf1.gateway_factory import get_bf1_client
-from app.services.bf1.server_player_count_service import record_player_counts
+from app.services.bf1.server_player_count_service import (
+    record_player_counts,
+    resolve_server_ids,
+)
 from app.services.bf1.server_service import _to_summary
 from app.services.bf1.server_snapshot_cache import write_server_snapshot
 
@@ -189,6 +192,13 @@ def _snapshot_mode(attrs: dict[str, Any]) -> str | None:
     return None
 
 
+def _int_or_none(value: Any) -> int | None:
+    try:
+        return int(value) if value not in (None, "") else None
+    except (TypeError, ValueError):
+        return None
+
+
 def _snapshot_summary(game: dict[str, Any]) -> ServerSummary:
     """把快照里的一个游戏转成 ServerSummary，字段足够聚合与服务器列表展示。"""
     attrs = game.get("ATTR") or {}
@@ -209,8 +219,6 @@ def _snapshot_summary(game: dict[str, Any]) -> ServerSummary:
     return ServerSummary(
         server_id=0,
         game_id=game.get("GID"),
-        # PGID 是 Blaze 的 persistedGameId，重启不变；同处的 PGSC 是密钥，不要读
-        persisted_game_id=str(game["PGID"]) if game.get("PGID") else None,
         name=game.get("GNAM") or "",
         map_name=level,
         map_display_name=translate_map_name(level),
@@ -223,9 +231,9 @@ def _snapshot_summary(game: dict[str, Any]) -> ServerSummary:
         spectator_count=pcnt[2] + pcnt[3],
         region=region,
         region_display_name=translate_region(region),
-        # shortcut: PSAS 是 Blaze 标准的 pingSiteAlias，未在生产快照里实测；国家、tickRate、
-        # 密码字段名未知暂缺，列表页对应的国旗回落 ping 节点、锁与 Hz 不显示，实测后补上。
         ping_site=game.get("PSAS") or None,
+        country=attrs.get("country") or None,
+        tick_rate=_int_or_none(attrs.get("tickRate")),
         is_official=server_type == "OFFICIAL",
         is_ranked=server_type == "RANKED",
         description=description or None,
@@ -350,7 +358,14 @@ _background_tasks: set[asyncio.Task[None]] = set()
 async def _record_player_counts(summaries: list[ServerSummary]) -> None:
     try:
         async with get_sessionmaker()() as db:
-            written = await record_player_counts(db, summaries)
+            try:
+                server_ids = await resolve_server_ids(db, summaries)
+            except Exception as e:
+                # 解析失败（Redis / EA 不可用）不影响写点，这一轮的点先按服名归并
+                logger.warning("BF1 serverId resolve skipped: {}", e)
+                await db.rollback()
+                server_ids = {}
+            written = await record_player_counts(db, summaries, server_ids)
         logger.debug("BF1 server player counts recorded: {}", written)
     except Exception as e:
         logger.warning("BF1 server player count write failed: {}", e)

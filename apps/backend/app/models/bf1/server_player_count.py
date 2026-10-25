@@ -16,8 +16,8 @@ class Bf1ServerPlayerCount(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     # game_id 仅定位当前这一局，服务器重启就会变
     game_id: Mapped[int] = mapped_column(BigInteger, index=True, nullable=False)
-    # 快照带 PGID 时按它跨重启归并，否则退回按服名
-    persisted_game_id: Mapped[str | None] = mapped_column(String(64), index=True)
+    # RSP serverId，重启不变；由 gameId 问 Gateway 解析，解析到之前为空，此时按服名归并
+    server_id: Mapped[int | None] = mapped_column(BigInteger, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     map_name: Mapped[str | None] = mapped_column(String(64))
     game_mode: Mapped[str | None] = mapped_column(String(32))

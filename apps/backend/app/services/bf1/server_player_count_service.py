@@ -2,24 +2,91 @@
 
 全服统计每 60 秒拿到一轮快照摘要，这里每 5 分钟为其中所有私服各写一个点（人数 + 当前地图 /
 模式），并清理超过保留期的旧点；服务器详情页据此画 24 小时人数曲线，地图字段留给热门地图统计。
+
+快照只有随重启变化的 gameId，稳定的 RSP serverId 要拿 gameId 问 Gateway。解析结果按 gameId
+缓存，同一局只问一次，所以除首轮外只有服务器重启后才会产生请求。
 """
 
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import delete, func, select
+from loguru import logger
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.errors import EAApiError
+from app.core.cache import get_cache
 from app.models.bf1.server_player_count import Bf1ServerPlayerCount
+from app.models.server import Server
 from app.schemas.bf1.server import ServerPlayerCountPoint, ServerSummary
+from app.services.bf1.server_service import BF1ServerService
 
 RETENTION = timedelta(days=7)
 # 轮询每分钟一次，采样隔 5 分钟一次；留 10 秒余量，免得轮询抖动把采样拖到 10 分钟
 SAMPLE_INTERVAL = timedelta(minutes=5) - timedelta(seconds=10)
 
+SERVER_ID_CACHE_KEY = "bf1:gid_server_id:{}"
+# 号池只有两三个号，首轮 150 多个私服分批解析，约 15 分钟解析完
+RESOLVE_PER_ROUND = 10
+SERVER_ID_TTL = int(timedelta(days=3).total_seconds())
+# 查不到 serverId（EA 没返回 rspInfo）的局隔一小时再试，免得每轮都占名额
+MISSING_SERVER_ID_TTL = int(timedelta(hours=1).total_seconds())
 
-async def record_player_counts(db: AsyncSession, summaries: list[ServerSummary]) -> int:
+
+def _is_private(s: ServerSummary) -> bool:
+    return not s.is_official and bool(s.game_id) and bool(s.name)
+
+
+async def resolve_server_ids(db: AsyncSession, summaries: list[ServerSummary]) -> dict[int, int]:
+    """返回本轮私服的 gameId → serverId。
+
+    先查缓存，未命中的每轮最多问 Gateway RESOLVE_PER_ROUND 个；新解析到的顺手回填这一局已写的
+    采样点，并把登记表里同一 serverId 的 game_id 更新成当前这一局。
+    """
+    cache = await get_cache()
+    resolved: dict[int, int] = {}
+    budget = RESOLVE_PER_ROUND
+    for s in filter(_is_private, summaries):
+        gid = int(s.game_id or 0)
+        key = SERVER_ID_CACHE_KEY.format(gid)
+        cached = await cache.get(key)
+        if cached is not None:
+            if cached:
+                resolved[gid] = int(cached)
+            continue
+        if budget == 0:
+            continue
+        budget -= 1
+        try:
+            identity = await BF1ServerService(db).get_admin_identity(gid)
+        except EAApiError as e:
+            logger.warning("BF1 serverId resolve failed, retry next round: {}", e)
+            break
+        server_id = identity[2] if identity else None
+        await cache.set(
+            key, server_id or 0, ttl=SERVER_ID_TTL if server_id else MISSING_SERVER_ID_TTL
+        )
+        if not server_id:
+            continue
+        resolved[gid] = server_id
+        await db.execute(
+            update(Bf1ServerPlayerCount)
+            .where(Bf1ServerPlayerCount.game_id == gid, Bf1ServerPlayerCount.server_id.is_(None))
+            .values(server_id=server_id)
+        )
+        await db.execute(
+            update(Server)
+            .where(Server.game == "bf1", Server.server_id == server_id)
+            .values(game_id=gid)
+        )
+    await db.commit()
+    return resolved
+
+
+async def record_player_counts(
+    db: AsyncSession, summaries: list[ServerSummary], server_ids: dict[int, int] | None = None
+) -> int:
     """距上次采样满 5 分钟时，为本轮所有私服写一个点并清理过期点，返回写入条数。"""
     now = datetime.now(UTC)
     last = await db.scalar(select(func.max(Bf1ServerPlayerCount.sampled_at)))
@@ -29,7 +96,7 @@ async def record_player_counts(db: AsyncSession, summaries: list[ServerSummary])
     rows = [
         Bf1ServerPlayerCount(
             game_id=s.game_id,
-            persisted_game_id=s.persisted_game_id,
+            server_id=(server_ids or {}).get(int(s.game_id or 0)),
             name=s.name,
             map_name=s.map_name,
             game_mode=s.game_mode,
@@ -40,7 +107,7 @@ async def record_player_counts(db: AsyncSession, summaries: list[ServerSummary])
             sampled_at=now,
         )
         for s in summaries
-        if not s.is_official and s.game_id and s.name
+        if _is_private(s)
     ]
     db.add_all(rows)
     await db.execute(
@@ -55,9 +122,9 @@ async def list_player_counts(
 ) -> list[ServerPlayerCountPoint]:
     """某私服最近 hours 小时的人数点，按时间升序。
 
-    先由 game_id 找到这个服最近一个点，有 persistedGameId 就按它取点（重启不变）；没有时退回
-    按服名取点。同一时刻有多个同名私服时（生产上真有），只取本 game_id 的点，分不清归属的
-    时刻跳过。shortcut: 按服名时改名后历史会断。
+    先由 game_id 找到这个服最近一个点，解析到了 serverId 就按它取点（重启、改名都不影响）；
+    还没解析到时退回按服名取点。同一时刻有多个同名私服时（生产上真有），只取本 game_id 的点，
+    分不清归属的时刻跳过。
     """
     latest = await db.scalar(
         select(Bf1ServerPlayerCount)
@@ -68,8 +135,8 @@ async def list_player_counts(
     if latest is None:
         return []
     same_server = (
-        Bf1ServerPlayerCount.persisted_game_id == latest.persisted_game_id
-        if latest.persisted_game_id
+        Bf1ServerPlayerCount.server_id == latest.server_id
+        if latest.server_id
         else Bf1ServerPlayerCount.name == latest.name
     )
     since = datetime.now(UTC) - timedelta(hours=hours)

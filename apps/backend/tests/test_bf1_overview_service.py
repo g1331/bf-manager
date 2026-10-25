@@ -271,7 +271,15 @@ def test_snapshot_summary_fills_list_fields() -> None:
     game["GNAM"] = "[ABC] 测试服"
     game["CAP"] = [64, 0, 4, 0]
     game["PSAS"] = "nrt"
-    game["ATTR"].update({"description1": "欢迎", "description2": "来玩", "description3": ""})
+    game["ATTR"].update(
+        {
+            "description1": "欢迎",
+            "description2": "来玩",
+            "description3": "",
+            "country": "JP",
+            "tickRate": "60",
+        }
+    )
     s = overview_service._snapshot_summary(game)
 
     assert (s.game_id, s.name, s.max_player_count) == (7, "[ABC] 测试服", 64)
@@ -280,6 +288,7 @@ def test_snapshot_summary_fills_list_fields() -> None:
     assert s.region_display_name is not None
     assert s.description == "欢迎来玩"
     assert s.ping_site == "nrt"
+    assert (s.country, s.tick_rate) == ("JP", 60)
     # 隐私字段不会出现在摘要里
     assert "secret" not in s.model_dump_json()
 

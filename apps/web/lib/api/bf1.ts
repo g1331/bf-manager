@@ -191,6 +191,22 @@ export interface ServerPlayerCountPoint {
   queue: number;
   spectators: number;
   max_players: number;
+  map_name: string | null;
+  game_mode: string | null;
+}
+
+/** 私服近 N 天在某张地图（地图 + 模式）上的累计情况，last_seen 为 unix 秒 */
+export interface ServerMapStat {
+  map_name: string;
+  game_mode: string | null;
+  map_display_name: string | null;
+  mode_display_name: string | null;
+  map_image_url: string | null;
+  minutes: number;
+  player_minutes: number;
+  avg_players: number;
+  rounds: number;
+  last_seen: number;
 }
 
 export interface MapRotationItem {
@@ -410,6 +426,12 @@ export const bf1Api = {
 
   getPlayer: (personaId: number) => api.get<PersonaBrief>(`/bf1/players/${personaId}`),
 
+  /** 批量取头像（persona_id → URL，取不到为 null），最多 200 个 */
+  getAvatars: (personaIds: number[]) =>
+    api.get<Record<string, string | null>>(
+      `/bf1/players/avatars?${personaIds.map((id) => `ids=${id}`).join("&")}`,
+    ),
+
   getStats: (personaId: number) => api.get<PlayerStatsDetail>(`/bf1/stats/${personaId}`),
 
   getWeapons: (personaId: number) => api.get<WeaponStats>(`/bf1/stats/${personaId}/weapons`),
@@ -446,6 +468,8 @@ export const bf1Api = {
 
   getServerPlayerCounts: (gameId: number) =>
     api.get<ServerPlayerCountPoint[]>(`/bf1/servers/${gameId}/player-counts`),
+  getServerMapStats: (gameId: number, days = 7) =>
+    api.get<ServerMapStat[]>(`/bf1/servers/${gameId}/map-stats?days=${days}`),
 
   getServerPlayers: (gameId: number, includeStats = true) =>
     api.get<ServerPlayersResponse>(

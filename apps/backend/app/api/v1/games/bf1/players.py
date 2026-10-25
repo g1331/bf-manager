@@ -7,7 +7,7 @@ from fastapi import APIRouter, Query
 from app.api.deps import DbDep
 from app.api.errors import ValidationError
 from app.schemas.bf1.player import PersonaBrief, PersonaSearchResult
-from app.services.bf1.player_service import BF1PlayerService
+from app.services.bf1.player_service import BF1PlayerService, get_avatars
 
 router = APIRouter()
 
@@ -20,6 +20,16 @@ async def search_players(
     if not name.strip():
         raise ValidationError("name 不能为空")
     return await BF1PlayerService(db).search_by_name(name.strip())
+
+
+@router.get("/avatars", response_model=dict[int, str | None])
+async def get_player_avatars(
+    ids: list[int] = Query(..., description="persona ID，可重复传参"),
+) -> dict[int, str | None]:
+    """批量取头像，供服务器成员名单等列表使用；名单上限 200 人。"""
+    if len(ids) > 200:
+        raise ValidationError("ids 最多 200 个")
+    return await get_avatars(list(dict.fromkeys(ids)))
 
 
 @router.get("/{persona_id}", response_model=PersonaBrief)

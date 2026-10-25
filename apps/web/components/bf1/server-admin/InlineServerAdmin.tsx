@@ -12,6 +12,7 @@
  */
 
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeftRight,
   Ban,
@@ -43,7 +44,7 @@ import {
   type AdminActionRequest,
 } from "@/hooks/useServerAdminActions";
 import { canDo, hasAnyServerAdmin, type ServerAdminAction } from "@/lib/bf1/server-admin-authz";
-import type { BlazePlayer, MyServerRole } from "@/lib/api/bf1";
+import { bf1Api, type BlazePlayer, type MyServerRole } from "@/lib/api/bf1";
 import { cn } from "@/lib/utils";
 
 /**
@@ -246,6 +247,22 @@ export function ServerAdminProvider({ gameId, children }: { gameId: number; chil
     ],
   );
 
+  // 换图提示要看行动进度：复用详情页已预取的实时名单，只在打开换图确认时才可能补拉
+  const players = useQuery({
+    queryKey: ["bf1-server-players", gameId],
+    queryFn: () => bf1Api.getServerPlayers(gameId),
+    staleTime: 15_000,
+    enabled: pending?.mode === "level",
+  });
+  const op = players.data?.operation;
+  const opSectors = op?.maps[op.map_index]?.sectors;
+  const levelDescription =
+    op?.state === "waiting"
+      ? "现在是开局前，适合换图；所有玩家会被移到新地图"
+      : op && opSectors
+        ? `当前对局正在进行（区域 ${Math.min(op.sectors_taken + 1, opSectors)}/${opSectors}），换图会立即结束这一局，建议等到开局前再换`
+        : "切换地图会立即结束当前对局，所有玩家会被移到新地图";
+
   const isKick = pending?.mode !== "level" && pending?.kind === "kick";
   const isMove = pending?.mode !== "level" && pending?.kind === "move";
   const isBan = pending?.mode !== "level" && pending?.kind === "ban";
@@ -261,7 +278,7 @@ export function ServerAdminProvider({ gameId, children }: { gameId: number; chil
   const confirmDescription = !pending
     ? undefined
     : pending.mode === "level"
-      ? "切换地图会立即结束当前对局，所有玩家会被移到新地图"
+      ? levelDescription
       : isMove
         ? pending.mode === "batch"
           ? "换边会强制玩家阵亡一次后移到对方阵营；将对所有选中玩家依次执行，部分失败不会中断其余项"
@@ -375,6 +392,10 @@ export function TeamSelectAllCheckbox({ players }: { players: PlayerRef[] }) {
   );
 }
 
+function isInTeam(player: BlazePlayer): boolean {
+  return player.team === 0 || player.team === 1;
+}
+
 /** 玩家行 ⋯ 操作菜单，按角色与玩家当前状态（是否已 VIP / 管理）决定菜单项 */
 export function PlayerActionMenu({ player }: { player: BlazePlayer }) {
   const { act, can } = useServerAdmin();
@@ -396,7 +417,8 @@ export function PlayerActionMenu({ player }: { player: BlazePlayer }) {
       </DropdownMenuItem>,
     );
   }
-  if (can("move")) {
+  // 排队 / 旁观玩家不在任何一队（TIDX 65535），没有换边可言
+  if (can("move") && isInTeam(player)) {
     items.push(
       <DropdownMenuItem key="move" className={itemCls} onSelect={() => act("move", ref)}>
         <ArrowLeftRight className="size-3.5" />
@@ -517,7 +539,7 @@ export function BatchActionBar({ players }: { players: BlazePlayer[] }) {
             variant="outline"
             size="sm"
             className="compact-action"
-            onClick={() => actBatch("move", selectedPlayers)}
+            onClick={() => actBatch("move", selectedPlayers.filter(isInTeam))}
           >
             <ArrowLeftRight className="size-3.5" />
             批量换边

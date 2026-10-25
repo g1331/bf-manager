@@ -216,6 +216,8 @@ export interface MapRotationItem {
   mode_display_name: string | null;
   map_image_url: string | null;
   is_current: boolean;
+  /** 行动模式条目所属战役的全部地图（按进行顺序），其它模式为 null */
+  operation: OperationMap[] | null;
 }
 
 export interface ServerPlayer {
@@ -271,6 +273,27 @@ export interface ServerPlayersSummary {
   rank_150_count: number;
 }
 
+export interface OperationMap {
+  /** 地图代号（MP_*） */
+  map_name: string;
+  name: string;
+  image_url: string | null;
+  /** 该图区域数，未收录的地图为 null */
+  sectors: number | null;
+}
+
+export interface OperationProgress {
+  /** 本行动全部地图，按进行顺序 */
+  maps: OperationMap[];
+  map_index: number;
+  /** 进攻方在当前地图已拿下的区域数 */
+  sectors_taken: number;
+  /** waiting 开局前；new 战役第一张图且攻方未丢营；running 其它对局中 */
+  state: string | null;
+  attacker: string | null;
+  defender: string | null;
+}
+
 export interface ServerPlayersResponse {
   game_id: number;
   server_name: string | null;
@@ -282,6 +305,7 @@ export interface ServerPlayersResponse {
   queued: BlazePlayer[];
   spectators: BlazePlayer[];
   summary: ServerPlayersSummary;
+  operation: OperationProgress | null;
   stats_included: boolean;
   is_mock: boolean;
 }

@@ -13,7 +13,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, MapPin, SkipForward } from "lucide-react";
+import { ArrowLeft, ArrowRightLeft, SkipForward } from "lucide-react";
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
 import { DetailBackground, DetailNote } from "@/components/bf1/visual/DetailBackground";
 import { ServerDetailSkeleton } from "@/components/layout/PageSkeleton";
@@ -975,6 +975,7 @@ function RotationGrid({
     const stat = m.map_name ? statByKey.get(mapKey(m.map_name, m.game_mode)) : undefined;
     const step = operationStep(m);
     const sectors = step >= 0 ? m.operation![step].sectors : null;
+    const switchable = canSwitch && serverInitialized && !m.is_current;
     return (
       <li key={`${m.map_name}-${i}`}>
         <Bf1Panel
@@ -998,6 +999,19 @@ function RotationGrid({
               />
             ) : null}
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+            {switchable ? (
+              <button
+                type="button"
+                aria-label={`换到 ${mapLabel}`}
+                onClick={() => chooseLevel(i, mapLabel)}
+                className="absolute inset-0 hidden items-center justify-center bg-black/45 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:hover)]:flex"
+              >
+                <span className="inline-flex items-center gap-1.5 bg-amber-400 px-4 py-2 text-sm font-bold text-black shadow-lg">
+                  <ArrowRightLeft className="size-4" />
+                  换到这张图
+                </span>
+              </button>
+            ) : null}
             <span className="font-display absolute top-2 left-2.5 text-sm font-bold text-white/70 tabular-nums drop-shadow">
               {String(i + 1).padStart(2, "0")}
             </span>
@@ -1051,10 +1065,10 @@ function RotationGrid({
                 disabled={!serverInitialized}
                 title={serverInitialized ? "切换到此地图" : "服务器尚未初始化，暂不可换图"}
                 onClick={() => chooseLevel(i, mapLabel)}
-                className="inline-flex shrink-0 items-center gap-1 border border-white/15 px-2 py-1 text-xs text-white/80 transition-colors hover:border-amber-400/60 hover:text-amber-200 disabled:opacity-40"
+                className="inline-flex shrink-0 items-center gap-1.5 border border-amber-400/70 bg-amber-400/10 px-3 py-1.5 text-xs font-semibold text-amber-200 transition-colors hover:bg-amber-400 hover:text-black disabled:border-white/15 disabled:bg-transparent disabled:text-white/40"
               >
-                <MapPin className="size-3.5" />
-                换图
+                <ArrowRightLeft className="size-3.5" />
+                换到这张
               </button>
             ) : null}
           </div>
@@ -1070,27 +1084,36 @@ function RotationGrid({
         <span>
           {grouped ? "按战役分组，序号为轮换顺序" : "按轮换顺序排列"}，共 {items.length} 张
         </span>
-        <div className="flex flex-wrap items-center gap-3">
-          {stats.length > 0 ? <span>热度条为近 7 天人·分钟，越长越受欢迎</span> : null}
-          {canSwitch && nextOpIdx >= 0 ? (
-            <button
-              type="button"
-              disabled={!serverInitialized}
-              onClick={() =>
-                chooseLevel(
-                  nextOpIdx,
-                  items[nextOpIdx].map_display_name ?? items[nextOpIdx].map_name ?? "",
-                )
-              }
-              className="inline-flex items-center gap-1 border border-sky-400/40 bg-sky-500/10 px-2 py-1 text-sky-200 transition-colors hover:border-sky-300 disabled:opacity-40"
-            >
-              <SkipForward className="size-3.5" />
-              换到下一个战役开头：
-              {items[nextOpIdx].map_display_name ?? items[nextOpIdx].map_name}
-            </button>
-          ) : null}
-        </div>
+        {stats.length > 0 ? <span>热度条为近 7 天人·分钟，越长越受欢迎</span> : null}
       </div>
+      {canSwitch && nextOpIdx >= 0 ? (
+        <div className="mb-5 flex flex-wrap items-center gap-x-4 gap-y-2 border-l-2 border-sky-400 bg-sky-500/10 px-4 py-3">
+          <SkipForward className="size-5 shrink-0 text-sky-300" />
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-semibold text-white">
+              下一个战役从「{items[nextOpIdx].map_display_name ?? items[nextOpIdx].map_name}」开始
+            </div>
+            <div className="text-xs text-white/50">
+              私服打完一个战役常落到别的战役第二张，可在这里直接换到下一个战役开头
+            </div>
+          </div>
+          <button
+            type="button"
+            disabled={!serverInitialized}
+            title={serverInitialized ? undefined : "服务器尚未初始化，暂不可换图"}
+            onClick={() =>
+              chooseLevel(
+                nextOpIdx,
+                items[nextOpIdx].map_display_name ?? items[nextOpIdx].map_name ?? "",
+              )
+            }
+            className="inline-flex shrink-0 items-center gap-1.5 bg-sky-500 px-4 py-2 text-sm font-bold text-black transition-colors hover:bg-sky-400 disabled:opacity-40"
+          >
+            <SkipForward className="size-4" />
+            换到下一个战役
+          </button>
+        </div>
+      ) : null}
       {grouped ? (
         <div className="space-y-6">
           {groups.map((g) => (

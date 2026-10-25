@@ -30,14 +30,34 @@ def test_faction_map_unknown_map_falls_back():
 def test_operation_progress_multi_map():
     op = _operation_progress({"mode": "BreakthroughLarge", "level": "MP_Amiens", "progress": "3"})
     assert op is not None
-    assert op.maps == ["圣康坦的伤痕", "亚眠"]
+    assert [m.name for m in op.maps] == ["圣康坦的伤痕", "亚眠"]
+    assert [m.sectors for m in op.maps] == [5, 4]
+    assert op.maps[1].image_url and op.maps[1].image_url.startswith("https://")
     assert (op.map_index, op.sectors_taken) == (1, 3)
+    assert (op.attacker, op.defender) == (MapData.GER, MapData.UK)
+    assert op.state is None
+
+
+def test_operation_progress_decodes_five_step_scale():
+    def taken(level: str, progress: int) -> int:
+        op = _operation_progress(
+            {"mode": "BreakthroughLarge", "level": level, "progress": str(progress)}
+        )
+        assert op is not None
+        return op.sectors_taken
+
+    # 4 区：progress 0,1,2,3,5 → 0..4
+    assert [taken("MP_Beachhead", p) for p in (0, 1, 2, 3, 5)] == [0, 1, 2, 3, 4]
+    # 3 区：progress 0,1,3,5 → 0..3
+    assert [taken("MP_FaoFortress", p) for p in (0, 1, 3, 5)] == [0, 1, 2, 3]
+    # 5 区：一一对应
+    assert [taken("MP_Desert", p) for p in range(6)] == [0, 1, 2, 3, 4, 5]
 
 
 def test_operation_progress_single_map_and_non_operation():
     op = _operation_progress(
         {"mode": "BreakthroughLarge", "level": "MP_Offensive", "progress": "0"}
     )
-    assert op is not None and op.maps == ["索姆河"] and op.map_index == 0
+    assert op is not None and [m.name for m in op.maps] == ["索姆河"] and op.map_index == 0
     assert _operation_progress({"mode": "Conquest", "level": "MP_Amiens", "progress": "1"}) is None
     assert _operation_progress({"mode": "BreakthroughLarge", "level": "MP_Amiens"}) is None

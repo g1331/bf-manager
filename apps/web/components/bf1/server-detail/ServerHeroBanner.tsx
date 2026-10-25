@@ -13,6 +13,8 @@ import type {
 import { pingSiteCountry } from "@/lib/bf1/pingsite";
 import { cn } from "@/lib/utils";
 import { formatDuration } from "./history";
+import { nextMap } from "./operation";
+import { OperationTrack } from "./OperationTrack";
 
 /** 槽位条每格代表的人数：64 人服 32 格，32 人服 16 格 */
 const PLAYERS_PER_SLOT = 2;
@@ -43,9 +45,21 @@ export function ServerHeroBanner({
   const filled = Math.round((Math.min(summary.player_count, cap) / cap) * slots);
   const fill = Math.round((summary.player_count / cap) * 100);
 
-  const currentIdx = rotation.findIndex((m) => m.is_current);
+  const nm = nextMap(rotation);
+  const rotationNext = nm?.kind === "rotation" ? rotation[nm.index] : null;
   const next =
-    currentIdx >= 0 && rotation.length > 1 ? rotation[(currentIdx + 1) % rotation.length] : null;
+    nm?.kind === "breakthrough"
+      ? { label: "攻破后进入", name: nm.map.name, mode: null, image: nm.map.image_url }
+      : nm?.kind === "uncertain"
+        ? { label: "战役结束后", name: "落点不确定", mode: null, image: null }
+        : rotationNext
+          ? {
+              label: "下一张",
+              name: rotationNext.map_display_name ?? rotationNext.map_name,
+              mode: rotationNext.mode_display_name,
+              image: rotationNext.map_image_url,
+            }
+          : null;
 
   return (
     <Bf1Panel
@@ -175,29 +189,13 @@ export function ServerHeroBanner({
               <span className="tabular-nums">已进行 {formatDuration(elapsedMinutes)}</span>
             ) : null}
           </div>
-          {operation ? (
-            <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-white/45 lg:justify-end">
-              {operation.maps.length > 1
-                ? operation.maps.map((name, i) => (
-                    <span key={name} className="flex items-center gap-1.5">
-                      {i > 0 ? <span aria-hidden>›</span> : null}
-                      <span className={cn(i === operation.map_index && "text-white/85")}>
-                        {name}
-                      </span>
-                    </span>
-                  ))
-                : null}
-              <span className="tabular-nums">
-                {operation.maps.length > 1 ? "· " : ""}已推进 {operation.sectors_taken} 区
-              </span>
-            </div>
-          ) : null}
+          {operation ? <OperationTrack operation={operation} /> : null}
           {next ? (
             <div className="mt-5 flex items-center gap-3 border-t border-white/15 pt-3 lg:flex-row-reverse">
-              {next.map_image_url ? (
+              {next.image ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={next.map_image_url}
+                  src={next.image}
                   alt=""
                   className="h-10 w-16 shrink-0 object-cover opacity-90 [clip-path:polygon(0_0,100%_0,100%_calc(100%-8px),calc(100%-8px)_100%,0_100%)]"
                 />
@@ -205,13 +203,11 @@ export function ServerHeroBanner({
               <div className="min-w-0">
                 <div className="flex items-center gap-1 text-[11px] text-white/45 lg:justify-end">
                   <SkipForward className="size-3" />
-                  下一张
+                  {next.label}
                 </div>
                 <div className="truncate text-sm text-white/85">
-                  {next.map_display_name ?? next.map_name}
-                  {next.mode_display_name ? (
-                    <span className="ml-1.5 text-white/45">{next.mode_display_name}</span>
-                  ) : null}
+                  {next.name}
+                  {next.mode ? <span className="ml-1.5 text-white/45">{next.mode}</span> : null}
                 </div>
               </div>
             </div>

@@ -9,9 +9,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.errors import EAApiError, NotFoundError
 from app.domain.games.bf1.maps import (
+    OPERATION_SECTORS,
     MapData,
     normalize_emblem_url,
     normalize_map_image_url,
+    operation_maps,
     translate_map_name,
     translate_mode_name,
     translate_region,
@@ -19,6 +21,7 @@ from app.domain.games.bf1.maps import (
 from app.domain.games.bf1.server_settings import localize_settings
 from app.schemas.bf1.server import (
     MapRotationItem,
+    OperationMap,
     PlatoonBrief,
     ServerDetail,
     ServerExtras,
@@ -124,6 +127,19 @@ _MAP_CODE_IN_IMAGE = re.compile(r"/(MP_[A-Za-z0-9]+)_Landscape")
 _MAP_CODES_BY_LOWER = {code.lower(): code for code in MapData.MapTeamDict}
 
 
+def operation_map_list(map_code: str) -> list[OperationMap]:
+    """地图所属行动的全部地图（按进行顺序），附中文名、封面与区域数"""
+    return [
+        OperationMap(
+            map_name=m,
+            name=translate_map_name(m) or m,
+            image_url=normalize_map_image_url(MapData.MapImageDict.get(m)),
+            sectors=OPERATION_SECTORS.get(m),
+        )
+        for m in operation_maps(map_code)
+    ]
+
+
 def _to_rotation(raw: dict[str, Any]) -> list[MapRotationItem]:
     """从详情接口 raw 字典里拼装地图轮换列表。
 
@@ -154,6 +170,9 @@ def _to_rotation(raw: dict[str, Any]) -> list[MapRotationItem]:
                 mode_display_name=translate_mode_name(mode_code) or item.get("modePrettyName"),
                 map_image_url=normalize_map_image_url(item.get("mapImage")),
                 is_current=is_current,
+                operation=operation_map_list(map_code)
+                if map_code and mode_code == "BreakthroughLarge"
+                else None,
             )
         )
     return rotation

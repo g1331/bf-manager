@@ -367,3 +367,28 @@ def test_server_lifecycle_validator_handles_garbage() -> None:
 def test_server_lifecycle_validator_accepts_integer_ms() -> None:
     lc = ServerLifecycle(created_at=1708228215000)  # type: ignore[arg-type]
     assert lc.created_at == datetime.fromtimestamp(1708228215, tz=UTC)
+
+
+def test_to_rotation_attaches_operation_for_operations_mode() -> None:
+    raw = {
+        "serverInfo": {
+            "mapName": "MP_Scar",
+            "mapMode": "BreakthroughLarge",
+            "rotation": [
+                {
+                    "mapPrettyName": "亞眠",
+                    "modePrettyName": "行動模式",
+                    "mapImage": "[BB_PREFIX]/gamedata/Tunguska/31/107/MP_Amiens_LandscapeLarge-e195589d.jpg",
+                },
+                {
+                    "mapPrettyName": "亞眠",
+                    "modePrettyName": "征服",
+                    "mapImage": "[BB_PREFIX]/gamedata/Tunguska/31/107/MP_Amiens_LandscapeLarge-e195589d.jpg",
+                },
+            ],
+        }
+    }
+    ops, conquest = _to_rotation(raw)
+    assert ops.operation is not None
+    assert [(m.map_name, m.sectors) for m in ops.operation] == [("MP_Scar", 5), ("MP_Amiens", 4)]
+    assert conquest.operation is None

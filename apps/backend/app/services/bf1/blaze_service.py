@@ -18,6 +18,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
+import math
 import time
 from collections.abc import Iterable
 from pathlib import Path
@@ -33,7 +34,7 @@ from app.core.config import get_settings
 from app.domain.ea.account_pool import EACredentials
 from app.domain.ea.blaze_protocol.socket import BlazeServerREQ, BlazeSocket
 from app.domain.ea.data_handle import BlazeData
-from app.domain.games.bf1.maps import MapData, operation_maps, translate_map_name
+from app.domain.games.bf1.maps import OPERATION_SECTORS, MapData
 from app.models.ea_binding import EaBinding
 from app.schemas.bf1.server import (
     BlazePlayer,
@@ -44,6 +45,7 @@ from app.schemas.bf1.server import (
     ServerPlayersSummary,
 )
 from app.services.bf1.gateway_factory import get_bf1_client
+from app.services.bf1.server_service import operation_map_list
 from app.services.ea_account_service import EAAccountService
 
 # Blaze 单条连接的最大存活时间（秒）。超龄主动重建，规避 EA 端静默断开后我方仍误判可用。
@@ -546,16 +548,27 @@ def _faction_map(map_name: str | None) -> dict[int, str]:
 
 
 def _operation_progress(attrs: dict[str, Any]) -> OperationProgress | None:
-    """行动模式服务器的当前进度；非行动模式或 ATTR 缺字段时返回 None。"""
+    """行动模式服务器的当前进度；非行动模式或 ATTR 缺字段时返回 None。
+
+    ATTR progress 是本图进度折成的 0-5 六档：floor(已拿下区域数 × 5 / 本图区域数)。官服实测
+    3 区的图出现 1、3、5，4 区的图出现 0、1、2、3、5，5 区的图 0-5 都有。这里反推区域数；
+    shortcut: 6 区的格拉巴山拿下第 1 区前后都是 0，会少算一区，EA 不给原始值无法区分。
+    """
     level = attrs.get("level")
     progress = str(attrs.get("progress", ""))
     if attrs.get("mode") != "BreakthroughLarge" or not level or not progress.isdigit():
         return None
-    maps = operation_maps(level)
+    maps = operation_map_list(level)
+    sectors = OPERATION_SECTORS.get(level)
+    taken = int(progress)
+    teams = MapData.MapTeamDict.get(level) or {}
     return OperationProgress(
-        maps=[translate_map_name(m) or m for m in maps],
-        map_index=maps.index(level),
-        sectors_taken=int(progress),
+        maps=maps,
+        map_index=[m.map_name for m in maps].index(level),
+        sectors_taken=math.ceil(taken * sectors / 5) if sectors else taken,
+        state=attrs.get("operationstate"),
+        attacker=teams.get("Team1"),
+        defender=teams.get("Team2"),
     )
 
 

@@ -73,6 +73,13 @@ class ServerMapStat(BaseModel):
     last_seen: int
 
 
+class OperationMap(BaseModel):
+    map_name: str  # 地图代号（MP_*）
+    name: str
+    image_url: str | None = None
+    sectors: int | None = None  # 该图区域数，未收录的地图为 None
+
+
 class MapRotationItem(BaseModel):
     map_name: str | None = None
     map_display_name: str | None = None
@@ -80,6 +87,8 @@ class MapRotationItem(BaseModel):
     mode_display_name: str | None = None
     map_image_url: str | None = None
     is_current: bool = False
+    # 行动模式条目所属战役的全部地图（按进行顺序），其它模式为 None
+    operation: list[OperationMap] | None = None
 
 
 class ServerPlayer(BaseModel):
@@ -152,9 +161,14 @@ class ServerPlayersSummary(BaseModel):
 class OperationProgress(BaseModel):
     """行动模式进度，取自 Blaze ATTR（level / progress）。"""
 
-    maps: list[str]  # 本行动全部地图的中文名，按进行顺序
+    maps: list[OperationMap]  # 本行动全部地图，按进行顺序
     map_index: int  # 当前地图在 maps 中的下标
-    sectors_taken: int  # ATTR progress：进攻方在当前地图已推进的区域数，换图归零
+    # 当前地图进攻方已拿下的区域数，由 ATTR progress 反推（见 blaze_service._operation_progress）
+    sectors_taken: int
+    # ATTR operationstate：waiting 开局前；new 战役第一张图且攻方未丢营；running 其它对局中
+    state: str | None = None
+    attacker: str | None = None  # 攻守阵营（中文名），行动模式下 MapTeamDict 的 Team1 是攻方
+    defender: str | None = None
 
 
 class ServerPlayersResponse(BaseModel):

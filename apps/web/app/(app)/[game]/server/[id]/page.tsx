@@ -13,7 +13,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, MapPin } from "lucide-react";
+import { ArrowLeft, MapPin, SkipForward } from "lucide-react";
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
 import { DetailBackground, DetailNote } from "@/components/bf1/visual/DetailBackground";
 import { ServerDetailSkeleton } from "@/components/layout/PageSkeleton";
@@ -40,8 +40,15 @@ import {
   toMapSegments,
   useNowSeconds,
 } from "@/components/bf1/server-detail/history";
+import {
+  nextMap,
+  nextOperationStart,
+  operationKey,
+  operationStep,
+} from "@/components/bf1/server-detail/operation";
 import { useSession } from "@/hooks/useSession";
 import { auditApi, type AuditLogItem } from "@/lib/api/audit";
+import { FACTION_SLUG } from "@/lib/bf1/factions";
 import { cn } from "@/lib/utils";
 import {
   bf1Api,
@@ -445,20 +452,6 @@ export function ServerPlayersView({ data, game }: { data: ServerPlayersResponse;
     </div>
   );
 }
-
-/** 阵营名称（中文）到旗帜图标文件名的映射，对应 public/factions/{slug}.png */
-const FACTION_SLUG: Record<string, string> = {
-  法国: "fra",
-  德意志帝国: "ger",
-  大英帝国: "uk",
-  美国: "usa",
-  意大利王国: "ita",
-  俄罗斯帝国: "rus",
-  奥匈帝国: "ahu",
-  奥斯曼帝国: "otm",
-  皇家海军陆战队: "rm",
-  红军: "bol",
-};
 
 const MAX_RANK = 150;
 
@@ -943,101 +936,171 @@ function RotationGrid({
   const statByKey = new Map(stats.map((m) => [mapKey(m.map_name, m.game_mode), m]));
   const topPlayerMinutes = Math.max(...stats.map((m) => m.player_minutes), 1);
   const currentIdx = items.findIndex((m) => m.is_current);
-  const nextIdx = currentIdx >= 0 && items.length > 1 ? (currentIdx + 1) % items.length : -1;
+  const nm = nextMap(items);
+  // 行动服的「下一张」是本战役的下一张图（攻破后进入），不是轮换里的下一项
+  const nextIdx =
+    nm?.kind === "rotation"
+      ? nm.index
+      : nm?.kind === "breakthrough"
+        ? items.findIndex((m) => m.map_name === nm.map.map_name && m.operation)
+        : -1;
+  const nextOpIdx =
+    currentIdx >= 0 && items[currentIdx].operation ? nextOperationStart(items, currentIdx) : -1;
+
+  // 行动条目按战役分组（按首次出现的顺序），组内按战役进行顺序；单图行动与其它模式各归一组
+  const groups: { key: string; title: string; entries: { m: MapRotationItem; i: number }[] }[] = [];
+  items.forEach((m, i) => {
+    const multi = m.operation && m.operation.length > 1;
+    const key = multi ? operationKey(m)! : m.operation ? "single" : "other";
+    let g = groups.find((x) => x.key === key);
+    if (!g) {
+      const title = multi
+        ? m.operation!.map((o) => `${o.name}${o.sectors ? `（${o.sectors} 区）` : ""}`).join(" → ")
+        : m.operation
+          ? "单图行动"
+          : "其它模式";
+      g = { key, title, entries: [] };
+      groups.push(g);
+    }
+    g.entries.push({ m, i });
+  });
+  for (const g of groups) g.entries.sort((a, b) => operationStep(a.m) - operationStep(b.m));
+  const grouped = groups.some((g) => g.key !== "other");
+
+  const renderCard = ({ m, i }: { m: MapRotationItem; i: number }) => {
+    const mapLabel = m.map_display_name ?? m.map_name ?? "未知地图";
+    const modeLabel = m.mode_display_name ?? m.game_mode;
+    const stat = m.map_name ? statByKey.get(mapKey(m.map_name, m.game_mode)) : undefined;
+    const step = operationStep(m);
+    const sectors = step >= 0 ? m.operation![step].sectors : null;
+    return (
+      <li key={`${m.map_name}-${i}`}>
+        <Bf1Panel
+          variant="transparent"
+          cut={14}
+          corners={["bottomRight"]}
+          className={cn(
+            "group relative overflow-hidden bg-black/50 ring-1 backdrop-blur-sm",
+            m.is_current ? "ring-amber-400/80" : "ring-white/10",
+          )}
+        >
+          <div className="relative aspect-[16/8] w-full bg-white/[0.04]">
+            {m.map_image_url ? (
+              // EA CDN 自带缩放与缓存，不走 next/image
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={m.map_image_url}
+                alt={mapLabel}
+                loading="lazy"
+                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+            ) : null}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+            <span className="font-display absolute top-2 left-2.5 text-sm font-bold text-white/70 tabular-nums drop-shadow">
+              {String(i + 1).padStart(2, "0")}
+            </span>
+            {m.is_current ? (
+              <span className="absolute top-2 right-2 bg-amber-400 px-2 py-0.5 text-xs font-bold text-black">
+                正在进行
+              </span>
+            ) : i === nextIdx ? (
+              <span className="absolute top-2 right-2 border border-white/40 bg-black/60 px-2 py-0.5 text-xs text-white/85">
+                {nm?.kind === "breakthrough" ? "攻破后进入" : "下一张"}
+              </span>
+            ) : null}
+            <div className="absolute inset-x-0 bottom-0 px-3 pb-2">
+              <div className="truncate text-base font-bold text-white">{mapLabel}</div>
+              <div className="flex items-center gap-2 text-xs">
+                {modeLabel ? <span className="text-amber-300/90">{modeLabel}</span> : null}
+                {m.operation && m.operation.length > 1 ? (
+                  <span className={step === 0 ? "text-sky-300" : "text-white/50"}>
+                    {step === 0 ? "战役起点" : `第 ${step + 1} 张`}
+                  </span>
+                ) : null}
+                {sectors ? <span className="text-white/50">{sectors} 区</span> : null}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 px-3 py-2.5">
+            <div className="min-w-0 flex-1">
+              {stat ? (
+                <>
+                  <div className="h-1 bg-white/[0.08]">
+                    <div
+                      className="h-full"
+                      style={{
+                        width: `${(stat.player_minutes / topPlayerMinutes) * 100}%`,
+                        background: colors[stat.map_name],
+                      }}
+                    />
+                  </div>
+                  <div className="mt-1.5 flex gap-3 text-[11px] text-white/50 tabular-nums">
+                    <span>{formatDuration(stat.minutes)}</span>
+                    <span>平均 {stat.avg_players.toFixed(0)} 人</span>
+                  </div>
+                </>
+              ) : (
+                <div className="text-[11px] text-white/35">近 7 天没玩过</div>
+              )}
+            </div>
+            {canSwitch && !m.is_current ? (
+              <button
+                type="button"
+                disabled={!serverInitialized}
+                title={serverInitialized ? "切换到此地图" : "服务器尚未初始化，暂不可换图"}
+                onClick={() => chooseLevel(i, mapLabel)}
+                className="inline-flex shrink-0 items-center gap-1 border border-white/15 px-2 py-1 text-xs text-white/80 transition-colors hover:border-amber-400/60 hover:text-amber-200 disabled:opacity-40"
+              >
+                <MapPin className="size-3.5" />
+                换图
+              </button>
+            ) : null}
+          </div>
+        </Bf1Panel>
+      </li>
+    );
+  };
+  const gridCls = "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4";
 
   return (
     <div>
-      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2 text-xs text-white/45">
-        <span>按轮换顺序排列，共 {items.length} 张</span>
-        {stats.length > 0 ? <span>热度条为近 7 天人·分钟，越长越受欢迎</span> : null}
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-white/45">
+        <span>
+          {grouped ? "按战役分组，序号为轮换顺序" : "按轮换顺序排列"}，共 {items.length} 张
+        </span>
+        <div className="flex flex-wrap items-center gap-3">
+          {stats.length > 0 ? <span>热度条为近 7 天人·分钟，越长越受欢迎</span> : null}
+          {canSwitch && nextOpIdx >= 0 ? (
+            <button
+              type="button"
+              disabled={!serverInitialized}
+              onClick={() =>
+                chooseLevel(
+                  nextOpIdx,
+                  items[nextOpIdx].map_display_name ?? items[nextOpIdx].map_name ?? "",
+                )
+              }
+              className="inline-flex items-center gap-1 border border-sky-400/40 bg-sky-500/10 px-2 py-1 text-sky-200 transition-colors hover:border-sky-300 disabled:opacity-40"
+            >
+              <SkipForward className="size-3.5" />
+              换到下一个战役开头：
+              {items[nextOpIdx].map_display_name ?? items[nextOpIdx].map_name}
+            </button>
+          ) : null}
+        </div>
       </div>
-      <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-        {items.map((m, i) => {
-          const mapLabel = m.map_display_name ?? m.map_name ?? "未知地图";
-          const modeLabel = m.mode_display_name ?? m.game_mode;
-          const stat = m.map_name ? statByKey.get(mapKey(m.map_name, m.game_mode)) : undefined;
-          return (
-            <li key={`${m.map_name}-${i}`}>
-              <Bf1Panel
-                variant="transparent"
-                cut={14}
-                corners={["bottomRight"]}
-                className={cn(
-                  "group relative overflow-hidden bg-black/50 ring-1 backdrop-blur-sm",
-                  m.is_current ? "ring-amber-400/80" : "ring-white/10",
-                )}
-              >
-                <div className="relative aspect-[16/8] w-full bg-white/[0.04]">
-                  {m.map_image_url ? (
-                    // EA CDN 自带缩放与缓存，不走 next/image
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={m.map_image_url}
-                      alt={mapLabel}
-                      loading="lazy"
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  ) : null}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-                  <span className="font-display absolute top-2 left-2.5 text-sm font-bold text-white/70 tabular-nums drop-shadow">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  {m.is_current ? (
-                    <span className="absolute top-2 right-2 bg-amber-400 px-2 py-0.5 text-xs font-bold text-black">
-                      正在进行
-                    </span>
-                  ) : i === nextIdx ? (
-                    <span className="absolute top-2 right-2 border border-white/40 bg-black/60 px-2 py-0.5 text-xs text-white/85">
-                      下一张
-                    </span>
-                  ) : null}
-                  <div className="absolute inset-x-0 bottom-0 px-3 pb-2">
-                    <div className="truncate text-base font-bold text-white">{mapLabel}</div>
-                    {modeLabel ? (
-                      <div className="text-xs text-amber-300/90">{modeLabel}</div>
-                    ) : null}
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 px-3 py-2.5">
-                  <div className="min-w-0 flex-1">
-                    {stat ? (
-                      <>
-                        <div className="h-1 bg-white/[0.08]">
-                          <div
-                            className="h-full"
-                            style={{
-                              width: `${(stat.player_minutes / topPlayerMinutes) * 100}%`,
-                              background: colors[stat.map_name],
-                            }}
-                          />
-                        </div>
-                        <div className="mt-1.5 flex gap-3 text-[11px] text-white/50 tabular-nums">
-                          <span>{formatDuration(stat.minutes)}</span>
-                          <span>平均 {stat.avg_players.toFixed(0)} 人</span>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="text-[11px] text-white/35">近 7 天没玩过</div>
-                    )}
-                  </div>
-                  {canSwitch && !m.is_current ? (
-                    <button
-                      type="button"
-                      disabled={!serverInitialized}
-                      title={serverInitialized ? "切换到此地图" : "服务器尚未初始化，暂不可换图"}
-                      onClick={() => chooseLevel(i, mapLabel)}
-                      className="inline-flex shrink-0 items-center gap-1 border border-white/15 px-2 py-1 text-xs text-white/80 transition-colors hover:border-amber-400/60 hover:text-amber-200 disabled:opacity-40"
-                    >
-                      <MapPin className="size-3.5" />
-                      换图
-                    </button>
-                  ) : null}
-                </div>
-              </Bf1Panel>
-            </li>
-          );
-        })}
-      </ul>
+      {grouped ? (
+        <div className="space-y-6">
+          {groups.map((g) => (
+            <section key={g.key}>
+              <h3 className="mb-2 text-sm font-semibold text-white/80">{g.title}</h3>
+              <ul className={gridCls}>{g.entries.map(renderCard)}</ul>
+            </section>
+          ))}
+        </div>
+      ) : (
+        <ul className={gridCls}>{items.map((m, i) => renderCard({ m, i }))}</ul>
+      )}
     </div>
   );
 }

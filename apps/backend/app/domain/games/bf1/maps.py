@@ -114,8 +114,9 @@ class MapData:
     }
 
 
-# 多图行动的地图顺序（单图行动不列）。分组已对照 Blaze ATTR operationindex 实测；
-# shortcut: 图内先后顺序取自社区换图工具 ChangeMapTool-KAF 的 opNextMap，官服轮询确认后再修正。
+# 多图行动的地图顺序（单图行动不列）。分组已对照 Blaze ATTR operationindex 实测，
+# 顺序与 Battlefield Fandom「Operations」词条一致，官服实测看到了海丽丝岬 → 阿奇巴巴、
+# 流血宴厅 → 阿尔贡森林两次自然推进。
 OPERATION_MAPS: tuple[tuple[str, ...], ...] = (
     ("MP_Chateau", "MP_Forest"),
     ("MP_Scar", "MP_Amiens"),
@@ -127,6 +128,34 @@ OPERATION_MAPS: tuple[tuple[str, ...], ...] = (
     ("MP_Volga", "MP_Tsaritsyn"),
     ("MP_Beachhead", "MP_Ridge"),
 )
+
+# 行动模式下每张图的区域数，取自 Battlefield Fandom 各行动 / 闪击行动地图词条。
+OPERATION_SECTORS: dict[str, int] = {
+    "MP_Chateau": 4,
+    "MP_Forest": 5,
+    "MP_Scar": 5,
+    "MP_Amiens": 4,
+    "MP_MountainFort": 6,
+    "MP_ItalianCoast": 5,
+    "MP_FaoFortress": 3,
+    "MP_Suez": 4,
+    "MP_Desert": 5,
+    "MP_Fields": 4,
+    "MP_Graveyard": 4,
+    "MP_Verdun": 3,
+    "MP_Underworld": 3,
+    "MP_Valley": 4,
+    "MP_Bridge": 4,
+    "MP_Volga": 3,
+    "MP_Tsaritsyn": 4,
+    "MP_Beachhead": 4,
+    "MP_Ridge": 4,
+    "MP_Offensive": 3,
+    "MP_Giant": 4,
+    "MP_ShovelTown": 3,
+    "MP_Ravines": 4,
+    "MP_Harbor": 4,
+}
 
 
 def operation_maps(map_name: str) -> tuple[str, ...]:

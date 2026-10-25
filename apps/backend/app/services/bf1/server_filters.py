@@ -15,6 +15,7 @@ from typing import Any
 
 from app.api.errors import ValidationError
 from app.domain.games.bf1.maps import MapData
+from app.schemas.bf1.server import ServerSummary
 
 # 服务器规模档位（gameSizes 数值 key 全集），与游戏「遊戲規模」筛选项一致
 VALID_SIZES: frozenset[int] = frozenset({10, 16, 24, 32, 40, 48, 64})
@@ -60,3 +61,27 @@ def build_search_filter(
         _reject_unknown(sizes, VALID_SIZES, "sizes")
         filter_dict["gameSizes"] = {str(size): "on" for size in sizes}
     return filter_dict
+
+
+def filter_summaries(
+    items: list[ServerSummary],
+    *,
+    name: str | None = None,
+    maps: list[str] | None = None,
+    modes: list[str] | None = None,
+    regions: list[str] | None = None,
+    sizes: list[int] | None = None,
+) -> list[ServerSummary]:
+    """在全服摘要缓存上本地筛选，口径对齐 EA：名称包含匹配且大小写不敏感，多值维度取并集，
+    规模按服务器最大人数匹配。取值合法性由 build_search_filter 先行校验。
+    """
+    needle = (name or "").casefold()
+    return [
+        s
+        for s in items
+        if needle in s.name.casefold()
+        and (not maps or s.map_name in maps)
+        and (not modes or s.game_mode in modes)
+        and (not regions or s.region in regions)
+        and (not sizes or s.max_player_count in sizes)
+    ]

@@ -1,22 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { animate, motion, useMotionValue, useTransform, type Variants } from "framer-motion";
 import { Clock4, Eye, Server, Users } from "lucide-react";
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
 import { BfCard } from "@/components/bf1/visual/BfCard";
+import { TrendPanel } from "@/components/bf1/visual/TrendPanel";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { StatsOverviewSkeleton } from "@/components/layout/PageSkeleton";
 import { SectionHeading } from "@/components/layout/SectionHeading";
 import { ENABLED_GAMES } from "@/lib/game-registry";
-import {
-  bf1Api,
-  type BF1Overview,
-  type CountBreakdown,
-  type NamedCount,
-  type TrendPoint,
-} from "@/lib/api/bf1";
+import { bf1Api, type BF1Overview, type CountBreakdown, type NamedCount } from "@/lib/api/bf1";
 import { cn } from "@/lib/utils";
 
 /**
@@ -146,7 +141,12 @@ function OverviewContent({ data }: { data: BF1Overview }) {
         </section>
 
         <motion.div variants={staggerItem}>
-          <TrendPanel points={data.history} />
+          <TrendPanel
+            title="24 小时在线趋势"
+            points={data.history}
+            emptyText="趋势数据采集中，每分钟记录一次，约一小时后可见曲线。"
+            describe={(p) => `${p.servers} 台`}
+          />
         </motion.div>
 
         <section className="grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -259,191 +259,6 @@ function HeroStat({
       </div>
     </Bf1Panel>
   );
-}
-
-/* ---------- 24h 在线趋势面积图（手写 SVG） ---------- */
-
-/** SVG 逻辑坐标系尺寸；preserveAspectRatio="none" 拉伸适配容器，线宽靠 non-scaling-stroke 保持 */
-const CHART_W = 1000;
-const CHART_H = 240;
-const CHART_PAD_TOP = 12;
-const CHART_PAD_BOTTOM = 6;
-
-/** 降采样上限：超过后按桶取均值，曲线更平滑、SVG path 更轻 */
-const CHART_MAX_POINTS = 288;
-
-function TrendPanel({ points: rawPoints }: { points: TrendPoint[] }) {
-  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
-  const plotRef = useRef<HTMLDivElement>(null);
-
-  const points = useMemo(() => {
-    if (rawPoints.length <= CHART_MAX_POINTS) return rawPoints;
-    const bucket = Math.ceil(rawPoints.length / CHART_MAX_POINTS);
-    const out: TrendPoint[] = [];
-    for (let i = 0; i < rawPoints.length; i += bucket) {
-      const slice = rawPoints.slice(i, i + bucket);
-      out.push({
-        ts: slice[Math.floor(slice.length / 2)].ts,
-        players: Math.round(slice.reduce((sum, p) => sum + p.players, 0) / slice.length),
-        servers: Math.round(slice.reduce((sum, p) => sum + p.servers, 0) / slice.length),
-      });
-    }
-    return out;
-  }, [rawPoints]);
-
-  const chart = useMemo(() => {
-    if (points.length < 2) return null;
-    const t0 = points[0].ts;
-    const span = Math.max(points[points.length - 1].ts - t0, 1);
-    // 顶部留 8% 余量，避免峰值顶到面板边缘
-    const yMax = Math.max(...points.map((p) => p.players), 1) * 1.08;
-    const plotH = CHART_H - CHART_PAD_TOP - CHART_PAD_BOTTOM;
-    const x = (p: TrendPoint) => ((p.ts - t0) / span) * CHART_W;
-    const y = (v: number) => CHART_PAD_TOP + (1 - v / yMax) * plotH;
-    const line = points
-      .map((p, i) => `${i === 0 ? "M" : "L"}${x(p).toFixed(1)} ${y(p.players).toFixed(1)}`)
-      .join(" ");
-    const baseline = CHART_H - CHART_PAD_BOTTOM;
-    return { t0, span, yMax, x, y, line, area: `${line} L${CHART_W} ${baseline} L0 ${baseline} Z` };
-  }, [points]);
-
-  // 峰值取原始数据，不受降采样均值影响
-  const peak = useMemo(
-    () => (rawPoints.length > 0 ? Math.max(...rawPoints.map((p) => p.players)) : 0),
-    [rawPoints],
-  );
-
-  function handleMove(e: React.MouseEvent) {
-    if (!chart || !plotRef.current) return;
-    const rect = plotRef.current.getBoundingClientRect();
-    const targetTs = chart.t0 + ((e.clientX - rect.left) / rect.width) * chart.span;
-    // 二分找到 >= targetTs 的第一个点，再与前一个点比距离取更近者
-    let lo = 0;
-    let hi = points.length - 1;
-    while (lo < hi) {
-      const mid = (lo + hi) >> 1;
-      if (points[mid].ts < targetTs) lo = mid + 1;
-      else hi = mid;
-    }
-    const idx = lo > 0 && targetTs - points[lo - 1].ts < points[lo].ts - targetTs ? lo - 1 : lo;
-    setHoverIdx(idx);
-  }
-
-  const hovered = hoverIdx !== null ? points[hoverIdx] : null;
-
-  return (
-    <Bf1Panel
-      variant="transparent"
-      cut={20}
-      corners={["topLeft", "bottomRight"]}
-      className="bg-white/[0.03] p-5"
-    >
-      <div className="flex items-baseline justify-between gap-4">
-        <SectionHeading className="mb-0">24 小时在线趋势</SectionHeading>
-        <div className="text-muted-foreground shrink-0 text-xs tabular-nums">
-          {hovered ? (
-            <>
-              {formatTime(hovered.ts)} ·{" "}
-              <span className="text-foreground font-medium">
-                {hovered.players.toLocaleString()}
-              </span>{" "}
-              人 · {hovered.servers} 台
-            </>
-          ) : (
-            <>
-              峰值 <span className="text-foreground font-medium">{peak.toLocaleString()}</span> 人
-            </>
-          )}
-        </div>
-      </div>
-
-      {!chart ? (
-        <div className="text-muted-foreground flex h-48 items-center justify-center text-sm">
-          趋势数据采集中，每分钟记录一次，约一小时后可见曲线。
-        </div>
-      ) : (
-        <div className="mt-4">
-          <div
-            ref={plotRef}
-            className="relative"
-            onMouseMove={handleMove}
-            onMouseLeave={() => setHoverIdx(null)}
-          >
-            <svg
-              width="100%"
-              height="192"
-              viewBox={`0 0 ${CHART_W} ${CHART_H}`}
-              preserveAspectRatio="none"
-              className="block"
-              aria-hidden
-            >
-              <defs>
-                <linearGradient id="trend-fill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="rgb(245 158 11 / 0.35)" />
-                  <stop offset="100%" stopColor="rgb(245 158 11 / 0.02)" />
-                </linearGradient>
-              </defs>
-              {/* 水平参考线：峰值与半值 */}
-              {[chart.y(chart.yMax / 1.08), chart.y(chart.yMax / 1.08 / 2)].map((gy) => (
-                <line
-                  key={gy}
-                  x1="0"
-                  x2={CHART_W}
-                  y1={gy}
-                  y2={gy}
-                  stroke="rgb(255 255 255 / 0.08)"
-                  strokeDasharray="4 6"
-                  vectorEffect="non-scaling-stroke"
-                />
-              ))}
-              <motion.path
-                d={chart.area}
-                fill="url(#trend-fill)"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.9, delay: 0.5 }}
-              />
-              <motion.path
-                d={chart.line}
-                fill="none"
-                stroke="rgb(245 158 11 / 0.9)"
-                strokeWidth="1.5"
-                vectorEffect="non-scaling-stroke"
-                initial={{ pathLength: 0 }}
-                animate={{ pathLength: 1 }}
-                transition={{ duration: 1.3, ease: "easeOut" }}
-              />
-            </svg>
-
-            {/* hover 跟随竖线与圆点：HTML 绝对定位，避开 SVG 非等比拉伸 */}
-            {hovered ? (
-              <div
-                className="pointer-events-none absolute inset-y-0"
-                style={{ left: `${(chart.x(hovered) / CHART_W) * 100}%` }}
-              >
-                <div className="absolute inset-y-0 w-px bg-white/25" />
-                <div
-                  className="absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.8)]"
-                  style={{ top: `${(chart.y(hovered.players) / CHART_H) * 100}%`, left: "0.5px" }}
-                />
-              </div>
-            ) : null}
-          </div>
-
-          {/* 时间轴：首 / 中 / 尾 */}
-          <div className="text-muted-foreground/70 mt-2 flex justify-between text-[11px] tabular-nums">
-            <span>{formatTime(chart.t0)}</span>
-            <span>{formatTime(chart.t0 + chart.span / 2)}</span>
-            <span>{formatTime(chart.t0 + chart.span)}</span>
-          </div>
-        </div>
-      )}
-    </Bf1Panel>
-  );
-}
-
-function formatTime(ts: number): string {
-  return new Date(ts * 1000).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
 }
 
 /* ---------- 地区分布 ---------- */

@@ -33,6 +33,7 @@ import {
   BatchActionBar,
 } from "@/components/bf1/server-admin/InlineServerAdmin";
 import { MembersPanel } from "@/components/bf1/server-admin/MembersPanel";
+import { ServerPlayerTrend } from "@/components/bf1/ServerPlayerTrend";
 import { useSession } from "@/hooks/useSession";
 import { auditApi, type AuditLogItem } from "@/lib/api/audit";
 import { FALLBACK_GRADIENT } from "@/lib/bf1/background";
@@ -133,6 +134,8 @@ function ServerDetailView({
         <SettingsMatrix settings={detail.settings} />
 
         <ServerInfoPanel extras={extras} />
+
+        <ServerPlayerTrend gameId={gameId} />
 
         <div className="mt-6">
           <TabNav tabs={tabs} tab={tab} onTab={setTab} />

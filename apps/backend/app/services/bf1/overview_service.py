@@ -27,12 +27,15 @@ from app.domain.games.bf1.maps import (
     normalize_map_image_url,
     translate_map_name,
     translate_mode_name,
+    translate_region,
 )
 from app.schemas.bf1.overview import BF1Overview, CountBreakdown, NamedCount, TrendPoint
 from app.schemas.bf1.server import ServerSummary
 from app.services.bf1.blaze_service import fetch_game_list_snapshot
 from app.services.bf1.gateway_factory import get_bf1_client
+from app.services.bf1.server_player_count_service import record_player_counts
 from app.services.bf1.server_service import _to_summary
+from app.services.bf1.server_snapshot_cache import write_server_snapshot
 
 # searchServers 单次最多约 200 条，并发多次再按 guid 去重以逼近全量。
 SEARCH_CONCURRENCY = 50
@@ -182,7 +185,7 @@ def _snapshot_mode(attrs: dict[str, Any]) -> str | None:
 
 
 def _snapshot_summary(game: dict[str, Any]) -> ServerSummary:
-    """把快照里的一个游戏转成 ServerSummary，只取聚合需要的字段。"""
+    """把快照里的一个游戏转成 ServerSummary，字段足够聚合与服务器列表展示。"""
     attrs = game.get("ATTR") or {}
     mode = _snapshot_mode(attrs)
     if mode is None:
@@ -192,25 +195,38 @@ def _snapshot_summary(game: dict[str, Any]) -> ServerSummary:
     level = attrs.get("level") or None
     # PCNT = [公开玩家, 私有玩家, 公开观战, 私有观战]
     pcnt = [*(game.get("PCNT") or []), 0, 0, 0, 0]
+    # CAP 与 PCNT 同序，首项是公开玩家位即服务器规模
+    cap = [*(game.get("CAP") or []), 0]
+    # 描述与 admins 一样按长度切片存放，按序拼接
+    description = "".join(attrs.get(f"description{i}") or "" for i in range(1, 10))
+    region = attrs.get("region")
+    server_type = attrs.get("servertype")
     return ServerSummary(
         server_id=0,
         game_id=game.get("GID"),
-        name="",
+        name=game.get("GNAM") or "",
         map_name=level,
         map_display_name=translate_map_name(level),
         map_image_url=normalize_map_image_url(MapData.MapImageDict.get(level or "")),
         game_mode=mode,
         mode_display_name=translate_mode_name(mode),
         player_count=pcnt[0] + pcnt[1],
+        max_player_count=int(cap[0] or 0),
         queue_count=int(game.get("QCNT") or 0),
         spectator_count=pcnt[2] + pcnt[3],
-        region=attrs.get("region"),
-        is_official=attrs.get("servertype") == "OFFICIAL",
+        region=region,
+        region_display_name=translate_region(region),
+        # shortcut: PSAS 是 Blaze 标准的 pingSiteAlias，未在生产快照里实测；国家、tickRate、
+        # 密码字段名未知暂缺，列表页对应的国旗回落 ping 节点、锁与 Hz 不显示，实测后补上。
+        ping_site=game.get("PSAS") or None,
+        is_official=server_type == "OFFICIAL",
+        is_ranked=server_type == "RANKED",
+        description=description or None,
     )
 
 
-def build_overview_from_snapshot(updates: list[dict[str, Any]]) -> BF1Overview:
-    """把 NotifyGameListUpdate 的 UPDT 项按 GID 去重后聚合成全服快照。纯函数，便于单测。
+def snapshot_summaries(updates: list[dict[str, Any]]) -> list[ServerSummary]:
+    """把 NotifyGameListUpdate 的 UPDT 项按 GID 去重后逐个转成 ServerSummary。纯函数，便于单测。
 
     任一服务器解析不出模式即抛出，宁可回退 searchServers，也不让标签与现有口径不一致。
     """
@@ -221,27 +237,35 @@ def build_overview_from_snapshot(updates: list[dict[str, Any]]) -> BF1Overview:
             games[game["GID"]] = game
     if not games:
         raise ValueError("快照没有返回任何服务器")
-    summaries = [_snapshot_summary(game) for game in games.values()]
-    return build_overview(summaries, sample_pulls=1, raw_count=len(updates))
+    return [_snapshot_summary(game) for game in games.values()]
 
 
-async def fetch_overview(db: AsyncSession) -> BF1Overview:
+def build_overview_from_snapshot(updates: list[dict[str, Any]]) -> BF1Overview:
+    """把快照 UPDT 项聚合成全服统计。纯函数，便于单测。"""
+    return build_overview(snapshot_summaries(updates), sample_pulls=1, raw_count=len(updates))
+
+
+async def fetch_overview(db: AsyncSession) -> tuple[BF1Overview, list[ServerSummary], str]:
     """拉取并聚合全服统计：先试 Blaze 快照，失败（含超时）打 warning 后回退 searchServers。
 
-    无任何数据时抛出，由调用方决定是否覆盖缓存。
+    返回 (统计, 去重后的服务器摘要, 数据源 snapshot/search)。无任何数据时抛出，由调用方
+    决定是否覆盖缓存。
     """
     if not get_settings().blaze_mock_mode:
         try:
-            overview = build_overview_from_snapshot(await fetch_game_list_snapshot(db))
+            updates = await fetch_game_list_snapshot(db)
+            summaries = snapshot_summaries(updates)
         except Exception as e:
             logger.warning("BF1 overview snapshot failed, falling back to searchServers: {}", e)
         else:
-            logger.info("BF1 overview source=snapshot games={}", overview.servers.total)
-            return overview
-    return await _fetch_overview_by_search(db)
+            logger.info("BF1 overview source=snapshot games={}", len(summaries))
+            overview = build_overview(summaries, sample_pulls=1, raw_count=len(updates))
+            return overview, summaries, "snapshot"
+    overview, summaries = await _fetch_overview_by_search(db)
+    return overview, summaries, "search"
 
 
-async def _fetch_overview_by_search(db: AsyncSession) -> BF1Overview:
+async def _fetch_overview_by_search(db: AsyncSession) -> tuple[BF1Overview, list[ServerSummary]]:
     """并发 searchServers 拉取并聚合全服统计。无任何一次成功拉取时抛出。
 
     去重、判空与抛出全部放在 ``get_bf1_client`` 上下文内：searchServers 失败只返回字符串
@@ -276,7 +300,8 @@ async def _fetch_overview_by_search(db: AsyncSession) -> BF1Overview:
 
         summaries = [_to_summary(raw) for raw in deduped.values()]
         logger.info("BF1 overview source=search pulls={}/{}", sample_pulls, SEARCH_CONCURRENCY)
-        return build_overview(summaries, sample_pulls=sample_pulls, raw_count=raw_count)
+        overview = build_overview(summaries, sample_pulls=sample_pulls, raw_count=raw_count)
+        return overview, summaries
 
 
 async def refresh_overview_cache(db: AsyncSession) -> BF1Overview:
@@ -285,9 +310,11 @@ async def refresh_overview_cache(db: AsyncSession) -> BF1Overview:
     快照与趋势历史分开存储：快照整体覆盖写，历史按采样点追加并裁剪到最近 24h，
     读取端再把两者拼装成完整响应。
     """
-    overview = await fetch_overview(db)
+    overview, summaries, source = await fetch_overview(db)
     cache = await get_cache()
     await cache.set(OVERVIEW_CACHE_KEY, overview.model_dump(), ttl=OVERVIEW_CACHE_TTL)
+    await write_server_snapshot(summaries, source=source, ttl=OVERVIEW_CACHE_TTL)
+    _spawn_record_player_counts(summaries)
     point = TrendPoint(
         ts=int(datetime.now(UTC).timestamp()),
         players=overview.players.total,
@@ -307,6 +334,26 @@ async def refresh_overview_cache(db: AsyncSession) -> BF1Overview:
         overview.raw_count,
     )
     return overview
+
+
+# 后台写点任务的强引用，防止任务未完成就被 GC 回收
+_background_tasks: set[asyncio.Task[None]] = set()
+
+
+async def _record_player_counts(summaries: list[ServerSummary]) -> None:
+    try:
+        async with get_sessionmaker()() as db:
+            written = await record_player_counts(db, summaries)
+        logger.debug("BF1 server player counts recorded: {}", written)
+    except Exception as e:
+        logger.warning("BF1 server player count write failed: {}", e)
+
+
+def _spawn_record_player_counts(summaries: list[ServerSummary]) -> None:
+    """人数点写库放到独立任务和会话里，不阻塞、不拖慢快照轮询。"""
+    task = asyncio.create_task(_record_player_counts(summaries))
+    _background_tasks.add(task)
+    task.add_done_callback(_background_tasks.discard)
 
 
 async def read_overview_cache() -> BF1Overview:

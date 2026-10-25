@@ -12,7 +12,7 @@ import pytest
 from app.api.errors import EAApiError
 from app.schemas.bf1.overview import BF1Overview
 from app.schemas.bf1.server import ServerSummary
-from app.services.bf1 import blaze_service, overview_service
+from app.services.bf1 import blaze_service, overview_service, server_snapshot_cache
 from app.services.bf1.overview_service import (
     _region_key,
     _snapshot_mode,
@@ -225,9 +225,11 @@ async def test_fetch_overview_prefers_snapshot(monkeypatch: pytest.MonkeyPatch) 
 
     monkeypatch.setattr(overview_service, "fetch_game_list_snapshot", fake_snapshot)
     monkeypatch.setattr(overview_service, "_fetch_overview_by_search", no_search)
-    ov = await overview_service.fetch_overview(object())  # type: ignore[arg-type]
+    ov, summaries, source = await overview_service.fetch_overview(object())  # type: ignore[arg-type]
     assert ov.players.total == 10
     assert ov.sample_pulls == 1
+    assert [s.game_id for s in summaries] == [1]
+    assert source == "snapshot"
 
 
 @pytest.mark.parametrize(
@@ -242,12 +244,68 @@ async def test_fetch_overview_falls_back_to_search(
 
     fallback = BF1Overview(available=True, sample_pulls=50, raw_count=9000)
 
-    async def fake_search(_db: object) -> BF1Overview:
-        return fallback
+    async def fake_search(_db: object) -> tuple[BF1Overview, list]:
+        return fallback, []
 
     monkeypatch.setattr(overview_service, "fetch_game_list_snapshot", failing_snapshot)
     monkeypatch.setattr(overview_service, "_fetch_overview_by_search", fake_search)
-    assert await overview_service.fetch_overview(object()) is fallback  # type: ignore[arg-type]
+    assert await overview_service.fetch_overview(object()) == (fallback, [], "search")  # type: ignore[arg-type]
+
+
+def test_snapshot_summary_fills_list_fields() -> None:
+    game = _game(7, servertype="RANKED", region="EU", pcnt=[40, 1, 2, 0], qcnt=5)
+    game["GNAM"] = "[ABC] 测试服"
+    game["CAP"] = [64, 0, 4, 0]
+    game["PSAS"] = "nrt"
+    game["ATTR"].update({"description1": "欢迎", "description2": "来玩", "description3": ""})
+    s = overview_service._snapshot_summary(game)
+
+    assert (s.game_id, s.name, s.max_player_count) == (7, "[ABC] 测试服", 64)
+    assert (s.player_count, s.queue_count, s.spectator_count) == (41, 5, 2)
+    assert s.is_ranked and not s.is_official
+    assert s.region_display_name is not None
+    assert s.description == "欢迎来玩"
+    assert s.ping_site == "nrt"
+    # 隐私字段不会出现在摘要里
+    assert "secret" not in s.model_dump_json()
+
+
+async def test_refresh_writes_server_snapshot_and_spawns_counts(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    summaries = overview_service.snapshot_summaries([{"GAM": _game(1, pcnt=[10, 0, 0, 0])}])
+    ov = overview_service.build_overview(summaries, sample_pulls=1, raw_count=1)
+
+    async def fake_fetch(_db: object) -> tuple:
+        return ov, summaries, "snapshot"
+
+    class _Cache:
+        def __init__(self) -> None:
+            self.data: dict = {}
+
+        async def set(self, key: str, value: object, ttl: int | None = None) -> None:
+            self.data[key] = (value, ttl)
+
+        async def list_append(self, *_a: object, **_k: object) -> None:
+            return None
+
+    cache = _Cache()
+
+    async def fake_get_cache() -> _Cache:
+        return cache
+
+    spawned: list = []
+    monkeypatch.setattr(overview_service, "fetch_overview", fake_fetch)
+    monkeypatch.setattr(overview_service, "get_cache", fake_get_cache)
+    monkeypatch.setattr(server_snapshot_cache, "get_cache", fake_get_cache)
+    monkeypatch.setattr(overview_service, "_spawn_record_player_counts", spawned.append)
+    await overview_service.refresh_overview_cache(object())  # type: ignore[arg-type]
+
+    value, ttl = cache.data[server_snapshot_cache.SERVER_SNAPSHOT_CACHE_KEY]
+    assert ttl == overview_service.OVERVIEW_CACHE_TTL
+    assert value["source"] == "snapshot"
+    assert [i["game_id"] for i in value["items"]] == [1]
+    assert spawned == [summaries]
 
 
 class _FakeSocket:

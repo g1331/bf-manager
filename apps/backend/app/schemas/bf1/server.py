@@ -46,6 +46,16 @@ class ServerListResponse(BaseModel):
     items: list[ServerSummary]
 
 
+class ServerPlayerCountPoint(BaseModel):
+    """服务器人数曲线上的一个采样点，ts 为 unix 秒"""
+
+    ts: int
+    players: int
+    queue: int = 0
+    spectators: int = 0
+    max_players: int = 0
+
+
 class MapRotationItem(BaseModel):
     map_name: str | None = None
     map_display_name: str | None = None

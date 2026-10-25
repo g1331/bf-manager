@@ -10,6 +10,9 @@
 
 from __future__ import annotations
 
+import re
+from pathlib import Path
+
 import pytest
 from app.domain.ea.login.exceptions import (
     CredentialsExpiredError,
@@ -172,11 +175,67 @@ async def test_juno_wrong_password_raises_wrong_password():
 
 
 @pytest.mark.asyncio
-async def test_juno_expired_credentials_raises_credentials_expired():
-    """juno 单页：凭据过期文案 → CredentialsExpiredError（区别于普通密码错误）。"""
+async def test_juno_incorrect_or_expired_is_wrong_password():
+    """juno 密码错误的标准文案「incorrect or have expired」→ WrongPasswordError，原文透传。"""
     engine = _engine_with_script([_JUNO_START_PAGE, _JUNO_EXPIRED_PAGE])
+    with pytest.raises(WrongPasswordError, match="incorrect or have expired"):
+        await engine.start()
+
+
+@pytest.mark.asyncio
+async def test_credentials_have_expired_raises_credentials_expired():
+    page = _JUNO_EXPIRED_PAGE.replace(
+        "Your credentials are incorrect or have expired.", "Your credentials have expired."
+    )
+    engine = _engine_with_script([_JUNO_START_PAGE, page])
     with pytest.raises(CredentialsExpiredError):
         await engine.start()
+
+
+# 2026-10 抓取的真实 juno 登录页（去掉脚本 / 样式，fid 已脱敏）：常驻离线错误模板与
+# 国家区号下拉，旧解析器会把它们当成错误，导致跳过密码步骤并误报凭据过期。
+_REAL_JUNO_PAGE = (Path(__file__).parent / "fixtures" / "ea_juno_login.html").read_text()
+
+
+def _real_page_with_error(text: str, code: str = "") -> str:
+    page = re.sub(
+        r'(<div id="online-general-error"[^>]*>\s*<p[^>]*>)(</p>)',
+        lambda m: m.group(1) + text + m.group(2),
+        _REAL_JUNO_PAGE,
+    )
+    return page.replace('id="errorCode" value=""', f'id="errorCode" value="{code}"')
+
+
+@pytest.mark.asyncio
+async def test_real_juno_page_without_error_posts_password_step():
+    """首个 POST 后 EA 又回了不带错误的登录页 → 补发密码 POST，而不是判成凭据过期。"""
+    session_script = [_REAL_JUNO_PAGE, _REAL_JUNO_PAGE, _TWO_FA_MULTI_PAGE]
+    engine = _engine_with_script(session_script)
+    outcome = await engine.start()
+    assert outcome.next_step == "need_method"
+
+
+@pytest.mark.asyncio
+async def test_real_juno_page_with_online_error_raises_wrong_password():
+    page = _real_page_with_error("Your credentials are incorrect or have expired.", "10003")
+    engine = _engine_with_script([_REAL_JUNO_PAGE, page])
+    with pytest.raises(WrongPasswordError) as exc:
+        await engine.start()
+    assert exc.value.message == "Your credentials are incorrect or have expired. (错误码 10003)"
+
+
+@pytest.mark.asyncio
+async def test_real_juno_page_returned_twice_raises_form_changed_with_diagnostic():
+    """补发密码后仍是无提示的登录页 → FormStructureChangedError，诊断文本不含输入值。"""
+    page = _REAL_JUNO_PAGE.replace('name="email" value=""', 'name="email" value="user@example.com"')
+    assert "user@example.com" in page
+    engine = _engine_with_script([_REAL_JUNO_PAGE, page, page])
+    with pytest.raises(FormStructureChangedError) as exc:
+        await engine.start()
+    assert exc.value.snippet.startswith("[SIGN IN]")
+    assert "user@example.com" not in exc.value.snippet
+    assert "Afghanistan" not in exc.value.snippet
+    assert "must be online" not in exc.value.snippet
 
 
 @pytest.mark.asyncio

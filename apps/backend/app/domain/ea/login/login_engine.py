@@ -51,6 +51,7 @@ from app.domain.ea.login.form_parser import (
     extract_redirect_url,
     get_email_method_masked_destination,
     has_privacy_accept_checkbox,
+    page_diagnostic,
     parse_set_cookie_pair,
 )
 
@@ -90,10 +91,9 @@ _RISK_KEYWORDS = (
 )
 
 # EA 明确告知「账号凭据过期 / 不可用」时返回的关键片段。命中后引导用户去官网走重置
-# 流程，而非反复尝试密码。注意 EA 实际页面常把这条文案与「You must be online…」
-# 等通用提示拼在一起，所以匹配片段只取确诊力强的子串。
+# 流程，而非反复尝试密码。juno 密码错误的标准文案就是「Your credentials are incorrect
+# or have expired」，它属于密码错误，不能放进这里。
 _CREDENTIALS_EXPIRED_KEYWORDS = (
-    "credentials are incorrect or have expired",
     "credentials have expired",
     "凭据已过期",
 )
@@ -103,8 +103,6 @@ def _classify_page_error(page_err: str) -> str:
     """把 EA 返回的错误文本分流成已知错误类别。
 
     返回值约定：``"expired"`` / ``"risk_blocked"`` / ``"wrong_password"``。
-    顺序敏感：``expired`` 关键词与 ``wrong_password``（"incorrect"）字面上有交集，
-    必须优先匹配 ``expired`` 才能避免把凭据过期场景误判为单纯密码错误。
     """
     if not page_err:
         return "wrong_password"
@@ -239,17 +237,21 @@ class EALoginEngine:
         """对 POST email/password 之后的响应做统一分类，抛对应异常或推进流程。
 
         分类顺序：
-        1. 密码输入框还在 → 凭据被拒（凭据过期 / 风控 / 密码错误三选一）
+        1. 密码输入框还在 → 有错误提示时按凭据被拒分流（凭据过期 / 风控 / 密码错误），
+           没有提示则视为表单结构变化
         2. 2FA radio 列表非空 → 进入 2FA 流程
         3. ``window.location=`` 重定向 → 跳过去拿 cookies，``next_step="done"``
         4. 还有 page error 文本 → 按关键词分流（兜底捕捉 EA 不带 password 输入但
            直接渲染了错误信息的新版页面）
-        5. 全部不匹配 → ``FormStructureChangedError``，附 HTML snippet 入日志
+        5. 全部不匹配 → ``FormStructureChangedError``，附页面诊断文本入日志
         """
         tree = lxml_html.fromstring(password_text)
         if tree.xpath('//input[@type="password" and @name="password"]'):
-            page_err = extract_page_error(password_text) or "密码错误"
-            self._raise_for_credentials_outcome(page_err, stage="password")
+            page_err = extract_page_error(password_text)
+            if page_err:
+                self._raise_for_credentials_outcome(page_err, stage="password")
+            # 退回登录页却没有任何提示：多半是表单字段变了，留现场而不是猜成密码错误
+            raise FormStructureChangedError(page_diagnostic(password_text), stage="password")
 
         methods = extract_available_auth_methods(password_text)
         if methods:
@@ -277,7 +279,7 @@ class EALoginEngine:
         if page_err:
             self._raise_for_credentials_outcome(page_err, stage="password")
 
-        raise FormStructureChangedError(_safe_snippet(password_text), stage="password")
+        raise FormStructureChangedError(page_diagnostic(password_text), stage="password")
 
     def _raise_for_credentials_outcome(self, page_err: str, *, stage: str) -> None:
         """按 :func:`_classify_page_error` 的分流结果抛对应业务异常。
@@ -332,7 +334,7 @@ class EALoginEngine:
             page_err = extract_page_error(resp_text)
             if page_err:
                 raise Invalid2FACodeError(page_err, stage="2fa_submit")
-            raise FormStructureChangedError(_safe_snippet(resp_text), stage="2fa_submit")
+            raise FormStructureChangedError(page_diagnostic(resp_text), stage="2fa_submit")
 
         cookies = await self._handle_redirect(session, redirect_url, stage="finalize")
         return FinalizeOutcome(cookies=cookies)
@@ -583,16 +585,6 @@ def _looks_like_2fa_or_redirect(text: str) -> bool:
         or 'id="readAccept"' in text
         or '<input type="password"' in text
     )
-
-
-def _safe_snippet(text: str, *, limit: int = 300) -> str:
-    """从异常 HTML 中截一段供日志诊断使用。
-
-    不做正则脱敏：诊断片段只进 :class:`FormStructureChanged` 异常的 ``snippet``
-    字段，永远不应当被直接写入日志或返回给前端；最终输出到日志的是全局 PII
-    filter 处理过的版本。
-    """
-    return text[:limit]
 
 
 __all__ = [

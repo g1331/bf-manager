@@ -51,7 +51,9 @@ class WrongPasswordError(EALoginError):
 
 
 class CredentialsExpiredError(EALoginError):
-    """EA 提示 "credentials are incorrect or have expired"：账号凭据已过期或无效。
+    """EA 明确提示账号凭据已过期（"credentials have expired"）。
+
+    注意 juno 的密码错误文案「credentials are incorrect or have expired」不属于这里。
 
     与单纯的「密码错错了再试一次」不同：EA 在此状态下会拒绝任何密码尝试，需要用户
     去 EA 官网走「忘记密码 / 重置密码」流程恢复账号，前端文案与操作按钮也应当区

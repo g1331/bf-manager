@@ -75,7 +75,7 @@ async def test_api_call_relogins_and_replays_on_invalid_session():
     ]
     sent_sessions: list[str] = []
 
-    async def fake_post(body, proxied=False):
+    async def fake_post(body):
         sent_sessions.append(client.session)
         return responses.pop(0)
 
@@ -99,7 +99,7 @@ async def test_api_call_does_not_replay_when_relogin_fails():
     client = BF1GatewayClient(pid=1, remid="remid", sid="sid", session="stale")
     calls = 0
 
-    async def fake_post(body, proxied=False):
+    async def fake_post(body):
         nonlocal calls
         calls += 1
         return {"error": {"code": -32501, "message": "Invalid Params: no valid session"}}

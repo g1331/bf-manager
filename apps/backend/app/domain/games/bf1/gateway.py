@@ -91,7 +91,6 @@ class _BF1GatewayBase:
             "X-Sparta-Info": "tenancyRootEnv = unknown;tenancyBlazeEnv = unknown",
             "Connection": "keep-alive",
         }
-        self.proxied_api_url = "https://ea-api.2788.pro/jsonrpc/pc/api"
         self.body = {
             "jsonrpc": "2.0",
             "method": str,
@@ -315,8 +314,8 @@ class _BF1GatewayBase:
         self.api_header["X-Gatewaysession"] = await self.get_session()
         return self.api_header
 
-    async def api_call(self, body: dict, proxied=False) -> dict | str:
-        data = await self._post_jsonrpc(body, proxied)
+    async def api_call(self, body: dict) -> dict | str:
+        data = await self._post_jsonrpc(body)
         # -32501 表示 EA 因 session 无效拒绝了请求（未执行），重新登录后用新 session 重放一次。
         # 登录态跨请求缓存后，EA 端提前作废的 session 靠这里自愈。
         if (
@@ -332,7 +331,7 @@ class _BF1GatewayBase:
             except Exception as e:
                 logger.exception(f"BF1账号{self.pid}重新登录异常: {e}")
             if self.check_login:
-                data = await self._post_jsonrpc(body, proxied)
+                data = await self._post_jsonrpc(body)
         return data if isinstance(data, str) else await self._handle_response(data)
 
     async def _handle_response(self, data: dict[str, Any]) -> dict[str, Any] | str:
@@ -342,11 +341,11 @@ class _BF1GatewayBase:
             logger.exception(f"EA API请求异常: {e}")
             return "EA API请求时发生未知错误"
 
-    async def _post_jsonrpc(self, body: dict[str, Any], proxied: bool = False) -> Any:
+    async def _post_jsonrpc(self, body: dict[str, Any]) -> Any:
         """发送 JSON-RPC 请求，返回原始 JSON；网络或格式错误返回错误描述字符串。"""
         try:
             async with self.http_session.post(
-                url=self.api_url if not proxied else self.proxied_api_url,
+                url=self.api_url,
                 headers=await self.get_api_header(),
                 data=json.dumps(body),
                 timeout=10,
@@ -1988,77 +1987,6 @@ class RSP(_BF1GatewayBase):
         )
 
 
-class CloudBanBy22(_BF1GatewayBase):
-    """22的云封禁"""
-
-    async def cb_listServerBan(self, serverId: int | str) -> dict:
-        """
-        获取服务器封禁列表
-        :param serverId:
-        :return: list[dict] - result: [
-        {
-            "platform": "pc",
-            "personaId": "1003517866915",
-            "cloud": false,
-            "reason": null,
-            "createdDate": "1708228215000"
-        }]
-        """
-        return await self.api_call(
-            {
-                "jsonrpc": "2.0",
-                "method": "CloudBan.listServerBan",
-                "params": {"game": "tunguska", "serverId": serverId},
-                "id": await get_a_uuid(),
-            },
-            proxied=True,
-        )
-
-    async def cb_addServerBan(self, serverId: int | str, personaId: int | str, reason: str) -> dict:
-        """
-        添加服务器封禁
-        :param serverId:
-        :param personaId:
-        :param reason:
-        :return:
-        """
-        return await self.api_call(
-            {
-                "jsonrpc": "2.0",
-                "method": "CloudBan.addServerBan",
-                "params": {
-                    "game": "tunguska",
-                    "serverId": serverId,
-                    "personaId": personaId,
-                    "reason": reason,
-                },
-                "id": await get_a_uuid(),
-            },
-            proxied=True,
-        )
-
-    async def cb_removeServerBan(self, serverId: int | str, personaId: int | str) -> dict:
-        """
-        移除服务器封禁
-        :param serverId:
-        :param personaId:
-        :return:
-        """
-        return await self.api_call(
-            {
-                "jsonrpc": "2.0",
-                "method": "CloudBan.removeServerBan",
-                "params": {
-                    "game": "tunguska",
-                    "serverId": serverId,
-                    "personaId": personaId,
-                },
-                "id": await get_a_uuid(),
-            },
-            proxied=True,
-        )
-
-
 class Platoons(_BF1GatewayBase):
     """
     战队相关
@@ -2503,7 +2431,6 @@ class BF1GatewayClient(
     CampaignOperations,
     Emblems,
     Loadout,
-    CloudBanBy22,
 ):
     """对外的 BF1 客户端，多重继承所有业务子类以聚合方法表。
 

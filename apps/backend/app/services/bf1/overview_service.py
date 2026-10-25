@@ -209,6 +209,8 @@ def _snapshot_summary(game: dict[str, Any]) -> ServerSummary:
     return ServerSummary(
         server_id=0,
         game_id=game.get("GID"),
+        # PGID 是 Blaze 的 persistedGameId，重启不变；同处的 PGSC 是密钥，不要读
+        persisted_game_id=str(game["PGID"]) if game.get("PGID") else None,
         name=game.get("GNAM") or "",
         map_name=level,
         map_display_name=translate_map_name(level),

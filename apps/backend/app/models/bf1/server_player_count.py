@@ -14,8 +14,10 @@ class Bf1ServerPlayerCount(Base):
     __tablename__ = "bf1_server_player_counts"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    # 快照里没有稳定的 serverId，跨重启按服名归并历史，game_id 仅定位当前这一局
+    # game_id 仅定位当前这一局，服务器重启就会变
     game_id: Mapped[int] = mapped_column(BigInteger, index=True, nullable=False)
+    # 快照带 PGID 时按它跨重启归并，否则退回按服名
+    persisted_game_id: Mapped[str | None] = mapped_column(String(64), index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     map_name: Mapped[str | None] = mapped_column(String(64))
     game_mode: Mapped[str | None] = mapped_column(String(32))

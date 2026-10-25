@@ -189,3 +189,24 @@ async def test_list_player_counts_separates_same_name_servers(test_session) -> N
     await test_session.commit()
     assert [p.players for p in await list_player_counts(test_session, 2)] == [20, 40]
     assert [p.players for p in await list_player_counts(test_session, 3)] == [30]
+
+
+async def test_list_player_counts_prefers_persisted_game_id(test_session) -> None:
+    # 有 persistedGameId 时按它归并：改名后仍连得上，同名的别家服不混进来
+    now = datetime.now(UTC)
+    t0, t1 = now - timedelta(hours=2), now - timedelta(hours=1)
+    test_session.add_all(
+        [
+            Bf1ServerPlayerCount(
+                game_id=1, persisted_game_id="g-a", name="old", player_count=10, sampled_at=t0
+            ),
+            Bf1ServerPlayerCount(
+                game_id=2, persisted_game_id="g-b", name="new", player_count=99, sampled_at=t0
+            ),
+            Bf1ServerPlayerCount(
+                game_id=3, persisted_game_id="g-a", name="new", player_count=20, sampled_at=t1
+            ),
+        ]
+    )
+    await test_session.commit()
+    assert [p.players for p in await list_player_counts(test_session, 3)] == [10, 20]

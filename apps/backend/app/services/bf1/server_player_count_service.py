@@ -29,6 +29,7 @@ async def record_player_counts(db: AsyncSession, summaries: list[ServerSummary])
     rows = [
         Bf1ServerPlayerCount(
             game_id=s.game_id,
+            persisted_game_id=s.persisted_game_id,
             name=s.name,
             map_name=s.map_name,
             game_mode=s.game_mode,
@@ -54,22 +55,27 @@ async def list_player_counts(
 ) -> list[ServerPlayerCountPoint]:
     """某私服最近 hours 小时的人数点，按时间升序。
 
-    先由 game_id 找到这个服的名字，再按名字取点，服务器重启换了 gameId 曲线也能连上。
-    同一时刻有多个同名私服时（生产上真有），只取本 game_id 的点，分不清归属的时刻跳过。
-    shortcut: 按服名归并，改名后历史会断；快照能拿到稳定 serverId 再换键。
+    先由 game_id 找到这个服最近一个点，有 persistedGameId 就按它取点（重启不变）；没有时退回
+    按服名取点。同一时刻有多个同名私服时（生产上真有），只取本 game_id 的点，分不清归属的
+    时刻跳过。shortcut: 按服名时改名后历史会断。
     """
-    name = await db.scalar(
-        select(Bf1ServerPlayerCount.name)
+    latest = await db.scalar(
+        select(Bf1ServerPlayerCount)
         .where(Bf1ServerPlayerCount.game_id == game_id)
         .order_by(Bf1ServerPlayerCount.sampled_at.desc())
         .limit(1)
     )
-    if name is None:
+    if latest is None:
         return []
+    same_server = (
+        Bf1ServerPlayerCount.persisted_game_id == latest.persisted_game_id
+        if latest.persisted_game_id
+        else Bf1ServerPlayerCount.name == latest.name
+    )
     since = datetime.now(UTC) - timedelta(hours=hours)
     rows = await db.scalars(
         select(Bf1ServerPlayerCount)
-        .where(Bf1ServerPlayerCount.name == name, Bf1ServerPlayerCount.sampled_at >= since)
+        .where(same_server, Bf1ServerPlayerCount.sampled_at >= since)
         .order_by(Bf1ServerPlayerCount.sampled_at)
     )
     by_time: dict[datetime, list[Bf1ServerPlayerCount]] = {}

@@ -67,7 +67,11 @@ def simplify() -> None:
     def convert(node: Any) -> Any:
         if isinstance(node, str):
             # 图片地址、URL 与 key 都是 ASCII，原样保留
-            return node if node.isascii() else converter.convert(node)
+            if node.isascii():
+                return node
+            text = converter.convert(node)
+            # tw2sp 会把「支援」误转成「支持」（支援兵→支持兵），「砲」也不转「炮」
+            return text.replace("支持", "支援").replace("砲", "炮")
         if isinstance(node, list):
             return [convert(item) for item in node]
         if isinstance(node, dict):

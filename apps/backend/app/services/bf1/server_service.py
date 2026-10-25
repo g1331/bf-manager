@@ -14,6 +14,7 @@ from app.domain.games.bf1.maps import (
     translate_mode_name,
     translate_region,
 )
+from app.domain.games.bf1.server_settings import localize_settings
 from app.schemas.bf1.server import (
     MapRotationItem,
     PlatoonBrief,
@@ -351,7 +352,7 @@ class BF1ServerService:
                     )
                 )
 
-            settings = (
+            settings, setting_descriptions = localize_settings(
                 raw.get("settings")
                 or raw.get("serverSettings")
                 or raw.get("serverInfo", {}).get("settings")
@@ -362,6 +363,7 @@ class BF1ServerService:
                 summary=summary,
                 description=summary.description,
                 settings=settings,
+                setting_descriptions=setting_descriptions,
                 map_rotation=rotation,
                 players=players,
                 extras=extras,

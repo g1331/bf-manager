@@ -17,10 +17,10 @@
         "Small": "[BB_PREFIX]/gamedata/Tunguska/100/86/mode_rush.jpg-9caaccd0.jpg",
         "Large": "[BB_PREFIX]/gamedata/Tunguska/84/2/mode_rush.jpg-acfe9ca7.jpg"
       },
-      "description": "进攻或防守电报站。进攻方必须摧毁电报站来通过敌方领地。防守方必须利用电报调用强力砲击以轰炸发现的敌军。",
+      "description": "进攻或防守电报站。进攻方必须摧毁电报站来通过敌方领地。防守方必须利用电报调用强力炮击以轰炸发现的敌军。",
       "objectives": [],
       "header": "攻击或防守电报站",
-      "body": "攻击方必须摧毁电报站来通过敌方领地。防守方必须利用电报调用强力砲击以轰炸发现的敌军。",
+      "body": "攻击方必须摧毁电报站来通过敌方领地。防守方必须利用电报调用强力炮击以轰炸发现的敌军。",
       "expansions": [
         {
           "name": "DEFAULT",
@@ -167,10 +167,10 @@
         "Small": "[BB_PREFIX]/gamedata/Tunguska/44/91/mode_warpigeon.jpg-2ca5536f.jpg",
         "Large": "[BB_PREFIX]/gamedata/Tunguska/64/65/mode_warpigeon.jpg-c0bf7cda.jpg"
       },
-      "description": "取回并送出信鸽。找出信鸽并寄送消息至火砲支持阵地来除掉敌人。",
+      "description": "取回并送出信鸽。找出信鸽并寄送消息至火炮支援阵地来除掉敌人。",
       "objectives": [],
       "header": "取回并送出信鸽",
-      "body": "找出信鸽并寄送消息至火砲支持阵地来除掉敌人。",
+      "body": "找出信鸽并寄送消息至火炮支援阵地来除掉敌人。",
       "expansions": [
         {
           "name": "DEFAULT",
@@ -1611,9 +1611,9 @@
       },
       {
         "filterKey": "FF",
-        "name": "友军砲火",
-        "prettyName": "友军砲火",
-        "description": "打开友军砲火代表你能伤害或杀害你的队员。",
+        "name": "友军炮火",
+        "prettyName": "友军炮火",
+        "description": "打开友军炮火代表你能伤害或杀害你的队员。",
         "type": "bool",
         "defaultValue": 0,
         "minValue": 0,
@@ -2098,9 +2098,9 @@
       },
       {
         "filterKey": "3",
-        "name": "支持兵",
-        "prettyName": "支持兵",
-        "description": "允许玩家选取支持兵种。",
+        "name": "支援兵",
+        "prettyName": "支援兵",
+        "description": "允许玩家选取支援兵种。",
         "type": "bool",
         "defaultValue": 1,
         "minValue": 0,

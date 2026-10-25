@@ -306,8 +306,8 @@ export interface ServerExtras {
 }
 
 /**
- * 服务器自定义设置矩阵。EA 已按网关账号语言把键译为中文（繁体），值为 on/off；
- * Scales 组的值是小数字符串（"1.0" = 100%）。各组可能整体缺失（非 RSP 服务器）。
+ * 服务器自定义设置矩阵。EA 按网关账号语言给出繁体键，后端已换成简体（查不到的保留原文），
+ * 值为 on/off；Scales 组的值是小数字符串（"1.0" = 100%）。各组可能整体缺失（非 RSP 服务器）。
  */
 export interface ServerSettings {
   Kits?: Record<string, string>;
@@ -322,6 +322,8 @@ export interface ServerDetail {
   summary: ServerSummary;
   description: string | null;
   settings: ServerSettings;
+  /** settings 条目简体名 → EA 官方说明（悬停提示用） */
+  setting_descriptions: Record<string, string>;
   map_rotation: MapRotationItem[];
   players: ServerPlayer[];
   extras: ServerExtras;

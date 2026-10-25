@@ -348,7 +348,7 @@ function SelectBox({
       aria-label={label}
       onClick={onToggle}
       className={cn(
-        "flex size-4 shrink-0 cursor-pointer items-center justify-center rounded-[3px] border transition-colors",
+        "compact-action flex size-4 shrink-0 cursor-pointer items-center justify-center rounded-[3px] border transition-colors",
         active
           ? "border-amber-500 bg-amber-500 text-black"
           : "border-white/30 bg-white/5 hover:border-white/55",
@@ -483,7 +483,7 @@ export function PlayerActionMenu({ player }: { player: BlazePlayer }) {
         <button
           type="button"
           aria-label={`管理 ${player.display_name}`}
-          className="inline-flex size-6 items-center justify-center rounded-sm text-white/45 transition-colors hover:bg-white/10 hover:text-white/90"
+          className="compact-action inline-flex size-6 items-center justify-center rounded-sm text-white/45 transition-colors hover:bg-white/10 hover:text-white/90"
         >
           <MoreHorizontal className="size-4" />
         </button>

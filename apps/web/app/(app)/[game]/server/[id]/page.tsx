@@ -148,6 +148,8 @@ function ServerDetailView({
     queryKey: ["bf1-server-players", gameId],
     queryFn: () => bf1Api.getServerPlayers(gameId),
     staleTime: 15_000,
+    // 行动服的区域进度随对局推进，页面可见时定时刷新；战绩后端按玩家缓存 10 分钟，刷新多半命中缓存
+    refetchInterval: (q) => (q.state.data?.operation ? 30_000 : false),
   });
   const points = useMemo(() => counts.data ?? [], [counts.data]);
   const stats = useMemo(() => mapStats.data ?? [], [mapStats.data]);

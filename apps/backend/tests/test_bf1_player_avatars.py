@@ -31,3 +31,27 @@ async def test_get_avatars_uses_cache_and_caches_misses(monkeypatch) -> None:
     assert sorted(asked) == [3, 4]
     assert ttls["bf1:avatar:3"] == player_service.AVATAR_TTL
     assert (store["bf1:avatar:4"], ttls["bf1:avatar:4"]) == ("", player_service.MISSING_AVATAR_TTL)
+
+
+async def test_lookup_exact_prefers_gametools_then_blaze(monkeypatch) -> None:
+    from app.schemas.bf1.player import PersonaBrief
+
+    calls: list[str] = []
+
+    async def gametools(name):
+        calls.append("gametools")
+        return PersonaBrief(persona_id=1, display_name=name) if name == "A-b" else None
+
+    async def blaze(db, name):
+        calls.append("blaze")
+        return (2, "C-d") if name == "c-d" else None
+
+    monkeypatch.setattr(player_service, "_fetch_gametools_persona", gametools)
+    monkeypatch.setattr(player_service.blaze_service, "lookup_online_persona", blaze)
+    svc = player_service.BF1PlayerService(db=None)
+
+    assert (await svc._lookup_exact("A-b")).persona_id == 1
+    assert calls == ["gametools"]
+    hit = await svc._lookup_exact("c-d")
+    assert (hit.persona_id, hit.display_name) == (2, "C-d")
+    assert await svc._lookup_exact("nobody") is None

@@ -693,6 +693,24 @@ async def get_server_players(
     )
 
 
+async def lookup_online_persona(db: AsyncSession, name: str) -> tuple[int, str] | None:
+    """按昵称精确查 persona（不区分大小写），返回 (personaId, 昵称)。
+
+    ``UserSessions.lookupUser`` 只认当前在线的人，离线或不存在都报 USER_NOT_FOUND，返回 None。
+    """
+    socket = await _pool.get_socket(db)
+    packet = {"method": "UserSessions.lookupUser", "type": "Command", "data": {"NAME 1": name}}
+    try:
+        res = await socket.send(packet, timeout=BLAZE_QUERY_TIMEOUT)
+    except (TimeoutError, ConnectionError, OSError):
+        await _pool.invalidate()
+        raise
+    user = (res.get("data") or {}).get("USER") if res.get("type") == "Result" else None
+    if not user or not user.get("ID"):
+        return None
+    return int(user["ID"]), user.get("NAME") or name
+
+
 async def fetch_game_list_snapshot(db: AsyncSession) -> list[dict[str, Any]]:
     """在连接池的已登录连接上拉一次全服快照，返回 NotifyGameListUpdate 的 UPDT 原始项。
 

@@ -149,3 +149,20 @@ async def test_record_player_counts_writes_registered_and_prunes(test_session) -
     assert [p.players for p in points] == [42]
     assert abs(points[0].ts - datetime.now(UTC).timestamp()) < 60
     assert await list_player_counts(test_session, 3) == []
+
+
+async def test_record_player_counts_falls_back_to_name(test_session) -> None:
+    # 服务器重启换了 gameId：按服名接回并写回新 gameId；同名多服不猜
+    restarted = Server(game="bf1", server_id=100, game_id=1, name="mine")
+    dup = Server(game="bf1", server_id=101, game_id=5, name="dup")
+    test_session.add_all([restarted, dup])
+    await test_session.commit()
+
+    summaries = [_s(9, "mine", players=30), _s(7, "dup"), _s(8, "dup")]
+    assert await record_player_counts(test_session, summaries) == 1
+
+    await test_session.refresh(restarted)
+    await test_session.refresh(dup)
+    assert restarted.game_id == 9
+    assert dup.game_id == 5
+    assert [p.players for p in await list_player_counts(test_session, 9)] == [30]

@@ -379,6 +379,8 @@ export interface BF1Overview {
   mode_distribution: NamedCount[];
   /** 最近 24h 趋势，按时间升序；服务刚部署时为空，前端需有占位态 */
   history: TrendPoint[];
+  /** 在线人数最多的服务器（含排队），按人数降序 */
+  top_servers: ServerSummary[];
 }
 
 /** 当前登录用户对某服务器的角色；role 为 null 且 is_platform_admin 为 false 表示无任何服管权限 */

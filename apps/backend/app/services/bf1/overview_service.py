@@ -42,6 +42,8 @@ SEARCH_CONCURRENCY = 50
 SEARCH_LIMIT = 200
 # 热门地图模式展示条数
 TOP_MAP_MODE_LIMIT = 8
+# 概览页「最热闹的服务器」条数
+TOP_SERVER_LIMIT = 10
 
 # 全服统计专用筛选条件：只按服务器类型与人数档位过滤，与上游 bf1 信息查询完全一致。
 # 网关默认 filter_dict 额外带 maps / gameModes 等维度的白名单，会改变 EA 返回的服务器
@@ -164,6 +166,9 @@ def build_overview(
         spectators=spectators,
         top_map_modes=top_map_modes,
         mode_distribution=mode_distribution,
+        top_servers=sorted(summaries, key=lambda s: (s.player_count, s.queue_count), reverse=True)[
+            :TOP_SERVER_LIMIT
+        ],
     )
 
 

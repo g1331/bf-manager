@@ -143,6 +143,35 @@ def test_to_rotation_marks_current_by_map_code_not_pretty_name() -> None:
     )
 
 
+def test_to_rotation_parses_real_items_without_codes() -> None:
+    """实测轮换条目只有繁体 prettyName 与封面：代号从封面取、模式按繁体反查，同图不同模式不误标"""
+    raw = {
+        "serverInfo": {"mapName": "MP_Desert", "mapMode": "Conquest"},
+        "rotation": [
+            {
+                "mapPrettyName": "亞眠",
+                "modePrettyName": "征服",
+                "mapImage": "[BB_PREFIX]/gamedata/Tunguska/31/107/MP_Amiens_LandscapeLarge-e1.jpg",
+            },
+            {
+                "mapPrettyName": "西奈沙漠",
+                "modePrettyName": "突襲",
+                "mapImage": "[BB_PREFIX]/gamedata/x/MP_Desert_LandscapeLarge-aa.jpg",
+            },
+            {
+                "mapPrettyName": "西奈沙漠",
+                "modePrettyName": "征服",
+                "mapImage": "[BB_PREFIX]/gamedata/x/MP_Desert_LandscapeLarge-aa.jpg",
+            },
+        ],
+    }
+    rotation = _to_rotation(raw)
+    assert [r.is_current for r in rotation] == [False, False, True]
+    assert (rotation[0].map_name, rotation[0].game_mode) == ("MP_Amiens", "Conquest")
+    assert (rotation[0].map_display_name, rotation[0].mode_display_name) == ("亚眠", "征服")
+    assert rotation[1].mode_display_name == "突袭"
+
+
 def test_to_rotation_returns_no_current_when_server_map_code_missing() -> None:
     """serverInfo.mapName 缺失时，不应把任何 rotation 项标 current（即使 item.mapName 也为 None）"""
     raw = {

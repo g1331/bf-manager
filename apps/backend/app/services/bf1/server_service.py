@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -103,30 +104,50 @@ def _to_summary(raw: dict[str, Any]) -> ServerSummary:
     )
 
 
+# 轮换条目只有繁体 prettyName，没有模式代号；按 gamedata.zh-TW.json 的 gameModes 反查
+_TW_MODE_CODES = {
+    "突襲": "Rush",
+    "征服": "Conquest",
+    "團隊死鬥": "TeamDeathMatch",
+    "閃擊行動": "Breakthrough",
+    "搶攻": "Domination",
+    "戰爭信鴿": "Possession",
+    "行動模式": "BreakthroughLarge",
+    "前線": "TugOfWar",
+    "空降補給": "ZoneControl",
+    "空中突擊": "AirAssault",
+}
+# 轮换条目没有 mapName，地图代号只能从封面文件名里取，如 .../MP_Amiens_LandscapeLarge-xxx.jpg
+_MAP_CODE_IN_IMAGE = re.compile(r"/(MP_[A-Za-z0-9]+)_Landscape")
+
+
 def _to_rotation(raw: dict[str, Any]) -> list[MapRotationItem]:
     """从详情接口 raw 字典里拼装地图轮换列表。
 
-    is_current 判定显式比较「内部代号」字段（serverInfo.mapName vs item.mapName），
-    不依赖 summary.map_name 这种可能混入 prettyName 的字段，避免代号与
-    prettyName 错位导致整局都不命中。current_code 为空时跳过判定。
+    实测轮换条目只有 mapPrettyName / modePrettyName（繁体）和 mapImage，地图代号从封面文件名
+    里取、模式代号按繁体名反查，再统一译成简体。is_current 比较代号（serverInfo.mapName /
+    mapMode），不比较 prettyName；当前代号为空时跳过判定。
     """
     rotation_raw = raw.get("rotation") or raw.get("serverInfo", {}).get("rotation") or []
     server_info = raw.get("serverInfo") or {}
     current_map_code = server_info.get("mapName") or raw.get("mapName")
+    current_mode_code = server_info.get("mapMode") or raw.get("mapMode")
     rotation: list[MapRotationItem] = []
     for item in rotation_raw:
-        item_code = item.get("mapName")
-        item_map_name = item_code or item.get("mapPrettyName")
-        item_mode_name = item.get("modeName") or item.get("modePrettyName")
+        match = _MAP_CODE_IN_IMAGE.search(item.get("mapImage") or "")
+        map_code = item.get("mapName") or (match.group(1) if match else None)
+        mode_code = item.get("modeName") or _TW_MODE_CODES.get(item.get("modePrettyName") or "")
+        is_current = bool(current_map_code) and map_code == current_map_code
+        if is_current and current_mode_code and mode_code:
+            is_current = mode_code == current_mode_code
         rotation.append(
             MapRotationItem(
-                map_name=item_map_name,
-                map_display_name=translate_map_name(item_code) or item.get("mapPrettyName"),
-                game_mode=item_mode_name,
-                mode_display_name=translate_mode_name(item.get("modeName"))
-                or item.get("modePrettyName"),
+                map_name=map_code or item.get("mapPrettyName"),
+                map_display_name=translate_map_name(map_code) or item.get("mapPrettyName"),
+                game_mode=mode_code or item.get("modePrettyName"),
+                mode_display_name=translate_mode_name(mode_code) or item.get("modePrettyName"),
                 map_image_url=normalize_map_image_url(item.get("mapImage")),
-                is_current=bool(current_map_code) and item_code == current_map_code,
+                is_current=is_current,
             )
         )
     return rotation

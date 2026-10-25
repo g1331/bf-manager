@@ -13,6 +13,7 @@ from app.api.errors import EAApiError, NotFoundError
 from app.core.cache import get_cache
 from app.domain.games.bf1.gateway import BF1GatewayClient
 from app.schemas.bf1.player import PersonaBrief, PersonaSearchResult
+from app.services.bf1 import blaze_service
 from app.services.bf1.gateway_factory import get_bf1_client
 
 
@@ -65,6 +66,26 @@ async def _fetch_gametools_avatar(persona_id: int) -> str | None:
         return None
     avatar = data.get("avatar")
     return avatar or None
+
+
+async def _fetch_gametools_persona(name: str) -> PersonaBrief | None:
+    """按昵称精确查 persona（gametools，离线也能查到）。失败或查无此人返回 None。"""
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get(
+                "https://api.gametools.network/bf1/player/",
+                params={"name": name, "platform": "pc"},
+                headers={"accept": "application/json"},
+            )
+        data = resp.json() if resp.status_code == 200 else None
+    except Exception as exc:
+        logger.debug(f"gametools persona lookup failed for {name}: {exc}")
+        return None
+    if not isinstance(data, dict) or not data.get("id") or not data.get("userName"):
+        return None
+    return PersonaBrief(
+        persona_id=int(data["id"]), display_name=data["userName"], avatar_url=data.get("avatar")
+    )
 
 
 AVATAR_CACHE_KEY = "bf1:avatar:{}"
@@ -139,8 +160,25 @@ class BF1PlayerService:
                 for p in personas_raw
                 if (p.get("personaId") or p.get("pidId"))
             ]
+            if not any(p.display_name.lower() == name.lower() for p in personas):
+                exact = await self._lookup_exact(name)
+                if exact and all(p.persona_id != exact.persona_id for p in personas):
+                    personas.insert(0, exact)
             await self._annotate_playtime_for_duplicates(client, personas)
             return PersonaSearchResult(query=name, personas=personas)
+
+    async def _lookup_exact(self, name: str) -> PersonaBrief | None:
+        """SAL 是模糊搜索（忽略连字符、只取前 20 条、可能受隐私设置影响），没命中原名时
+        先问 gametools（离线也能查），再问 Blaze lookupUser（官方，但只认在线玩家）。"""
+        found = await _fetch_gametools_persona(name)
+        if found:
+            return found
+        try:
+            hit = await blaze_service.lookup_online_persona(self.db, name)
+        except Exception as exc:
+            logger.debug(f"Blaze lookupUser failed for {name}: {exc}")
+            return None
+        return PersonaBrief(persona_id=hit[0], display_name=hit[1]) if hit else None
 
     async def _annotate_playtime_for_duplicates(
         self, client: BF1GatewayClient, personas: list[PersonaBrief]

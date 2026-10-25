@@ -1,7 +1,8 @@
 """BF1 全服统计聚合服务
 
-后台定时任务并发调用 EA `GameServer.searchServers` 拉取全量服务器列表，按 guid 去重后
-聚合为全服快照写入 Redis。前端只读缓存，避免每个访客触发一次全量拉取。
+后台定时任务拉取全量服务器列表聚合为全服快照写入 Redis，前端只读缓存，避免每个访客触发
+一次全量拉取。数据源优先用一次 Blaze ``GameManager.getGameListSnapshot``（复用玩家列表的
+Blaze 长连接）；快照失败时回退为并发调用 Gateway ``GameServer.searchServers`` 并按 guid 去重。
 
 聚合口径与上游 bf1 信息查询保持一致：官方服按 is_official 判定，地区按 EA 区域代号
 归入亚洲（Asia）、欧洲（EU）与其他三档。
@@ -12,15 +13,24 @@ from __future__ import annotations
 import asyncio
 from collections import defaultdict
 from datetime import UTC, datetime
+from typing import Any
 
 from loguru import logger
 from redis.exceptions import RedisError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.cache import get_cache
+from app.core.config import get_settings
 from app.db.session import get_sessionmaker
+from app.domain.games.bf1.maps import (
+    MapData,
+    normalize_map_image_url,
+    translate_map_name,
+    translate_mode_name,
+)
 from app.schemas.bf1.overview import BF1Overview, CountBreakdown, NamedCount, TrendPoint
 from app.schemas.bf1.server import ServerSummary
+from app.services.bf1.blaze_service import fetch_game_list_snapshot
 from app.services.bf1.gateway_factory import get_bf1_client
 from app.services.bf1.server_service import _to_summary
 
@@ -154,8 +164,85 @@ def build_overview(
     )
 
 
+def _snapshot_mode(attrs: dict[str, Any]) -> str | None:
+    """从 Blaze ATTR 找出与 Gateway mapMode 同口径的模式代号（ModeDict 的键）。
+
+    shortcut: 模式字段名未实测，按名字含 mode 或 levellocation 的键逐个尝试，值依次试原值、
+    去尾部数字、再去 Large 后缀，命中 ModeDict 即采用；字段名实测确认后可收窄为单键。
+    """
+    for key, value in attrs.items():
+        lowered = key.lower()
+        if not isinstance(value, str) or ("mode" not in lowered and lowered != "levellocation"):
+            continue
+        candidate = value.rsplit("_", 1)[-1].rstrip("0123456789")
+        for code in (value, candidate, candidate.removesuffix("Large")):
+            if code in MapData.ModeDict:
+                return code
+    return None
+
+
+def _snapshot_summary(game: dict[str, Any]) -> ServerSummary:
+    """把快照里的一个游戏转成 ServerSummary，只取聚合需要的字段。"""
+    attrs = game.get("ATTR") or {}
+    mode = _snapshot_mode(attrs)
+    if mode is None:
+        # 只带键名与模式相关的值，ATTR 其它值（管理名单等）不进日志
+        hints = {k: v for k, v in attrs.items() if "mode" in k.lower() or "level" in k.lower()}
+        raise ValueError(f"快照 ATTR 中找不到可识别的模式: keys={sorted(attrs)} hints={hints}")
+    level = attrs.get("level") or None
+    # PCNT = [公开玩家, 私有玩家, 公开观战, 私有观战]
+    pcnt = [*(game.get("PCNT") or []), 0, 0, 0, 0]
+    return ServerSummary(
+        server_id=0,
+        game_id=game.get("GID"),
+        name="",
+        map_name=level,
+        map_display_name=translate_map_name(level),
+        map_image_url=normalize_map_image_url(MapData.MapImageDict.get(level or "")),
+        game_mode=mode,
+        mode_display_name=translate_mode_name(mode),
+        player_count=pcnt[0] + pcnt[1],
+        queue_count=int(game.get("QCNT") or 0),
+        spectator_count=pcnt[2] + pcnt[3],
+        region=attrs.get("region"),
+        is_official=attrs.get("servertype") == "OFFICIAL",
+    )
+
+
+def build_overview_from_snapshot(updates: list[dict[str, Any]]) -> BF1Overview:
+    """把 NotifyGameListUpdate 的 UPDT 项按 GID 去重后聚合成全服快照。纯函数，便于单测。
+
+    任一服务器解析不出模式即抛出，宁可回退 searchServers，也不让标签与现有口径不一致。
+    """
+    games: dict[int, dict[str, Any]] = {}
+    for update in updates:
+        game = update.get("GAM") or update
+        if game.get("GID") is not None:
+            games[game["GID"]] = game
+    if not games:
+        raise ValueError("快照没有返回任何服务器")
+    summaries = [_snapshot_summary(game) for game in games.values()]
+    return build_overview(summaries, sample_pulls=1, raw_count=len(updates))
+
+
 async def fetch_overview(db: AsyncSession) -> BF1Overview:
-    """并发拉取并聚合全服统计。无任何一次成功拉取时抛出，由调用方决定是否覆盖缓存。
+    """拉取并聚合全服统计：先试 Blaze 快照，失败（含超时）打 warning 后回退 searchServers。
+
+    无任何数据时抛出，由调用方决定是否覆盖缓存。
+    """
+    if not get_settings().blaze_mock_mode:
+        try:
+            overview = build_overview_from_snapshot(await fetch_game_list_snapshot(db))
+        except Exception as e:
+            logger.warning("BF1 overview snapshot failed, falling back to searchServers: {}", e)
+        else:
+            logger.info("BF1 overview source=snapshot games={}", overview.servers.total)
+            return overview
+    return await _fetch_overview_by_search(db)
+
+
+async def _fetch_overview_by_search(db: AsyncSession) -> BF1Overview:
+    """并发 searchServers 拉取并聚合全服统计。无任何一次成功拉取时抛出。
 
     去重、判空与抛出全部放在 ``get_bf1_client`` 上下文内：searchServers 失败只返回字符串
     而非抛异常，若全失败时让上下文正常退出，工厂会走成功分支 mark_used 并清零失败计数，
@@ -188,6 +275,7 @@ async def fetch_overview(db: AsyncSession) -> BF1Overview:
             raise RuntimeError("searchServers 全部失败，未取得任何服务器数据")
 
         summaries = [_to_summary(raw) for raw in deduped.values()]
+        logger.info("BF1 overview source=search pulls={}/{}", sample_pulls, SEARCH_CONCURRENCY)
         return build_overview(summaries, sample_pulls=sample_pulls, raw_count=raw_count)
 
 
@@ -212,11 +300,11 @@ async def refresh_overview_cache(db: AsyncSession) -> BF1Overview:
         ttl=HISTORY_CACHE_TTL,
     )
     logger.info(
-        "BF1 overview refreshed: servers={} players={} pulls={}/{}",
+        "BF1 overview refreshed: servers={} players={} pulls={} raw={}",
         overview.servers.total,
         overview.players.total,
         overview.sample_pulls,
-        SEARCH_CONCURRENCY,
+        overview.raw_count,
     )
     return overview
 

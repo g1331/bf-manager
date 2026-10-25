@@ -8,7 +8,8 @@
  * 成员 / 审计）沿用既有数据与操作逻辑，仅置于半透明深色面板内保证可读。
  */
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -175,20 +176,48 @@ function ServerDetailView({
 
 /* ----------------------------- 背景与外壳 ----------------------------- */
 
+/** 背景层挂载时整体淡入，盖住全站轮换背景；地图图片下载完再淡入，换图时新旧交叉淡化 */
 function ServerBackgroundLayer({ url }: { url: string | null }) {
+  const reduceMotion = useReducedMotion();
+  const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!url) return;
+    const img = new Image();
+    img.onload = () => setLoadedUrl(url);
+    img.src = url;
+    return () => {
+      img.onload = null;
+    };
+  }, [url]);
+
+  const shownUrl = url ? loadedUrl : null;
+  const fade = { duration: reduceMotion ? 0 : 0.8, ease: "easeInOut" } as const;
+
   return (
-    <div className="pointer-events-none fixed inset-0 z-0">
-      {url ? (
-        <div
-          className="absolute inset-0 scale-110 bg-cover bg-center bg-no-repeat blur-[2px]"
-          style={{ backgroundImage: `url(${url})` }}
-        />
-      ) : (
-        <div className="absolute inset-0" style={{ background: FALLBACK_GRADIENT }} />
-      )}
+    <motion.div
+      className="pointer-events-none fixed inset-0 z-0"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={fade}
+    >
+      <div className="absolute inset-0" style={{ background: FALLBACK_GRADIENT }} />
+      <AnimatePresence>
+        {shownUrl ? (
+          <motion.div
+            key={shownUrl}
+            className="absolute inset-0 scale-110 bg-cover bg-center bg-no-repeat blur-[2px]"
+            style={{ backgroundImage: `url(${shownUrl})` }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={fade}
+          />
+        ) : null}
+      </AnimatePresence>
       <div className="absolute inset-0 bg-black/55" />
       <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/35 to-black/90" />
-    </div>
+    </motion.div>
   );
 }
 

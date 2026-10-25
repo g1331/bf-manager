@@ -733,7 +733,7 @@ function SidePlayerGroup({
               target="_blank"
               rel="noopener noreferrer"
               className={cn(
-                "inline-flex items-center gap-1.5 text-[11px] hover:underline",
+                "compact-action inline-flex items-center gap-1.5 text-[11px] hover:underline",
                 nameColor(p),
               )}
             >

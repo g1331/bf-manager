@@ -11,6 +11,7 @@
 ::
 
     POST   /                                    创建任务，返回 task_id + 初始 status
+                                                 （管理员端可带 target_account_id 重新登录已有账号）
     GET    /{task_id}?since_version=N            状态查询；提供 since_version 时启用
                                                  ea_login_long_poll_seconds 窗口的长轮询
     POST   /{task_id}/2fa-method                 选择 2FA 方式
@@ -27,14 +28,16 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query
 
-from app.api.deps import CurrentAdmin, CurrentUser
+from app.api.deps import CurrentAdmin, CurrentUser, DbDep
 from app.domain.ea.login.schemas import (
+    EAAccountLoginTaskCreateRequest,
     EALoginTaskCreateRequest,
     EALoginTaskResponse,
     EALoginTaskSelectMethodRequest,
     EALoginTaskSubmitCodeRequest,
 )
 from app.services import ea_login_task_service as svc
+from app.services.ea_account_service import EAAccountService
 
 me_router = APIRouter()
 admin_router = APIRouter()
@@ -101,9 +104,17 @@ async def cancel_my_login_task(task_id: str, user: CurrentUser) -> EALoginTaskRe
 
 @admin_router.post("", response_model=EALoginTaskResponse, status_code=201)
 async def create_admin_login_task(
-    payload: EALoginTaskCreateRequest, admin: CurrentAdmin
+    payload: EAAccountLoginTaskCreateRequest, admin: CurrentAdmin, db: DbDep
 ) -> EALoginTaskResponse:
-    return await svc.create_task(actor_kind="admin", actor_id=admin.id, payload=payload)
+    if payload.target_account_id is not None:
+        # 目标不存在时直接 404，免得白走一趟 EA 登录；finalize 时还会再校验 persona
+        await EAAccountService(db).get_by_id(payload.target_account_id)
+    return await svc.create_task(
+        actor_kind="admin",
+        actor_id=admin.id,
+        payload=payload,
+        target_account_id=payload.target_account_id,
+    )
 
 
 @admin_router.get("/{task_id}", response_model=EALoginTaskResponse)

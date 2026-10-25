@@ -45,6 +45,8 @@ export interface EALoginTaskResponse {
 export interface EALoginTaskCreateRequest {
   email: string;
   password: string;
+  /** 仅 admin：重新登录已有账号，后端校验登录得到的 persona 必须与该账号一致。 */
+  target_account_id?: number;
 }
 
 const TERMINAL_STATUSES: ReadonlySet<EALoginTaskStatus> = new Set([

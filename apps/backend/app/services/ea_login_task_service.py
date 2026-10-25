@@ -48,6 +48,7 @@ async def create_task(
     actor_kind: ActorKind,
     actor_id: int,
     payload: EALoginTaskCreateRequest,
+    target_account_id: int | None = None,
 ) -> EALoginTaskResponse:
     mgr = get_task_manager()
     with _map_errors():
@@ -56,6 +57,7 @@ async def create_task(
             actor_id=actor_id,
             email=str(payload.email),
             password=payload.password.get_secret_value(),
+            target_account_id=target_account_id,
         )
 
 

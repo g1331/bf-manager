@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.errors import EAApiError, NotFoundError, ValidationError
 from app.core.security import get_cipher
 from app.domain.ea.account_pool import EACredentials
+from app.domain.ea.login.exceptions import PersonaMismatchError, TargetAccountNotFoundError
 from app.models import EAAccount
 from app.schemas.ea_account import (
     EAAccountCreate,
@@ -43,11 +44,16 @@ class EAAccountService:
         self.db = db
 
     async def pick_available(self) -> EACredentials:
-        """取一个可用 EA 账号。MVP 阶段策略：最久未使用的 enabled 账号。"""
+        """取一个可用 EA 账号：失败计数最低者优先，同分取最久未使用。
+
+        只按最久未使用挑号时，一个凭据失效的账号（失败后 last_used_at 不更新）会被
+        每个请求反复选中，直到累计 10 次失败被自动停用，期间全部 EA 请求失败。
+        失败计数优先后，它失败一次就让位给健康账号。
+        """
         stmt = (
             select(EAAccount)
             .where(EAAccount.enabled.is_(True))
-            .order_by(EAAccount.last_used_at.asc().nulls_first())
+            .order_by(EAAccount.failure_count.asc(), EAAccount.last_used_at.asc().nulls_first())
             .limit(1)
         )
         account = await self.db.scalar(stmt)
@@ -150,7 +156,7 @@ class EAAccountService:
 
         手动更新凭据视为运维已修复账号，因此同步清零失败计数。
         """
-        account = await self._get_by_id(account_id)
+        account = await self.get_by_id(account_id)
         cipher = get_cipher()
         if payload.remid is not None:
             account.encrypted_remid = cipher.encrypt(payload.remid)
@@ -169,7 +175,7 @@ class EAAccountService:
         self, account_id: int, payload: EAAccountDisplayNameUpdate
     ) -> EAAccountItem:
         """仅更新备注名。备注属于展示层，故不触发任何凭据相关副作用。"""
-        account = await self._get_by_id(account_id)
+        account = await self.get_by_id(account_id)
         account.display_name = payload.display_name
         await self.db.commit()
         await self.db.refresh(account)
@@ -178,9 +184,20 @@ class EAAccountService:
     async def set_enabled(self, account_id: int, enabled: bool) -> EAAccountItem:
         """启用或停用账号。
 
-        启用时同步清零失败计数，避免凭据已修复却因历史计数立刻被再次自动禁用。
+        从停用切到启用前先用当前凭据做一次 :meth:`verify`，失败则保持停用并报错，
+        避免把凭据早已过期的账号放回池里拖垮所有 EA 请求。启用时同步清零失败计数，
+        避免凭据已修复却因历史计数立刻被再次自动禁用。
         """
-        account = await self._get_by_id(account_id)
+        account = await self.get_by_id(account_id)
+        if enabled and not account.enabled:
+            result = await self.verify(account_id)
+            if not result.success:
+                raise ValidationError(
+                    message=(
+                        f"凭据验证失败，账号未启用：{result.message}。"
+                        "请先用「重新登录」刷新凭据（成功后会自动启用）"
+                    )
+                )
         account.enabled = enabled
         if enabled:
             account.failure_count = 0
@@ -190,7 +207,7 @@ class EAAccountService:
 
     async def delete(self, account_id: int) -> None:
         """删除账号。"""
-        account = await self._get_by_id(account_id)
+        account = await self.get_by_id(account_id)
         await self.db.delete(account)
         await self.db.commit()
 
@@ -248,6 +265,7 @@ class EAAccountService:
         sid: str,
         session: str | None,
         access_token: str | None,
+        expected_account_id: int | None = None,
     ) -> EAAccount:
         """EA 邮箱密码登录链路成功后写入或更新后台账号池。
 
@@ -257,6 +275,10 @@ class EAAccountService:
         - 更新：``persona_id`` 已存在时仅覆盖本次提供的非空字段，``enabled`` 复位为
           True、``failure_count`` 清零，相当于「用真人新登录的凭据修复了池子里的旧账号」。
 
+        - 重新登录：给出 ``expected_account_id`` 时只允许更新该账号，persona 不一致抛
+          :class:`PersonaMismatchError`、账号已删抛 :class:`TargetAccountNotFoundError`，
+          两种情况都不写库，杜绝串号。
+
         返回 ORM 实例供调用方取 ``id``；前端永远不会拿到任何明文凭据，落库前由
         :class:`CredentialCipher` 加密。
         """
@@ -265,7 +287,20 @@ class EAAccountService:
             # 仅做最后兜底，避免任何后续调用方误传空串。
             raise ValidationError(message="登录链路缺失 remid / sid，无法回填账号池")
 
-        existing = await self._get(persona_id)
+        if expected_account_id is not None:
+            existing = await self.db.scalar(
+                select(EAAccount).where(EAAccount.id == expected_account_id)
+            )
+            if existing is None:
+                raise TargetAccountNotFoundError(stage="finalize")
+            if existing.persona_id != persona_id:
+                raise PersonaMismatchError(
+                    f"登录的 EA 账号（persona {persona_id}）与目标账号"
+                    f"（persona {existing.persona_id}）不一致，未写入任何凭据",
+                    stage="finalize",
+                )
+        else:
+            existing = await self._get(persona_id)
         if existing is None:
             cipher = get_cipher()
             account = EAAccount(
@@ -337,7 +372,7 @@ class EAAccountService:
         # 惰性导入：gateway 的导入链经 gateway_factory 回指本模块，顶层导入会构成循环。
         from app.domain.games.bf1.gateway import BF1GatewayClient  # noqa: PLC0415
 
-        account = await self._get_by_id(account_id)
+        account = await self.get_by_id(account_id)
         cipher = get_cipher()
         persona_id = account.persona_id
 
@@ -387,7 +422,7 @@ class EAAccountService:
     async def _get(self, persona_id: int) -> EAAccount | None:
         return await self.db.scalar(select(EAAccount).where(EAAccount.persona_id == persona_id))
 
-    async def _get_by_id(self, account_id: int) -> EAAccount:
+    async def get_by_id(self, account_id: int) -> EAAccount:
         account = await self.db.scalar(select(EAAccount).where(EAAccount.id == account_id))
         if account is None:
             raise NotFoundError(resource="EA 账号")

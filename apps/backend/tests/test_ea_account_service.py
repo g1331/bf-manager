@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 from app.api.errors import NotFoundError, ValidationError
 from app.core.security import get_cipher
+from app.domain.ea.login.exceptions import PersonaMismatchError, TargetAccountNotFoundError
 from app.models import EAAccount
 from app.schemas.ea_account import (
     EAAccountCreate,
@@ -131,7 +132,8 @@ async def test_update_display_name_missing_raises_not_found(test_session) -> Non
         await service.update_display_name(9999, EAAccountDisplayNameUpdate(display_name="x"))
 
 
-async def test_set_enabled_reenable_resets_failure(test_session) -> None:
+async def test_set_enabled_reenable_resets_failure(test_session, monkeypatch) -> None:
+    monkeypatch.setattr("app.domain.games.bf1.gateway.BF1GatewayClient", _FakeGatewayOk)
     account = await _seed(test_session, enabled=False, failure_count=10)
     service = EAAccountService(test_session)
     item = await service.set_enabled(account.id, True)
@@ -252,6 +254,38 @@ async def test_verify_session_ok_but_access_token_fail(test_session, monkeypatch
     assert refreshed.failure_count == 1
 
 
+async def test_enable_with_invalid_credentials_is_rejected(test_session, monkeypatch) -> None:
+    """启用前验证失败：拒绝启用并报错，账号保持停用，不会被挑号选中。"""
+    account_id = (await _seed(test_session, persona_id=1101, enabled=False)).id
+    monkeypatch.setattr("app.domain.games.bf1.gateway.BF1GatewayClient", _FakeGatewayFail)
+    service = EAAccountService(test_session)
+    with pytest.raises(ValidationError, match="未启用"):
+        await service.set_enabled(account_id, True)
+    refreshed = await _reload(test_session, account_id)
+    assert refreshed.enabled is False
+
+
+async def test_enable_already_enabled_skips_verify(test_session, monkeypatch) -> None:
+    """已启用账号重复启用不触发 EA 调用（_FakeGatewayFail 若被调用会让断言失败）。"""
+    account_id = (await _seed(test_session, persona_id=1102, failure_count=2)).id
+    monkeypatch.setattr("app.domain.games.bf1.gateway.BF1GatewayClient", _FakeGatewayFail)
+    item = await EAAccountService(test_session).set_enabled(account_id, True)
+    assert item.enabled is True
+    assert item.failure_count == 0
+
+
+async def test_pick_available_prefers_low_failure_count(test_session) -> None:
+    """失败过的账号即使最久未使用，也要让位给失败计数更低的健康账号。"""
+    from datetime import UTC, datetime
+
+    await _seed(test_session, persona_id=1201, failure_count=1)  # last_used_at=None，最久未用
+    healthy = await _seed(test_session, persona_id=1202)
+    healthy.last_used_at = datetime.now(UTC)
+    await test_session.commit()
+    creds = await EAAccountService(test_session).pick_available()
+    assert creds.persona_id == 1202
+
+
 async def test_upsert_creates_when_absent(test_session) -> None:
     service = EAAccountService(test_session)
     item = await service.upsert(persona_id=3003, display_name="cli", remid="r1", sid="s1")
@@ -330,6 +364,70 @@ async def test_upsert_after_ea_login_rejects_missing_remid_or_sid(test_session) 
         )
 
 
+async def test_relogin_target_updates_credentials_enables_and_resets(test_session) -> None:
+    """重新登录已有账号：persona 一致时凭据更新、自动启用、失败计数清零，不新增行。"""
+    seeded = await _seed(test_session, persona_id=6006, enabled=False, failure_count=10)
+    service = EAAccountService(test_session)
+    updated = await service.upsert_after_ea_login(
+        persona_id=6006,
+        display_name=None,
+        remid="r-relogin",
+        sid="s-relogin",
+        session="sess-relogin",
+        access_token=None,
+        expected_account_id=seeded.id,
+    )
+    assert updated.id == seeded.id
+    refreshed = await _reload(test_session, seeded.id)
+    assert refreshed.enabled is True
+    assert refreshed.failure_count == 0
+    assert refreshed.display_name == "acc_6006"  # 未提供新名字时保留备注
+    cipher = get_cipher()
+    assert cipher.decrypt(refreshed.encrypted_remid) == "r-relogin"
+    assert cipher.decrypt(refreshed.encrypted_sid) == "s-relogin"
+    assert cipher.decrypt(refreshed.encrypted_session) == "sess-relogin"
+    assert len((await test_session.scalars(select(EAAccount))).all()) == 1
+
+
+async def test_relogin_target_rejects_persona_mismatch(test_session) -> None:
+    """登录到别的 persona（含池里已有的另一个账号）时拒绝写入：不新建、不覆盖任何账号。"""
+    target_id = (await _seed(test_session, persona_id=7007, enabled=False, failure_count=10)).id
+    other_id = (await _seed(test_session, persona_id=7008, failure_count=3)).id
+    service = EAAccountService(test_session)
+    for logged_in_persona in (7008, 9999):
+        with pytest.raises(PersonaMismatchError):
+            await service.upsert_after_ea_login(
+                persona_id=logged_in_persona,
+                display_name="x",
+                remid="r-wrong",
+                sid="s-wrong",
+                session=None,
+                access_token=None,
+                expected_account_id=target_id,
+            )
+    cipher = get_cipher()
+    for account_id, failure_count in ((target_id, 10), (other_id, 3)):
+        refreshed = await _reload(test_session, account_id)
+        assert cipher.decrypt(refreshed.encrypted_remid) == "remid-value"
+        assert refreshed.failure_count == failure_count
+    assert len((await test_session.scalars(select(EAAccount))).all()) == 2
+
+
+async def test_relogin_target_missing_raises(test_session) -> None:
+    service = EAAccountService(test_session)
+    with pytest.raises(TargetAccountNotFoundError):
+        await service.upsert_after_ea_login(
+            persona_id=8008,
+            display_name=None,
+            remid="r",
+            sid="s",
+            session=None,
+            access_token=None,
+            expected_account_id=12345,
+        )
+    assert (await test_session.scalars(select(EAAccount))).all() == []
+
+
 async def test_upsert_updates_existing_and_resets_failure(test_session) -> None:
     account = await _seed(test_session, persona_id=3005, failure_count=7)
     service = EAAccountService(test_session)
@@ -341,3 +439,13 @@ async def test_upsert_updates_existing_and_resets_failure(test_session) -> None:
     # 只更新了 sid 与 display_name，remid 保持原值
     assert cipher.decrypt(refreshed.encrypted_remid) == "remid-value"
     assert cipher.decrypt(refreshed.encrypted_sid) == "s-updated"
+
+
+async def test_relogin_task_for_missing_account_returns_404(admin_client) -> None:
+    """目标账号不存在时创建任务即 404，不会发起任何 EA 登录。"""
+    client, _ = admin_client
+    resp = await client.post(
+        "/api/v1/ea-accounts/login-tasks",
+        json={"email": "a@example.com", "password": "pw", "target_account_id": 12345},
+    )
+    assert resp.status_code == 404

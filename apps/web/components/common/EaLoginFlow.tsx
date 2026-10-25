@@ -89,8 +89,17 @@ const codeSchema = z.object({
 });
 type CodeValues = z.infer<typeof codeSchema>;
 
+/** 管理员重新登录已有账号时的目标。 */
+export interface EaLoginTarget {
+  accountId: number;
+  personaId: number;
+  label: string;
+}
+
 interface Props {
   actor: EALoginTaskActor;
+  /** 仅 admin：提供时为「重新登录该账号」，persona 不一致会被后端拒绝。 */
+  target?: EaLoginTarget | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** 登录成功时回调，外层用来 invalidate 列表查询。 */
@@ -144,6 +153,21 @@ function resolveFailureView(task: EALoginTaskResponse): FailureView {
         title: "EA 不接受该邮箱",
         description: "该邮箱可能不是 EA 账号、不存在或已被锁定。请确认后重试。",
       };
+    case "EA_LOGIN_PERSONA_MISMATCH":
+      return {
+        title: "登录的不是目标账号",
+        description: `${fallback}。请确认使用的是该账号对应的 EA 邮箱。`,
+      };
+    case "EA_LOGIN_INVALID_2FA_CODE":
+      return {
+        title: "验证码错误或已过期",
+        description: "EA 拒绝了该验证码。请重新开始登录，EA 会发送新的验证码。",
+      };
+    case "EA_LOGIN_2FA_TIMEOUT":
+      return {
+        title: "等待验证码超时",
+        description: "超过 5 分钟未完成二次验证，本次登录已作废。请重新开始。",
+      };
     case "EA_LOGIN_FORM_CHANGED":
       return {
         title: "EA 登录页结构发生变化",
@@ -155,7 +179,7 @@ function resolveFailureView(task: EALoginTaskResponse): FailureView {
   }
 }
 
-export function EaLoginFlow({ actor, open, onOpenChange, onSucceeded }: Props) {
+export function EaLoginFlow({ actor, target, open, onOpenChange, onSucceeded }: Props) {
   const [task, setTask] = useState<EALoginTaskResponse | null>(null);
   const [submitting, setSubmitting] = useState(false);
   // useRef 引用最新 task 供轮询循环读取，避免 useEffect 依赖 task 触发频繁重启。
@@ -169,6 +193,9 @@ export function EaLoginFlow({ actor, open, onOpenChange, onSucceeded }: Props) {
   const onSucceededRef = useRef(onSucceeded);
   // eslint-disable-next-line react-hooks/refs
   onSucceededRef.current = onSucceeded;
+  const targetRef = useRef(target);
+  // eslint-disable-next-line react-hooks/refs
+  targetRef.current = target;
 
   const loginForm = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
@@ -291,7 +318,11 @@ export function EaLoginFlow({ actor, open, onOpenChange, onSucceeded }: Props) {
         setTask(next);
         if (next.status === "succeeded") {
           onSucceededRef.current?.(next);
-          toast.success("EA 登录成功");
+          toast.success(
+            targetRef.current
+              ? `已重新登录 ${targetRef.current.label}：凭据已刷新，账号已启用、失败计数清零`
+              : "EA 登录成功",
+          );
         }
         if (next.status === "failed") {
           toast.error(next.error_message ?? "登录失败");
@@ -328,7 +359,10 @@ export function EaLoginFlow({ actor, open, onOpenChange, onSucceeded }: Props) {
   const onSubmitCredentials = loginForm.handleSubmit(async (values) => {
     setSubmitting(true);
     try {
-      const created = await eaLoginTasksApi.create(actor, values);
+      const created = await eaLoginTasksApi.create(
+        actor,
+        target ? { ...values, target_account_id: target.accountId } : values,
+      );
       setTask(created);
     } catch (err) {
       toast.error(describeError(err, "创建登录任务失败"));
@@ -368,10 +402,17 @@ export function EaLoginFlow({ actor, open, onOpenChange, onSucceeded }: Props) {
       <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
         <SheetHeader>
           <SheetTitle>
-            {actor === "user" ? "邮箱密码绑定 EA 账号" : "邮箱密码新增 EA 账号"}
+            {target
+              ? `重新登录 ${target.label}`
+              : actor === "user"
+                ? "邮箱密码绑定 EA 账号"
+                : "邮箱密码新增 EA 账号"}
           </SheetTitle>
           <SheetDescription>
-            登录链路完全在 bf-manager 内执行，明文邮箱、密码、验证码均不落盘；登录成功 后凭据以
+            {target
+              ? `用该账号（persona ${target.personaId}）的 EA 邮箱密码登录以刷新凭据；登录到其它 persona 时不会写入任何账号。`
+              : null}
+            登录链路完全在 bf-manager 内执行，明文邮箱、密码、验证码均不落盘；登录成功后凭据以
             AES-256-GCM 加密后入库。
           </SheetDescription>
         </SheetHeader>
@@ -423,6 +464,12 @@ export function EaLoginFlow({ actor, open, onOpenChange, onSucceeded }: Props) {
               onSelectMethod={onSelectMethod}
               codeForm={codeForm}
               onSubmitCode={onSubmitCode}
+              onRestart={() => {
+                // 保留已填邮箱，清掉密码与验证码，回到登录表单重新发起
+                loginForm.reset({ email: loginForm.getValues("email"), password: "" });
+                codeForm.reset({ code: "" });
+                setTask(null);
+              }}
             />
           )}
         </div>
@@ -437,12 +484,14 @@ function TaskProgress({
   onSelectMethod,
   codeForm,
   onSubmitCode,
+  onRestart,
 }: {
   task: EALoginTaskResponse;
   submitting: boolean;
   onSelectMethod: (method: string) => void;
   codeForm: ReturnType<typeof useForm<CodeValues>>;
   onSubmitCode: () => void;
+  onRestart: () => void;
 }) {
   switch (task.status) {
     case "pending":
@@ -543,7 +592,9 @@ function TaskProgress({
               {view.action.label}
             </a>
           ) : null}
-          <p className="text-muted-foreground text-xs">关闭面板后可重新发起。</p>
+          <Button variant="outline" size="sm" onClick={onRestart}>
+            重新开始
+          </Button>
         </div>
       );
     }
@@ -551,6 +602,9 @@ function TaskProgress({
       return (
         <div className="text-muted-foreground space-y-2 text-sm">
           <p>任务已取消。</p>
+          <Button variant="outline" size="sm" onClick={onRestart}>
+            重新开始
+          </Button>
         </div>
       );
     default:

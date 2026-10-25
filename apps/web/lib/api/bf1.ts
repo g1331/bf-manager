@@ -172,14 +172,25 @@ export interface ServerListResponse {
   items: ServerSummary[];
 }
 
-/** 服务器搜索查询参数：maps/modes/regions/sizes 下推到 EA 按条件检索；空位由前端二次过滤 */
+/** 服务器搜索查询参数：maps/modes/regions/sizes 交后端筛选；空位由前端二次过滤 */
 export interface ServerListQuery {
   name?: string;
   maps?: string[];
   modes?: string[];
   regions?: string[];
   sizes?: number[];
+  /** 包含 0 人空服：全服快照不含空服，开启后后端改走 EA searchServers 抽样 */
+  includeEmpty?: boolean;
   limit?: number;
+}
+
+/** 站内登记服务器的人数采样点，ts 为 unix 秒 */
+export interface ServerPlayerCountPoint {
+  ts: number;
+  players: number;
+  queue: number;
+  spectators: number;
+  max_players: number;
 }
 
 export interface MapRotationItem {
@@ -419,16 +430,20 @@ export const bf1Api = {
   listServers: (query: ServerListQuery = {}) => {
     const params = new URLSearchParams();
     if (query.name) params.set("name", query.name);
-    // maps/modes/regions/sizes 作为重复 query 参数下推到后端，由 EA 按条件检索
+    // maps/modes/regions/sizes 作为重复 query 参数交后端筛选
     query.maps?.forEach((m) => params.append("maps", m));
     query.modes?.forEach((m) => params.append("modes", m));
     query.regions?.forEach((r) => params.append("regions", r));
     query.sizes?.forEach((s) => params.append("sizes", String(s)));
+    if (query.includeEmpty) params.set("include_empty", "true");
     params.set("limit", String(query.limit ?? 200));
     return api.get<ServerListResponse>(`/bf1/servers?${params.toString()}`);
   },
 
   getServer: (gameId: number) => api.get<ServerDetail>(`/bf1/servers/${gameId}`),
+
+  getServerPlayerCounts: (gameId: number) =>
+    api.get<ServerPlayerCountPoint[]>(`/bf1/servers/${gameId}/player-counts`),
 
   getServerPlayers: (gameId: number, includeStats = true) =>
     api.get<ServerPlayersResponse>(

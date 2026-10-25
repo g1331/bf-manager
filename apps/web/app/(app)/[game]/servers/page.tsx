@@ -40,6 +40,7 @@ interface FilterState {
   regions: string[]; // region 代号
   emptySlots: string[]; // EMPTY_SLOT_OPTIONS.id
   sizes: number[]; // max_player_count 档位
+  includeEmpty: boolean; // 含 0 人空服：全服快照不含空服，开启后后端改走 EA 抽样搜索
   nameFilter: string; // 结果内按名称二次筛选
 }
 
@@ -49,6 +50,7 @@ const DEFAULT_FILTERS: FilterState = {
   regions: [],
   emptySlots: [],
   sizes: [],
+  includeEmpty: false,
   nameFilter: "",
 };
 
@@ -82,17 +84,18 @@ export default function ServerListPage() {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
 
-  // 地图 / 模式 / 区域 / 规模四个维度下推到后端由 EA 按条件检索：勾选即作为查询参数触发新
-  // 请求，而非仅在已加载的前若干条结果内过滤，避免冷门条件被结果上限截断而漏掉真实存在的服务器。
-  // 勾选合并 300ms 防抖，避免连续勾选产生多次 EA 请求；排序保证勾选顺序不同不产生多份缓存。
+  // 地图 / 模式 / 区域 / 规模四个维度作为查询参数交后端筛选（默认在全服快照上筛，含空服时走
+  // EA 检索），而非仅在已加载的前若干条结果内过滤，避免冷门条件被结果上限截断。
+  // 勾选合并 300ms 防抖，避免连续勾选产生多次请求；排序保证勾选顺序不同不产生多份缓存。
   const selection = useMemo(
     () => ({
       maps: [...filters.maps].sort(),
       modes: [...filters.modes].sort(),
       regions: [...filters.regions].sort(),
       sizes: [...filters.sizes].sort((a, b) => a - b),
+      includeEmpty: filters.includeEmpty,
     }),
-    [filters.maps, filters.modes, filters.regions, filters.sizes],
+    [filters.maps, filters.modes, filters.regions, filters.sizes, filters.includeEmpty],
   );
   const debouncedSelection = useDebouncedValue(selection, 300);
   // 名称同样下推到 EA（包含匹配、大小写不敏感）以补全前若干条之外的同名服务器，打字停止
@@ -108,6 +111,7 @@ export default function ServerListPage() {
         modes: debouncedSelection.modes.length ? debouncedSelection.modes : undefined,
         regions: debouncedSelection.regions.length ? debouncedSelection.regions : undefined,
         sizes: debouncedSelection.sizes.length ? debouncedSelection.sizes : undefined,
+        includeEmpty: debouncedSelection.includeEmpty || undefined,
         limit: 500,
       }),
     // 刷新 / 切换筛选期间保留上一次结果，避免请求期间 servers.data 变 undefined 导致列表与筛选面板闪断。
@@ -142,6 +146,7 @@ export default function ServerListPage() {
     filters.regions.length > 0 ||
     filters.emptySlots.length > 0 ||
     filters.sizes.length > 0 ||
+    filters.includeEmpty ||
     filters.nameFilter.trim().length > 0;
 
   const resetFilters = () => {
@@ -160,6 +165,7 @@ export default function ServerListPage() {
     ...filters.regions.map(regionLabel),
     ...filters.emptySlots.map((id) => EMPTY_SLOT_OPTIONS.find((o) => o.id === id)?.label ?? id),
     ...filters.sizes.map((n) => `${n} 人`),
+    ...(filters.includeEmpty ? ["含空服"] : []),
     ...(filters.nameFilter.trim() ? [`名称含「${filters.nameFilter.trim()}」`] : []),
   ];
 
@@ -436,6 +442,14 @@ function FilterPanel({
                 label={String(n)}
               />
             ))}
+          </FilterSection>
+
+          <FilterSection title="空服" count={filters.includeEmpty ? 1 : 0}>
+            <GameCheckbox
+              checked={filters.includeEmpty}
+              onChange={() => patch({ includeEmpty: !filters.includeEmpty })}
+              label="包含 0 人服务器（EA 抽样，结果不全）"
+            />
           </FilterSection>
         </div>
       </section>

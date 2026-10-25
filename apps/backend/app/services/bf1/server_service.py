@@ -28,7 +28,8 @@ from app.schemas.bf1.server import (
     ServerSummary,
 )
 from app.services.bf1.gateway_factory import get_bf1_client
-from app.services.bf1.server_filters import build_search_filter
+from app.services.bf1.server_filters import build_search_filter, filter_summaries
+from app.services.bf1.server_snapshot_cache import read_server_snapshot
 
 
 def _to_summary(raw: dict[str, Any]) -> ServerSummary:
@@ -254,8 +255,9 @@ class BF1ServerService:
         regions: list[str] | None = None,
         sizes: list[int] | None = None,
         limit: int = 50,
+        include_empty: bool = False,
     ) -> ServerListResponse:
-        # 把筛选条件下推为 EA filter_dict，由上游按条件检索而非仅在本地结果内过滤。
+        # 构造 filter_dict 同时校验各维度取值，快照与 EA 两条路径共用。
         # 空位（emptySlots）不在此处理：EA 不按实时空位过滤，交前端二次过滤。
         filter_dict = build_search_filter(
             name=keyword,
@@ -264,6 +266,16 @@ class BF1ServerService:
             regions=regions,
             sizes=sizes,
         )
+        # 浏览（无关键词）时在全服摘要缓存上本地筛选：结果完整且不请求 EA。快照只含有人的服，
+        # 所以按名称搜索（常见于找自己的空服）、要空服或缓存缺失 / 过期时回退 EA searchServers。
+        use_cache = not include_empty and not (keyword or "").strip()
+        cached = await read_server_snapshot() if use_cache else None
+        if cached is not None:
+            matched = filter_summaries(
+                cached, name=keyword, maps=maps, modes=modes, regions=regions, sizes=sizes
+            )
+            matched.sort(key=lambda s: s.player_count, reverse=True)
+            return ServerListResponse(total=len(matched), items=matched[:limit])
         async with get_bf1_client(self.db) as client:
             res = await client.searchServers(
                 server_name=keyword or "",

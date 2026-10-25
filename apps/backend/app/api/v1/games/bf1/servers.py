@@ -5,8 +5,14 @@ from __future__ import annotations
 from fastapi import APIRouter, Query
 
 from app.api.deps import DbDep
-from app.schemas.bf1.server import ServerDetail, ServerListResponse, ServerPlayersResponse
+from app.schemas.bf1.server import (
+    ServerDetail,
+    ServerListResponse,
+    ServerPlayerCountPoint,
+    ServerPlayersResponse,
+)
 from app.services.bf1.blaze_service import get_server_players
+from app.services.bf1.server_player_count_service import list_player_counts
 from app.services.bf1.server_service import BF1ServerService
 
 router = APIRouter()
@@ -23,9 +29,12 @@ async def list_servers(
     regions: list[str] | None = Query(None, description="地区代号，多值取并集"),
     sizes: list[int] | None = Query(None, description="服务器最大人数档位，多值取并集"),
     limit: int = Query(200, ge=1, le=500),
+    include_empty: bool = Query(
+        False, description="包含 0 人的空服；全服快照不含空服，开启后改走 EA searchServers"
+    ),
 ) -> ServerListResponse:
-    # 筛选条件下推到 EA searchServers 按条件检索。空位（emptySlots）EA 不支持过滤，
-    # 由前端二次过滤。EA searchServers 只接受 limit，没有 offset，前端走客户端分批渲染。
+    # 默认在全服快照缓存上本地筛选，缓存缺失或要空服时下推 EA searchServers。空位
+    # （emptySlots）由前端二次过滤。接口没有 offset，前端走客户端分批渲染。
     return await BF1ServerService(db).search(
         keyword=name,
         maps=maps,
@@ -33,6 +42,7 @@ async def list_servers(
         regions=regions,
         sizes=sizes,
         limit=limit,
+        include_empty=include_empty,
     )
 
 
@@ -52,3 +62,9 @@ async def get_server_players_route(
     # 玩家列表走 Blaze 长连接拉取实时房间名单，叠加 RSP 管理 / VIP 名单与平台绑定标记。
     # 战绩为可选的慢路径，按 include_stats 控制是否并发查询。
     return await get_server_players(db, game_id, include_stats=include_stats)
+
+
+@router.get("/{game_id}/player-counts", response_model=list[ServerPlayerCountPoint])
+async def get_server_player_counts(game_id: int, db: DbDep) -> list[ServerPlayerCountPoint]:
+    # 只有站内登记（servers 表）的服务器才有人数点，由全服统计轮询每分钟写入一次
+    return await list_player_counts(db, game_id)

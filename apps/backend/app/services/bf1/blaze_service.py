@@ -637,16 +637,17 @@ async def get_server_players(
     admin_ids = _attr_ids(attrs, "admins")
     vip_ids = _attr_ids(attrs, "vips")
     faction_by_team = _faction_map(attrs.get("level"))
-    stats_map: dict[int, BlazePlayerStats] = {}
-    rank_map: dict[int, int] = {}
-    if include_stats:
-        async with get_bf1_client(db) as client:
-            stats_map, rank_map = await _gather_stats(client, normal_pids)
-
-    # 3. 平台已绑定用户标记（db 此时已空闲）。
     all_pids = (
         normal_pids + [int(p["pid"]) for p in raw_queues] + [int(p["pid"]) for p in raw_spectators]
     )
+    stats_map: dict[int, BlazePlayerStats] = {}
+    rank_map: dict[int, int] = {}
+    if include_stats:
+        # 排队 / 观战玩家的 roster 同样不带等级，一并查战绩估算
+        async with get_bf1_client(db) as client:
+            stats_map, rank_map = await _gather_stats(client, all_pids)
+
+    # 3. 平台已绑定用户标记（db 此时已空闲）。
     registered_ids = await _fetch_registered_ids(db, all_pids)
 
     def _make(raw_player: dict) -> BlazePlayer:

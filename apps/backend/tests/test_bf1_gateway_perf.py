@@ -158,6 +158,53 @@ async def test_gather_stats_uses_cache_on_second_call(monkeypatch):
     assert "extra" not in cache.data[f"{blaze_service.STATS_CACHE_PREFIX}:1"]
 
 
+@pytest.mark.asyncio
+async def test_server_players_estimates_rank_for_queue_and_spectators(monkeypatch):
+    # roster 不带等级，排队 / 观战玩家也要查战绩估算，否则列表里显示 0 级
+    class _Socket:
+        async def send(self, packet, timeout):
+            return {}
+
+    class _Pool:
+        async def get_socket(self, db):
+            return _Socket()
+
+    room = {
+        "players": [{"pid": 1, "team": 0}],
+        "queues": [{"pid": 2}],
+        "spectators": [{"pid": 3}],
+        "attributes": {},
+    }
+
+    class _Client:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *exc):
+            return False
+
+    queried: list[int] = []
+
+    async def fake_gather(client, pids):
+        queried.extend(pids)
+        return {}, {pid: 100 + pid for pid in pids}
+
+    async def no_registered(db, pids):
+        return set()
+
+    monkeypatch.setattr(blaze_service, "_pool", _Pool())
+    monkeypatch.setattr(blaze_service.BlazeData, "player_list_handle", lambda _r: {7: room})
+    monkeypatch.setattr(blaze_service, "get_bf1_client", lambda db: _Client())
+    monkeypatch.setattr(blaze_service, "_gather_stats", fake_gather)
+    monkeypatch.setattr(blaze_service, "_fetch_registered_ids", no_registered)
+
+    res = await blaze_service.get_server_players(None, 7)
+
+    assert queried == [1, 2, 3]
+    assert [p.rank for p in res.queued] == [102]
+    assert [p.rank for p in res.spectators] == [103]
+
+
 class _LoginResponse:
     """模拟 accounts.ea.com 对 remid/sid 的应答。"""
 

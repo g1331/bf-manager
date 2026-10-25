@@ -265,7 +265,14 @@ async def fetch_overview(db: AsyncSession) -> tuple[BF1Overview, list[ServerSumm
         except Exception as e:
             logger.warning("BF1 overview snapshot failed, falling back to searchServers: {}", e)
         else:
-            logger.info("BF1 overview source=snapshot games={}", len(summaries))
+            first = updates[0].get("GAM") or updates[0]
+            # 只打字段名不打值（含 HNET 等隐私字段），用于查找快照里重启不变的服务器标识
+            logger.info(
+                "BF1 overview source=snapshot games={} game_keys={} attr_keys={}",
+                len(summaries),
+                sorted(first),
+                sorted(first.get("ATTR") or {}),
+            )
             overview = build_overview(summaries, sample_pulls=1, raw_count=len(updates))
             return overview, summaries, "snapshot"
     overview, summaries = await _fetch_overview_by_search(db)

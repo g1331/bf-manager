@@ -265,9 +265,10 @@ class BF1ServerService:
             regions=regions,
             sizes=sizes,
         )
-        # 优先在全服摘要缓存上本地筛选：结果完整且不请求 EA。快照只含有人的服，
-        # 要空服或缓存缺失 / 过期时回退 EA searchServers（单次约 200 条抽样）。
-        cached = None if include_empty else await read_server_snapshot()
+        # 浏览（无关键词）时在全服摘要缓存上本地筛选：结果完整且不请求 EA。快照只含有人的服，
+        # 所以按名称搜索（常见于找自己的空服）、要空服或缓存缺失 / 过期时回退 EA searchServers。
+        use_cache = not include_empty and not (keyword or "").strip()
+        cached = await read_server_snapshot() if use_cache else None
         if cached is not None:
             matched = filter_summaries(
                 cached, name=keyword, maps=maps, modes=modes, regions=regions, sizes=sizes

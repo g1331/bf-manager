@@ -110,6 +110,20 @@ async def test_search_falls_back_to_ea(
     assert [s.game_id for s in res.items] == [9]
 
 
+async def test_search_by_keyword_uses_ea(monkeypatch: pytest.MonkeyPatch) -> None:
+    """按名称搜索要能找到空服，快照里没有空服，所以不读快照。"""
+
+    async def fake_read() -> list[ServerSummary] | None:
+        raise AssertionError("按名称搜索不读快照")
+
+    client = _FakeClient()
+    monkeypatch.setattr(server_service, "read_server_snapshot", fake_read)
+    monkeypatch.setattr(server_service, "get_bf1_client", lambda _db: client)
+    res = await BF1ServerService(object()).search(keyword="empty")  # type: ignore[arg-type]
+    assert client.calls == 1
+    assert [s.game_id for s in res.items] == [9]
+
+
 async def test_record_player_counts_writes_registered_and_prunes(test_session) -> None:
     registered = Server(game="bf1", server_id=100, game_id=1, name="mine")
     other_game = Server(game="bfv", server_id=200, game_id=2)

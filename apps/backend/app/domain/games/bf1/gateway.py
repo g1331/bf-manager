@@ -13,6 +13,7 @@ Cookie 持久化通过可选回调 on_session_refreshed 注入，避免本层直
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import copy
 import json
 import time
@@ -262,7 +263,6 @@ class _BF1GatewayBase:
                 "144": "on",
             },
         }
-        self.auto_login_count = 0
         # 创建SSL上下文，禁用证书验证以解决526错误
         import ssl
 
@@ -376,7 +376,7 @@ class _BF1GatewayBase:
         :param sid: 玩家登录时cookie的sid
         :return: 成功登录后的session
         """
-        logger.debug(f"BF1账号{self.pid}登录ing\nremid={remid}\nsid={sid}")
+        logger.debug(f"BF1账号{self.pid}登录ing")
         self.remid = remid
         self.sid = sid
         # 获取access_token
@@ -391,41 +391,30 @@ class _BF1GatewayBase:
         )
         try:
             res = json.loads(await response.text())
-            logger.debug(res)
             self.access_token = res["access_token"]
             self.access_token_expires_time = res["expires_in"]
-            logger.success(f"获取access_token成功!access_token:{self.access_token}")
-            # 获取返回值的头部
+            logger.success(f"BF1账号{self.pid}获取access_token成功")
+            # 取出 Set-Cookie 里刷新后的 sid
             header = dict(response.headers)
-            # 取出 Set-Cookie
-            logger.debug(
-                f"type:{type(header['Set-Cookie'])},header['Set-Cookie']:{header['Set-Cookie']}"
-            )
             sid = header["Set-Cookie"][
                 header["Set-Cookie"].find("sid=") + 4 : header["Set-Cookie"].find(";")
             ]
-            logger.success(f"更新sid成功!sid:{sid}")
+            logger.success(f"BF1账号{self.pid}更新sid成功")
             self.sid = sid
             await self._notify_session_refreshed(new_sid=sid, new_session=None)
         except Exception as e:
-            logger.error(e)
-            logger.error(await response.text())
-            try:
-                error_data = json.loads(await response.text())
-                if error_data.get("error") == "login_required":
-                    logger.warning(
-                        f"BF1账号:{self.pid}已经失效，正在尝试第{self.auto_login_count + 1}次刷新"
-                    )
-                    if self.auto_login_count <= 2:
-                        await self.auto_login(str(self.pid))
-                    else:
-                        logger.error(f"BF1账号:{self.pid}登录失败次数过多!请检查账密信息是否正确!")
-                        return await response.text()
-            except Exception as e:
-                logger.error(f"BF1账号{self.pid}登录刷新session失败!{e}")
-                pass
-            logger.error(f"BF1账号{self.pid}登录刷新session失败!")
-            return await response.text()
+            text = await response.text()
+            error = ""
+            with contextlib.suppress(Exception):
+                error = json.loads(text).get("error", "")
+            if error == "login_required":
+                # remid/sid 已被 EA 作废，只能人工重新登录；本项目不在磁盘上保存密码
+                logger.error(f"BF1账号{self.pid}账号凭据失效，需要在后台用邮箱密码重新登录")
+            else:
+                logger.error(
+                    f"BF1账号{self.pid}获取access_token失败: {type(e).__name__} error={error!r}"
+                )
+            return text
         # 获取authcode
         url2 = (
             f"https://accounts.ea.com/connect/auth?access_token={self.access_token}"
@@ -443,9 +432,9 @@ class _BF1GatewayBase:
             authcode = response2.headers["location"]
             authcode = authcode[authcode.rfind("=") + 1 :]
             self.authcode = authcode
-            logger.success(f"获取authcode成功!authcode:{self.authcode}")
+            logger.success(f"BF1账号{self.pid}获取authcode成功")
         except Exception as e:
-            logger.error(f"获取authcode失败!{e}")
+            logger.error(f"BF1账号{self.pid}获取authcode失败: {type(e).__name__}")
             return None
         # 使用authcode登录获取session
         login_info = await self.Authentication_getEnvIdViaAuthCode(self.authcode)
@@ -462,7 +451,6 @@ class _BF1GatewayBase:
         # 自动设置语言
         if isinstance(await self.setLocale(), dict):
             logger.success(f"BF1账号{self.pid}已自动设置语言为zhtw")
-        self.auto_login_count = 0
         await self._notify_session_refreshed(new_sid=self.sid, new_session=self.session)
         return self.session
 
@@ -480,85 +468,6 @@ class _BF1GatewayBase:
                 "id": await get_a_uuid(),
             }
         )
-
-    @staticmethod
-    async def ap_login(email, password) -> dict:
-        """
-        使用账号密码登录获取remid和sid
-        :param email: ea账号
-        :param password: ea账号密码
-        :return:
-        eg: {
-                "remid": "xxx",
-                "sid": "xxx",
-                "sessionId": "xxx"
-            }
-        """
-        url = "https://login.2788.pro/login"
-        headers = {
-            "authority": "login.2788.pro",
-            "accept": "*/*",
-            "accept-language": "zh-CN,zh;q=0.9",
-            "content-type": "application/x-www-form-urlencoded",
-            "origin": "https://login.2788.pro",
-            "referer": "https://login.2788.pro/",
-            "sec-ch-ua": '"Chromium";v="118", "Microsoft Edge";v="118", "Not=A?Brand";v="99"',
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": '"Windows"',
-            "sec-fetch-dest": "empty",
-            "sec-fetch-mode": "cors",
-            "sec-fetch-site": "same-origin",
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 Edg/118.0.0.0",
-        }
-        data = {
-            "email": email,
-            "password": password,
-            "bypass2fa": "true",
-        }
-        async with aiohttp.ClientSession() as session:
-            async with session.post(url, headers=headers, data=data) as response:
-                # 检查HTTP状态码
-                if response.status != 200:
-                    logger.error(f"登录API请求失败，状态码: {response.status}")
-                    response_text = await response.text()
-                    logger.debug(f"响应内容: {response_text[:500]}...")
-                    return {"error": f"登录失败，状态码: {response.status}"}
-
-                # 检查Content-Type是否为JSON
-                content_type = response.headers.get("content-type", "").lower()
-                if "application/json" not in content_type:
-                    logger.error(f"登录API返回非JSON响应，Content-Type: {content_type}")
-                    response_text = await response.text()
-                    logger.debug(f"响应内容: {response_text[:500]}...")
-                    return {"error": "登录API返回格式错误"}
-
-                return await response.json()
-
-    async def auto_login(self, pid):
-        file_path = "utils/bf1/ap_info.json"
-        with open(file_path, encoding="utf-8") as f:
-            ap_info = json.load(f)
-        if not ap_info.get(pid):
-            logger.error(f"BF1账号:{pid}没有账密信息!取消更新remid和sid!")
-            return
-        else:
-            email = ap_info[pid]["email"]
-            password = ap_info[pid]["password"]
-            logger.debug(f"获取到BF1账号:{pid}账密")
-        try:
-            login_info = await self.ap_login(email, password)
-            if not login_info.get("remid"):
-                logger.error(f"BF1账号:{pid}登录失败!{login_info}")
-                return
-            self.remid = login_info["remid"]
-            self.sid = login_info["sid"]
-            self.session = login_info["sessionId"]
-            logger.success(f"BF1账号:{pid}刷新cookie成功!正在尝试重新登录!")
-            await self.login(self.remid, self.sid)
-            self.auto_login_count += 1
-        except Exception as e:
-            logger.error(f"BF1账号:{pid}登录失败!{e}")
-            return
 
     async def getBlazeAuthcode(self, remid: str = None, sid: str = None) -> str:
         if not remid:
@@ -583,9 +492,7 @@ class _BF1GatewayBase:
             authcode = response.headers["location"]
             return authcode[authcode.rfind("=") + 1 :]
         except Exception as e:
-            logger.error(e)
-            logger.error(await response.text())
-            logger.error(f"BF1账号{self.pid}登录获取authcode失败!")
+            logger.error(f"BF1账号{self.pid}登录获取Blaze authcode失败: {type(e).__name__}")
             return await response.text()
 
     async def Authentication_getEnvIdViaAuthCode(self, authcode) -> dict | str:
@@ -726,7 +633,8 @@ class _BF1GatewayBase:
         expires_in_str = (params.get("expires_in") or ["0"])[0]
         if not token:
             logger.error(
-                f"BF1账号{self.pid}desktop_access_token 解析失败，location={location[:300]}"
+                f"BF1账号{self.pid}desktop_access_token 解析失败，"
+                f"location={location.split('?', 1)[0].split('#', 1)[0][:300]}"
             )
             return None
         try:

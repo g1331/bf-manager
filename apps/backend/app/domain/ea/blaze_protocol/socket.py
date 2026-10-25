@@ -329,7 +329,7 @@ class BlazeSocket:
             if not future.done():
                 future.set_result(packet)
         elif packet["method"] == "UserSessions.UserUnauthenticated":
-            logger.error(f"Blaze 会话已被注销，请重新登录/连接！\n{packet}")
+            logger.error("Blaze 会话已被注销，请重新登录/连接！")
             await self.close()
         elif packet["type"] == "Message":
             # 推送体可能很大（游戏列表快照数 MB），只记方法名
@@ -343,4 +343,5 @@ class BlazeSocket:
 
     @staticmethod
     def callback(packet):
-        logger.debug(packet)
+        # 只记方法名：登录应答里带会话 key 等凭据
+        logger.debug(f"Blaze 包: {packet.get('method')} ({packet.get('type')})")

@@ -44,11 +44,16 @@ class EAAccountService:
         self.db = db
 
     async def pick_available(self) -> EACredentials:
-        """取一个可用 EA 账号。MVP 阶段策略：最久未使用的 enabled 账号。"""
+        """取一个可用 EA 账号：失败计数最低者优先，同分取最久未使用。
+
+        只按最久未使用挑号时，一个凭据失效的账号（失败后 last_used_at 不更新）会被
+        每个请求反复选中，直到累计 10 次失败被自动停用，期间全部 EA 请求失败。
+        失败计数优先后，它失败一次就让位给健康账号。
+        """
         stmt = (
             select(EAAccount)
             .where(EAAccount.enabled.is_(True))
-            .order_by(EAAccount.last_used_at.asc().nulls_first())
+            .order_by(EAAccount.failure_count.asc(), EAAccount.last_used_at.asc().nulls_first())
             .limit(1)
         )
         account = await self.db.scalar(stmt)
@@ -179,9 +184,20 @@ class EAAccountService:
     async def set_enabled(self, account_id: int, enabled: bool) -> EAAccountItem:
         """启用或停用账号。
 
-        启用时同步清零失败计数，避免凭据已修复却因历史计数立刻被再次自动禁用。
+        从停用切到启用前先用当前凭据做一次 :meth:`verify`，失败则保持停用并报错，
+        避免把凭据早已过期的账号放回池里拖垮所有 EA 请求。启用时同步清零失败计数，
+        避免凭据已修复却因历史计数立刻被再次自动禁用。
         """
         account = await self.get_by_id(account_id)
+        if enabled and not account.enabled:
+            result = await self.verify(account_id)
+            if not result.success:
+                raise ValidationError(
+                    message=(
+                        f"凭据验证失败，账号未启用：{result.message}。"
+                        "请先用「重新登录」刷新凭据（成功后会自动启用）"
+                    )
+                )
         account.enabled = enabled
         if enabled:
             account.failure_count = 0

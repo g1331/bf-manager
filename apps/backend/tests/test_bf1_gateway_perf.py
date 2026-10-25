@@ -156,3 +156,62 @@ async def test_gather_stats_uses_cache_on_second_call(monkeypatch):
     assert second[1].kd == 2.0
     assert set(ranks) == {1, 2}
     assert "extra" not in cache.data[f"{blaze_service.STATS_CACHE_PREFIX}:1"]
+
+
+class _LoginResponse:
+    """模拟 accounts.ea.com 对 remid/sid 的应答。"""
+
+    def __init__(self, body: str, set_cookie: str = "") -> None:
+        self._body = body
+        self.headers = {"Set-Cookie": set_cookie} if set_cookie else {}
+
+    async def text(self) -> str:
+        return self._body
+
+
+async def _run_login(resp: _LoginResponse) -> tuple[BF1GatewayClient, object, str]:
+    from loguru import logger
+
+    client = BF1GatewayClient(pid=7)
+
+    async def _get(**kwargs):
+        return resp
+
+    client.http_session = SimpleNamespace(get=_get, close=None)  # type: ignore[assignment]
+    lines: list[str] = []
+    sink_id = logger.add(lambda m: lines.append(str(m)), level="DEBUG")
+    try:
+        result = await client.login("remid-secret", "sid-secret")
+    finally:
+        logger.remove(sink_id)
+    return client, result, "".join(lines)
+
+
+@pytest.mark.asyncio
+async def test_login_required_fails_cleanly_without_auto_login():
+    """凭据失效：不再去读磁盘账密自动重登，直接失败并提示去后台重新登录。"""
+    client, result, logs = await _run_login(_LoginResponse('{"error":"login_required"}'))
+    assert client.check_login is False
+    assert result == '{"error":"login_required"}'
+    assert "需要在后台用邮箱密码重新登录" in logs
+    assert "No such file" not in logs
+    assert "remid-secret" not in logs and "sid-secret" not in logs
+
+
+@pytest.mark.asyncio
+async def test_login_logs_never_contain_token_or_sid(monkeypatch):
+    """access_token 换取成功（随后 authcode 步骤失败）全程日志不得出现凭据值。"""
+
+    class _NoNetwork:
+        def __init__(self, **kwargs) -> None:
+            raise ConnectionError("network disabled in unit test")
+
+    monkeypatch.setattr("app.domain.games.bf1.gateway.httpx.AsyncClient", _NoNetwork)
+    _, _, logs = await _run_login(
+        _LoginResponse(
+            '{"access_token":"tok-secret","expires_in":3600}',
+            set_cookie="sid=sid-refreshed-secret; Path=/",
+        )
+    )
+    for secret in ("tok-secret", "sid-refreshed-secret", "remid-secret", "sid-secret"):
+        assert secret not in logs

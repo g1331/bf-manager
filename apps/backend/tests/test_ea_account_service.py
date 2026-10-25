@@ -132,7 +132,8 @@ async def test_update_display_name_missing_raises_not_found(test_session) -> Non
         await service.update_display_name(9999, EAAccountDisplayNameUpdate(display_name="x"))
 
 
-async def test_set_enabled_reenable_resets_failure(test_session) -> None:
+async def test_set_enabled_reenable_resets_failure(test_session, monkeypatch) -> None:
+    monkeypatch.setattr("app.domain.games.bf1.gateway.BF1GatewayClient", _FakeGatewayOk)
     account = await _seed(test_session, enabled=False, failure_count=10)
     service = EAAccountService(test_session)
     item = await service.set_enabled(account.id, True)
@@ -251,6 +252,38 @@ async def test_verify_session_ok_but_access_token_fail(test_session, monkeypatch
     assert "access_token" in (result.message or "")
     refreshed = await _reload(test_session, account.id)
     assert refreshed.failure_count == 1
+
+
+async def test_enable_with_invalid_credentials_is_rejected(test_session, monkeypatch) -> None:
+    """启用前验证失败：拒绝启用并报错，账号保持停用，不会被挑号选中。"""
+    account_id = (await _seed(test_session, persona_id=1101, enabled=False)).id
+    monkeypatch.setattr("app.domain.games.bf1.gateway.BF1GatewayClient", _FakeGatewayFail)
+    service = EAAccountService(test_session)
+    with pytest.raises(ValidationError, match="未启用"):
+        await service.set_enabled(account_id, True)
+    refreshed = await _reload(test_session, account_id)
+    assert refreshed.enabled is False
+
+
+async def test_enable_already_enabled_skips_verify(test_session, monkeypatch) -> None:
+    """已启用账号重复启用不触发 EA 调用（_FakeGatewayFail 若被调用会让断言失败）。"""
+    account_id = (await _seed(test_session, persona_id=1102, failure_count=2)).id
+    monkeypatch.setattr("app.domain.games.bf1.gateway.BF1GatewayClient", _FakeGatewayFail)
+    item = await EAAccountService(test_session).set_enabled(account_id, True)
+    assert item.enabled is True
+    assert item.failure_count == 0
+
+
+async def test_pick_available_prefers_low_failure_count(test_session) -> None:
+    """失败过的账号即使最久未使用，也要让位给失败计数更低的健康账号。"""
+    from datetime import UTC, datetime
+
+    await _seed(test_session, persona_id=1201, failure_count=1)  # last_used_at=None，最久未用
+    healthy = await _seed(test_session, persona_id=1202)
+    healthy.last_used_at = datetime.now(UTC)
+    await test_session.commit()
+    creds = await EAAccountService(test_session).pick_available()
+    assert creds.persona_id == 1202
 
 
 async def test_upsert_creates_when_absent(test_session) -> None:

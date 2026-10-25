@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { animate, motion, useMotionValue, useTransform, type Variants } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { ArrowRight, Clock4, Eye, Server, TrendingDown, TrendingUp, Users } from "lucide-react";
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
+import { CountUp } from "@/components/bf1/visual/CountUp";
 import { CountryFlag } from "@/components/common/CountryFlag";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { StatsOverviewSkeleton } from "@/components/layout/PageSkeleton";
@@ -141,20 +142,6 @@ function LiveBadge({ updatedAt }: { updatedAt: string | null }) {
       ) : null}
     </div>
   );
-}
-
-/* ---------- 数字 count-up：mount 时从 0 滚入，60s 刷新时从旧值滚到新值 ---------- */
-
-function CountUp({ value }: { value: number }) {
-  const mv = useMotionValue(0);
-  const text = useTransform(mv, (v) => Math.round(v).toLocaleString());
-
-  useEffect(() => {
-    const controls = animate(mv, value, { duration: 1.1, ease: "circOut" });
-    return () => controls.stop();
-  }, [mv, value]);
-
-  return <motion.span>{text}</motion.span>;
 }
 
 /* ---------- 首屏横幅：热门地图铺底 + 在线人数 + 24h 趋势 ---------- */

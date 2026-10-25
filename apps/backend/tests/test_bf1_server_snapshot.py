@@ -294,8 +294,8 @@ async def test_list_map_stats_aggregates_minutes_and_rounds(test_session) -> Non
     assert amiens.player_minutes == 190
     assert amiens.avg_players == 47.5
     assert amiens.map_display_name and amiens.map_image_url
-    # 西奈第二个点后间隔 31 分钟，只按封顶的 2 分钟计
-    assert (desert.rounds, desert.minutes, desert.player_minutes) == (1, 3, 90)
+    # 西奈第二个点后间隔 31 分钟，视为断档只算 1 分钟
+    assert (desert.rounds, desert.minutes, desert.player_minutes) == (1, 2, 60)
 
     points = await list_player_counts(test_session, 1)
     assert [p.map_name for p in points][:4] == ["MP_Amiens"] * 3 + ["MP_Desert"]

@@ -67,7 +67,7 @@ export function ServerListSkeleton({ rows = 12 }: { rows?: number }) {
 }
 
 /**
- * 服务器详情页整页骨架：返回行 + 信息横幅 + 标签行 + 玩家双列。
+ * 服务器详情页整页骨架：返回行 + 首屏横幅 + 分区导航 + 概览（战况 / 热门地图两栏）。
  * 真实页面的全屏地图背景属于数据态内容，骨架阶段由底层战场氛围透出即可，
  * 不在此铺 fixed 层。
  */
@@ -76,21 +76,15 @@ export function ServerDetailSkeleton() {
     <div className="relative min-h-screen w-full overflow-hidden text-white">
       <div className="relative z-10 max-w-[1600px] px-6 py-5 sm:px-10 sm:py-8">
         <Skeleton className="mb-4 h-5 w-24" />
-        <Skeleton className="h-40 w-full sm:h-48" />
-        <div className="mt-6 flex items-center gap-6">
-          {Array.from({ length: 4 }, (_, i) => (
-            <Skeleton key={i} className="h-5 w-16" />
+        <Skeleton className="h-[22rem] w-full" />
+        <div className="mt-6 flex items-center gap-6 border-b border-white/10 pb-3">
+          {Array.from({ length: 5 }, (_, i) => (
+            <Skeleton key={i} className="h-5 w-14" />
           ))}
         </div>
-        <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {Array.from({ length: 2 }, (_, col) => (
-            <div key={col} className="space-y-2">
-              <Skeleton className="h-8 w-full" />
-              {Array.from({ length: 8 }, (_, i) => (
-                <Skeleton key={i} className="h-10 w-full" />
-              ))}
-            </div>
-          ))}
+        <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+          <Skeleton className="h-96 w-full" />
+          <Skeleton className="h-96 w-full" />
         </div>
       </div>
     </div>

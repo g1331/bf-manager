@@ -172,6 +172,11 @@ def test_to_rotation_parses_real_items_without_codes() -> None:
     assert rotation[1].mode_display_name == "突袭"
 
 
+def test_to_rotation_normalizes_map_code_case_from_image() -> None:
+    raw = {"rotation": [{"mapImage": "[BB_PREFIX]/x/MP_Shoveltown_LandscapeLarge-d0.jpg"}]}
+    assert _to_rotation(raw)[0].map_name == "MP_ShovelTown"
+
+
 def test_to_rotation_returns_no_current_when_server_map_code_missing() -> None:
     """serverInfo.mapName 缺失时，不应把任何 rotation 项标 current（即使 item.mapName 也为 None）"""
     raw = {

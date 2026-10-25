@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.errors import EAApiError, NotFoundError
 from app.domain.games.bf1.maps import (
+    MapData,
     normalize_emblem_url,
     normalize_map_image_url,
     translate_map_name,
@@ -119,6 +120,8 @@ _TW_MODE_CODES = {
 }
 # 轮换条目没有 mapName，地图代号只能从封面文件名里取，如 .../MP_Amiens_LandscapeLarge-xxx.jpg
 _MAP_CODE_IN_IMAGE = re.compile(r"/(MP_[A-Za-z0-9]+)_Landscape")
+# 封面文件名的大小写与代号不总一致（MP_Shoveltown vs MP_ShovelTown），按小写归一
+_MAP_CODES_BY_LOWER = {code.lower(): code for code in MapData.MapTeamDict}
 
 
 def _to_rotation(raw: dict[str, Any]) -> list[MapRotationItem]:
@@ -135,7 +138,10 @@ def _to_rotation(raw: dict[str, Any]) -> list[MapRotationItem]:
     rotation: list[MapRotationItem] = []
     for item in rotation_raw:
         match = _MAP_CODE_IN_IMAGE.search(item.get("mapImage") or "")
-        map_code = item.get("mapName") or (match.group(1) if match else None)
+        image_code = match.group(1) if match else None
+        map_code = item.get("mapName") or (
+            _MAP_CODES_BY_LOWER.get(image_code.lower(), image_code) if image_code else None
+        )
         mode_code = item.get("modeName") or _TW_MODE_CODES.get(item.get("modePrettyName") or "")
         is_current = bool(current_map_code) and map_code == current_map_code
         if is_current and current_mode_code and mode_code:

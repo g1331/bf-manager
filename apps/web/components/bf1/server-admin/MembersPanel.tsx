@@ -3,20 +3,22 @@
 /**
  * 服务器详情「成员名单」tab：管理员 / VIP / 封禁三类名单的查看与维护。
  *
- * 子级分类 chips 切换名单；搜索框按玩家名或 persona ID 过滤，搜索词跨分类保留，
+ * 顶部三张容量卡切换名单；搜索框按玩家名或 persona ID 过滤，搜索词跨分类保留，
  * 便于快速确认某玩家身处哪份名单。有对应权限时显示添加入口（按名字或 persona ID
  * 解析）与行内移除按钮，写操作复用 ServerAdminProvider 的 act（统一二次确认 +
  * 双键缓存失效 + 提示），离线名单维护与在线玩家行内操作走同一条链路。
  */
 
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ResponsiveTable, type Column } from "@/components/common/ResponsiveTable";
+import Link from "next/link";
+import { PlayerAvatar } from "@/components/common/PlayerAvatar";
 import { useServerAdmin } from "@/components/bf1/server-admin/InlineServerAdmin";
-import { bf1Api, type ServerExtras, type ServerMember } from "@/lib/api/bf1";
+import { bf1Api, type ServerExtras } from "@/lib/api/bf1";
 import { ApiException } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
@@ -99,7 +101,7 @@ async function resolveTarget(raw: string): Promise<ResolvedTarget | null> {
   return hit ? { persona_id: hit.persona_id, display_name: hit.display_name } : null;
 }
 
-export function MembersPanel({ extras }: { extras: ServerExtras }) {
+export function MembersPanel({ game, extras }: { game: string; extras: ServerExtras }) {
   const { can, act } = useServerAdmin();
   const [kind, setKind] = useState<MemberKind>("admins");
   const [search, setSearch] = useState("");
@@ -110,6 +112,13 @@ export function MembersPanel({ extras }: { extras: ServerExtras }) {
   const members = extras[kind];
   const canAdd = can(meta.addKind);
   const canRemove = can(meta.removeKind);
+  // RSP 名单不带头像，另行批量查询；查到前显示首字母
+  const avatars = useQuery({
+    queryKey: ["bf1-avatars", members.map((m) => m.persona_id)],
+    queryFn: () => bf1Api.getAvatars(members.map((m) => m.persona_id)),
+    enabled: members.length > 0,
+    staleTime: 60 * 60_000,
+  });
 
   const keyword = search.trim().toLowerCase();
   const filtered = keyword
@@ -144,54 +153,17 @@ export function MembersPanel({ extras }: { extras: ServerExtras }) {
     }
   };
 
-  const columns: Column<ServerMember>[] = [
-    {
-      key: "name",
-      header: "玩家",
-      cell: (m) => m.display_name ?? "—",
-      isCardTitle: true,
-    },
-    {
-      key: "platform",
-      header: "平台",
-      cell: (m) => (m.platform ? m.platform.toUpperCase() : "—"),
-    },
-    { key: "id", header: "Persona ID", cell: (m) => m.persona_id },
-    ...(canRemove
-      ? ([
-          {
-            key: "actions",
-            header: "操作",
-            className: "w-24 text-right",
-            cell: (m: ServerMember) => (
-              <Button
-                variant="outline"
-                size="sm"
-                className="compact-action"
-                onClick={() =>
-                  act(meta.removeKind, {
-                    persona_id: m.persona_id,
-                    display_name: m.display_name ?? String(m.persona_id),
-                  })
-                }
-              >
-                <X className="size-3.5" />
-                {meta.removeLabel}
-              </Button>
-            ),
-          },
-        ] satisfies Column<ServerMember>[])
-      : []),
-  ];
-
   return (
-    <div className="space-y-4">
-      {/* 分类 chips：带「当前数 / 容量上限」计数 */}
-      <div className="flex flex-wrap gap-1.5">
+    <div className="space-y-5">
+      {/* 三份名单的容量卡，同时充当分类切换 */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         {KIND_ORDER.map((k) => (
-          <KindChip
+          <KindCard
             key={k}
-            label={`${KIND_META[k].label} ${extras[k].length}/${KIND_META[k].limit}`}
+            label={KIND_META[k].label}
+            count={extras[k].length}
+            limit={KIND_META[k].limit}
+            danger={k === "banned"}
             active={kind === k}
             onClick={() => switchKind(k)}
           />
@@ -240,38 +212,108 @@ export function MembersPanel({ extras }: { extras: ServerExtras }) {
         </p>
       ) : null}
 
-      <ResponsiveTable
-        data={filtered}
-        columns={columns}
-        rowKey={(m) => m.persona_id}
-        emptyState={keyword ? `没有匹配「${search.trim()}」的${meta.label}` : meta.emptyText}
-      />
+      {filtered.length === 0 ? (
+        <p className="border border-dashed border-white/10 py-10 text-center text-sm text-white/40">
+          {keyword ? `没有匹配「${search.trim()}」的${meta.label}` : meta.emptyText}
+        </p>
+      ) : (
+        <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
+          {filtered.map((m) => {
+            const name = m.display_name ?? String(m.persona_id);
+            return (
+              <li
+                key={m.persona_id}
+                className="group flex items-center gap-3 border border-white/[0.06] bg-black/35 px-3 py-2.5 transition-colors hover:border-white/15"
+              >
+                <PlayerAvatar
+                  avatarUrl={m.avatar_url || avatars.data?.[m.persona_id] || null}
+                  displayName={name}
+                  size="sm"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={`/${game}/player/${m.persona_id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="truncate text-sm text-white hover:underline"
+                      title={`${name}（在新标签查看战绩）`}
+                    >
+                      {name}
+                    </Link>
+                    {m.platform ? (
+                      <span className="shrink-0 border border-white/20 px-1 text-[10px] leading-4 text-white/55">
+                        {m.platform.toUpperCase()}
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="font-mono text-[11px] text-white/40">{m.persona_id}</div>
+                </div>
+                {canRemove ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="compact-action shrink-0 opacity-70 group-hover:opacity-100"
+                    onClick={() =>
+                      act(meta.removeKind, { persona_id: m.persona_id, display_name: name })
+                    }
+                  >
+                    <X className="size-3.5" />
+                    {meta.removeLabel}
+                  </Button>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }
 
-/** 分类切换 chip，沿用武器 / 载具过滤条的样式语言（白底高亮 + 细描边） */
-function KindChip({
+/** 名单容量卡：人数 / 上限 + 容量条，选中时描金边 */
+function KindCard({
   label,
+  count,
+  limit,
+  danger,
   active,
   onClick,
 }: {
   label: string;
+  count: number;
+  limit: number;
+  danger: boolean;
   active: boolean;
   onClick: () => void;
 }) {
+  const share = Math.min(count / limit, 1);
   return (
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={active}
       className={cn(
-        "border px-2.5 py-1 text-xs tracking-wide tabular-nums transition-colors",
+        "relative border px-3 py-3 text-left transition-colors sm:px-4",
         active
-          ? "border-white bg-white font-semibold text-black"
-          : "border-white/20 text-white/60 hover:border-white/45 hover:text-white",
+          ? "border-amber-400/60 bg-amber-500/[0.08]"
+          : "border-white/10 bg-black/30 hover:border-white/25",
       )}
     >
-      {label}
+      {active ? <span className="absolute inset-x-0 top-0 h-0.5 bg-amber-400" /> : null}
+      <div className={cn("text-xs tracking-wider", active ? "text-amber-300" : "text-white/55")}>
+        {label}
+      </div>
+      <div className="font-display mt-1 flex items-baseline tabular-nums">
+        <span className="text-3xl font-bold text-white">{count}</span>
+        <span className="ml-1 text-sm text-white/40">/{limit}</span>
+      </div>
+      <div className="mt-2 h-1 bg-white/10">
+        <div
+          className={cn("h-full", danger ? "bg-rose-400/80" : "bg-amber-400")}
+          style={{ width: `${share * 100}%` }}
+        />
+      </div>
     </button>
   );
 }

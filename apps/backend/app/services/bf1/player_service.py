@@ -10,6 +10,7 @@ from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.errors import EAApiError, NotFoundError
+from app.core.cache import get_cache
 from app.domain.games.bf1.gateway import BF1GatewayClient
 from app.schemas.bf1.player import PersonaBrief, PersonaSearchResult
 from app.services.bf1.gateway_factory import get_bf1_client
@@ -64,6 +65,42 @@ async def _fetch_gametools_avatar(persona_id: int) -> str | None:
         return None
     avatar = data.get("avatar")
     return avatar or None
+
+
+AVATAR_CACHE_KEY = "bf1:avatar:{}"
+AVATAR_TTL = 7 * 86400
+# 没取到（无头像或 gametools 波动）的隔一小时再试
+MISSING_AVATAR_TTL = 3600
+AVATAR_CONCURRENCY = 8
+
+
+async def get_avatars(persona_ids: list[int]) -> dict[int, str | None]:
+    """批量取头像（服务器成员名单用），按 persona 缓存。
+
+    RSP 名单里的 avatar 恒为空，逐个走 SAL 会把一两百个请求压到号池上，所以批量场景只走
+    gametools 单人接口（它的批量接口常超时），限并发、结果缓存 7 天。
+    """
+    cache = await get_cache()
+    result: dict[int, str | None] = {}
+    misses: list[int] = []
+    for pid in persona_ids:
+        cached = await cache.get(AVATAR_CACHE_KEY.format(pid))
+        if cached is None:
+            misses.append(pid)
+        else:
+            result[pid] = cached or None
+    sem = asyncio.Semaphore(AVATAR_CONCURRENCY)
+
+    async def fetch(pid: int) -> None:
+        async with sem:
+            url = await _fetch_gametools_avatar(pid)
+        result[pid] = url
+        await cache.set(
+            AVATAR_CACHE_KEY.format(pid), url or "", ttl=AVATAR_TTL if url else MISSING_AVATAR_TTL
+        )
+
+    await asyncio.gather(*(fetch(pid) for pid in misses))
+    return result
 
 
 async def _playtime_hours(client: BF1GatewayClient, persona_id: int) -> int | None:

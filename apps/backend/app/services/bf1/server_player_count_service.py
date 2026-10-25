@@ -185,8 +185,9 @@ async def list_player_counts(
     ]
 
 
-# 单个点最多代表这么久：相邻点间隔更长说明中间服务器空了（空服不采样），不计入地图时长
-MAX_SAMPLE_SPAN = 120
+# 相邻点间隔超过它说明中间服务器空了（空服不采样），断档前的点只算 60 秒；
+# 留出余量兼容早期每 5 分钟一次的采样，与前端 GAP_SECONDS 一致
+MAX_SAMPLE_SPAN = 420
 # 间隔超过这么久就算新一轮，哪怕前后是同一张图
 NEW_ROUND_GAP = 600
 
@@ -194,7 +195,7 @@ NEW_ROUND_GAP = 600
 async def list_map_stats(db: AsyncSession, game_id: int, *, days: int = 7) -> list[ServerMapStat]:
     """某私服最近 days 天各地图的累计时长、人·分钟、平均人数与轮次，按人·分钟降序。
 
-    时长按相邻采样点的时间差累加（单点封顶 MAX_SAMPLE_SPAN 秒），轮次按「地图或模式变化、
+    时长按相邻采样点的时间差累加（超过 MAX_SAMPLE_SPAN 秒视为断档，只算 60 秒），轮次按「地图或模式变化、
     或中断超过 NEW_ROUND_GAP 秒」切段计数。
     """
     rows = await _server_rows(db, game_id, datetime.now(UTC) - timedelta(days=days))
@@ -204,7 +205,7 @@ async def list_map_stats(db: AsyncSession, game_id: int, *, days: int = 7) -> li
     for i, row in enumerate(rows):
         ts = _ts(row)
         next_ts = _ts(rows[i + 1]) if i + 1 < len(rows) else ts + 60
-        span = min(next_ts - ts, MAX_SAMPLE_SPAN)
+        span = next_ts - ts if next_ts - ts <= MAX_SAMPLE_SPAN else 60
         if not row.map_name:
             prev_key = None
             continue

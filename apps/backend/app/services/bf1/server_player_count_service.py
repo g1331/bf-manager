@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+from collections import Counter
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import delete, select
@@ -21,31 +22,35 @@ RETENTION = timedelta(days=7)
 async def record_player_counts(db: AsyncSession, summaries: list[ServerSummary]) -> int:
     """写入本轮人数点并清理过期点，返回写入条数。
 
-    shortcut: 按 servers.game_id 匹配，game_id 只在鉴权识别时回填，服务器重启换 gameId 后
-    要等有人再次访问服管页才会接上；快照若能稳定拿到 serverId / persistedGameId 再改用稳定键。
+    先按 servers.game_id 匹配；对不上时按服名回退（服务器重启会换 gameId，而 game_id 只在
+    鉴权识别时回填），命中后把新 gameId 写回登记表。本轮同名的多个服不参与名称匹配。
+    shortcut: 服主改名后名称回退失效，要等鉴权识别更新名称；快照若能拿到 serverId /
+    persistedGameId 再改用稳定键。
     """
     now = datetime.now(UTC)
     by_gid = {s.game_id: s for s in summaries if s.game_id}
+    name_counts = Counter(s.name for s in summaries if s.name)
+    by_name = {s.name: s for s in summaries if s.name and name_counts[s.name] == 1}
     written = 0
-    if by_gid:
-        rows = await db.execute(
-            select(Server.id, Server.game_id).where(
-                Server.game == "bf1", Server.game_id.in_(by_gid)
+    for server in await db.scalars(select(Server).where(Server.game == "bf1")):
+        s = by_gid.get(server.game_id) if server.game_id else None
+        if s is None and server.name:
+            s = by_name.get(server.name)
+            if s is not None:
+                server.game_id = s.game_id
+        if s is None:
+            continue
+        db.add(
+            Bf1ServerPlayerCount(
+                server_pk=server.id,
+                player_count=s.player_count,
+                queue_count=s.queue_count,
+                spectator_count=s.spectator_count,
+                max_player_count=s.max_player_count,
+                sampled_at=now,
             )
         )
-        for server_pk, game_id in rows:
-            s = by_gid[game_id]
-            db.add(
-                Bf1ServerPlayerCount(
-                    server_pk=server_pk,
-                    player_count=s.player_count,
-                    queue_count=s.queue_count,
-                    spectator_count=s.spectator_count,
-                    max_player_count=s.max_player_count,
-                    sampled_at=now,
-                )
-            )
-            written += 1
+        written += 1
     await db.execute(
         delete(Bf1ServerPlayerCount).where(Bf1ServerPlayerCount.sampled_at < now - RETENTION)
     )

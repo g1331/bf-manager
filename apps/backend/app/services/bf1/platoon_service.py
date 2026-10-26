@@ -1,8 +1,8 @@
 """BF1 战队查询
 
 详情走 EA Gateway：getPlatoon 基本信息、getMembers 成员（一页 100 人就是战队上限）、
-getServersWithPlayers 成员正在玩的服务器。EA 没有按名字搜战队的方法（实测 Platoons.search
-等均为 Method not found），搜索借用 gametools 的战队索引，它要求关键字至少 3 个字符。
+getServersWithPlayers 成员正在玩的服务器。搜索走 findByPartialName：只按战队名模糊匹配（不含简称），
+关键字至少 3 个字符，每次最多 10 条。战队只在 Gateway 上，Blaze 没有 Clubs 组件（实测 0x4002）。
 """
 
 from __future__ import annotations
@@ -10,8 +10,6 @@ from __future__ import annotations
 import re
 from typing import Any
 
-import httpx
-from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.errors import EAApiError, NotFoundError
@@ -40,8 +38,8 @@ ROLE_ORDER = {r: i for i, r in enumerate(["general", "colonel", "lieutenant", "p
 
 DETAIL_TTL = 180
 SEARCH_TTL = 600
-SEARCH_URL = "https://api.gametools.network/bfglobal/platoons/"
 SEARCH_MIN_LEN = 3
+SEARCH_PAGE_SIZE = 10  # EA 上限，超过报「11 > 10」
 
 
 def _member(raw: dict[str, Any]) -> PlatoonMember | None:
@@ -121,7 +119,23 @@ async def get_platoon_detail(db: AsyncSession, guid: str) -> PlatoonDetail:
     return detail
 
 
-async def search_platoons(name: str) -> list[PlatoonSearchItem]:
+def build_search(res: Any) -> list[PlatoonSearchItem]:
+    """findByPartialName 的返回转成搜索结果。纯函数，便于单测。"""
+    raw = res.get("result") if isinstance(res, dict) else None
+    return [
+        PlatoonSearchItem(
+            guid=p["guid"],
+            tag=p.get("tag"),
+            name=p.get("name"),
+            size=p.get("size"),
+            emblem_url=normalize_emblem_url(p.get("emblem")),
+        )
+        for p in raw or []
+        if isinstance(p, dict) and p.get("guid")
+    ]
+
+
+async def search_platoons(db: AsyncSession, name: str) -> list[PlatoonSearchItem]:
     name = name.strip()
     if len(name) < SEARCH_MIN_LEN:
         return []
@@ -129,24 +143,10 @@ async def search_platoons(name: str) -> list[PlatoonSearchItem]:
     key = f"bf1:platoon-search:{name.lower()}"
     if (cached := await cache.get(key)) is not None:
         return [PlatoonSearchItem.model_validate(i) for i in cached]
-    try:
-        async with httpx.AsyncClient(timeout=8.0) as client:
-            resp = await client.get(SEARCH_URL, params={"name": name, "platform": "pc"})
-        resp.raise_for_status()
-        raw = resp.json().get("platoons") or []
-    except (httpx.HTTPError, ValueError, AttributeError) as exc:
-        logger.warning(f"gametools 战队搜索失败 {name!r}: {exc}")
-        raise EAApiError(code="PLATOON_SEARCH_FAILED", message="战队搜索暂时不可用") from exc
-    items = [
-        PlatoonSearchItem(
-            guid=p["id"],
-            tag=p.get("tag"),
-            name=p.get("name"),
-            size=p.get("currentSize"),
-            emblem_url=normalize_emblem_url(p.get("emblem")),
-        )
-        for p in raw
-        if isinstance(p, dict) and p.get("id")
-    ]
+    async with get_bf1_client(db) as client:
+        res = await client.findByPartialName(name, page_size=SEARCH_PAGE_SIZE)
+    if isinstance(res, str):
+        raise EAApiError(code="EA_PLATOON_SEARCH_FAILED", message=f"EA Gateway 查询失败: {res}")
+    items = build_search(res)
     await cache.set(key, [i.model_dump() for i in items], ttl=SEARCH_TTL)
     return items

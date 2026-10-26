@@ -2173,6 +2173,43 @@ class Platoons(_BF1GatewayBase):
             }
         )
 
+    async def findByPartialName(
+        self, partial_name: str, page_index: int = 0, page_size: int = 10
+    ) -> dict:
+        """
+        按名字模糊搜索战队（不匹配简称，不区分大小写）
+        :param partial_name: 至少 3 个字符，否则 error -35103「戰隊名稱太短」
+        :param page_index: 实测是按条数的偏移量，不是页码：传 1 只往后挪 1 条
+        :param page_size: 最大 10
+        :return:
+        eg:
+        {
+            "result": [
+                {
+                    "guid": "128f4998-63f2-43a4-a8b6-958e8f4ab6c4",
+                    "name": "Grumpy Old Warriors",
+                    "size": 2,
+                    "tag": "GOW",
+                    "emblem": "http://eaassets-a.akamaihd.net/battlelog/prod/emblem/693/916/[SIZE]/2955057091719114533.[FORMAT]?v=1398139630",
+                    "verified": false,
+                    "displayMembers": []
+                }
+            ]
+        }
+        """
+        return await self.api_call(
+            {
+                "jsonrpc": "2.0",
+                "method": "Platoons.findByPartialName",
+                "params": {
+                    "partialName": partial_name,
+                    "pageIndex": page_index,
+                    "pageSize": page_size,
+                },
+                "id": await get_a_uuid(),
+            }
+        )
+
     async def getServersWithPlayers(self, platoon_guid: str) -> dict:
         """
         获取战队正在游玩的服务器

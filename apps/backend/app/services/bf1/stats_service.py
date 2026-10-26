@@ -214,12 +214,13 @@ def _num(values: dict[str, float], stats: dict[str, str], field: str) -> float:
 def _build_weapons(
     values: dict[str, float], skin_candidates: dict[str, list[str]]
 ) -> list[WeaponStat]:
-    """按武器目录把 Blaze 统计组装成武器列表，用过的才列，顺序沿用 Gateway；按 GUID 关联已装备皮肤"""
+    """按武器目录把 Blaze 统计组装成武器列表，用过的才列（无统计的配备总列），顺序沿用 Gateway；按 GUID 关联已装备皮肤"""
     weapons: list[WeaponStat] = []
     for entry in sorted(catalog("weapons").values(), key=lambda e: e["order"]):
         st = entry["stats"]
         kills, seconds = _num(values, st, "kills"), _num(values, st, "seconds")
-        if not kills and not seconds:
+        # 没有统计的配备（绷带包等）总是列出，与 Gateway 一致
+        if st and not kills and not seconds:
             continue
         shots, hits = _num(values, st, "shots"), _num(values, st, "hits")
         guid = entry.get("guid")

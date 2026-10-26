@@ -12,6 +12,7 @@ import { TopTabs } from "./TopTabs";
 import { UserMenu } from "./UserMenu";
 import { PageTransition } from "./PageTransition";
 import { AmbientBackground } from "./AmbientBackground";
+import { useTrackNavigation } from "@/hooks/useNavigation";
 
 /**
  * 应用外壳，复刻经典战地大厅的两级导航布局：
@@ -27,6 +28,7 @@ import { AmbientBackground } from "./AmbientBackground";
  */
 export function SidebarLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  useTrackNavigation();
 
   return (
     <div className="dark bg-background text-foreground relative min-h-screen">

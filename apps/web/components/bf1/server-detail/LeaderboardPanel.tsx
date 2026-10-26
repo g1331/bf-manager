@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
 import { SectionHeading } from "@/components/layout/SectionHeading";
 import { bf1Api } from "@/lib/api/bf1";
 import { cn } from "@/lib/utils";
+import { usePageState } from "@/hooks/useNavigation";
 import { useNowSeconds } from "@/components/bf1/server-detail/history";
 
 const WINDOWS = [
@@ -33,7 +33,7 @@ function fmtAgo(ts: number, now: number): string {
  * 服务器重启前后的各局合并计算。名单只保留 7 天，也只记录私服。
  */
 export function LeaderboardPanel({ gameId, game }: { gameId: number; game: string }) {
-  const [days, setDays] = useState<number>(7);
+  const [days, setDays] = usePageState<number>("server-leaderboard-days", 7);
   const board = useQuery({
     queryKey: ["bf1-server-leaderboard", gameId, days],
     queryFn: () => bf1Api.getServerLeaderboard(gameId, days),

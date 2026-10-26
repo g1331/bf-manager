@@ -34,6 +34,7 @@ import {
 } from "@/lib/api/bf1";
 import { pickBackgroundUrl } from "@/lib/bf1/background";
 import { pushRecentPlayer } from "@/lib/bf1/recent-players";
+import { useBack } from "@/hooks/useNavigation";
 import { formatDuration } from "@/lib/utils";
 
 const TAB_KEYS = ["overview", "weapons", "vehicles", "recent"] as const;
@@ -99,6 +100,8 @@ function PlayerDetailView({
   stats: PlayerStatsDetail;
 }) {
   const { summary, soldiers } = stats;
+  // 回到真正来的那一页（战队、服务器排行、带搜索词的战绩查询等），直接打开时退到战绩查询
+  const back = useBack(`/${game}/players`);
 
   const playerQ = useQuery({
     queryKey: ["bf1-player", personaId],
@@ -164,13 +167,14 @@ function PlayerDetailView({
       <DetailBackground url={pickBackgroundUrl(personaId, null)} grayscale={banned} />
 
       <div className="relative z-10 max-w-[1600px] px-6 py-5 sm:px-10 sm:py-8">
-        <Link
-          href={`/${game}/players`}
+        <button
+          type="button"
+          onClick={back}
           className="mb-4 inline-flex items-center gap-1.5 text-sm text-white/55 transition-colors hover:text-white"
         >
           <ArrowLeft className="size-4" />
-          返回战绩查询
-        </Link>
+          返回
+        </button>
 
         <PlayerHeroBanner
           personaId={personaId}

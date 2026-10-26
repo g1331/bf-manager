@@ -83,9 +83,11 @@ class RosterPlayer(BaseModel):
 
 
 class ServerRosterSnapshot(ServerRosterPoint):
-    """某个采样时刻的完整名单"""
+    """某个采样时刻的完整名单；阵营由当时的地图决定（Team1 对应 team1），未知地图为空"""
 
     roster: list[RosterPlayer] = []
+    team1_faction: str | None = None
+    team2_faction: str | None = None
 
 
 class ServerMapStat(BaseModel):

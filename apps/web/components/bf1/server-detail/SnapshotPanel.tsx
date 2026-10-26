@@ -13,6 +13,7 @@ import {
   type RosterSlot,
   type ServerRosterPoint,
 } from "@/lib/api/bf1";
+import { FACTION_SLUG } from "@/lib/bf1/factions";
 import { cn } from "@/lib/utils";
 
 type MapInfo = (mapName: string, mode: string | null) => { name: string; mode: string | null };
@@ -295,9 +296,15 @@ function SnapshotRoster({
       ) : (
         <>
           <div className="mt-4 grid grid-cols-1 gap-x-8 gap-y-6 lg:grid-cols-2">
-            <RosterTable title="队伍 1" players={groups.team1} game={game} />
             <RosterTable
-              title="队伍 2"
+              title={snap.data?.team1_faction ?? "队伍 1"}
+              faction={snap.data?.team1_faction}
+              players={groups.team1}
+              game={game}
+            />
+            <RosterTable
+              title={snap.data?.team2_faction ?? "队伍 2"}
+              faction={snap.data?.team2_faction}
               players={groups.team2}
               game={game}
               className="lg:border-l lg:border-white/15 lg:pl-8"
@@ -330,19 +337,30 @@ function Stat({ label, value }: { label: string; value: number }) {
 
 function RosterTable({
   title,
+  faction,
   players,
   game,
   className,
 }: {
   title: string;
+  faction?: string | null;
   players: RosterPlayer[];
   game: string;
   className?: string;
 }) {
   const present = players.filter((p) => p.change !== "left").length;
+  const slug = faction ? FACTION_SLUG[faction] : undefined;
   return (
     <div className={cn("min-w-0", className)}>
       <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-white">
+        {slug ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={`/factions/${slug}.png`}
+            alt={title}
+            className="h-7 w-7 shrink-0 object-contain drop-shadow"
+          />
+        ) : null}
         {title}
         <span className="rounded-sm bg-white/10 px-1.5 text-[11px] font-normal text-white/70">
           {present} 人

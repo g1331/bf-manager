@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 from app.core.security import create_access_token
-from app.services.metrics_service import classify_path, user_id_from_token
+from app.services.metrics_service import classify_path, guest_key, user_id_from_token
 
 
 def test_classify_path_groups_by_resource() -> None:
@@ -39,3 +39,14 @@ def test_user_id_from_token_invalid_or_missing() -> None:
     assert user_id_from_token(None) is None
     assert user_id_from_token("") is None
     assert user_id_from_token("not-a-jwt") is None
+
+
+def test_guest_key_only_counts_public_ips() -> None:
+    assert guest_key("182.148.6.213") == "182.148.6.213"
+    assert guest_key("2001:4860:4860::8888") == "2001:4860:4860::8888"
+    # 回环、内网是本机调试或服务间调用，缺失与非法值同样不计
+    assert guest_key("127.0.0.1") is None
+    assert guest_key("172.18.0.3") is None
+    assert guest_key("192.168.1.10") is None
+    assert guest_key(None) is None
+    assert guest_key("testclient") is None

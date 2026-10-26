@@ -11,11 +11,11 @@ import { SectionHeading } from "@/components/layout/SectionHeading";
 import { useSession } from "@/hooks/useSession";
 import { eaAccountsApi, type EAAccountItem } from "@/lib/api/ea-accounts";
 import { membershipsApi } from "@/lib/api/memberships";
-import { adminApi, type AdminMetrics } from "@/lib/api/admin";
+import { adminApi, type AdminMetrics, type DailyCount } from "@/lib/api/admin";
 
 /**
  * 管理员运维概览：平台整体运行情况入口。
- * 汇总 EA 账号池与服管授权概况，并接入访问量、活跃用户与接口调用分布等运维埋点。
+ * 汇总 EA 账号池与服管授权概况，并接入访问量、活跃用户、游客与接口调用分布等运维埋点。
  */
 export default function AdminOverviewPage() {
   const router = useRouter();
@@ -82,7 +82,7 @@ export default function AdminOverviewPage() {
         </StatCard>
         <StatCard title="今日访问" value={m?.requests_today ?? 0} suffix="次">
           <span className="text-muted-foreground text-xs">
-            今日活跃用户 {m?.active_users_today ?? 0} 人
+            今日活跃用户 {m?.active_users_today ?? 0} 人 · 游客 {m?.guests_today ?? 0} 人
           </span>
         </StatCard>
       </section>
@@ -96,11 +96,13 @@ export default function AdminOverviewPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
               <MiniStat label="累计请求" value={m.total_requests} />
               <MiniStat label="近 7 日请求" value={m.requests_7d} />
               <MiniStat label="今日活跃" value={m.active_users_today} suffix="人" />
               <MiniStat label="近 7 日活跃" value={m.active_users_7d} suffix="人" />
+              <MiniStat label="今日游客" value={m.guests_today} suffix="人" />
+              <MiniStat label="近 7 日游客" value={m.guests_7d} suffix="人" />
             </div>
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -164,11 +166,7 @@ function MiniStat({ label, value, suffix }: { label: string; value: number; suff
   );
 }
 
-function DailyTrend({
-  daily,
-}: {
-  daily: { date: string; requests: number; active_users: number }[];
-}) {
+function DailyTrend({ daily }: { daily: DailyCount[] }) {
   const max = Math.max(1, ...daily.map((d) => d.requests));
   return (
     <div className="border-border bg-card rounded-sm border p-5">
@@ -186,7 +184,7 @@ function DailyTrend({
                 <div
                   className="bg-foreground/25 hover:bg-foreground/40 w-full rounded-sm transition-colors"
                   style={{ height: `${Math.max(2, (d.requests / max) * 100)}%` }}
-                  title={`${d.date} · ${d.requests} 次 · 活跃 ${d.active_users} 人`}
+                  title={`${d.date} · ${d.requests} 次 · 活跃 ${d.active_users} 人 · 游客 ${d.guests} 人`}
                 />
               </div>
               <span className="text-muted-foreground text-[10px] tabular-nums">

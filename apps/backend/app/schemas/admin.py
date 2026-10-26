@@ -13,11 +13,12 @@ class EndpointCount(BaseModel):
 
 
 class DailyCount(BaseModel):
-    """单日请求量与去重活跃用户数。date 为 ``YYYY-MM-DD``。"""
+    """单日请求量、去重活跃用户数与去重游客数（未登录，按 IP）。date 为 ``YYYY-MM-DD``。"""
 
     date: str
     requests: int = 0
     active_users: int = 0
+    guests: int = 0
 
 
 class AdminMetrics(BaseModel):
@@ -29,6 +30,8 @@ class AdminMetrics(BaseModel):
     requests_7d: int = 0
     active_users_today: int = 0
     active_users_7d: int = 0
+    guests_today: int = 0
+    guests_7d: int = 0
     top_endpoints: list[EndpointCount] = Field(default_factory=list)
     # 最近 7 天，按日期升序排列，便于前端从左到右画趋势
     daily: list[DailyCount] = Field(default_factory=list)

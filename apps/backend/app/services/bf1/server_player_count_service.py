@@ -28,6 +28,8 @@ from app.models.bf1.server_player_count import Bf1ServerPlayerCount
 from app.models.server import Server
 from app.schemas.bf1.server import (
     RosterPlayer,
+    ServerLeaderboard,
+    ServerLeaderboardEntry,
     ServerMapStat,
     ServerPlayerCountPoint,
     ServerRosterPage,
@@ -35,7 +37,7 @@ from app.schemas.bf1.server import (
     ServerRosterSnapshot,
     ServerSummary,
 )
-from app.services.bf1.server_roster_service import Rosters, read_roster
+from app.services.bf1.server_roster_service import Rosters, read_names, read_playtime, read_roster
 from app.services.bf1.server_roster_service import tracker as roster_tracker
 from app.services.bf1.server_service import BF1ServerService
 
@@ -269,6 +271,39 @@ async def get_roster_snapshot(db: AsyncSession, game_id: int, ts: int) -> Server
         roster=[
             RosterPlayer(persona_id=p["pid"], name=p["name"], slot=p["slot"], change=p["change"])
             for p in roster
+        ],
+    )
+
+
+async def get_leaderboard(
+    db: AsyncSession, game_id: int, *, days: int = 7, limit: int = 50
+) -> ServerLeaderboard:
+    """某私服近 days 天按在队时长排序的前 limit 名。服重启过也按 serverId / 服名把各局合起来算。"""
+    now = datetime.now(UTC)
+    since = now - timedelta(days=days)
+    rows = await _server_rows(db, game_id, since)
+    game_ids = {r.game_id for r in rows} | {game_id}
+    tallies = await read_playtime(db, game_ids, int(since.timestamp()), int(now.timestamp()))
+    ranked = sorted(
+        ((pid, t) for pid, t in tallies.items() if t["seconds"] > 0),
+        key=lambda item: (-item[1]["seconds"], item[0]),
+    )
+    top = ranked[:limit]
+    names = await read_names(db, [pid for pid, _ in top]) if top else {}
+    return ServerLeaderboard(
+        days=days,
+        total_players=len(ranked),
+        items=[
+            ServerLeaderboardEntry(
+                persona_id=pid,
+                name=names.get(pid),
+                seconds=t["seconds"],
+                days=len(t["days"]),
+                joins=t["joins"],
+                last_seen=t["last_seen"],
+                online=t["online"],
+            )
+            for pid, t in top
         ],
     )
 

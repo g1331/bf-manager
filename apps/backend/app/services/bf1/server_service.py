@@ -267,6 +267,7 @@ def _to_extras(raw: dict[str, Any]) -> ServerExtras:
         except (TypeError, ValueError):
             size = None
         platoon = PlatoonBrief(
+            guid=platoon_info.get("guid"),
             tag=platoon_info.get("tag"),
             name=platoon_info.get("name"),
             size=size,

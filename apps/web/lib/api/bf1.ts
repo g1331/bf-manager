@@ -77,6 +77,33 @@ export interface PlayerPlatoon {
   verified: boolean;
 }
 
+export type PlatoonRole = "general" | "colonel" | "lieutenant" | "private";
+
+/** 战队成员；role 为 null 表示未知职位（正在玩的服务器里的成员也不带职位） */
+export interface PlatoonMember {
+  persona_id: number;
+  name: string;
+  role: PlatoonRole | null;
+  avatar_url: string | null;
+}
+
+/** 战队详情：成员按职位从高到低排好，servers 为成员正在玩的服务器 */
+export interface PlatoonDetail extends PlayerPlatoon {
+  created_at: number | null;
+  free_join: boolean;
+  can_apply: boolean;
+  members: PlatoonMember[];
+  servers: { server: ServerSummary; members: PlatoonMember[] }[];
+}
+
+export interface PlatoonSearchItem {
+  guid: string;
+  tag: string | null;
+  name: string | null;
+  size: number | null;
+  emblem_url: string | null;
+}
+
 /** 单一封禁来源三态：clean 无记录 / hit 命中 / unknown 无法判定 */
 export type BanSourceState = "clean" | "hit" | "unknown";
 
@@ -223,6 +250,25 @@ export interface ServerRosterSnapshot extends ServerRosterPoint {
   roster: RosterPlayer[];
 }
 
+/** 排行榜一行：seconds 为在两队里的时长（不含排队、观战），days 为活跃天数（北京时间），
+ * joins 为进服次数，last_seen 为最后在服的 unix 秒，online 表示统计截止时仍在服 */
+export interface ServerLeaderboardEntry {
+  persona_id: number;
+  name: string | null;
+  seconds: number;
+  days: number;
+  joins: number;
+  last_seen: number;
+  online: boolean;
+}
+
+/** 私服近 days 天按在队时长排序的玩家；total_players 为窗口内上过场的总人数 */
+export interface ServerLeaderboard {
+  days: number;
+  total_players: number;
+  items: ServerLeaderboardEntry[];
+}
+
 /** 私服近 N 天在某张地图（地图 + 模式）上的累计情况，last_seen 为 unix 秒 */
 export interface ServerMapStat {
   map_name: string;
@@ -364,6 +410,7 @@ export interface ServerLifecycle {
 }
 
 export interface PlatoonBrief {
+  guid: string | null;
   tag: string | null;
   name: string | null;
   size: number | null;
@@ -522,6 +569,12 @@ export const bf1Api = {
   getPlatoon: (personaId: number) =>
     api.get<PlayerPlatoon | null>(`/bf1/stats/${personaId}/platoon`),
 
+  /** 关键字少于 3 个字符时后端返回空列表 */
+  searchPlatoons: (name: string) =>
+    api.get<PlatoonSearchItem[]>(`/bf1/platoons?name=${encodeURIComponent(name)}`),
+  getPlatoonDetail: (guid: string) =>
+    api.get<PlatoonDetail>(`/bf1/platoons/${encodeURIComponent(guid)}`),
+
   getBan: (personaId: number, name?: string) =>
     api.get<BanStatus>(
       `/bf1/stats/${personaId}/ban${name ? `?name=${encodeURIComponent(name)}` : ""}`,
@@ -546,6 +599,8 @@ export const bf1Api = {
     api.get<ServerPlayerCountPoint[]>(`/bf1/servers/${gameId}/player-counts`),
   getServerMapStats: (gameId: number, days = 7) =>
     api.get<ServerMapStat[]>(`/bf1/servers/${gameId}/map-stats?days=${days}`),
+  getServerLeaderboard: (gameId: number, days = 7) =>
+    api.get<ServerLeaderboard>(`/bf1/servers/${gameId}/leaderboard?days=${days}`),
   getServerSnapshots: (gameId: number, before?: number | null) =>
     api.get<ServerRosterPage>(
       `/bf1/servers/${gameId}/snapshots${before ? `?before=${before}` : ""}`,

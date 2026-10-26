@@ -181,6 +181,7 @@ function PlayerDetailView({
           onlineServer={onlineQ.data?.server_name ?? null}
           ban={ban}
           platoon={platoonQ.data ?? null}
+          game={game}
         />
 
         <SectionNav tabs={tabs} tab={tab} onTab={setTab} />

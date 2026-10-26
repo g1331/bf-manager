@@ -88,6 +88,27 @@ class ServerRosterSnapshot(ServerRosterPoint):
     roster: list[RosterPlayer] = []
 
 
+class ServerLeaderboardEntry(BaseModel):
+    """排行榜一行。seconds 为在两队里的时长（不含排队、观战），days 为有在队时长的北京时间天数，
+    joins 为进服次数，last_seen 为最后在服的 unix 秒，online 表示统计截止时仍在服"""
+
+    persona_id: int
+    name: str | None = None
+    seconds: int
+    days: int
+    joins: int
+    last_seen: int
+    online: bool = False
+
+
+class ServerLeaderboard(BaseModel):
+    """某私服近 days 天按在队时长排序的玩家，total_players 为窗口内有在队时长的总人数"""
+
+    days: int
+    total_players: int
+    items: list[ServerLeaderboardEntry] = []
+
+
 class ServerMapStat(BaseModel):
     """某张地图（按地图 + 模式区分）在统计窗口内的累计情况，last_seen 为 unix 秒"""
 
@@ -282,6 +303,7 @@ class ServerLifecycle(BaseModel):
 class PlatoonBrief(BaseModel):
     """绑定到服务器的战队简介。emblem_url 占位符已展开为可加载 URL"""
 
+    guid: str | None = None
     tag: str | None = None
     name: str | None = None
     size: int | None = None

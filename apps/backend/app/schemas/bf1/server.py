@@ -74,7 +74,7 @@ class ServerRosterPage(BaseModel):
 
 class RosterPlayer(BaseModel):
     """快照名单里的一个人。slot 为 team1 / team2 / queue / spectator，离开的人是离开前的位置；
-    change 为这一轮的变化：joined 进入、left 退出、seated 排队后进场、switched 换队，没变为空"""
+    change 为这一轮的变化：joined 进入、left 退出、seated 排队或观战后进场、switched 换队，没变为空"""
 
     persona_id: int
     name: str | None = None

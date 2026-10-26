@@ -143,6 +143,22 @@ async def test_rounds_record_changes_and_read_back(
         await spc.get_roster_snapshot(test_session, 1, int((t2 + timedelta(minutes=3)).timestamp()))
 
 
+async def test_spectator_entering_team_is_seated(
+    test_session, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(spc, "datetime", _Clock)
+    monkeypatch.setattr(spc, "roster_tracker", RosterTracker())
+    t0 = datetime.now(UTC) - timedelta(hours=1)
+    t1 = t0 + timedelta(minutes=1)
+    a, b = 301, 302
+    await _round(test_session, t0, {a: SPECTATOR, b: TEAM1})
+    await _round(test_session, t1, {a: TEAM2, b: SPECTATOR})
+
+    snap = await spc.get_roster_snapshot(test_session, 1, int(t1.timestamp()))
+    # 观战上场算进场；在队的人去观战仍是换队
+    assert _view(snap) == {a: ("team2", "seated"), b: ("spectator", "switched")}
+
+
 async def test_roster_page_paginates(test_session, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(spc, "datetime", _Clock)
     monkeypatch.setattr(spc, "roster_tracker", RosterTracker())

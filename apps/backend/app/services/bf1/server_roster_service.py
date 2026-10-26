@@ -274,8 +274,8 @@ async def read_roster(db: AsyncSession, game_id: int, ts: int) -> list[dict[str,
         if after != LEFT:
             if before == LEFT:
                 change = "joined"
-            elif before == QUEUE and after in (TEAM1, TEAM2):
-                change = "seated"  # 排队的人进场，不是换队
+            elif before in (QUEUE, SPECTATOR) and after in (TEAM1, TEAM2):
+                change = "seated"  # 排队或观战的人进场，不是换队
             else:
                 change = "switched" if before != after else None
             out.append({"pid": pid, "slot": SLOT_NAMES[after], "change": change})

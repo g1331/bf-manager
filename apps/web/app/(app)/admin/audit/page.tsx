@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { usePageState } from "@/hooks/useNavigation";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -39,12 +40,12 @@ export default function AdminAuditPage() {
   const session = useSession();
   const isAdmin = session.data?.role === "admin";
 
-  const [filters, setFilters] = useState<{
+  const [filters, setFilters] = usePageState<{
     game?: string;
     serverId?: string;
     action?: string;
-  }>({});
-  const [page, setPage] = useState(1);
+  }>("admin-audit-filters", {});
+  const [page, setPage] = usePageState("admin-audit-page", 1);
 
   useEffect(() => {
     if (session.isLoading) return;

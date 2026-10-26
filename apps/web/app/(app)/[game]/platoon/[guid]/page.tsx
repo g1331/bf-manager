@@ -13,6 +13,7 @@ import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
 import { PlayerAvatar } from "@/components/common/PlayerAvatar";
 import { SectionHeading } from "@/components/layout/SectionHeading";
 import { ApiException } from "@/lib/api-client";
+import { useBack } from "@/hooks/useNavigation";
 import { bf1Api, type PlatoonDetail, type PlatoonMember, type PlatoonRole } from "@/lib/api/bf1";
 
 const ROLE_LABEL: Record<PlatoonRole, string> = {
@@ -24,6 +25,8 @@ const ROLE_LABEL: Record<PlatoonRole, string> = {
 
 export default function PlatoonDetailPage() {
   const { game, guid } = useParams<{ game: string; guid: string }>();
+  // 回到真正来的那一页（如带搜索词的战队搜索、玩家页），直接打开时退到战队搜索
+  const back = useBack(`/${game}/platoons`);
   const detail = useQuery({
     queryKey: ["bf1-platoon", guid],
     queryFn: () => bf1Api.getPlatoonDetail(guid),
@@ -33,13 +36,14 @@ export default function PlatoonDetailPage() {
 
   return (
     <main className="mx-auto max-w-6xl space-y-6 px-4 py-6 text-white sm:px-6 sm:py-10">
-      <Link
-        href={`/${game}/platoons`}
+      <button
+        type="button"
+        onClick={back}
         className="inline-flex items-center gap-1.5 text-sm text-white/55 transition-colors hover:text-white"
       >
         <ArrowLeft className="size-4" />
-        战队搜索
-      </Link>
+        返回
+      </button>
 
       {detail.isLoading ? (
         <div className="space-y-6">

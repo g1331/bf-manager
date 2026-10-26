@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePageState } from "@/hooks/useNavigation";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -34,7 +35,7 @@ export default function MePage() {
   const session = useSession();
   const qc = useQueryClient();
   const [loginFlowOpen, setLoginFlowOpen] = useState(false);
-  const [logPage, setLogPage] = useState(1);
+  const [logPage, setLogPage] = usePageState("me-log-page", 1);
 
   useEffect(() => {
     // 会话请求自身失败（5xx、网络中断等非 401 错误）时不当作未登录处理，避免把仍持有

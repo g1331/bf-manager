@@ -11,7 +11,8 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useBack } from "@/hooks/useNavigation";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRightLeft } from "lucide-react";
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
@@ -89,7 +90,8 @@ type TabKey = (typeof TAB_KEYS)[number];
 
 export default function ServerDetailPage() {
   const { id, game } = useParams<{ id: string; game: string }>();
-  const router = useRouter();
+  // 回到真正来的那一页（保留列表筛选），直接打开时退到服务器列表
+  const back = useBack(`/${game}/servers`);
   const gameId = Number(id);
 
   const detail = useQuery({
@@ -105,14 +107,7 @@ export default function ServerDetailPage() {
     return <DetailNote text="未找到该服务器，请返回列表重试" />;
   }
 
-  return (
-    <ServerDetailView
-      gameId={gameId}
-      game={game}
-      detail={detail.data}
-      onBack={() => router.push(`/${game}/servers`)}
-    />
-  );
+  return <ServerDetailView gameId={gameId} game={game} detail={detail.data} onBack={back} />;
 }
 
 function ServerDetailView({
@@ -222,7 +217,7 @@ function ServerDetailView({
           className="mb-4 inline-flex items-center gap-1.5 text-sm text-white/55 transition-colors hover:text-white"
         >
           <ArrowLeft className="size-4" />
-          返回服务器列表
+          返回
         </button>
 
         <ServerHeroBanner

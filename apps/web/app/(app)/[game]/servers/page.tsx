@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { usePageState } from "@/hooks/useNavigation";
 import { useParams, useRouter } from "next/navigation";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Check, ChevronDown, Lock, MapPin, RotateCw, Users } from "lucide-react";
@@ -81,8 +82,12 @@ function useDebouncedValue<T>(value: T, delayMs: number): T {
 export default function ServerListPage() {
   const params = useParams<{ game: string }>();
   const router = useRouter();
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
+  // 进详情再返回时保留筛选与已展开的条数
+  const [visibleCount, setVisibleCount] = usePageState(`${params.game}-servers-count`, PAGE_SIZE);
+  const [filters, setFilters] = usePageState<FilterState>(
+    `${params.game}-servers-filters`,
+    DEFAULT_FILTERS,
+  );
 
   // 地图 / 模式 / 区域 / 规模四个维度作为查询参数交后端筛选（默认在全服快照上筛，含空服时走
   // EA 检索），而非仅在已加载的前若干条结果内过滤，避免冷门条件被结果上限截断。

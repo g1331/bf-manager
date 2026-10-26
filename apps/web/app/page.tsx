@@ -2,8 +2,15 @@
 
 import { useRef } from "react";
 import Link from "next/link";
-import { motion, useScroll, useTransform, useInView } from "framer-motion";
-import { ChevronDown, ChevronRight, Crosshair, ScrollText, Server, Shield } from "lucide-react";
+import {
+  MotionConfig,
+  motion,
+  useInView,
+  useScroll,
+  useTransform,
+  type MotionValue,
+} from "framer-motion";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { GAMES } from "@/lib/game-registry";
 import { cn } from "@/lib/utils";
 import { HeroBackground } from "@/components/landing/HeroBackground";
@@ -19,28 +26,47 @@ const HERO_IMAGES = [
   "/bf2042/backgrounds/general/general-2.jpg", // BF2042 火海中冲锋
 ];
 
-const FEATURES = [
+// 宣传片分镜：每个能力一个整屏镜头，滚动推进；image 的主体在画面另一侧，文字压在留白处
+const CHAPTERS = [
   {
-    icon: Crosshair,
+    no: "01",
+    en: "Player Intel",
     title: "战绩查询",
+    line: "每一发子弹，都会留下记录。",
     description: "深度战绩数据分析，武器、载具、地图统计全覆盖",
+    image: "/bf1/backgrounds/general/general-7.jpg", // 奥斯曼步枪兵，主体在右
+    align: "left",
   },
   {
-    icon: Server,
+    no: "02",
+    en: "Server Command",
     title: "服务器管理",
+    line: "整片战场，尽在掌握。",
     description: "实时玩家列表，踢人、封禁、换图一站式操作",
+    image: "/bf1/backgrounds/general/general-2.jpg", // 黄昏空战，主体在右
+    align: "left",
   },
   {
-    icon: ScrollText,
+    no: "03",
+    en: "Audit Trail",
     title: "操作审计",
+    line: "每一道命令，有据可查。",
     description: "完整操作日志记录，每一次管理行为有据可查",
+    image: "/bf1/backgrounds/general/general-1.jpg", // 德军军官，主体在左
+    align: "right",
   },
   {
-    icon: Shield,
+    no: "04",
+    en: "Chain of Command",
     title: "权限管控",
+    line: "授权，精确到每一台服务器。",
     description: "精细化服管授权体系，按服务器分配管理权限",
+    image: "/bf1/backgrounds/general/general-4.jpg", // 官方主视觉，主体居中偏左
+    align: "right",
   },
-];
+] as const;
+
+const FINALE_IMAGE = "/bf1/backgrounds/general/general-8.jpg";
 
 // 应用版本号：生产镜像构建时由 CI 注入（NEXT_PUBLIC_APP_VERSION，源自 git tag）；
 // 本地 next dev 无注入时回落 "dev"。展示值直接取注入原文（tag 构建为 vX.Y.Z，main 构建为 main）。
@@ -48,21 +74,52 @@ const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || "dev";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-black">
-      <HeroSection />
-      <FeaturesSection />
-      <GamesSection />
-      <footer className="border-t border-white/10 bg-[#0d0a04] px-4 py-8 text-center">
-        <p className="inline-action text-xs text-white/30">
-          BF-Manager · Battlefield 系列服务器管理平台 · MIT License
-          <span className="ml-2 font-mono text-white/20">{APP_VERSION}</span>
-        </p>
-      </footer>
+    // reducedMotion="user"：系统开启「减少动态效果」时 framer 跳过位移/缩放，只保留淡入淡出
+    <MotionConfig reducedMotion="user">
+      <div className="relative min-h-screen bg-black">
+        <Timecode />
+        <HeroSection />
+        {CHAPTERS.map((c) => (
+          <ChapterScene key={c.no} chapter={c} />
+        ))}
+        <GamesSection />
+        <FinaleSection />
+        {/* 胶片颗粒 + 暗角，覆盖整页 */}
+        <div aria-hidden className="pointer-events-none fixed inset-0 z-40 overflow-hidden">
+          <div className="film-grain" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(0,0,0,0.55)_100%)]" />
+        </div>
+      </div>
+    </MotionConfig>
+  );
+}
+
+/* ---------- 时间码：整页滚动进度映射成一支 2 分 30 秒的片子 ---------- */
+
+const RUNTIME_SECONDS = 150;
+const FPS = 24;
+
+function Timecode() {
+  const { scrollYProgress } = useScroll();
+  const text = useTransform(scrollYProgress, (p) => {
+    const frames = Math.round(p * RUNTIME_SECONDS * FPS);
+    const s = Math.floor(frames / FPS);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `00:${pad(Math.floor(s / 60))}:${pad(s % 60)}:${pad(frames % FPS)}`;
+  });
+
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none fixed bottom-5 left-6 z-30 hidden items-center gap-2 font-mono text-[11px] tracking-widest text-white/40 sm:flex lg:left-16"
+    >
+      <span className="size-1.5 animate-pulse rounded-full bg-red-500/80" />
+      <motion.span>{text}</motion.span>
     </div>
   );
 }
 
-/* ---------- Hero ---------- */
+/* ---------- 开场：快门拉开 → 片名卡 ---------- */
 
 function HeroSection() {
   const ref = useRef<HTMLElement>(null);
@@ -73,20 +130,38 @@ function HeroSection() {
   const bgY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
   const contentOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
   const contentY = useTransform(scrollYProgress, [0, 0.5], [0, -60]);
+  // 遮幅黑边：开场 2.39:1 宽银幕感，往下滚逐渐收起
+  const barH = useTransform(scrollYProgress, [0, 0.6], ["9vh", "0vh"]);
 
   return (
     <section ref={ref} className="relative h-screen overflow-hidden">
-      {/* Parallax background — 视频背景（已配置时）/ 多代战地图 Ken Burns 轮播 */}
       <motion.div style={{ y: bgY }} className="absolute inset-0 scale-110">
         <HeroBackground images={HERO_IMAGES} />
       </motion.div>
 
-      {/* Gradient overlays — 底部加重、左侧加重，托住左下角文字组 */}
       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/20" />
       <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent" />
 
-      {/* Top nav */}
-      <nav className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-6 py-6 sm:px-10 lg:px-16">
+      <motion.div style={{ height: barH }} className="absolute inset-x-0 top-0 z-10 bg-black" />
+      <motion.div style={{ height: barH }} className="absolute inset-x-0 bottom-0 z-10 bg-black" />
+
+      {/* 快门：上下两片黑幕从中线拉开 */}
+      <motion.div
+        aria-hidden
+        initial={{ scaleY: 1 }}
+        animate={{ scaleY: 0 }}
+        transition={{ duration: 1.3, delay: 0.25, ease: [0.76, 0, 0.24, 1] }}
+        className="absolute inset-x-0 top-0 z-20 h-1/2 origin-top bg-black"
+      />
+      <motion.div
+        aria-hidden
+        initial={{ scaleY: 1 }}
+        animate={{ scaleY: 0 }}
+        transition={{ duration: 1.3, delay: 0.25, ease: [0.76, 0, 0.24, 1] }}
+        className="absolute inset-x-0 bottom-0 z-20 h-1/2 origin-bottom bg-black"
+      />
+
+      <nav className="absolute inset-x-0 top-0 z-30 flex items-center justify-between px-6 py-6 sm:px-10 lg:px-16">
         <span className="font-display inline-action text-base font-semibold tracking-[0.2em] text-white uppercase">
           BF-Manager
         </span>
@@ -98,29 +173,29 @@ function HeroSection() {
         </Link>
       </nav>
 
-      {/* Hero content — 左下角锚定，电影海报式排版 */}
       <motion.div
         style={{ opacity: contentOpacity, y: contentY }}
-        className="relative flex h-full flex-col justify-end px-6 pb-20 sm:px-10 sm:pb-24 lg:px-16 lg:pb-28"
+        className="relative z-10 flex h-full flex-col justify-end px-6 pb-[16vh] sm:px-10 lg:px-16"
       >
-        <div className="max-w-3xl">
+        <div className="max-w-4xl">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.7, delay: 0.2 }}
-            className="mb-4 flex items-center gap-3"
+            transition={{ duration: 0.8, delay: 1.2 }}
+            className="mb-5 flex items-center gap-3"
           >
             <span className="h-[3px] w-10 bg-amber-500" />
-            <span className="font-display text-sm font-medium tracking-[0.3em] text-amber-400 uppercase">
-              Battlefield 系列管理平台
+            <span className="font-display text-sm font-medium tracking-[0.4em] text-amber-400 uppercase">
+              1916 · 1944 · 2042
             </span>
           </motion.div>
 
+          {/* 片名：字距从极宽收拢、由虚到实，模拟预告片片名卡 */}
           <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="font-display text-6xl leading-[0.95] font-bold tracking-tight text-white uppercase sm:text-7xl lg:text-8xl"
+            initial={{ opacity: 0, letterSpacing: "0.45em", filter: "blur(14px)" }}
+            animate={{ opacity: 1, letterSpacing: "-0.01em", filter: "blur(0px)" }}
+            transition={{ duration: 1.8, delay: 1.3, ease: [0.16, 1, 0.3, 1] }}
+            className="font-display text-6xl leading-[0.95] font-bold text-white uppercase sm:text-8xl lg:text-9xl"
           >
             BF-Manager
           </motion.h1>
@@ -128,48 +203,35 @@ function HeroSection() {
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-            className="mt-5 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg"
+            transition={{ duration: 0.9, delay: 2.4 }}
+            className="mt-6 max-w-xl text-lg leading-relaxed text-white/80 sm:text-xl"
           >
-            战绩查询、服务器管理、操作审计与权限管控，一个平台覆盖全部需求。
+            一个平台，指挥你的整片战场。
           </motion.p>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.9 }}
-            className="mt-9 flex flex-wrap gap-4"
+            transition={{ duration: 0.9, delay: 2.7 }}
+            className="mt-9"
           >
-            <Link
-              href="/bf1"
-              className="font-display group inline-flex items-center gap-2.5 bg-amber-500 px-9 py-3.5 text-sm font-semibold tracking-[0.15em] text-black uppercase transition-colors hover:bg-amber-400"
-            >
-              进入 BF1
-              <ChevronRight className="size-4 transition-transform group-hover:translate-x-1" />
-            </Link>
-            <Link
-              href="/login"
-              className="font-display inline-flex items-center border border-white/30 px-9 py-3.5 text-sm font-semibold tracking-[0.15em] text-white uppercase backdrop-blur-sm transition-colors hover:border-white/60 hover:bg-white/5"
-            >
-              登录
-            </Link>
+            <CallToAction />
           </motion.div>
         </div>
       </motion.div>
 
-      {/* Scroll indicator */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1.8 }}
-        className="absolute inset-x-0 bottom-6 flex justify-center"
+        transition={{ delay: 3.4 }}
+        className="absolute inset-x-0 bottom-[10vh] z-10 flex justify-center"
       >
-        <a href="#features" className="inline-action block">
+        <a href="#chapter-01" className="inline-action block" aria-label="向下滚动">
           <motion.div
             animate={{ y: [0, 8, 0] }}
             transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
           >
-            <ChevronDown className="size-5 text-white/30" />
+            <ChevronDown className="size-5 text-white/40" />
           </motion.div>
         </a>
       </motion.div>
@@ -177,59 +239,105 @@ function HeroSection() {
   );
 }
 
-/* ---------- Features ---------- */
+function CallToAction() {
+  return (
+    <div className="flex flex-wrap gap-4">
+      <Link
+        href="/bf1"
+        className="font-display group inline-flex items-center gap-2.5 bg-amber-500 px-9 py-3.5 text-sm font-semibold tracking-[0.15em] text-black uppercase transition-colors hover:bg-amber-400"
+      >
+        进入 BF1
+        <ChevronRight className="size-4 transition-transform group-hover:translate-x-1" />
+      </Link>
+      <Link
+        href="/login"
+        className="font-display inline-flex items-center border border-white/30 px-9 py-3.5 text-sm font-semibold tracking-[0.15em] text-white uppercase backdrop-blur-sm transition-colors hover:border-white/60 hover:bg-white/5"
+      >
+        登录
+      </Link>
+    </div>
+  );
+}
 
-function FeaturesSection() {
+/* ---------- 分镜：钉住整屏，滚动推镜，首尾黑场转场 ---------- */
+
+function ChapterScene({ chapter }: { chapter: (typeof CHAPTERS)[number] }) {
   const ref = useRef<HTMLElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-80px" });
+  const { scrollYProgress: p } = useScroll({ target: ref, offset: ["start start", "end end"] });
+
+  const imgScale = useTransform(p, [0, 1], [1.25, 1.02]);
+  const imgX = useTransform(p, [0, 1], chapter.align === "left" ? ["2%", "-2%"] : ["-2%", "2%"]);
+  const blackout = useTransform(p, [0, 0.14, 0.86, 1], [1, 0, 0, 1]);
+  const textOpacity = useTransform(p, [0.14, 0.3, 0.72, 0.86], [0, 1, 1, 0]);
+  const textY = useTransform(p, [0.14, 0.3], [50, 0]);
+  const numberY = useTransform(p, [0, 1], ["25%", "-25%"]);
+  const right = chapter.align === "right";
 
   return (
-    <section
-      id="features"
-      ref={ref}
-      className="relative bg-gradient-to-b from-black to-[#0d0a04] px-4 py-24 sm:px-6 lg:py-32"
-    >
-      <div className="mx-auto max-w-5xl">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
-          className="mb-16 text-center"
-        >
-          <h2 className="font-display text-4xl font-bold tracking-tight text-white uppercase sm:text-5xl">
-            平台能力
-          </h2>
-          <div className="mx-auto mt-4 h-[3px] w-12 bg-amber-500" />
+    <section id={`chapter-${chapter.no}`} ref={ref} className="relative h-[220vh]">
+      <div className="sticky top-0 h-screen overflow-hidden">
+        <motion.div style={{ scale: imgScale, x: imgX }} className="absolute inset-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={chapter.image} alt="" className="h-full w-full object-cover" loading="lazy" />
         </motion.div>
+        <div
+          className={cn(
+            "absolute inset-0 from-black/90 via-black/45 to-transparent",
+            right ? "bg-gradient-to-l" : "bg-gradient-to-r",
+          )}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/40" />
 
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-          {FEATURES.map((f, i) => {
-            const Icon = f.icon;
-            return (
-              <motion.div
-                key={f.title}
-                initial={{ opacity: 0, y: 30 }}
-                animate={isInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.5, delay: 0.1 * i }}
-                className="group rounded-lg border border-white/[0.06] bg-white/[0.03] p-6 transition-colors hover:border-amber-500/20 hover:bg-white/[0.06]"
-              >
-                <div className="mb-4 inline-flex rounded-md bg-amber-500/10 p-2.5">
-                  <Icon className="size-5 text-amber-500" />
-                </div>
-                <h3 className="font-display mb-2 text-lg font-semibold tracking-wide text-white uppercase">
-                  {f.title}
-                </h3>
-                <p className="text-sm leading-relaxed text-white/50">{f.description}</p>
-              </motion.div>
-            );
-          })}
+        <div
+          className={cn(
+            "relative flex h-full items-center px-6 sm:px-10 lg:px-16",
+            right && "justify-end text-right",
+          )}
+        >
+          <motion.div style={{ opacity: textOpacity, y: textY }} className="relative max-w-xl">
+            <motion.span
+              aria-hidden
+              style={{ y: numberY, WebkitTextStroke: "1px rgba(255,255,255,0.18)" }}
+              className={cn(
+                "font-display pointer-events-none absolute -top-28 text-[10rem] leading-none font-bold text-transparent select-none sm:-top-36 sm:text-[14rem]",
+                right ? "-right-2" : "-left-2",
+              )}
+            >
+              {chapter.no}
+            </motion.span>
+            <p className="font-display relative text-xs font-medium tracking-[0.4em] text-amber-400 uppercase">
+              {chapter.no} — {chapter.en}
+            </p>
+            <h2 className="font-display relative mt-4 text-5xl font-bold tracking-tight text-white uppercase sm:text-7xl">
+              {chapter.title}
+            </h2>
+            <p className="relative mt-5 text-xl text-white/90 sm:text-2xl">{chapter.line}</p>
+            <p className="relative mt-3 text-sm leading-relaxed text-white/55 sm:text-base">
+              {chapter.description}
+            </p>
+          </motion.div>
         </div>
+
+        <ChapterProgress progress={p} />
+        <motion.div
+          aria-hidden
+          style={{ opacity: blackout }}
+          className="pointer-events-none absolute inset-0 bg-black"
+        />
       </div>
     </section>
   );
 }
 
-/* ---------- Games ---------- */
+function ChapterProgress({ progress }: { progress: MotionValue<number> }) {
+  return (
+    <div className="absolute inset-x-0 bottom-0 h-[2px] bg-white/10">
+      <motion.div style={{ scaleX: progress }} className="h-full origin-left bg-amber-500/80" />
+    </div>
+  );
+}
+
+/* ---------- 选择战场 ---------- */
 
 function GamesSection() {
   const ref = useRef<HTMLElement>(null);
@@ -237,27 +345,29 @@ function GamesSection() {
   const allGames = Object.values(GAMES);
 
   return (
-    <section ref={ref} className="bg-[#0d0a04] px-4 py-24 sm:px-6 lg:py-32">
+    <section ref={ref} className="bg-black px-4 py-28 sm:px-6 lg:py-36">
       <div className="mx-auto max-w-5xl">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.8 }}
           className="mb-16 text-center"
         >
-          <h2 className="font-display text-4xl font-bold tracking-tight text-white uppercase sm:text-5xl">
-            选择游戏
+          <p className="font-display text-xs font-medium tracking-[0.4em] text-amber-400 uppercase">
+            Select Your Battlefield
+          </p>
+          <h2 className="font-display mt-4 text-4xl font-bold tracking-tight text-white uppercase sm:text-6xl">
+            选择你的战场
           </h2>
-          <div className="mx-auto mt-4 h-[3px] w-12 bg-amber-500" />
         </motion.div>
 
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {allGames.map((game, i) => (
             <motion.div
               key={game.id}
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 40 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: 0.12 * i }}
+              transition={{ duration: 0.7, delay: 0.15 * i }}
             >
               <GameCard game={game} />
             </motion.div>
@@ -308,4 +418,63 @@ function GameCard({ game }: { game: (typeof GAMES)[keyof typeof GAMES] }) {
   );
 
   return game.enabled ? <Link href={`/${game.id}`}>{card}</Link> : card;
+}
+
+/* ---------- 终幕 + 片尾字幕 ---------- */
+
+function FinaleSection() {
+  const ref = useRef<HTMLElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "-120px" });
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end end"] });
+  const imgScale = useTransform(scrollYProgress, [0, 1], [1.2, 1]);
+
+  return (
+    <section ref={ref} className="relative overflow-hidden bg-black">
+      <div className="relative flex h-screen items-center justify-center overflow-hidden px-6 text-center">
+        <motion.div style={{ scale: imgScale }} className="absolute inset-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={FINALE_IMAGE} alt="" className="h-full w-full object-cover" loading="lazy" />
+        </motion.div>
+        <div className="absolute inset-0 bg-black/55" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black via-transparent to-black" />
+
+        <div className="relative flex flex-col items-center">
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={isInView ? { opacity: 1 } : {}}
+            transition={{ duration: 1 }}
+            className="font-display text-xs font-medium tracking-[0.5em] text-amber-400 uppercase"
+          >
+            Deploy Now
+          </motion.p>
+          <motion.h2
+            initial={{ opacity: 0, letterSpacing: "0.3em", filter: "blur(10px)" }}
+            animate={isInView ? { opacity: 1, letterSpacing: "-0.01em", filter: "blur(0px)" } : {}}
+            transition={{ duration: 1.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="font-display mt-5 text-5xl font-bold text-white uppercase sm:text-8xl"
+          >
+            战场已就绪
+          </motion.h2>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.9, delay: 1.1 }}
+            className="mt-10"
+          >
+            <CallToAction />
+          </motion.div>
+        </div>
+      </div>
+
+      <footer className="flex flex-col items-center gap-2 px-4 pt-4 pb-14 text-center">
+        <span className="font-display inline-action text-sm font-semibold tracking-[0.4em] text-white/60 uppercase">
+          BF-Manager
+        </span>
+        <p className="inline-action text-xs tracking-[0.2em] text-white/30">
+          Battlefield 系列服务器管理平台 · MIT License
+        </p>
+        <span className="font-mono text-[11px] text-white/20">{APP_VERSION}</span>
+      </footer>
+    </section>
+  );
 }

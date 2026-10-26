@@ -40,7 +40,7 @@ def test_extract_rosters_private_only_without_private_fields() -> None:
             "GAM": {
                 "GID": 2,
                 "ATTR": {"servertype": "RANKED"},
-                "ROST": [_p(1, 0), _p(2, 1), _p(3, 65535, role=""), _p(4, 65535), _p(5, 7)],
+                "ROST": [_p(1, 0), _p(2, 1), _p(3, 65535, role=""), _p(4, 65535)],
             }
         },
         {"GID": 3, "ATTR": {}},
@@ -50,9 +50,9 @@ def test_extract_rosters_private_only_without_private_fields() -> None:
         2: {
             1: (TEAM1, "p1"),
             2: (TEAM2, "p2"),
-            3: (QUEUE, "p3"),
+            # 观战者 ROLE 为空，排队者 ROLE 为 soldier，两者 TIDX 都是 65535
+            3: (SPECTATOR, "p3"),
             4: (QUEUE, "p4"),
-            5: (SPECTATOR, "p5"),
         },
         3: {},
     }

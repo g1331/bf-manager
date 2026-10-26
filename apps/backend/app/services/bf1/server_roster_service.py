@@ -61,14 +61,13 @@ def _day_and_sec(ts: int) -> tuple[date, int]:
 
 
 def _slot(player: dict[str, Any]) -> int:
+    # 生产实测：观战者 ROLE 为空、TIDX 65535、STYP 2；排队者 ROLE 为 soldier、TIDX 65535、STYP 0
+    if player.get("ROLE") == "":
+        return SPECTATOR
     tidx = player.get("TIDX")
-    if tidx == QUEUE_TIDX:
-        return QUEUE
     if tidx in (0, 1):
         return TEAM1 + int(tidx)
-    # shortcut: 观战者的 ROST 形态未实测（人数对得上但没区分过），队伍号不是 0/1/65535 的一律
-    # 当观战；找到有人观战的服核对后再收窄
-    return SPECTATOR
+    return QUEUE
 
 
 def extract_rosters(updates: Iterable[dict[str, Any]]) -> Rosters:

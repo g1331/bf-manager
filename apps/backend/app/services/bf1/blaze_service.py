@@ -8,7 +8,7 @@ Blaze 是 EA 后端的二进制长连接协议，提供 Gateway 拿不到的房�
 2. 封装 Blaze 登录序列：用账号池凭据取 Blaze authcode，经 redirector 拿到 Blaze 服务器
    地址，建立加密连接并完成 ``Authentication.login``。
 3. 组装玩家列表：Blaze roster 叠加 ATTR 里的管理 / VIP 名单、平台已绑定用户标记，以及可选的
-   生涯战绩（并发限流合并）。
+   生涯战绩（Blaze Stats.getStats 批量查询）。
 
 连接池为进程级单例，``close_blaze_pool`` 在 FastAPI lifespan 关闭时调用。
 """
@@ -34,6 +34,7 @@ from app.core.config import get_settings
 from app.domain.ea.account_pool import EACredentials
 from app.domain.ea.blaze_protocol.socket import BlazeServerREQ, BlazeSocket
 from app.domain.ea.data_handle import BlazeData
+from app.domain.games.bf1.blaze_stats import career_stat_names, parse_career
 from app.domain.games.bf1.maps import OPERATION_SECTORS, MapData
 from app.models.ea_binding import EaBinding
 from app.schemas.bf1.server import (
@@ -44,7 +45,6 @@ from app.schemas.bf1.server import (
     ServerPlayersResponse,
     ServerPlayersSummary,
 )
-from app.services.bf1.gateway_factory import get_bf1_client
 from app.services.bf1.server_service import operation_map_list
 from app.services.ea_account_service import EAAccountService
 
@@ -52,14 +52,12 @@ from app.services.ea_account_service import EAAccountService
 CONNECTION_MAX_AGE_SECONDS = 300
 # 单次 Blaze 查询（含大体量 roster 解码）的超时。
 BLAZE_QUERY_TIMEOUT = 20
-# 并发查询生涯战绩的上限，控制对 EA Gateway 的瞬时压力，避免触发限流。
-STATS_CONCURRENCY = 8
-# 生涯战绩按 personaId 缓存的时长（秒）。生涯数据几分钟内几乎不变，刷新同一服务器时
-# 大部分玩家直接命中缓存，不再逐个打 EA。
+# Blaze Stats.getStats 单个请求最多带多少个 personaId（实测 64 可用）。
+STATS_BATCH_SIZE = 64
+# 生涯战绩按 personaId 缓存的时长（秒）。生涯数据只在回合结束时更新，刷新同一服务器时
+# 大部分玩家直接命中缓存。
 STATS_CACHE_TTL_SECONDS = 600
-STATS_CACHE_PREFIX = "bf1:basic_stats"
-# 只缓存计算胜率 / KD / KPM / 时长 / 估算等级所需的字段。
-_CACHED_BASIC_FIELDS = ("kills", "deaths", "wins", "losses", "timePlayed", "kpm", "spm")
+STATS_CACHE_PREFIX = "bf1:blaze_list_stats"
 # BF1 满级。
 RANK_MAX = 150
 # Blaze TIDX 中表示「排队 / 旁观」而非真实队伍的哨兵值。
@@ -213,211 +211,53 @@ async def _fetch_blaze_authcode(creds: EACredentials) -> str:
     return code
 
 
-# BF1 各等级的累计经验阈值（下标即等级，0..150）。Blaze roster 与 detailedStats 的
-# basicStats 多数情况下不返回 rank（为 null），需用「击杀分速 spm × 游玩时长 / 60」估出
-# 累计经验再查此表反推等级，否则列表会大面积显示等级 0。
-RANK_EXP_THRESHOLDS: tuple[int, ...] = (
-    0,
-    1000,
-    5000,
-    15000,
-    25000,
-    40000,
-    55000,
-    75000,
-    95000,
-    120000,
-    145000,
-    175000,
-    205000,
-    235000,
-    265000,
-    295000,
-    325000,
-    355000,
-    395000,
-    435000,
-    475000,
-    515000,
-    555000,
-    595000,
-    635000,
-    675000,
-    715000,
-    755000,
-    795000,
-    845000,
-    895000,
-    945000,
-    995000,
-    1045000,
-    1095000,
-    1145000,
-    1195000,
-    1245000,
-    1295000,
-    1345000,
-    1405000,
-    1465000,
-    1525000,
-    1585000,
-    1645000,
-    1705000,
-    1765000,
-    1825000,
-    1885000,
-    1945000,
-    2015000,
-    2085000,
-    2155000,
-    2225000,
-    2295000,
-    2365000,
-    2435000,
-    2505000,
-    2575000,
-    2645000,
-    2745000,
-    2845000,
-    2945000,
-    3045000,
-    3145000,
-    3245000,
-    3345000,
-    3445000,
-    3545000,
-    3645000,
-    3750000,
-    3870000,
-    4000000,
-    4140000,
-    4290000,
-    4450000,
-    4630000,
-    4830000,
-    5040000,
-    5260000,
-    5510000,
-    5780000,
-    6070000,
-    6390000,
-    6730000,
-    7110000,
-    7510000,
-    7960000,
-    8430000,
-    8960000,
-    9520000,
-    10130000,
-    10800000,
-    11530000,
-    12310000,
-    13170000,
-    14090000,
-    15100000,
-    16190000,
-    17380000,
-    20000000,
-    20500000,
-    21000000,
-    21500000,
-    22000000,
-    22500000,
-    23000000,
-    23500000,
-    24000000,
-    24500000,
-    25000000,
-    25500000,
-    26000000,
-    26500000,
-    27000000,
-    27500000,
-    28000000,
-    28500000,
-    29000000,
-    29500000,
-    30000000,
-    30500000,
-    31000000,
-    31500000,
-    32000000,
-    32500000,
-    33000000,
-    33500000,
-    34000000,
-    34500000,
-    35000000,
-    35500000,
-    36000000,
-    36500000,
-    37000000,
-    37500000,
-    38000000,
-    38500000,
-    39000000,
-    39500000,
-    40000000,
-    41000000,
-    42000000,
-    43000000,
-    44000000,
-    45000000,
-    46000000,
-    47000000,
-    48000000,
-    49000000,
-    50000000,
-)
+async def fetch_stats(
+    db: AsyncSession, pids: list[int], names: dict[str, list[str]]
+) -> dict[int, dict[str, float]]:
+    """Blaze ``Stats.getStats`` 批量取生涯统计，返回 {pid: {统计名: 数值}}。
 
-
-def _rank_from_basic(basic: dict) -> int | None:
-    """由 basicStats 的 spm 与 timePlayed 估算累计经验，查表反推等级。
-
-    roster / basicStats 的 rank 字段多为 null，故用经验值估算补齐：
-    ``exp = spm * timePlayed / 60``，再在 ``RANK_EXP_THRESHOLDS`` 中取首个不小于 exp 的
-    阈值下标减一作为等级。spm 或时长缺失时返回 None，由调用方回退 roster 给的等级。
+    names 为 {类别: 统计名列表}；每类每 64 人一个请求，全部并发发在同一条连接上。没有生涯数据
+    的 pid 不在结果里。统计名写错会让整个请求报错，所以名单只来自已验证的映射与武器目录。
     """
-    try:
-        spm = float(basic.get("spm") or 0)
-        time_played = float(basic.get("timePlayed") or 0)
-    except (TypeError, ValueError):
-        return None
-    if spm <= 0 or time_played <= 0:
-        return None
-    exp = spm * time_played / 60
-    if exp <= RANK_EXP_THRESHOLDS[1]:
-        return 0
-    if exp >= RANK_EXP_THRESHOLDS[-1]:
-        return RANK_MAX
-    for level in range(1, len(RANK_EXP_THRESHOLDS)):
-        if exp <= RANK_EXP_THRESHOLDS[level]:
-            return level - 1
-    return RANK_MAX
+    socket = await _pool.get_socket(db)
+    batches = [
+        (cat, stat_names, pids[i : i + STATS_BATCH_SIZE])
+        for cat, stat_names in names.items()
+        if stat_names
+        for i in range(0, len(pids), STATS_BATCH_SIZE)
+    ]
 
-
-def _stats_from_basic(basic: dict) -> BlazePlayerStats:
-    """从 detailedStats 的 basicStats 子字典提取列表所需的四项综合战绩。"""
-
-    def _num(value: object) -> float:
+    async def _one(cat: str, stat_names: list[str], batch: list[int]) -> list[tuple[int, dict]]:
+        packet = {
+            "method": "Stats.getStats",
+            "type": "Command",
+            "data": {"CAT  1": cat, "EID  40": batch, "NAME 41": stat_names},
+        }
         try:
-            return float(value)  # type: ignore[arg-type]
-        except (TypeError, ValueError):
-            return 0.0
+            response = await socket.send(packet, timeout=BLAZE_QUERY_TIMEOUT)
+        except (TimeoutError, ConnectionError, OSError) as exc:
+            await _pool.invalidate()
+            raise EAApiError(
+                code="BLAZE_QUERY_FAILED", message=f"Blaze 查询超时或连接中断: {exc}"
+            ) from exc
+        if not isinstance(response, dict) or response.get("type") != "Result":
+            raise EAApiError(
+                code="BLAZE_STATS_FAILED",
+                message=f"Blaze 战绩查询失败: {str((response or {}).get('data'))[:200]}",
+            )
+        rows = (((response.get("data") or {}).get("KSSV") or {}).get("No_Scope_Defined") or {}).get(
+            "STAT"
+        ) or []
+        return [
+            (int(row["EID"]), dict(zip(stat_names, map(float, row["STAT"]), strict=False)))
+            for row in rows
+        ]
 
-    kills = _num(basic.get("kills"))
-    deaths = _num(basic.get("deaths"))
-    wins = _num(basic.get("wins"))
-    losses = _num(basic.get("losses"))
-    time_played = _num(basic.get("timePlayed"))
-    kpm = basic.get("kpm")
-    total_rounds = wins + losses
-    return BlazePlayerStats(
-        win_rate=(wins / total_rounds * 100) if total_rounds > 0 else None,
-        kd=(kills / deaths) if deaths > 0 else None,
-        kpm=_num(kpm) if kpm else None,
-        time_hours=(time_played / 3600) if time_played else None,
-    )
+    out: dict[int, dict[str, float]] = {}
+    for rows in await asyncio.gather(*(_one(*b) for b in batches)):
+        for pid, values in rows:
+            out.setdefault(pid, {}).update(values)
+    return out
 
 
 async def _stats_cache() -> Cache | None:
@@ -439,49 +279,54 @@ async def _cache_get(cache: Cache | None, pid: int) -> dict[str, Any] | None:
     return cached if isinstance(cached, dict) else None
 
 
-async def _cache_set(cache: Cache | None, pid: int, basic: dict[str, Any]) -> None:
+async def _cache_set(cache: Cache | None, pid: int, entry: dict[str, Any]) -> None:
     if cache is None:
         return
     try:
-        await cache.set(f"{STATS_CACHE_PREFIX}:{pid}", basic, ttl=STATS_CACHE_TTL_SECONDS)
+        await cache.set(f"{STATS_CACHE_PREFIX}:{pid}", entry, ttl=STATS_CACHE_TTL_SECONDS)
     except Exception as exc:
         logger.warning(f"玩家 {pid} 战绩缓存写入失败: {exc}")
 
 
 async def _gather_stats(
-    client: object, pids: list[int]
+    db: AsyncSession, pids: list[int]
 ) -> tuple[dict[int, BlazePlayerStats], dict[int, int]]:
-    """并发查询多名玩家的生涯战绩，信号量限流，单个失败降级为无战绩。
+    """批量查询多名玩家的生涯战绩与等级，先读缓存，没命中的一次 Blaze 批量补齐。
 
-    返回两张表：综合战绩 ``stats_map`` 与由经验值估算的等级 ``rank_map``。后者用于补齐
-    roster 未给的等级，避免列表大面积显示等级 0。
+    返回 ``stats_map`` 与 ``rank_map``（roster 多数不带等级，用生涯 rank 补齐）。Blaze 查询失败
+    时降级为无战绩，不影响名单本身。
     """
     if not pids:
         return {}, {}
-    semaphore = asyncio.Semaphore(STATS_CONCURRENCY)
     cache = await _stats_cache()
-
-    async def _one(pid: int) -> tuple[int, BlazePlayerStats | None, int | None]:
-        basic = await _cache_get(cache, pid)
-        if basic is None:
-            async with semaphore:
-                try:
-                    res = await client.detailedStatsByPersonaId(pid)  # type: ignore[attr-defined]
-                except Exception as exc:
-                    logger.warning(f"玩家 {pid} 战绩查询失败，降级为无战绩: {exc}")
-                    return pid, None, None
-            if not isinstance(res, dict):
-                return pid, None, None
-            basic = (res.get("result") or {}).get("basicStats") or {}
-            if not basic:
-                return pid, None, None
-            basic = {k: basic.get(k) for k in _CACHED_BASIC_FIELDS}
-            await _cache_set(cache, pid, basic)
-        return pid, _stats_from_basic(basic), _rank_from_basic(basic)
-
-    results = await asyncio.gather(*[_one(pid) for pid in pids])
-    stats_map = {pid: stats for pid, stats, _ in results if stats is not None}
-    rank_map = {pid: rank for pid, _, rank in results if rank is not None}
+    cached: dict[int, dict[str, Any]] = {}
+    for pid in pids:
+        hit = await _cache_get(cache, pid)
+        if hit is not None:
+            cached[pid] = hit
+    misses = [pid for pid in pids if pid not in cached]
+    if misses:
+        try:
+            values = await fetch_stats(db, misses, career_stat_names())
+        except EAApiError as exc:
+            logger.warning(f"{len(misses)} 名玩家战绩查询失败，降级为无战绩: {exc}")
+            values = {}
+        for pid, vals in values.items():
+            career = parse_career(vals)
+            entry = {
+                "win_rate": career.win_rate,
+                "kd": career.kd,
+                "kpm": career.kpm,
+                "time_hours": career.seconds / 3600 if career.seconds else None,
+                "rank": career.rank,
+            }
+            cached[pid] = entry
+            await _cache_set(cache, pid, entry)
+    stats_map = {
+        pid: BlazePlayerStats(**{k: v for k, v in e.items() if k != "rank"})
+        for pid, e in cached.items()
+    }
+    rank_map = {pid: int(e["rank"]) for pid, e in cached.items() if e.get("rank") is not None}
     return stats_map, rank_map
 
 
@@ -687,8 +532,7 @@ async def get_server_players(
     if not room:
         raise NotFoundError(resource=f"服务器 gameId={game_id} 的实时玩家数据")
 
-    # 2. 管理 / VIP 名单与阵营取自 roster 的 ATTR；可选战绩走 Gateway HTTP
-    #    （与 roster 串行避免共用 db 并发）。
+    # 2. 管理 / VIP 名单与阵营取自 roster 的 ATTR；可选战绩走同一条 Blaze 连接批量查。
     raw_normal = room.get("players") or []
     raw_queues = room.get("queues") or []
     raw_spectators = room.get("spectators") or []
@@ -704,9 +548,8 @@ async def get_server_players(
     stats_map: dict[int, BlazePlayerStats] = {}
     rank_map: dict[int, int] = {}
     if include_stats:
-        # 排队 / 观战玩家的 roster 同样不带等级，一并查战绩估算
-        async with get_bf1_client(db) as client:
-            stats_map, rank_map = await _gather_stats(client, all_pids)
+        # 排队 / 观战玩家的 roster 同样不带等级，一并查
+        stats_map, rank_map = await _gather_stats(db, all_pids)
 
     # 3. 平台已绑定用户标记（db 此时已空闲）。
     registered_ids = await _fetch_registered_ids(db, all_pids)

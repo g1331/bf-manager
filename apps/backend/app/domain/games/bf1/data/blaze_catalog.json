@@ -1,0 +1,4728 @@
+{
+ "vehicles": {
+  "BeArT": {
+   "cat": "player_statcategory",
+   "category": "機械巨獸",
+   "guid": "A3ED808E-1525-412B-8E77-9EB6902A55D2",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/86/74/RUSArmoredTrain-564a4e48.png",
+   "label": "Behemoth - Armoured Train",
+   "name": "裝甲列車",
+   "order": 15001,
+   "sort_order": 15,
+   "stats": {
+    "destroyed": "c__BeArT_di_g",
+    "kills": "c_BeArT__ki_g",
+    "seconds": "c_BeArT__si_g"
+   }
+  },
+  "BeDr": {
+   "cat": "player_statcategory",
+   "category": "機械巨獸",
+   "guid": "003FCC0A-2758-8508-4774-78E66FA1B5E3",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/59/126/GBRHMSIronDuke-3b82016f.png",
+   "label": "Behemoth - Dreadnaught",
+   "name": "無畏艦",
+   "order": 15002,
+   "sort_order": 15,
+   "stats": {
+    "destroyed": "c__BeDr_di_g",
+    "kills": "c_BeDr__ki_g",
+    "seconds": "c_BeDr__si_g"
+   }
+  },
+  "BeSht": {
+   "cat": "player_statcategory",
+   "category": "機械巨獸",
+   "guid": "BBFC5A91-B2FC-48D2-8913-658C08072E6E",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/72/13/FRAChar2C-b8f3c0e2.png",
+   "label": "Behemoth - Super Heavy Tank",
+   "name": "Char 2C",
+   "order": 15003,
+   "sort_order": 15,
+   "stats": {
+    "destroyed": "c__BeSht_di_g",
+    "kills": "c_BeSht__ki_g",
+    "seconds": "c_BeSht__si_g"
+   }
+  },
+  "BeZe": {
+   "cat": "player_statcategory",
+   "category": "機械巨獸",
+   "guid": "1A7DEECF-4F0E-E343-9644-D6D91DCAEC12",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/98/97/GERZeppelinL30-62618731.png",
+   "label": "Behemoth - Zeppelins",
+   "name": "飛船 L30",
+   "order": 15000,
+   "sort_order": 15,
+   "stats": {
+    "destroyed": "c__BeZe_di_g",
+    "kills": "c_BeZe__ki_g",
+    "seconds": "c_BeZe__si_g"
+   }
+  },
+  "BoMAS": {
+   "cat": "player_statcategory",
+   "category": "船隻",
+   "guid": "FA740EE6-6C1E-2F97-D48B-0EF8D1C7D11B",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/81/30/ITAMAS-51e28b0e.png",
+   "label": "Boats - MAS",
+   "name": "M.A.S. 魚雷快艇",
+   "order": 12000,
+   "sort_order": 13,
+   "stats": {
+    "destroyed": "c__BoMAS_di_g",
+    "kills": "c_BoMAS__ki_g",
+    "seconds": "c_BoMAS__si_g"
+   }
+  },
+  "BoYL": {
+   "cat": "player_statcategory",
+   "category": "船隻",
+   "guid": "EA1C556F-DC5A-4764-BE8F-E661AF2B2C3B",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/70/113/GBR_Y_Lighter-468f2eaa.png",
+   "label": "Boats - Y Lighter",
+   "name": "Y-Lighter 登陸艇",
+   "order": 12001,
+   "sort_order": 13,
+   "stats": {
+    "destroyed": "c__BoYL_di_g",
+    "kills": "c_BoYL__ki_g",
+    "seconds": "c_BoYL__si_g"
+   }
+  },
+  "ShDeLa": {
+   "cat": "player_statcategory3",
+   "category": "驅逐艦",
+   "guid": "67B44E81-D1DA-B485-D185-D6520CF59E4B",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/101/49/HMSLancerDestroyer-65317e44.png",
+   "label": "Ships - Destroyers - Lance",
+   "name": "L 級驅逐艦",
+   "order": 13000,
+   "sort_order": 14,
+   "stats": {
+    "destroyed": "c__ShDeLa_di_g",
+    "kills": "c_ShDeLa__ki_g",
+    "seconds": "c_ShDeLa__si_g"
+   }
+  },
+  "ashAt": {
+   "cat": "player_statcategory3",
+   "category": "飛船",
+   "guid": "4289E1A4-5EBE-7FA3-52D8-AFDB8ED374BA",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/30/20/AstraTorresAirship-e2148807.png",
+   "label": "Airships - Astra Torres",
+   "name": "C 級飛船",
+   "order": 10000,
+   "sort_order": 14,
+   "stats": {
+    "destroyed": "c__ashAt_di_g",
+    "kills": "c_ashAt__ki_g",
+    "seconds": "c_ashAt__si_g"
+   }
+  },
+  "horse": {
+   "cat": "player_statcategory",
+   "category": "馬匹",
+   "guid": "7CA00F5A-E5DE-3FD9-ECAD-7D4FC5C1AC80",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/64/120/Horse-c07830d0.png",
+   "label": "Horse",
+   "name": "戰馬",
+   "order": 16000,
+   "sort_order": 12,
+   "stats": {
+    "destroyed": "c__horse_di_g",
+    "kills": "c_horse__ki_g",
+    "seconds": "c_horse__si_g"
+   }
+  },
+  "pl2sBris": {
+   "cat": "player_statcategory",
+   "category": "攻擊機",
+   "guid": "33A894B8-BCE1-8689-3064-7308BBC781CC",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/20/27/GBRBristolF2B-141b8daa.png",
+   "label": "Planes - 2 Seaters - Bristol F2.B",
+   "name": "布里斯托 F2.B 攻擊機",
+   "order": 6001,
+   "sort_order": 0,
+   "stats": {
+    "destroyed": "c__pl2sBris_di_g",
+    "kills": "c_pl2sBris__ki_g",
+    "seconds": "c_pl2sBris__si_g"
+   }
+  },
+  "pl2sHarl": {
+   "cat": "player_statcategory",
+   "category": "攻擊機",
+   "guid": "EB79DB6E-8A05-9618-3368-34DCBE3C3C17",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/63/53/GERHalberstadtCLII-c1cb8257.png",
+   "label": "Planes - 2 Seaters - Harlberstadt",
+   "name": "哈爾伯施塔特 CL.II 攻擊機",
+   "order": 6000,
+   "sort_order": 0,
+   "stats": {
+    "destroyed": "c__pl2sHarl_di_g",
+    "kills": "c_pl2sHarl__ki_g",
+    "seconds": "c_pl2sHarl__si_g"
+   }
+  },
+  "pl2sRump": {
+   "cat": "player_statcategory",
+   "category": "攻擊機",
+   "guid": "C3272C97-B92E-4E2A-B842-06EF06DC2CB0",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/21/69/AHU_Rumpler_CI-eb45a6be.png",
+   "label": "Planes - 2 Seaters - Rumpler CI",
+   "name": "Rumpler C.I 攻擊機",
+   "order": 6003,
+   "sort_order": 0,
+   "stats": {
+    "destroyed": "c__pl2sRump_di_g",
+    "kills": "c_pl2sRump__ki_g",
+    "seconds": "c_pl2sRump__si_g"
+   }
+  },
+  "pl2sSalm": {
+   "cat": "player_statcategory",
+   "category": "攻擊機",
+   "guid": "189D43F5-E653-416B-B6D6-D0137C28375D",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/5/12/FRA_Salmson_2-05f47b5c.png",
+   "label": "Planes - 2 Seaters - Salmson 2",
+   "name": "A.E.F 2-A2 攻擊機",
+   "order": 6002,
+   "sort_order": 0,
+   "stats": {
+    "destroyed": "c__pl2sSalm_di_g",
+    "kills": "c_pl2sSalm__ki_g",
+    "seconds": "c_pl2sSalm__si_g"
+   }
+  },
+  "plBoCa": {
+   "cat": "player_statcategory",
+   "category": "轟炸機",
+   "guid": "91ECED06-9066-470D-BFE0-A1122118A5B3",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/49/4/ITACaproniCa5-31fc77c8.png",
+   "label": "Planes - Bombers - Caproni Ca.5",
+   "name": "卡普羅尼 CA.5 轟炸機",
+   "order": 7001,
+   "sort_order": 1,
+   "stats": {
+    "destroyed": "c__plBoCa_di_g",
+    "kills": "c_plBoCa__ki_g",
+    "seconds": "c_plBoCa__si_g"
+   }
+  },
+  "plBoDH10": {
+   "cat": "player_statcategory4",
+   "category": "轟炸機",
+   "guid": "DF87BA6E-961D-4F14-86B4-AE5F1326BA14",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/5/25/GBR_Airco_DH10-05e772e8.png",
+   "label": "Planes - Bombers - Airco DH 10",
+   "name": "Airco DH.10 轟炸機",
+   "order": 7002,
+   "sort_order": 1,
+   "stats": {
+    "destroyed": "c__plBoDH10_di_g",
+    "kills": "c_plBoDH10__ki_g",
+    "seconds": "c_plBoDH10__si_g"
+   }
+  },
+  "plBoGoth": {
+   "cat": "player_statcategory",
+   "category": "轟炸機",
+   "guid": "2B0D6EA6-8978-6400-7E85-C8ED33E3B6B3",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/84/65/GERGothaGIV-54bfb0bf.png",
+   "label": "Planes - Bombers - Gotha G.IV",
+   "name": "戈塔 G 轟炸機",
+   "order": 7000,
+   "sort_order": 1,
+   "stats": {
+    "destroyed": "c__plBoGoth_di_g",
+    "kills": "c_plBoGoth__ki_g",
+    "seconds": "c_plBoGoth__si_g"
+   }
+  },
+  "plBoHaBa": {
+   "cat": "player_statcategory4",
+   "category": "轟炸機",
+   "guid": "887AA8B4-878C-4943-B688-BAE3E9A5A4E7",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/4/47/AHU_Hansa_Brandenburg_GI-042fc3dc.png",
+   "label": "Planes - Bombers - Hansa-Brandenburg G.1",
+   "name": "漢莎·布蘭登堡 G.I 轟炸機",
+   "order": 7003,
+   "sort_order": 1,
+   "stats": {
+    "destroyed": "c__plBoHaBa_di_g",
+    "kills": "c_plBoHaBa__ki_g",
+    "seconds": "c_plBoHaBa__si_g"
+   }
+  },
+  "plHBIM": {
+   "cat": "player_statcategory",
+   "category": "重型轟炸機",
+   "guid": "E305E0C1-FED8-00FD-747A-C9282C51F524",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/116/119/IlyaMurometsHeavyBomber-74779164.png",
+   "label": "Planes - Heavy Bombers - Ilya Muromets",
+   "name": "伊利亞·穆羅梅茨",
+   "order": 9000,
+   "sort_order": 2,
+   "stats": {
+    "destroyed": "c__plHBIM_di_g",
+    "kills": "c_plHBIM__ki_g",
+    "seconds": "c_plHBIM__si_g"
+   }
+  },
+  "plScAlb": {
+   "cat": "player_statcategory",
+   "category": "戰鬥機",
+   "guid": "6D6C110E-EBC9-42CC-BB7A-ACA156638D3C",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/92/87/GER_Albatros_DIII-5ca9e1d3.png",
+   "label": "Planes - Scouts - Albatros DIII",
+   "name": "信天翁 D-III 戰鬥機",
+   "order": 8003,
+   "sort_order": 3,
+   "stats": {
+    "destroyed": "c__plScAlb_di_g",
+    "kills": "c_plScAlb__ki_g",
+    "seconds": "c_plScAlb__si_g"
+   }
+  },
+  "plScFok": {
+   "cat": "player_statcategory",
+   "category": "戰鬥機",
+   "guid": "AD78AD89-1824-B113-75EC-CFD3180A367D",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/20/7/GERFokkerDR1-14f95745.png",
+   "label": "Planes - Scouts - Fokker Dr.1",
+   "name": "DR.1 戰鬥機",
+   "order": 8002,
+   "sort_order": 3,
+   "stats": {
+    "destroyed": "c__plScFok_di_g",
+    "kills": "c_plScFok__ki_g",
+    "seconds": "c_plScFok__si_g"
+   }
+  },
+  "plScSop": {
+   "cat": "player_statcategory",
+   "category": "戰鬥機",
+   "guid": "ADF5B89F-5854-43C4-BAD4-46C9D1C020F5",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/57/42/GBRSopwithCamel-39d664a3.png",
+   "label": "Planes - Scouts - Sopwith Camel",
+   "name": "索普威斯駱駝式戰鬥機",
+   "order": 8001,
+   "sort_order": 3,
+   "stats": {
+    "destroyed": "c__plScSop_di_g",
+    "kills": "c_plScSop__ki_g",
+    "seconds": "c_plScSop__si_g"
+   }
+  },
+  "plScSpa": {
+   "cat": "player_statcategory",
+   "category": "戰鬥機",
+   "guid": "CB7D595C-0376-4C72-A8B8-1455965EA81E",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/113/96/FRA_SPAD_X_XIII-8f60a194.png",
+   "label": "Planes - Scouts - SPAD S XIII",
+   "name": "SPAD S XIII 戰鬥機",
+   "order": 8000,
+   "sort_order": 3,
+   "stats": {
+    "destroyed": "c__plScSpa_di_g",
+    "kills": "c_plScSpa__ki_g",
+    "seconds": "c_plScSpa__si_g"
+   }
+  },
+  "swBL9": {
+   "cat": "player_statcategory",
+   "category": "定點武器",
+   "guid": "EFB07B81-BBA3-413E-AF40-221CC104C21D",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/10/16/GBRBL9-0a10176d.png",
+   "label": "Stationary Weapons - BL9",
+   "name": "BL 9.2 攻城砲",
+   "order": 14005,
+   "sort_order": 11,
+   "stats": {
+    "destroyed": "c__swBL9_di_g",
+    "kills": "c_swBL9__ki_g",
+    "seconds": "c_swBL9__si_g"
+   }
+  },
+  "swBeck": {
+   "cat": "player_statcategory",
+   "category": "定點武器",
+   "guid": "A3C6FC16-2DF6-4719-9A5F-E079CDB928F3",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/57/65/GER_BeckerM_Stationary-c741a373.png",
+   "label": "Stationary Weapons - Becker",
+   "name": "高爆機砲",
+   "order": 14004,
+   "sort_order": 11,
+   "stats": {
+    "destroyed": "c__swBeck_di_g",
+    "kills": "c_swBeck__ki_g",
+    "seconds": "c_swBeck__si_g"
+   }
+  },
+  "swCB": {
+   "cat": "player_statcategory",
+   "category": "定點武器",
+   "guid": "B3BFBF74-6475-598C-C097-06DA0375F14A",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/76/73/DagoCoastalArtilleryGun-b4b737b1.png",
+   "label": "Stationary Weapons - Coastal Battery",
+   "name": "305/52 O 岸防砲",
+   "order": 14006,
+   "sort_order": 11,
+   "stats": {
+    "destroyed": "c__swCB_di_g",
+    "kills": "c_swCB__ki_g",
+    "seconds": "c_swCB__si_g"
+   }
+  },
+  "swCC": {
+   "cat": "player_statcategory3",
+   "category": "定點武器",
+   "image": null,
+   "label": "Stationary Weapons - SK45 Coastal Cannon",
+   "name": "SK45 岸防砲",
+   "order": 99044,
+   "stats": {
+    "destroyed": "c__swCC_di_g",
+    "kills": "c_swCC__ki_g",
+    "seconds": "c_swCC__si_g"
+   }
+  },
+  "swField": {
+   "cat": "player_statcategory",
+   "category": "定點武器",
+   "guid": "E7825334-17D9-3BA1-D59C-8497155B8DBB",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/118/13/GERFk96nA-760d0461.png",
+   "label": "Stationary Weapons - Field Gun",
+   "name": "FK 96 野戰砲",
+   "order": 14000,
+   "sort_order": 11,
+   "stats": {
+    "destroyed": "c__swField_di_g",
+    "kills": "c_swField__ki_g",
+    "seconds": "c_swField__si_g"
+   }
+  },
+  "swFort": {
+   "cat": "player_statcategory",
+   "category": "定點武器",
+   "guid": "12689F49-C72C-6BFE-07E9-A26258C0FCA0",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/97/79/FRAFortressTurret-9fb165ad.png",
+   "label": "Stationary Weapons - Fortress Gun",
+   "name": "堡壘火砲",
+   "order": 14001,
+   "sort_order": 11,
+   "stats": {
+    "destroyed": "c__swFort_di_g",
+    "kills": "c_swFort__ki_g",
+    "seconds": "c_swFort__si_g"
+   }
+  },
+  "swQF1": {
+   "cat": "player_statcategory",
+   "category": "定點武器",
+   "guid": "2E5402EF-6303-B756-AEE9-E7926AB5FEF8",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/99/120/GBRQF1-63882f78.png",
+   "label": "Stationary Weapons - QF1 Pounder",
+   "name": "QF 1 防空砲",
+   "order": 14002,
+   "sort_order": 11,
+   "stats": {
+    "destroyed": "c__swQF1_di_g",
+    "kills": "c_swQF1__ki_g",
+    "seconds": "c_swQF1__si_g"
+   }
+  },
+  "swVick": {
+   "cat": "player_statcategory",
+   "category": "定點武器",
+   "guid": "690ABB5C-7B7E-4609-B37A-2DB46C2F6287",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/22/72/GBRVickers-ea4826ae.png",
+   "label": "Stationary Weapons - Vickers",
+   "name": "重型機槍",
+   "order": 14003,
+   "sort_order": 11,
+   "stats": {
+    "destroyed": "c__swVick_di_g",
+    "kills": "c_swVick__ki_g",
+    "seconds": "c_swVick__si_g"
+   }
+  },
+  "taATSCHMD": {
+   "cat": "player_statcategory",
+   "category": "攻擊坦克",
+   "guid": "12F1002B-97FA-490B-822F-E621C6827BFB",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/49/35/FRAStChamond-3123e0cd.png",
+   "label": "Tanks - Assault Tanks - StChamond",
+   "name": "聖沙蒙",
+   "order": 4000,
+   "sort_order": 8,
+   "stats": {
+    "destroyed": "c__taATSCHMD_di_g",
+    "kills": "c_taATSCHMD__ki_g",
+    "seconds": "c_taATSCHMD__si_g"
+   }
+  },
+  "taAaPier": {
+   "cat": "player_statcategory",
+   "category": "火砲裝甲車",
+   "guid": "A92386FB-7D4B-0E8A-6F2B-CC63FC2A8D78",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/110/109/GBRPierceArrowAALorry-6e6d8d9f.png",
+   "label": "Tanks - Mobile AA  - Pierce Arrow",
+   "name": "火砲裝甲車",
+   "order": 3000,
+   "sort_order": 7,
+   "stats": {
+    "destroyed": "c__taAaPier_di_g",
+    "kills": "c_taAaPier__ki_g",
+    "seconds": "c_taAaPier__si_g"
+   }
+  },
+  "taHtA7V": {
+   "cat": "player_statcategory",
+   "category": "重型坦克",
+   "guid": "4AA28E71-6FDA-A50B-80A8-B52D070FF884",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/65/64/GERA7V-bfc09237.png",
+   "label": "Tanks - Heavy Tanks - A7V",
+   "name": "A7V 重型坦克",
+   "order": 0,
+   "sort_order": 5,
+   "stats": {
+    "destroyed": "c__taHtA7V_di_g",
+    "kills": "c_taHtA7V__ki_g",
+    "seconds": "c_taHtA7V__si_g"
+   }
+  },
+  "taLaMark": {
+   "cat": "player_statcategory",
+   "category": "巡航坦克",
+   "guid": "4723A26F-98AE-55BA-7B3F-3AE7E0E3B0C7",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/65/59/GBRMarkV-bf3b1d1a.png",
+   "label": "Tanks - Landships - Mark V",
+   "name": "Mark V 巡航坦克",
+   "order": 1000,
+   "sort_order": 4,
+   "stats": {
+    "destroyed": "c__taLaMark_di_g",
+    "kills": "c_taLaMark__ki_g",
+    "seconds": "c_taLaMark__si_g"
+   }
+  },
+  "taLtFT17": {
+   "cat": "player_statcategory",
+   "category": "輕型坦克",
+   "guid": "A79071D2-5C4F-0BA8-0ECC-FCB1376E2FBA",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/82/87/FRARenaultFt-17-aea9e5e7.png",
+   "label": "Tanks - Light Tanks - Renault FT-17",
+   "name": "FT-17 輕型坦克",
+   "order": 2000,
+   "sort_order": 6,
+   "stats": {
+    "destroyed": "c__taLtFT17_di_g",
+    "kills": "c_taLtFT17__ki_g",
+    "seconds": "c_taLtFT17__si_g"
+   }
+  },
+  "taTrPUGAR": {
+   "cat": "player_statcategory",
+   "category": "突擊裝甲車",
+   "guid": "705E9B4E-5E97-FD3C-9979-A4F2D11AE06F",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/32/92/PutilovGarford-20a4fd91.png",
+   "label": "Tanks - Assault Trucks - PutilovGarford",
+   "name": "樸帝洛夫·加福德",
+   "order": 5000,
+   "sort_order": 9,
+   "stats": {
+    "destroyed": "c__taTrPUGAR_di_g",
+    "kills": "c_taTrPUGAR__ki_g",
+    "seconds": "c_taTrPUGAR__si_g"
+   }
+  },
+  "trvArcEhr": {
+   "cat": "player_statcategory",
+   "category": "地面載具",
+   "guid": "B30F9312-6887-46C5-873F-2670906856AE",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/30/113/GER_Ehrhardt_EV4-1e718572.png",
+   "label": "Transport - Armoured Cars - Turk Ehrhardt EV4",
+   "name": "EV4 裝甲車",
+   "order": 11007,
+   "sort_order": 10,
+   "stats": {
+    "destroyed": "c__trvArcEhr_di_g",
+    "kills": "c_trvArcEhr__ki_g",
+    "seconds": "c_trvArcEhr__si_g"
+   }
+  },
+  "trvArcRR": {
+   "cat": "player_statcategory",
+   "category": "地面載具",
+   "guid": "7FEDA17B-6A27-1946-A02E-AA72A72FBCD7",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/76/108/GBRRollsRoyceArmoredCar-4c6ccdf0.png",
+   "label": "Transport - Armoured Cars - Rolls Royce",
+   "name": "RNAS 裝甲車",
+   "order": 11005,
+   "sort_order": 10,
+   "stats": {
+    "destroyed": "c__trvArcRR_di_g",
+    "kills": "c_trvArcRR__ki_g",
+    "seconds": "c_trvArcRR__si_g"
+   }
+  },
+  "trvArcRom": {
+   "cat": "player_statcategory",
+   "category": "地面載具",
+   "guid": "045085BF-D9E2-476F-9363-C11DD9BDDC61",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/121/43/GER_Romfell-79d5be52.png",
+   "label": "Transport - Armoured Cars - Romfell",
+   "name": "Romfell 裝甲車",
+   "order": 11006,
+   "sort_order": 10,
+   "stats": {
+    "destroyed": "c__trvArcRom_di_g",
+    "kills": "c_trvArcRom__ki_g",
+    "seconds": "c_trvArcRom__si_g"
+   }
+  },
+  "trvArcTer": {
+   "cat": "player_statcategory",
+   "category": "地面載具",
+   "guid": "87E38FC3-022D-4A88-80B5-6E3BD58C320F",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/61/128/ITA_Fiat_Terni-3d8076d6.png",
+   "label": "Transport - Armoured Cars - Terni",
+   "name": "F.T. 裝甲車",
+   "order": 11008,
+   "sort_order": 10,
+   "stats": {
+    "destroyed": "c__trvArcTer_di_g",
+    "kills": "c_trvArcTer__ki_g",
+    "seconds": "c_trvArcTer__si_g"
+   }
+  },
+  "trvCaBenz": {
+   "cat": "player_statcategory",
+   "category": "地面載具",
+   "guid": "F73DA041-0864-4782-BEDD-D9C08D86DA7D",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/71/77/GER_Benz_MGCarrier-474daf7b.png",
+   "label": "Transport - Cars - Benz MG Carrier",
+   "name": "KFT 偵察車",
+   "order": 11002,
+   "sort_order": 10,
+   "stats": {
+    "destroyed": "c__trvCaBenz_di_g",
+    "kills": "c_trvCaBenz__ki_g",
+    "seconds": "c_trvCaBenz__si_g"
+   }
+  },
+  "trvCaDodg": {
+   "cat": "player_statcategory",
+   "category": "地面載具",
+   "guid": "1F37F90F-F85E-A4EA-0CA0-977FBC04DB6C",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/124/60/USADodgeScoutCar-843c9c16.png",
+   "label": "Transport - Cars - Dodge Scout Car",
+   "name": "M30 偵察車",
+   "order": 11000,
+   "sort_order": 10,
+   "stats": {
+    "destroyed": "c__trvCaDodg_di_g",
+    "kills": "c_trvCaDodg__ki_g",
+    "seconds": "c_trvCaDodg__si_g"
+   }
+  },
+  "trvCaM37": {
+   "cat": "player_statcategory",
+   "category": "地面載具",
+   "guid": "A9D9062B-FFEC-429E-9DD5-E24EB9D9C51B",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/105/76/AHU_Mercedes_37_95-69b407d2.png",
+   "label": "Transport - Cars - Mercedes 37 95",
+   "name": "37/95 偵察車",
+   "order": 11001,
+   "sort_order": 10,
+   "stats": {
+    "destroyed": "c__trvCaM37_di_g",
+    "kills": "c_trvCaM37__ki_g",
+    "seconds": "c_trvCaM37__si_g"
+   }
+  },
+  "trvMo18J": {
+   "cat": "player_statcategory",
+   "category": "地面載具",
+   "guid": "56C8EC6A-6667-547E-8393-B047A1BCB730",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/39/80/USAHarleyDavidsson18J-27b0d7ef.png",
+   "label": "Transport - Motorcycles - Harley Davidsson 18J",
+   "name": "MC 18J 附邊車摩托車",
+   "order": 11003,
+   "sort_order": 10,
+   "stats": {
+    "destroyed": "c__trvMo18J_di_g",
+    "kills": "c_trvMo18J__ki_g",
+    "seconds": "c_trvMo18J__si_g"
+   }
+  },
+  "trvMoNSU": {
+   "cat": "player_statcategory",
+   "category": "地面載具",
+   "guid": "41A7B28A-FE39-4FC8-9AA3-9AD7BC4F6A3C",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/31/90/GER_NSU_1914-e1a63515.png",
+   "label": "Transport - Motorcycles - NSU",
+   "name": "MC 3.5HP 附邊車摩托車",
+   "order": 11004,
+   "sort_order": 10,
+   "stats": {
+    "destroyed": "c__trvMoNSU_di_g",
+    "kills": "c_trvMoNSU__ki_g",
+    "seconds": "c_trvMoNSU__si_g"
+   }
+  }
+ },
+ "weapons": {
+  "aeqmair": {
+   "cat": "player_statcategory",
+   "category": "配備",
+   "guid": "C71A02C3-608E-42AA-9179-A4324A4D4539",
+   "image": "[BB_PREFIX]/gamedata/tunguska/119/55/MortarAirburst-77c9647f.png",
+   "label": "Equipment - Mortars - AIR",
+   "name": "迫擊砲（空爆）",
+   "order": 1023,
+   "stats": {
+    "destroyed": "c__aeqmair_di_g",
+    "kills": "c_aeqmair__ki_g",
+    "seconds": "c_aeqmair__si_g"
+   }
+  },
+  "aeqmhe": {
+   "cat": "player_statcategory",
+   "category": "配備",
+   "guid": "8BD0FABD-DCCE-4031-8156-B77866FCE1A0",
+   "image": "[BB_PREFIX]/gamedata/tunguska/124/29/GadgetMortar-84e30045.png",
+   "label": "Equipment - Mortars - HE",
+   "name": "迫擊砲（高爆）",
+   "order": 1000,
+   "stats": {
+    "destroyed": "c__aeqmhe_di_g",
+    "kills": "c_aeqmhe__ki_g",
+    "seconds": "c_aeqmhe__si_g"
+   }
+  },
+  "mWPry": {
+   "cat": "player_weapons4",
+   "category": "近戰武器",
+   "guid": "7CB43200-5E40-40FB-89FD-5B550AC2879F",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/124/3/PrybarHatchet-840332e7.png",
+   "label": "Melee - Prybar",
+   "name": "撬棍",
+   "order": 6040,
+   "stats": {
+    "headshots": "c__mWPry_hsh_g",
+    "hits": "c_mWPry__shw_g",
+    "kills": "c_mWPry__kw_g",
+    "seconds": "c_mWPry__sw_g",
+    "shots": "c_mWPry__sfw_g"
+   }
+  },
+  "wHBObrez": {
+   "cat": "player_weapons1",
+   "category": "佩槍",
+   "guid": "84AF0AF5-D981-48BE-8665-CC24A278DA6E",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/12/122/ObrezPistol-0c86b6ed.png",
+   "label": "Handgun - Bolt - Obrez",
+   "name": "Obrez 手槍",
+   "order": 4019,
+   "stats": {
+    "headshots": "c__wHBObrez_hsh_g",
+    "hits": "c_wHBObrez__shw_g",
+    "kills": "c_wHBObrez__kw_g",
+    "seconds": "c_wHBObrez__sw_g",
+    "shots": "c_wHBObrez__sfw_g"
+   }
+  },
+  "wHSBer": {
+   "cat": "player_weapons1",
+   "category": "佩槍",
+   "guid": "101FAD96-0E8B-4AB2-9299-299A15CB5BF1",
+   "image": "[BB_PREFIX]/gamedata/tunguska/30/61/Beretta1915-e2c3c8d8.png",
+   "label": "Handgun - Semi - Beretta M1915",
+   "name": "Modello 1915",
+   "order": 4010,
+   "stats": {
+    "headshots": "c__wHSBer_hsh_g",
+    "hits": "c_wHSBer__shw_g",
+    "kills": "c_wHSBer__kw_g",
+    "seconds": "c_wHSBer__sw_g",
+    "shots": "c_wHSBer__sfw_g"
+   }
+  },
+  "wHSBodeo": {
+   "cat": "player_weapons1",
+   "category": "佩槍",
+   "guid": "F08BC756-2600-4834-BDBA-4E53C4A24E1D",
+   "image": "[BB_PREFIX]/gamedata/tunguska/90/34/Bodeo1889-a62282b6.png",
+   "label": "Handgun - Revolver - Bodeo",
+   "name": "Bodeo 1889",
+   "order": 4005,
+   "stats": {
+    "headshots": "c__wHSBodeo_hsh_g",
+    "hits": "c_wHSBodeo__shw_g",
+    "kills": "c_wHSBodeo__kw_g",
+    "seconds": "c_wHSBodeo__sw_g",
+    "shots": "c_wHSBodeo__sfw_g"
+   }
+  },
+  "wHSBull": {
+   "cat": "player_weapons1",
+   "category": "佩槍",
+   "guid": "B8EA5E4D-5B6A-9958-473F-20E8B2088CFD",
+   "image": "[BB_PREFIX]/gamedata/tunguska/39/92/Bulldog-d95cfd90.png",
+   "label": "Handgun - Revolver - Bulldog",
+   "name": "鬥牛犬左輪手槍",
+   "order": 4006,
+   "stats": {
+    "headshots": "c__wHSBull_hsh_g",
+    "hits": "c_wHSBull__shw_g",
+    "kills": "c_wHSBull__kw_g",
+    "seconds": "c_wHSBull__sw_g",
+    "shots": "c_wHSBull__sfw_g"
+   }
+  },
+  "wHSC93": {
+   "cat": "player_weapons1",
+   "category": "佩槍",
+   "guid": "4DD1FAD2-1CF1-496C-BE29-BDAEBC931D74",
+   "image": "[BB_PREFIX]/gamedata/tunguska/43/92/BorchardtC93-2b5cc5c7.png",
+   "label": "Handgun - Semi - Borchardt C93",
+   "name": "C93",
+   "order": 4004,
+   "stats": {
+    "headshots": "c__wHSC93_hsh_g",
+    "hits": "c_wHSC93__shw_g",
+    "kills": "c_wHSC93__kw_g",
+    "seconds": "c_wHSC93__sw_g",
+    "shots": "c_wHSC93__sfw_g"
+   }
+  },
+  "wHSColt": {
+   "cat": "player_weapons1",
+   "category": "佩槍",
+   "guid": "3CE86D7C-9951-4B25-9FD6-A97CA94F4A20",
+   "image": "[BB_PREFIX]/gamedata/tunguska/19/50/Colt1911-ed324bf1.png",
+   "label": "Handgun - Semi - Colt 1911",
+   "name": "M1911",
+   "order": 4014,
+   "stats": {
+    "headshots": "c__wHSColt_hsh_g",
+    "hits": "c_wHSColt__shw_g",
+    "kills": "c_wHSColt__kw_g",
+    "seconds": "c_wHSColt__sw_g",
+    "shots": "c_wHSColt__sfw_g"
+   }
+  },
+  "wHSColtA": {
+   "cat": "player_weapons5",
+   "category": "佩槍",
+   "guid": "CF71A87B-2BD4-4AF8-AE80-D3B9F6F5CEDE",
+   "image": "[BB_PREFIX]/gamedata/tunguska/19/50/Colt1911-ed324bf1.png",
+   "label": "Handgun - Semi - Colt 1911A1",
+   "name": "M1911A1",
+   "order": 4023,
+   "stats": {
+    "headshots": "c__wHSColtA_hsh_g",
+    "hits": "c_wHSColtA__shw_g",
+    "kills": "c_wHSColtA__kw_g",
+    "seconds": "c_wHSColtA__sw_g",
+    "shots": "c_wHSColtA__sfw_g"
+   }
+  },
+  "wHSColtH": {
+   "cat": "player_weapons1",
+   "category": "佩槍",
+   "guid": "AF3F421B-F68B-401D-94B4-B982EE6C8A91",
+   "image": "[BB_PREFIX]/gamedata/tunguska/19/50/Colt1911-ed324bf1.png",
+   "label": "Handgun - Semi - Colt 1911 Hellfighter",
+   "name": "地獄戰士 M1911",
+   "order": 4009,
+   "stats": {
+    "headshots": "c__wHSColtH_hsh_g",
+    "hits": "c_wHSColtH__shw_g",
+    "kills": "c_wHSColtH__kw_g",
+    "seconds": "c_wHSColtH__sw_g",
+    "shots": "c_wHSColtH__sfw_g"
+   }
+  },
+  "wHSColtT": {
+   "cat": "player_weapons1",
+   "category": "佩槍",
+   "image": null,
+   "label": "Handgun - Semi - Colt 1911 Triforce",
+   "name": "Triforce M1911",
+   "order": 99242,
+   "stats": {
+    "headshots": "c__wHSColtT_hsh_g",
+    "hits": "c_wHSColtT__shw_g",
+    "kills": "c_wHSColtT__kw_g",
+    "seconds": "c_wHSColtT__sw_g",
+    "shots": "c_wHSColtT__sfw_g"
+   }
+  },
+  "wHSFN1903": {
+   "cat": "player_weapons1",
+   "category": "佩槍",
+   "guid": "A666D907-0F72-4641-B43A-6AA756FFBC03",
+   "image": "[BB_PREFIX]/gamedata/tunguska/96/2/Mle1903-a0fe1ec3.png",
+   "label": "Handgun - Semi - FN1903",
+   "name": "Mle 1903",
+   "order": 4016,
+   "stats": {
+    "headshots": "c__wHSFN1903_hsh_g",
+    "hits": "c_wHSFN1903__shw_g",
+    "kills": "c_wHSFN1903__kw_g",
+    "seconds": "c_wHSFN1903__sw_g",
+    "shots": "c_wHSFN1903__sfw_g"
+   }
+  },
+  "wHSFS": {
+   "cat": "player_weapons1",
+   "category": "佩槍",
+   "guid": "FAE1EA24-DFBE-3E0A-E525-BC20340FE196",
+   "image": "[BB_PREFIX]/gamedata/tunguska/22/91/FrommerStopAuto-ea5b918e.png",
+   "label": "Handgun - Semi - Frommer Stop",
+   "name": "費羅梅爾停止手槍",
+   "order": 4012,
+   "stats": {
+    "headshots": "c__wHSFS_hsh_g",
+    "hits": "c_wHSFS__shw_g",
+    "kills": "c_wHSFS__kw_g",
+    "seconds": "c_wHSFS__sw_g",
+    "shots": "c_wHSFS__sfw_g"
+   }
+  },
+  "wHSGasser": {
+   "cat": "player_weapons1",
+   "category": "佩槍",
+   "guid": "F5F1FAA5-1791-441F-BDB5-82F9A4D14BAF",
+   "image": "[BB_PREFIX]/gamedata/tunguska/0/71/GasserM1870-00471df4.png",
+   "label": "Handgun - Revolver - Gasser M1870",
+   "name": "加塞 M1870",
+   "order": 4011,
+   "stats": {
+    "headshots": "c__wHSGasser_hsh_g",
+    "hits": "c_wHSGasser__shw_g",
+    "kills": "c_wHSGasser__kw_g",
+    "seconds": "c_wHSGasser__sw_g",
+    "shots": "c_wHSGasser__sfw_g"
+   }
+  },
+  "wHSHL": {
+   "cat": "player_weapons1",
+   "category": "佩槍",
+   "guid": "E0C46F74-92CF-0C0C-E475-806B37E14706",
+   "image": "[BB_PREFIX]/gamedata/tunguska/26/21/Hammerless-e61505d4.png",
+   "label": "Handgun - Semi - Colt Pocket Hammerless",
+   "name": "1903 Hammerless",
+   "order": 4008,
+   "stats": {
+    "headshots": "c__wHSHL_hsh_g",
+    "hits": "c_wHSHL__shw_g",
+    "kills": "c_wHSHL__kw_g",
+    "seconds": "c_wHSHL__sw_g",
+    "shots": "c_wHSHL__sfw_g"
+   }
+  },
+  "wHSKoli": {
+   "cat": "player_weapons1",
+   "category": "佩槍",
+   "guid": "33F9105C-40C7-3980-7982-ADD4B9F6311A",
+   "image": "[BB_PREFIX]/gamedata/tunguska/20/32/KolibriPistol-ec20b160.png",
+   "label": "Handgun - Semi - Kolibri",
+   "name": "Kolibri",
+   "order": 4015,
+   "stats": {
+    "headshots": "c__wHSKoli_hsh_g",
+    "hits": "c_wHSKoli__shw_g",
+    "kills": "c_wHSKoli__kw_g",
+    "seconds": "c_wHSKoli__sw_g",
+    "shots": "c_wHSKoli__sfw_g"
+   }
+  },
+  "wHSLHow": {
+   "cat": "player_weapons1",
+   "category": "佩槍",
+   "guid": "25B28666-332D-4FCB-AD68-18184AD37702",
+   "image": "[BB_PREFIX]/gamedata/tunguska/111/0/LancasterHowdah-9100578c.png",
+   "label": "Handgun - Semi - Lancaster Howdah",
+   "name": "Howdah 手槍",
+   "order": 4014,
+   "stats": {
+    "headshots": "c__wHSLHow_hsh_g",
+    "hits": "c_wHSLHow__shw_g",
+    "kills": "c_wHSLHow__kw_g",
+    "seconds": "c_wHSLHow__sw_g",
+    "shots": "c_wHSLHow__sfw_g"
+   }
+  },
+  "wHSLugRB": {
+   "cat": "player_weapons1",
+   "category": "佩槍",
+   "guid": "B97A8C29-A567-437F-9B6C-9E1E8FD86BF9",
+   "image": "[BB_PREFIX]/gamedata/tunguska/127/7/LugerP08-7f07aa2d.png",
+   "label": "Handgun - Semi - Luger P08 PREORDER",
+   "name": "紅男爵的 P08",
+   "order": 4002,
+   "stats": {
+    "headshots": "c__wHSLugRB_hsh_g",
+    "hits": "c_wHSLugRB__shw_g",
+    "kills": "c_wHSLugRB__kw_g",
+    "seconds": "c_wHSLugRB__sw_g",
+    "shots": "c_wHSLugRB__sfw_g"
+   }
+  },
+  "wHSLuger": {
+   "cat": "player_weapons1",
+   "category": "佩槍",
+   "guid": "009736C2-B237-49AE-9DD1-E77AF7771FF2",
+   "image": "[BB_PREFIX]/gamedata/tunguska/127/7/LugerP08-7f07aa2d.png",
+   "label": "Handgun - Semi - Luger P08",
+   "name": "P08 手槍",
+   "order": 4017,
+   "stats": {
+    "headshots": "c__wHSLuger_hsh_g",
+    "hits": "c_wHSLuger__shw_g",
+    "kills": "c_wHSLuger__kw_g",
+    "seconds": "c_wHSLuger__sw_g",
+    "shots": "c_wHSLuger__sfw_g"
+   }
+  },
+  "wHSM14": {
+   "cat": "player_weapons1",
+   "category": "佩槍",
+   "guid": "8373B804-511A-AB86-256D-9CE36CE25BA5",
+   "image": "[BB_PREFIX]/gamedata/tunguska/83/95/Mauser1914-53a1954e.png",
+   "label": "Handgun - Semi - Mauser 1914",
+   "name": "Taschenpistole M1914",
+   "order": 4018,
+   "stats": {
+    "headshots": "c__wHSM14_hsh_g",
+    "hits": "c_wHSM14__shw_g",
+    "kills": "c_wHSM14__kw_g",
+    "seconds": "c_wHSM14__sw_g",
+    "shots": "c_wHSM14__sfw_g"
+   }
+  },
+  "wHSM1912": {
+   "cat": "player_weapons1",
+   "category": "佩槍",
+   "guid": "333D0B8C-404B-4B99-9588-B01736E0B742",
+   "image": "[BB_PREFIX]/gamedata/tunguska/92/100/SteyrM1912-a49c97dd.png",
+   "label": "Handgun - Semi - Steyr M1912",
+   "name": "Repetierpistole M1912",
+   "order": 4007,
+   "stats": {
+    "headshots": "c__wHSM1912_hsh_g",
+    "hits": "c_wHSM1912__shw_g",
+    "kills": "c_wHSM1912__kw_g",
+    "seconds": "c_wHSM1912__sw_g",
+    "shots": "c_wHSM1912__sfw_g"
+   }
+  },
+  "wHSMM3": {
+   "cat": "player_weapons1",
+   "category": "佩槍",
+   "guid": "87643E53-CD17-FFC4-167B-AA72301A323A",
+   "image": "[BB_PREFIX]/gamedata/tunguska/30/107/SmithWesson-e26b4f24.png",
+   "label": "Handgun - Revolver - SW Model 3",
+   "name": "3 號左輪手槍",
+   "order": 4013,
+   "stats": {
+    "headshots": "c__wHSMM3_hsh_g",
+    "hits": "c_wHSMM3__shw_g",
+    "kills": "c_wHSMM3__kw_g",
+    "seconds": "c_wHSMM3__sw_g",
+    "shots": "c_wHSMM3__sfw_g"
+   }
+  },
+  "wHSMars": {
+   "cat": "player_weapons1",
+   "category": "佩槍",
+   "guid": "E5A72AA0-02C9-40B8-A74D-D60C921D1288",
+   "image": "[BB_PREFIX]/gamedata/tunguska/127/38/MarsAutoPistol-7f2606e9.png",
+   "label": "Handgun - Semi - Mars",
+   "name": "Mars 自動手槍",
+   "order": 4000,
+   "stats": {
+    "headshots": "c__wHSMars_hsh_g",
+    "hits": "c_wHSMars__shw_g",
+    "kills": "c_wHSMars__kw_g",
+    "seconds": "c_wHSMars__sw_g",
+    "shots": "c_wHSMars__sfw_g"
+   }
+  },
+  "wHSMauser": {
+   "cat": "player_weapons1",
+   "category": "佩槍",
+   "guid": "169D5DA6-8DB5-48B3-8101-DB208C4BB4DD",
+   "image": "[BB_PREFIX]/gamedata/tunguska/82/125/MauserC96-52835b08.png",
+   "label": "Handgun - Semi - Mauser C96",
+   "name": "C96",
+   "order": 4003,
+   "stats": {
+    "headshots": "c__wHSMauser_hsh_g",
+    "hits": "c_wHSMauser__shw_g",
+    "kills": "c_wHSMauser__kw_g",
+    "seconds": "c_wHSMauser__sw_g",
+    "shots": "c_wHSMauser__sfw_g"
+   }
+  },
+  "wHSNag": {
+   "cat": "player_weapons1",
+   "category": "佩槍",
+   "guid": "64503392-4DDF-435D-8ABA-22730383E073",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/5/3/NagantM1895-05035f4a.png",
+   "label": "Handgun - Revolver - Nagant M1895",
+   "name": "納甘左輪手槍",
+   "order": 4020,
+   "stats": {
+    "headshots": "c__wHSNag_hsh_g",
+    "hits": "c_wHSNag__shw_g",
+    "kills": "c_wHSNag__kw_g",
+    "seconds": "c_wHSNag__sw_g",
+    "shots": "c_wHSNag__sfw_g"
+   }
+  },
+  "wHSSAA": {
+   "cat": "player_weapons5",
+   "category": "佩槍",
+   "image": null,
+   "label": "Handgun - Revolver - Colt SAA",
+   "name": "維和者",
+   "order": 99250,
+   "stats": {
+    "headshots": "c__wHSSAA_hsh_g",
+    "hits": "c_wHSSAA__shw_g",
+    "kills": "c_wHSSAA__kw_g",
+    "seconds": "c_wHSSAA__sw_g",
+    "shots": "c_wHSSAA__sfw_g"
+   }
+  },
+  "wHSWMVI": {
+   "cat": "player_weapons4",
+   "category": "佩槍",
+   "guid": "8680EFC0-CA02-43E0-8CA2-591FB279DD95",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/38/127/Webley_MK6-da81b474.png",
+   "label": "Handgun - Revolver - Webley Mk VI",
+   "name": "Mk VI 左輪手槍",
+   "order": 4021,
+   "stats": {
+    "headshots": "c__wHSWMVI_hsh_g",
+    "hits": "c_wHSWMVI__shw_g",
+    "kills": "c_wHSWMVI__kw_g",
+    "seconds": "c_wHSWMVI__sw_g",
+    "shots": "c_wHSWMVI__sfw_g"
+   }
+  },
+  "wHSWeb": {
+   "cat": "player_weapons1",
+   "category": "佩槍",
+   "guid": "447B3866-1241-42D7-8AB2-384727CFE624",
+   "image": "[BB_PREFIX]/gamedata/tunguska/91/126/WebleyFosberyAutoRevolver-a57ea28c.png",
+   "label": "Handgun - Revolver - Web-Fosbery Auto Revolver",
+   "name": "自動左輪手槍",
+   "order": 4001,
+   "stats": {
+    "headshots": "c__wHSWeb_hsh_g",
+    "hits": "c_wHSWeb__shw_g",
+    "kills": "c_wHSWeb__kw_g",
+    "seconds": "c_wHSWeb__sw_g",
+    "shots": "c_wHSWeb__sfw_g"
+   }
+  },
+  "wLMG0818": {
+   "cat": "player_weapons4",
+   "category": "輕機槍",
+   "guid": "57D820BF-38CC-4F62-8069-617E063971A0",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/116/60/LMG_08-18-743c1aa8.png",
+   "label": "MG - LMG - 0818",
+   "name": "輕機槍 08/18（輕量化）",
+   "order": 5025,
+   "stats": {
+    "headshots": "c__wLMG0818_hsh_g",
+    "hits": "c_wLMG0818__shw_g",
+    "kills": "c_wLMG0818__kw_g",
+    "seconds": "c_wLMG0818__sw_g",
+    "shots": "c_wLMG0818__sfw_g"
+   }
+  },
+  "wLMG0818S": {
+   "cat": "player_weapons4",
+   "category": "輕機槍",
+   "guid": "16DF4163-78E0-4926-929A-E6052E04BE7F",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/116/60/LMG_08-18-743c1aa8.png",
+   "label": "MG - LMG - 0818 Suppressive",
+   "name": "輕機槍 08/18（壓制）",
+   "order": 5026,
+   "stats": {
+    "headshots": "c__wLMG0818S_hsh_g",
+    "hits": "c_wLMG0818S__shw_g",
+    "kills": "c_wLMG0818S__kw_g",
+    "seconds": "c_wLMG0818S__sw_g",
+    "shots": "c_wLMG0818S__sfw_g"
+   }
+  },
+  "wLMGBARA": {
+   "cat": "player_weapons5",
+   "category": "輕機槍",
+   "guid": "AB16FE32-BC40-4AB0-9F8C-07AADBBC1E4E",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/72/57/BARM1918A2-48c755b2.png",
+   "label": "MG - LMG - BAR 1918 A2A2",
+   "name": "M1918A2 白朗寧自動步槍",
+   "order": 5027,
+   "stats": {
+    "headshots": "c__wLMGBARA_hsh_g",
+    "hits": "c_wLMGBARA__shw_g",
+    "kills": "c_wLMGBARA__kw_g",
+    "seconds": "c_wLMGBARA__sw_g",
+    "shots": "c_wLMGBARA__sfw_g"
+   }
+  },
+  "wLMGBARB": {
+   "cat": "player_weapons2",
+   "category": "輕機槍",
+   "guid": "2D800408-99C2-4A84-9B8E-C713F4B6C450",
+   "image": "[BB_PREFIX]/gamedata/tunguska/60/20/Barm1918-3c14511c.png",
+   "label": "MG - LMG - BAR 1918 Bipod",
+   "name": "M1918 白朗寧自動步槍（望遠瞄具）",
+   "order": 5005,
+   "stats": {
+    "headshots": "c__wLMGBARB_hsh_g",
+    "hits": "c_wLMGBARB__shw_g",
+    "kills": "c_wLMGBARB__kw_g",
+    "seconds": "c_wLMGBARB__sw_g",
+    "shots": "c_wLMGBARB__sfw_g"
+   }
+  },
+  "wLMGBARS": {
+   "cat": "player_weapons2",
+   "category": "輕機槍",
+   "guid": "7D987B4E-A08C-41AD-A68B-245FBB5B10EF",
+   "image": "[BB_PREFIX]/gamedata/tunguska/60/20/Barm1918-3c14511c.png",
+   "label": "MG - LMG - BAR 1918 Stability",
+   "name": "M1918 白朗寧自動步槍（衝鋒）",
+   "order": 5006,
+   "stats": {
+    "headshots": "c__wLMGBARS_hsh_g",
+    "hits": "c_wLMGBARS__shw_g",
+    "kills": "c_wLMGBARS__kw_g",
+    "seconds": "c_wLMGBARS__sw_g",
+    "shots": "c_wLMGBARS__sfw_g"
+   }
+  },
+  "wLMGBART": {
+   "cat": "player_weapons2",
+   "category": "輕機槍",
+   "guid": "3231A399-B1DB-4D04-B286-1338092424B9",
+   "image": "[BB_PREFIX]/gamedata/tunguska/60/20/Barm1918-3c14511c.png",
+   "label": "MG - LMG - BAR 1918 Trench",
+   "name": "M1918 白朗寧自動步槍（壕溝戰）",
+   "order": 5010,
+   "stats": {
+    "headshots": "c__wLMGBART_hsh_g",
+    "hits": "c_wLMGBART__shw_g",
+    "kills": "c_wLMGBART__kw_g",
+    "seconds": "c_wLMGBART__sw_g",
+    "shots": "c_wLMGBART__sfw_g"
+   }
+  },
+  "wLMGBerg": {
+   "cat": "player_weapons2",
+   "category": "輕機槍",
+   "guid": "64BE05D1-CE33-4DE5-9458-AB083C776635",
+   "image": "[BB_PREFIX]/gamedata/tunguska/119/26/Bergmann1915MG-891af31f.png",
+   "label": "MG - LMG - Bergman 1915 MG",
+   "name": "MG15 n.A.（輕量化）",
+   "order": 5015,
+   "stats": {
+    "headshots": "c__wLMGBerg_hsh_g",
+    "hits": "c_wLMGBerg__shw_g",
+    "kills": "c_wLMGBerg__kw_g",
+    "seconds": "c_wLMGBerg__sw_g",
+    "shots": "c_wLMGBerg__sfw_g"
+   }
+  },
+  "wLMGBergS": {
+   "cat": "player_weapons2",
+   "category": "輕機槍",
+   "guid": "FFD12D82-9187-4F1A-823F-0F61E766EC98",
+   "image": "[BB_PREFIX]/gamedata/tunguska/119/26/Bergmann1915MG-891af31f.png",
+   "label": "MG - LMG - Bergman 1915 MG Stab",
+   "name": "MG15 n.A.（衝鋒）",
+   "order": 5013,
+   "stats": {
+    "headshots": "c__wLMGBergS_hsh_g",
+    "hits": "c_wLMGBergS__shw_g",
+    "kills": "c_wLMGBergS__kw_g",
+    "seconds": "c_wLMGBergS__sw_g",
+    "shots": "c_wLMGBergS__sfw_g"
+   }
+  },
+  "wLMGBergU": {
+   "cat": "player_weapons2",
+   "category": "輕機槍",
+   "guid": "2F0B54CD-CA30-4E9C-9384-5E967C478845",
+   "image": "[BB_PREFIX]/gamedata/tunguska/119/26/Bergmann1915MG-891af31f.png",
+   "label": "MG - LMG - Bergman 1915 MG Sup",
+   "name": "MG15 n.A.（壓制）",
+   "order": 5012,
+   "stats": {
+    "headshots": "c__wLMGBergU_hsh_g",
+    "hits": "c_wLMGBergU__shw_g",
+    "kills": "c_wLMGBergU__kw_g",
+    "seconds": "c_wLMGBergU__sw_g",
+    "shots": "c_wLMGBergU__sfw_g"
+   }
+  },
+  "wLMGBro": {
+   "cat": "player_weapons3",
+   "category": "輕機槍",
+   "guid": "BE397913-E33F-40B2-87C4-F7B92426AAA1",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/97/41/Browning1917-61290bc9.png",
+   "label": "MG - LMG - Browning 1917 MG",
+   "name": "M1917 機槍（輕量化）",
+   "order": 5023,
+   "stats": {
+    "headshots": "c__wLMGBro_hsh_g",
+    "hits": "c_wLMGBro__shw_g",
+    "kills": "c_wLMGBro__kw_g",
+    "seconds": "c_wLMGBro__sw_g",
+    "shots": "c_wLMGBro__sfw_g"
+   }
+  },
+  "wLMGBroU": {
+   "cat": "player_weapons3",
+   "category": "輕機槍",
+   "guid": "96B134CC-5EDA-436A-9913-5ED429C696DD",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/97/41/Browning1917-61290bc9.png",
+   "label": "MG - LMG - Browning 1917 MG Sup",
+   "name": "M1917 機槍（望遠瞄具）",
+   "order": 5024,
+   "stats": {
+    "headshots": "c__wLMGBroU_hsh_g",
+    "hits": "c_wLMGBroU__shw_g",
+    "kills": "c_wLMGBroU__kw_g",
+    "seconds": "c_wLMGBroU__sw_g",
+    "shots": "c_wLMGBroU__sfw_g"
+   }
+  },
+  "wLMGBurtO": {
+   "cat": "player_weapons5",
+   "category": "輕機槍",
+   "image": null,
+   "label": "MG - LMG - Burton LMG Optical",
+   "name": "伯頓 LMR（瞄準鏡）",
+   "order": 99251,
+   "stats": {
+    "headshots": "c__wLMGBurtO_hsh_g",
+    "hits": "c_wLMGBurtO__shw_g",
+    "kills": "c_wLMGBurtO__kw_g",
+    "seconds": "c_wLMGBurtO__sw_g",
+    "shots": "c_wLMGBurtO__sfw_g"
+   }
+  },
+  "wLMGBurtT": {
+   "cat": "player_weapons5",
+   "category": "輕機槍",
+   "image": null,
+   "label": "MG - LMG - Burton LMG Trench",
+   "name": "伯頓 LMR（壕溝）",
+   "order": 99252,
+   "stats": {
+    "headshots": "c__wLMGBurtT_hsh_g",
+    "hits": "c_wLMGBurtT__shw_g",
+    "kills": "c_wLMGBurtT__kw_g",
+    "seconds": "c_wLMGBurtT__sw_g",
+    "shots": "c_wLMGBurtT__sfw_g"
+   }
+  },
+  "wLMGCh": {
+   "cat": "player_weapons2",
+   "category": "輕機槍",
+   "guid": "20BB8B94-1A01-4D8E-A2C7-7D19CE440802",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/120/122/Chauchat-787ad478.png",
+   "label": "MG - LMG - Chauchat",
+   "name": "紹沙輕機槍（輕量化）",
+   "order": 5017,
+   "stats": {
+    "headshots": "c__wLMGCh_hsh_g",
+    "hits": "c_wLMGCh__shw_g",
+    "kills": "c_wLMGCh__kw_g",
+    "seconds": "c_wLMGCh__sw_g",
+    "shots": "c_wLMGCh__sfw_g"
+   }
+  },
+  "wLMGChB": {
+   "cat": "player_weapons2",
+   "category": "輕機槍",
+   "guid": "2C12E5FE-909A-4F0C-99FD-B23FBD1A6B4C",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/120/122/Chauchat-787ad478.png",
+   "label": "MG - LMG - Chauchat Bipod",
+   "name": "紹沙輕機槍（望遠瞄具）",
+   "order": 5016,
+   "stats": {
+    "headshots": "c__wLMGChB_hsh_g",
+    "hits": "c_wLMGChB__shw_g",
+    "kills": "c_wLMGChB__kw_g",
+    "seconds": "c_wLMGChB__sw_g",
+    "shots": "c_wLMGChB__sfw_g"
+   }
+  },
+  "wLMGHotB": {
+   "cat": "player_weapons2",
+   "category": "輕機槍",
+   "guid": "94286083-BE6A-46C0-AFAF-011635458AAA",
+   "image": "[BB_PREFIX]/gamedata/tunguska/6/34/HotchkissLMG-06defda3.png",
+   "label": "MG - LMG - Hotchkiss M1909 Bipod",
+   "name": "M1909 貝內特·梅西耶機槍（望遠瞄具）",
+   "order": 5004,
+   "stats": {
+    "headshots": "c__wLMGHotB_hsh_g",
+    "hits": "c_wLMGHotB__shw_g",
+    "kills": "c_wLMGHotB__kw_g",
+    "seconds": "c_wLMGHotB__sw_g",
+    "shots": "c_wLMGHotB__sfw_g"
+   }
+  },
+  "wLMGHotR": {
+   "cat": "player_weapons2",
+   "category": "輕機槍",
+   "guid": "02721F8C-6901-4389-B56A-89C3AC93C889",
+   "image": "[BB_PREFIX]/gamedata/tunguska/6/34/HotchkissLMG-06defda3.png",
+   "label": "MG - LMG - Hotchkiss M1909 Range",
+   "name": "M1909 貝內特·梅西耶機槍（瞄準鏡）",
+   "order": 5014,
+   "stats": {
+    "headshots": "c__wLMGHotR_hsh_g",
+    "hits": "c_wLMGHotR__shw_g",
+    "kills": "c_wLMGHotR__kw_g",
+    "seconds": "c_wLMGHotR__sw_g",
+    "shots": "c_wLMGHotR__sfw_g"
+   }
+  },
+  "wLMGHotS": {
+   "cat": "player_weapons2",
+   "category": "輕機槍",
+   "guid": "465A4240-78EA-4648-868F-40EA06D5DC06",
+   "image": "[BB_PREFIX]/gamedata/tunguska/6/34/HotchkissLMG-06defda3.png",
+   "label": "MG - LMG - Hotchkiss M1909 Stab",
+   "name": "M1909 貝內特·梅西耶機槍（衝鋒）",
+   "order": 5001,
+   "stats": {
+    "headshots": "c__wLMGHotS_hsh_g",
+    "hits": "c_wLMGHotS__shw_g",
+    "kills": "c_wLMGHotS__kw_g",
+    "seconds": "c_wLMGHotS__sw_g",
+    "shots": "c_wLMGHotS__sfw_g"
+   }
+  },
+  "wLMGHuot": {
+   "cat": "player_weapons2",
+   "category": "輕機槍",
+   "guid": "5C2C5A64-6227-4FA3-A382-E9DD68C66DAD",
+   "image": "[BB_PREFIX]/gamedata/tunguska/74/73/HuotAutoRifle-4ab70c1a.png",
+   "label": "MG - LMG - Huot",
+   "name": "Huot 自動步槍（輕量化）",
+   "order": 5002,
+   "stats": {
+    "headshots": "c__wLMGHuot_hsh_g",
+    "hits": "c_wLMGHuot__shw_g",
+    "kills": "c_wLMGHuot__kw_g",
+    "seconds": "c_wLMGHuot__sw_g",
+    "shots": "c_wLMGHuot__sfw_g"
+   }
+  },
+  "wLMGHuotR": {
+   "cat": "player_weapons2",
+   "category": "輕機槍",
+   "guid": "EE0A0210-4B5F-48DC-A02F-5879C24B1580",
+   "image": "[BB_PREFIX]/gamedata/tunguska/74/73/HuotAutoRifle-4ab70c1a.png",
+   "label": "MG - LMG - Huot Range",
+   "name": "Huot 自動步槍（瞄準鏡）",
+   "order": 5018,
+   "stats": {
+    "headshots": "c__wLMGHuotR_hsh_g",
+    "hits": "c_wLMGHuotR__shw_g",
+    "kills": "c_wLMGHuotR__kw_g",
+    "seconds": "c_wLMGHuotR__sw_g",
+    "shots": "c_wLMGHuotR__sfw_g"
+   }
+  },
+  "wLMGLew": {
+   "cat": "player_weapons2",
+   "category": "輕機槍",
+   "guid": "B79B965E-E080-475D-A1CC-2432DE5F3BF5",
+   "image": "[BB_PREFIX]/gamedata/tunguska/125/44/LewisLMG-832c29e8.png",
+   "label": "MG - LMG - Lewis",
+   "name": "路易士機槍（輕量化）",
+   "order": 5003,
+   "stats": {
+    "headshots": "c__wLMGLew_hsh_g",
+    "hits": "c_wLMGLew__shw_g",
+    "kills": "c_wLMGLew__kw_g",
+    "seconds": "c_wLMGLew__sw_g",
+    "shots": "c_wLMGLew__sfw_g"
+   }
+  },
+  "wLMGLewR": {
+   "cat": "player_weapons2",
+   "category": "輕機槍",
+   "guid": "CCE43311-3362-4D84-91D0-6A3D83B9BA17",
+   "image": "[BB_PREFIX]/gamedata/tunguska/125/44/LewisLMG-832c29e8.png",
+   "label": "MG - LMG - Lewis Range",
+   "name": "路易士機槍（瞄準鏡）",
+   "order": 5011,
+   "stats": {
+    "headshots": "c__wLMGLewR_hsh_g",
+    "hits": "c_wLMGLewR__shw_g",
+    "kills": "c_wLMGLewR__kw_g",
+    "seconds": "c_wLMGLewR__sw_g",
+    "shots": "c_wLMGLewR__sfw_g"
+   }
+  },
+  "wLMGLewU": {
+   "cat": "player_weapons2",
+   "category": "輕機槍",
+   "guid": "B524273C-77FD-433E-8A40-270C00A4AE67",
+   "image": "[BB_PREFIX]/gamedata/tunguska/125/44/LewisLMG-832c29e8.png",
+   "label": "MG - LMG - Lewis Sup",
+   "name": "路易士機槍（壓制）",
+   "order": 5007,
+   "stats": {
+    "headshots": "c__wLMGLewU_hsh_g",
+    "hits": "c_wLMGLewU__shw_g",
+    "kills": "c_wLMGLewU__kw_g",
+    "seconds": "c_wLMGLewU__sw_g",
+    "shots": "c_wLMGLewU__sfw_g"
+   }
+  },
+  "wLMGMads": {
+   "cat": "player_weapons2",
+   "category": "輕機槍",
+   "guid": "E2812647-A994-413B-B24F-24CAF2578551",
+   "image": "[BB_PREFIX]/gamedata/tunguska/81/28/MadsenMG-51e41523.png",
+   "label": "MG - LMG - Madsen MG",
+   "name": "麥德森機槍（輕量化）",
+   "order": 5009,
+   "stats": {
+    "headshots": "c__wLMGMads_hsh_g",
+    "hits": "c_wLMGMads__shw_g",
+    "kills": "c_wLMGMads__kw_g",
+    "seconds": "c_wLMGMads__sw_g",
+    "shots": "c_wLMGMads__sfw_g"
+   }
+  },
+  "wLMGMadsS": {
+   "cat": "player_weapons2",
+   "category": "輕機槍",
+   "guid": "6E9863F2-2A32-4A0A-8F6C-BBC668044B15",
+   "image": "[BB_PREFIX]/gamedata/tunguska/81/28/MadsenMG-51e41523.png",
+   "label": "MG - LMG - Madsen MG Stab",
+   "name": "麥德森機槍（衝鋒）",
+   "order": 5008,
+   "stats": {
+    "headshots": "c__wLMGMadsS_hsh_g",
+    "hits": "c_wLMGMadsS__shw_g",
+    "kills": "c_wLMGMadsS__kw_g",
+    "seconds": "c_wLMGMadsS__sw_g",
+    "shots": "c_wLMGMadsS__sfw_g"
+   }
+  },
+  "wLMGMadsT": {
+   "cat": "player_weapons2",
+   "category": "輕機槍",
+   "guid": "75DEC4E1-9A85-43A3-BBDE-9908F7A65D23",
+   "image": "[BB_PREFIX]/gamedata/tunguska/81/28/MadsenMG-51e41523.png",
+   "label": "MG - LMG - Madsen MG Trench",
+   "name": "麥德森機槍（壕溝戰）",
+   "order": 5000,
+   "stats": {
+    "headshots": "c__wLMGMadsT_hsh_g",
+    "hits": "c_wLMGMadsT__shw_g",
+    "kills": "c_wLMGMadsT__kw_g",
+    "seconds": "c_wLMGMadsT__sw_g",
+    "shots": "c_wLMGMadsT__sfw_g"
+   }
+  },
+  "wLMGPara": {
+   "cat": "player_weapons2",
+   "category": "輕機槍",
+   "guid": "37207FD2-BD0C-460A-A065-6D8A5DEE2334",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/9/36/ParabellumMG1417-09dccd5b.png",
+   "label": "MG - LMG - Parabellum MG14/17",
+   "name": "Parabellum MG14/17（輕量化）",
+   "order": 5021,
+   "stats": {
+    "headshots": "c__wLMGPara_hsh_g",
+    "hits": "c_wLMGPara__shw_g",
+    "kills": "c_wLMGPara__kw_g",
+    "seconds": "c_wLMGPara__sw_g",
+    "shots": "c_wLMGPara__sfw_g"
+   }
+  },
+  "wLMGParaU": {
+   "cat": "player_weapons2",
+   "category": "輕機槍",
+   "guid": "95BDD2DE-CF36-45E1-B2F6-1DC5B8F8E632",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/9/36/ParabellumMG1417-09dccd5b.png",
+   "label": "MG - LMG - Parabellum MG14/17 Suppressive",
+   "name": "Parabellum MG14/17（壓制）",
+   "order": 5022,
+   "stats": {
+    "headshots": "c__wLMGParaU_hsh_g",
+    "hits": "c_wLMGParaU__shw_g",
+    "kills": "c_wLMGParaU__kw_g",
+    "seconds": "c_wLMGParaU__sw_g",
+    "shots": "c_wLMGParaU__sfw_g"
+   }
+  },
+  "wLMGPer": {
+   "cat": "player_weapons2",
+   "category": "輕機槍",
+   "guid": "406A7149-CFBC-4CD4-8ED7-B388AB1B5501",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/23/113/Perino1908-e97144b1.png",
+   "label": "MG - LMG - Perino M1908",
+   "name": "Perino Model 1908（輕量化）",
+   "order": 5020,
+   "stats": {
+    "headshots": "c__wLMGPer_hsh_g",
+    "hits": "c_wLMGPer__shw_g",
+    "kills": "c_wLMGPer__kw_g",
+    "seconds": "c_wLMGPer__sw_g",
+    "shots": "c_wLMGPer__sfw_g"
+   }
+  },
+  "wLMGPerD": {
+   "cat": "player_weapons2",
+   "category": "輕機槍",
+   "guid": "1B3EA625-4AFD-465D-AC16-16356B26BB82",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/23/113/Perino1908-e97144b1.png",
+   "label": "MG - LMG - Perino M1908 Defensive",
+   "name": "Perino Model 1908（防禦）",
+   "order": 5019,
+   "stats": {
+    "headshots": "c__wLMGPerD_hsh_g",
+    "hits": "c_wLMGPerD__shw_g",
+    "kills": "c_wLMGPerD__kw_g",
+    "seconds": "c_wLMGPerD__sw_g",
+    "shots": "c_wLMGPerD__sfw_g"
+   }
+  },
+  "wM1916": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "EF835C7F-2569-4524-BE13-4C4B5988A93F",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/65/37/GadgetScoutKnife-bf2558ea.png",
+   "label": "Melee - Scout Knife M1916",
+   "name": "野戰刀",
+   "order": 6015,
+   "stats": {
+    "headshots": "c__wM1916_hsh_g",
+    "hits": "c_wM1916__shw_g",
+    "kills": "c_wM1916__kw_g",
+    "seconds": "c_wM1916__sw_g",
+    "shots": "c_wM1916__sfw_g"
+   }
+  },
+  "wM1917": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "01EDB113-9A7A-4639-80C2-E557B0BFD95B",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/63/55/GadgetUSKnifeTrench-c1372100.png",
+   "label": "Melee - US Trench Knife M1917",
+   "name": "美軍戰壕刀",
+   "order": 6007,
+   "stats": {
+    "headshots": "c__wM1917_hsh_g",
+    "hits": "c_wM1917__shw_g",
+    "kills": "c_wM1917__kw_g",
+    "seconds": "c_wM1917__sw_g",
+    "shots": "c_wM1917__sfw_g"
+   }
+  },
+  "wMARA": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "image": null,
+   "label": "Melee - Ararebo",
+   "name": "霰棒",
+   "order": 99246,
+   "stats": {
+    "headshots": "c__wMARA_hsh_g",
+    "hits": "c_wMARA__shw_g",
+    "kills": "c_wMARA__kw_g",
+    "seconds": "c_wMARA__sw_g",
+    "shots": "c_wMARA__sfw_g"
+   }
+  },
+  "wMAmKn": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "EDC97B49-0582-4166-A489-B2171F26B392",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/111/118/GadgetAmericanKnifeTrench-6f8a415f.png",
+   "label": "Melee - American Trench Knife",
+   "name": "小型戰壕刀",
+   "order": 6004,
+   "stats": {
+    "headshots": "c__wMAmKn_hsh_g",
+    "hits": "c_wMAmKn__shw_g",
+    "kills": "c_wMAmKn__kw_g",
+    "seconds": "c_wMAmKn__sw_g",
+    "shots": "c_wMAmKn__sfw_g"
+   }
+  },
+  "wMArd": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "6EE87AD3-DC0C-40A7-84FF-7558CD317557",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/62/78/ArditiDagger-c24e8858.png",
+   "label": "Melee - Arditi Dagger",
+   "name": "敢死隊匕首",
+   "order": 6025,
+   "stats": {
+    "headshots": "c__wMArd_hsh_g",
+    "hits": "c_wMArd__shw_g",
+    "kills": "c_wMArd__kw_g",
+    "seconds": "c_wMArd__sw_g",
+    "shots": "c_wMArd__sfw_g"
+   }
+  },
+  "wMAxe": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "F1A70E1E-8A1A-406F-B9EC-DA388A690513",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/26/30/GadgetPickAxe-1ae28c6c.png",
+   "label": "Melee - Pickaxe",
+   "name": "鶴嘴鋤",
+   "order": 6017,
+   "stats": {
+    "headshots": "c__wMAxe_hsh_g",
+    "hits": "c_wMAxe__shw_g",
+    "kills": "c_wMAxe__kw_g",
+    "seconds": "c_wMAxe__sw_g",
+    "shots": "c_wMAxe__sfw_g"
+   }
+  },
+  "wMBarb": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "917B1B48-21BC-4FCE-A45C-BDE2A1C561FB",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/81/52/GadgetBarbedWireBat-af34ba46.png",
+   "label": "Melee - Barbed Wire Club",
+   "name": "鐵絲木棒",
+   "order": 6037,
+   "stats": {
+    "headshots": "c__wMBarb_hsh_g",
+    "hits": "c_wMBarb__shw_g",
+    "kills": "c_wMBarb__kw_g",
+    "seconds": "c_wMBarb__sw_g",
+    "shots": "c_wMBarb__sfw_g"
+   }
+  },
+  "wMBart": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "47EFBE34-8604-4811-BD9B-51415E04F251",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/24/26/GadgetBartekBludgeon-e81ac588.png",
+   "label": "Melee - Bartek Bludgeon",
+   "name": "鮑爾泰克巨木棒",
+   "order": 6013,
+   "stats": {
+    "headshots": "c__wMBart_hsh_g",
+    "hits": "c_wMBart__shw_g",
+    "kills": "c_wMBart__kw_g",
+    "seconds": "c_wMBart__sw_g",
+    "shots": "c_wMBart__sfw_g"
+   }
+  },
+  "wMBeDag": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "624E46AC-B9C2-45B0-B193-8D74C9437EFA",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/100/89/GadgetBeduinDagger-6459a755.png",
+   "label": "Melee - Beduin Dagger",
+   "name": "貝都因匕首",
+   "order": 6008,
+   "stats": {
+    "headshots": "c__wMBeDag_hsh_g",
+    "hits": "c_wMBeDag__shw_g",
+    "kills": "c_wMBeDag__kw_g",
+    "seconds": "c_wMBeDag__sw_g",
+    "shots": "c_wMBeDag__sfw_g"
+   }
+  },
+  "wMBill": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "45629BFF-8046-4C75-9C39-BE10C0866C41",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/65/89/Billhook-bf59500e.png",
+   "label": "Melee - Billhook",
+   "name": "鉤鐮",
+   "order": 6022,
+   "stats": {
+    "headshots": "c__wMBill_hsh_g",
+    "hits": "c_wMBill__shw_g",
+    "kills": "c_wMBill__kw_g",
+    "seconds": "c_wMBill__sw_g",
+    "shots": "c_wMBill__sfw_g"
+   }
+  },
+  "wMBolo": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "60538A4D-7E4A-4755-BC4E-CF625691A3EB",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/82/28/GadgetBoloknife-52e4de56.png",
+   "label": "Melee - Bolo Knife",
+   "name": "地獄戰士雙刃短刀",
+   "order": 6006,
+   "stats": {
+    "headshots": "c__wMBolo_hsh_g",
+    "hits": "c_wMBolo__shw_g",
+    "kills": "c_wMBolo__kw_g",
+    "seconds": "c_wMBolo__sw_g",
+    "shots": "c_wMBolo__sfw_g"
+   }
+  },
+  "wMBott": {
+   "cat": "player_weapons4",
+   "category": "近戰武器",
+   "guid": "7B0EEEF0-5C96-4766-8B49-AE48EB4D9937",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/63/75/BottleBroken-3fb5a1db.png",
+   "label": "Melee - Broken Bottle",
+   "name": "碎酒瓶",
+   "order": 6041,
+   "stats": {
+    "headshots": "c__wMBott_hsh_g",
+    "hits": "c_wMBott__shw_g",
+    "kills": "c_wMBott__kw_g",
+    "seconds": "c_wMBott__sw_g",
+    "shots": "c_wMBott__sfw_g"
+   }
+  },
+  "wMBottUn": {
+   "cat": "player_weapons4",
+   "category": "近戰武器",
+   "guid": "FA7A0B58-1929-4812-8BB6-ABE00CE2387C",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/116/58/WholeBottle-8c3a56c1.png",
+   "label": "Melee - Bottle",
+   "name": "酒瓶",
+   "order": 6041,
+   "stats": {
+    "headshots": "c__wMBottUn_hsh_g",
+    "hits": "c_wMBottUn__shw_g",
+    "kills": "c_wMBottUn__kw_g",
+    "seconds": "c_wMBottUn__sw_g",
+    "shots": "c_wMBottUn__sfw_g"
+   }
+  },
+  "wMCavL": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "CB3DE34F-3706-42BD-B7E6-00D54EA6B936",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/118/57/GadgetLance-8a390645.png",
+   "label": "Melee - Lance Cavalry",
+   "name": "騎兵長槍",
+   "order": 6026,
+   "stats": {
+    "headshots": "c__wMCavL_hsh_g",
+    "hits": "c_wMCavL__shw_g",
+    "kills": "c_wMCavL__kw_g",
+    "seconds": "c_wMCavL__sw_g",
+    "shots": "c_wMCavL__sfw_g"
+   }
+  },
+  "wMCavLC": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "image": null,
+   "label": "Melee - Lance Cavalry Charge",
+   "name": "騎兵長槍（衝鋒）",
+   "order": 99244,
+   "stats": {
+    "headshots": "c__wMCavLC_hsh_g",
+    "hits": "c_wMCavLC__shw_g",
+    "kills": "c_wMCavLC__kw_g",
+    "seconds": "c_wMCavLC__sw_g",
+    "shots": "c_wMCavLC__sfw_g"
+   }
+  },
+  "wMCavS": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "A32A090F-16B9-4546-983A-43BE721BDA6B",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/105/98/GadgetSaber-9762402c.png",
+   "label": "Melee - Saber Cavalry",
+   "name": "騎兵軍刀",
+   "order": 6014,
+   "stats": {
+    "headshots": "c__wMCavS_hsh_g",
+    "hits": "c_wMCavS__shw_g",
+    "kills": "c_wMCavS__kw_g",
+    "seconds": "c_wMCavS__sw_g",
+    "shots": "c_wMCavS__sfw_g"
+   }
+  },
+  "wMCh": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "4E40014C-B574-41A7-AF7C-8FE4556AC201",
+   "image": "[BB_PREFIX]/gamedata/tunguska/53/19/GadgetBayonet-35ed4683.png",
+   "label": "Melee - Bayonet Charge",
+   "name": "刺刀衝鋒",
+   "order": 6011,
+   "stats": {
+    "headshots": "c__wMCh_hsh_g",
+    "hits": "c_wMCh__shw_g",
+    "kills": "c_wMCh__kw_g",
+    "seconds": "c_wMCh__sw_g",
+    "shots": "c_wMCh__sfw_g"
+   }
+  },
+  "wMClub": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "5ECF98B5-035C-4D9E-99DA-0B5802E343B6",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/69/103/GadgetClub-45678e7c.png",
+   "label": "Melee - Club",
+   "name": "棍棒",
+   "order": 6003,
+   "stats": {
+    "headshots": "c__wMClub_hsh_g",
+    "hits": "c_wMClub__shw_g",
+    "kills": "c_wMClub__kw_g",
+    "seconds": "c_wMClub__sw_g",
+    "shots": "c_wMClub__sfw_g"
+   }
+  },
+  "wMClvr": {
+   "cat": "player_weapons4",
+   "category": "近戰武器",
+   "guid": "42561396-096D-4B56-AA3E-F5EABA8E6147",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/96/57/MeatCleaver-a03992be.png",
+   "label": "Melee - Meat Cleaver",
+   "name": "切肉刀",
+   "order": 6039,
+   "stats": {
+    "headshots": "c__wMClvr_hsh_g",
+    "hits": "c_wMClvr__shw_g",
+    "kills": "c_wMClvr__kw_g",
+    "seconds": "c_wMClvr__sw_g",
+    "shots": "c_wMClvr__sfw_g"
+   }
+  },
+  "wMCogClub": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "CBFB454C-DBF2-41DB-A4BA-628F8FC14C34",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/60/13/Tankerclub-c4f39f04.png",
+   "label": "Melee - Cogwheel Club",
+   "name": "齒輪槌",
+   "order": 6023,
+   "stats": {
+    "headshots": "c__wMCogClub_hsh_g",
+    "hits": "c_wMCogClub__shw_g",
+    "kills": "c_wMCogClub__kw_g",
+    "seconds": "c_wMCogClub__sw_g",
+    "shots": "c_wMCogClub__sfw_g"
+   }
+  },
+  "wMCossack": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "5B8AFD98-8C0D-4846-91FF-3334A2C41062",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/53/5/CossackKnife-3505f2c8.png",
+   "label": "Melee - Cossack Dagger",
+   "name": "哥薩克匕首",
+   "order": 6027,
+   "stats": {
+    "headshots": "c__wMCossack_hsh_g",
+    "hits": "c_wMCossack__shw_g",
+    "kills": "c_wMCossack__kw_g",
+    "seconds": "c_wMCossack__sw_g",
+    "shots": "c_wMCossack__sfw_g"
+   }
+  },
+  "wMCoupe": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "688C92FA-A3DB-4519-A0C2-DE24CCF00EB0",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/1/14/FrenceCoupeCoupe-fff27e4a.png",
+   "label": "Melee - Coupe Coupe",
+   "name": "開山刀",
+   "order": 6032,
+   "stats": {
+    "headshots": "c__wMCoupe_hsh_g",
+    "hits": "c_wMCoupe__shw_g",
+    "kills": "c_wMCoupe__kw_g",
+    "seconds": "c_wMCoupe__sw_g",
+    "shots": "c_wMCoupe__sfw_g"
+   }
+  },
+  "wMFleur": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "5703EA77-6B58-492B-84A8-9E2C7858BDA8",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/5/65/TrenchFleur-05bf6060.png",
+   "label": "Melee - Trench Fleur",
+   "name": "戰壕鳶尾刀",
+   "order": 6020,
+   "stats": {
+    "headshots": "c__wMFleur_hsh_g",
+    "hits": "c_wMFleur__shw_g",
+    "kills": "c_wMFleur__kw_g",
+    "seconds": "c_wMFleur__sw_g",
+    "shots": "c_wMFleur__sfw_g"
+   }
+  },
+  "wMGren": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "E0F9C0D2-939A-4E89-AA8B-B3AF5ADA5C86",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/113/125/GrenadeClub-717d59b8.png",
+   "label": "Melee - Grenade Club",
+   "name": "啞彈棒",
+   "order": 6028,
+   "stats": {
+    "headshots": "c__wMGren_hsh_g",
+    "hits": "c_wMGren__shw_g",
+    "kills": "c_wMGren__kw_g",
+    "seconds": "c_wMGren__sw_g",
+    "shots": "c_wMGren__sfw_g"
+   }
+  },
+  "wMHat": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "9AA7F012-93CB-4CA2-9B5F-3DDEFB7050BD",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/18/112/GadgetHatchet-ee901e80.png",
+   "label": "Melee - Hatchet",
+   "name": "手斧",
+   "order": 6012,
+   "stats": {
+    "headshots": "c__wMHat_hsh_g",
+    "hits": "c_wMHat__shw_g",
+    "kills": "c_wMHat__kw_g",
+    "seconds": "c_wMHat__sw_g",
+    "shots": "c_wMHat__sfw_g"
+   }
+  },
+  "wMHook": {
+   "cat": "player_weapons3",
+   "category": "近戰武器",
+   "guid": "0A553FF6-89EB-4A01-8697-5EEE975B2651",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/12/53/MarineHook-f4cb8671.png",
+   "label": "Melee - Marine Hook",
+   "name": "勾索",
+   "order": 6035,
+   "stats": {
+    "headshots": "c__wMHook_hsh_g",
+    "hits": "c_wMHook__shw_g",
+    "kills": "c_wMHook__kw_g",
+    "seconds": "c_wMHook__sw_g",
+    "shots": "c_wMHook__sfw_g"
+   }
+  },
+  "wMHun": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "E6D69CA1-B643-4CA1-8AF0-24AB0B8EEF81",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/46/76/FrenchHuntingKnife-d24c6a52.png",
+   "label": "Melee - Hunting Knife",
+   "name": "法軍屠刀",
+   "order": 6030,
+   "stats": {
+    "headshots": "c__wMHun_hsh_g",
+    "hits": "c_wMHun__shw_g",
+    "kills": "c_wMHun__kw_g",
+    "seconds": "c_wMHun__sw_g",
+    "shots": "c_wMHun__sfw_g"
+   }
+  },
+  "wMJam": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "C41B429F-0991-4FDE-B298-5CCF940FD10D",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/128/124/JambiyaKnife-807c494e.png",
+   "label": "Melee - Jambiya Knife",
+   "name": "雙刃彎刀",
+   "order": 6009,
+   "stats": {
+    "headshots": "c__wMJam_hsh_g",
+    "hits": "c_wMJam__shw_g",
+    "kills": "c_wMJam__kw_g",
+    "seconds": "c_wMJam__sw_g",
+    "shots": "c_wMJam__sfw_g"
+   }
+  },
+  "wMKukri": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "78502D88-206A-4216-BD0D-F5FCFDCDAF44",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/13/4/Kukri-f304daac.png",
+   "label": "Melee - Kukri",
+   "name": "反曲刀",
+   "order": 6024,
+   "stats": {
+    "headshots": "c__wMKukri_hsh_g",
+    "hits": "c_wMKukri__shw_g",
+    "kills": "c_wMKukri__kw_g",
+    "seconds": "c_wMKukri__sw_g",
+    "shots": "c_wMKukri__sfw_g"
+   }
+  },
+  "wMMac": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "BCC17D36-9B5E-48E7-BCD0-2C390D0AA5E0",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/102/58/GadgetTrenchMace-9ac606fa.png",
+   "label": "Melee - Trench Mace",
+   "name": "戰壕槌",
+   "order": 6001,
+   "stats": {
+    "headshots": "c__wMMac_hsh_g",
+    "hits": "c_wMMac__shw_g",
+    "kills": "c_wMMac__kw_g",
+    "seconds": "c_wMMac__sw_g",
+    "shots": "c_wMMac__sfw_g"
+   }
+  },
+  "wMNail": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "DE1AEA73-D8AE-47E9-B2C2-48E0BC817E11",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/117/65/Frenchnail-8bbfb7a5.png",
+   "label": "Melee - Nail Knife",
+   "name": "鐵釘小刀",
+   "order": 6018,
+   "stats": {
+    "headshots": "c__wMNail_hsh_g",
+    "hits": "c_wMNail__shw_g",
+    "kills": "c_wMNail__kw_g",
+    "seconds": "c_wMNail__sw_g",
+    "shots": "c_wMNail__sfw_g"
+   }
+  },
+  "wMNav": {
+   "cat": "player_weapons3",
+   "category": "近戰武器",
+   "guid": "52590553-2E05-4A74-B168-A1D741D60942",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/109/89/NavalCutlass-93595698.png",
+   "label": "Melee - Naval Cutlass",
+   "name": "海軍彎刀",
+   "order": 6034,
+   "stats": {
+    "headshots": "c__wMNav_hsh_g",
+    "hits": "c_wMNav__shw_g",
+    "kills": "c_wMNav__kw_g",
+    "seconds": "c_wMNav__sw_g",
+    "shots": "c_wMNav__sfw_g"
+   }
+  },
+  "wMOCS": {
+   "cat": "player_weapons3",
+   "category": "近戰武器",
+   "guid": "4913316F-B1BF-46F2-8B15-EACF0E5B07C9",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/38/113/KilijOttomanSword-268f38a5.png",
+   "label": "Melee - Ottoman Calvary Sword Kilij",
+   "name": "鄂圖曼彎刀",
+   "order": 6037,
+   "stats": {
+    "headshots": "c__wMOCS_hsh_g",
+    "hits": "c_wMOCS__shw_g",
+    "kills": "c_wMOCS__kw_g",
+    "seconds": "c_wMOCS__sw_g",
+    "shots": "c_wMOCS__sfw_g"
+   }
+  },
+  "wMOFM": {
+   "cat": "player_weapons3",
+   "category": "近戰武器",
+   "guid": "3C23E897-CB52-4794-98D8-C321C95E30A9",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/83/126/GadgetOttFlangedMace-537e0619.png",
+   "label": "Melee - Ottoman Flanged Mace",
+   "name": "鄂圖曼釘頭錘",
+   "order": 6036,
+   "stats": {
+    "headshots": "c__wMOFM_hsh_g",
+    "hits": "c_wMOFM__shw_g",
+    "kills": "c_wMOFM__kw_g",
+    "seconds": "c_wMOFM__sw_g",
+    "shots": "c_wMOFM__sfw_g"
+   }
+  },
+  "wMOR": {
+   "cat": "player_weapons1",
+   "category": "配備",
+   "image": null,
+   "label": "Explosives - Mortar (Only for Custom Games)",
+   "name": "迫擊砲（自訂遊戲）",
+   "order": 99243,
+   "stats": {
+    "headshots": "c__wMOR_hsh_g",
+    "hits": "c_wMOR__shw_g",
+    "kills": "c_wMOR__kw_g",
+    "seconds": "c_wMOR__sw_g",
+    "shots": "c_wMOR__sfw_g"
+   }
+  },
+  "wMRAxe": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "2AD2C37C-E68C-4DFB-9FD0-313A2C2AF45B",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/95/41/RussianAxe-5fd70b10.png",
+   "label": "Melee - Axe",
+   "name": "俄軍戰斧",
+   "order": 6033,
+   "stats": {
+    "headshots": "c__wMRAxe_hsh_g",
+    "hits": "c_wMRAxe__shw_g",
+    "kills": "c_wMRAxe__kw_g",
+    "seconds": "c_wMRAxe__sw_g",
+    "shots": "c_wMRAxe__sfw_g"
+   }
+  },
+  "wMRus": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "020C3966-C489-4D5A-9883-5F1D26F7CFC3",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/48/94/RussianCombatKnife-30a2d04b.png",
+   "label": "Melee - Russian Fighting Knife",
+   "name": "俄軍勳刀",
+   "order": 6031,
+   "stats": {
+    "headshots": "c__wMRus_hsh_g",
+    "hits": "c_wMRus__shw_g",
+    "kills": "c_wMRus__kw_g",
+    "seconds": "c_wMRus__sw_g",
+    "shots": "c_wMRus__sfw_g"
+   }
+  },
+  "wMSbr": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "34D4650D-BC3A-4670-B462-56B9293B369A",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/42/15/RoyalSabre-2af1b4eb.png",
+   "label": "Melee - Saber XP1",
+   "name": "軍刀",
+   "order": 6019,
+   "stats": {
+    "headshots": "c__wMSbr_hsh_g",
+    "hits": "c_wMSbr__shw_g",
+    "kills": "c_wMSbr__kw_g",
+    "seconds": "c_wMSbr__sw_g",
+    "shots": "c_wMSbr__sfw_g"
+   }
+  },
+  "wMScout": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "5BE36F02-DE5E-4DDD-8E09-74FD16F39EFC",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/47/116/GadgetVehicleScoutKnife-2f8ccca7.png",
+   "label": "Melee - Scout Knife",
+   "name": "求生小刀",
+   "order": 6016,
+   "stats": {
+    "headshots": "c__wMScout_hsh_g",
+    "hits": "c_wMScout__shw_g",
+    "kills": "c_wMScout__kw_g",
+    "seconds": "c_wMScout__sw_g",
+    "shots": "c_wMScout__sfw_g"
+   }
+  },
+  "wMSho": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "27FEC1DA-8B41-4F6F-87EA-B0225FBB964E",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/41/68/GadgetShovel-29bc7215.png",
+   "label": "Melee - Shovel",
+   "name": "軍鏟",
+   "order": 6000,
+   "stats": {
+    "headshots": "c__wMSho_hsh_g",
+    "hits": "c_wMSho__shw_g",
+    "kills": "c_wMSho__kw_g",
+    "seconds": "c_wMSho__sw_g",
+    "shots": "c_wMSho__sfw_g"
+   }
+  },
+  "wMSick": {
+   "cat": "player_weapons5",
+   "category": "近戰武器",
+   "guid": "C5118EA9-F587-44DC-BFB1-EA55C33F577E",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/95/80/Sickle-5f505baa.png",
+   "label": "Melee - Sickle",
+   "name": "鐮刀",
+   "order": 6042,
+   "stats": {
+    "headshots": "c__wMSick_hsh_g",
+    "hits": "c_wMSick__shw_g",
+    "kills": "c_wMSick__kw_g",
+    "seconds": "c_wMSick__sw_g",
+    "shots": "c_wMSick__sfw_g"
+   }
+  },
+  "wMSpik": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "F56F6EBF-B486-47E8-B31C-7EC694E51498",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/125/11/GadgetSpikedclub-83f5f724.png",
+   "label": "Melee - Spiked Club",
+   "name": "狼牙棒",
+   "order": 6010,
+   "stats": {
+    "headshots": "c__wMSpik_hsh_g",
+    "hits": "c_wMSpik__shw_g",
+    "kills": "c_wMSpik__kw_g",
+    "seconds": "c_wMSpik__sw_g",
+    "shots": "c_wMSpik__sfw_g"
+   }
+  },
+  "wMStClub": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "8A849EDD-AE9F-4F9D-B872-7728067E4E9F",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/125/80/Steelclub-83b053cf.png",
+   "label": "Melee - Steel Club",
+   "name": "奇兵棒",
+   "order": 6021,
+   "stats": {
+    "headshots": "c__wMStClub_hsh_g",
+    "hits": "c_wMStClub__shw_g",
+    "kills": "c_wMStClub__kw_g",
+    "seconds": "c_wMStClub__sw_g",
+    "shots": "c_wMStClub__sfw_g"
+   }
+  },
+  "wMSwKnf": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "F9983578-E3E9-46FB-BCC5-6640825B7169",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/10/18/GadgetSawtoothKnife-0aee4b76.png",
+   "label": "Melee - US Sawtooth Knife",
+   "name": "鋸齒刀",
+   "order": 6002,
+   "stats": {
+    "headshots": "c__wMSwKnf_hsh_g",
+    "hits": "c_wMSwKnf__shw_g",
+    "kills": "c_wMSwKnf__kw_g",
+    "seconds": "c_wMSwKnf__sw_g",
+    "shots": "c_wMSwKnf__sfw_g"
+   }
+  },
+  "wMTot": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "57EAB779-B881-4D9A-8F16-A7EC3B359061",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/45/65/TotokiaWarClub_lineart-d3bf30f1.png",
+   "label": "Melee - Totokia",
+   "name": "鳥嘴槌",
+   "order": 6029,
+   "stats": {
+    "headshots": "c__wMTot_hsh_g",
+    "hits": "c_wMTot__shw_g",
+    "kills": "c_wMTot__kw_g",
+    "seconds": "c_wMTot__sw_g",
+    "shots": "c_wMTot__sfw_g"
+   }
+  },
+  "wMTrKnf": {
+   "cat": "player_weapons1",
+   "category": "近戰武器",
+   "guid": "E6F76148-EBF4-4F1A-9AC0-A96DA81BD948",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/109/13/GadgetKnifeTrench-6df335a3.png",
+   "label": "Melee - Trench Knife",
+   "name": "戰壕刀",
+   "order": 6005,
+   "stats": {
+    "headshots": "c__wMTrKnf_hsh_g",
+    "hits": "c_wMTrKnf__shw_g",
+    "kills": "c_wMTrKnf__kw_g",
+    "seconds": "c_wMTrKnf__sw_g",
+    "shots": "c_wMTrKnf__sfw_g"
+   }
+  },
+  "wMWelsh": {
+   "cat": "player_weapons5",
+   "category": "近戰武器",
+   "guid": "EA096988-1E90-4554-A45B-90EB6FA8F04B",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/54/117/WelshBlade-ca75773c.png",
+   "label": "Melee - Welsh Blade",
+   "name": "威爾士刀",
+   "order": 6043,
+   "stats": {
+    "headshots": "c__wMWelsh_hsh_g",
+    "hits": "c_wMWelsh__shw_g",
+    "kills": "c_wMWelsh__kw_g",
+    "seconds": "c_wMWelsh__sw_g",
+    "shots": "c_wMWelsh__sfw_g"
+   }
+  },
+  "wMYata": {
+   "cat": "player_weapons3",
+   "category": "近戰武器",
+   "guid": "38E74B0D-04FE-46CF-B3B8-B4AAE88A83EF",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/66/72/YataganSword-be484415.png",
+   "label": "Melee - Yatagan",
+   "name": "穆斯林彎刀",
+   "order": 6038,
+   "stats": {
+    "headshots": "c__wMYata_hsh_g",
+    "hits": "c_wMYata__shw_g",
+    "kills": "c_wMYata__kw_g",
+    "seconds": "c_wMYata__sw_g",
+    "shots": "c_wMYata__sfw_g"
+   }
+  },
+  "wPCA1911": {
+   "cat": "player_weapons2",
+   "category": "坦克/駕駛員",
+   "guid": "3DC12572-2D2F-4439-95CA-8DFB80BA17F5",
+   "image": "[BB_PREFIX]/gamedata/tunguska/21/1/M1911ExtendedMag-eb019f60.png",
+   "label": "Pistol Carbine - Auto - M1911 with Stock",
+   "name": "M1911（加長）",
+   "order": 10005,
+   "stats": {
+    "headshots": "c__wPCA1911_hsh_g",
+    "hits": "c_wPCA1911__shw_g",
+    "kills": "c_wPCA1911__kw_g",
+    "seconds": "c_wPCA1911__sw_g",
+    "shots": "c_wPCA1911__sfw_g"
+   }
+  },
+  "wPCAFrom": {
+   "cat": "player_weapons2",
+   "category": "坦克/駕駛員",
+   "guid": "D8AEB334-58E2-4A52-83BA-F3C2107196F0",
+   "image": "[BB_PREFIX]/gamedata/tunguska/80/109/FrommerStop-506df97e.png",
+   "label": "Pistol Carbine - Auto - Frommer Stop Automatic",
+   "name": "費羅梅爾停止手槍（自動）",
+   "order": 10003,
+   "stats": {
+    "headshots": "c__wPCAFrom_hsh_g",
+    "hits": "c_wPCAFrom__shw_g",
+    "kills": "c_wPCAFrom__kw_g",
+    "seconds": "c_wPCAFrom__sw_g",
+    "shots": "c_wPCAFrom__sfw_g"
+   }
+  },
+  "wPCSC93": {
+   "cat": "player_weapons2",
+   "category": "坦克/駕駛員",
+   "guid": "EBE043CB-8D37-4807-9260-E2DD7EFC4BD2",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/18/6/C93CarbineSup-120665d1.png",
+   "label": "Pistol Carbine - Semi - C93 Carbine",
+   "name": "C93（卡賓槍）",
+   "order": 10007,
+   "stats": {
+    "headshots": "c__wPCSC93_hsh_g",
+    "hits": "c_wPCSC93__shw_g",
+    "kills": "c_wPCSC93__kw_g",
+    "seconds": "c_wPCSC93__sw_g",
+    "shots": "c_wPCSC93__sfw_g"
+   }
+  },
+  "wPCSC96": {
+   "cat": "player_weapons2",
+   "category": "坦克/駕駛員",
+   "guid": "53B264D8-1E4D-42E9-AA31-401D55BA2F39",
+   "image": "[BB_PREFIX]/gamedata/tunguska/116/26/MauserC96CCarbine-741ab77d.png",
+   "label": "Pistol Carbine - Semi - Mauser C96 Auto",
+   "name": "C96（卡賓槍）",
+   "order": 10002,
+   "stats": {
+    "headshots": "c__wPCSC96_hsh_g",
+    "hits": "c_wPCSC96__shw_g",
+    "kills": "c_wPCSC96__kw_g",
+    "seconds": "c_wPCSC96__sw_g",
+    "shots": "c_wPCSC96__sfw_g"
+   }
+  },
+  "wPCSFN": {
+   "cat": "player_weapons2",
+   "category": "坦克/駕駛員",
+   "guid": "2B421852-CFF9-41FF-B385-34580D5A9BF0",
+   "image": "[BB_PREFIX]/gamedata/tunguska/40/112/FN1903stock-d8904447.png",
+   "label": "Pistol Carbine - Semi - FN1903",
+   "name": "Mle 1903（加長）",
+   "order": 10006,
+   "stats": {
+    "headshots": "c__wPCSFN_hsh_g",
+    "hits": "c_wPCSFN__shw_g",
+    "kills": "c_wPCSFN__kw_g",
+    "seconds": "c_wPCSFN__sw_g",
+    "shots": "c_wPCSFN__sfw_g"
+   }
+  },
+  "wPCSP08": {
+   "cat": "player_weapons2",
+   "category": "坦克/駕駛員",
+   "guid": "0CC870E0-7AAE-44FE-B9D8-5D90706AF38B",
+   "image": "[BB_PREFIX]/gamedata/tunguska/31/65/LugerArtillery-1fbfb83c.png",
+   "label": "Pistol Carbine - Semi - Luger P08 Artillery",
+   "name": "P08 Artillerie",
+   "order": 10004,
+   "stats": {
+    "headshots": "c__wPCSP08_hsh_g",
+    "hits": "c_wPCSP08__shw_g",
+    "kills": "c_wPCSP08__kw_g",
+    "seconds": "c_wPCSP08__sw_g",
+    "shots": "c_wPCSP08__sfw_g"
+   }
+  },
+  "wPCSPiep": {
+   "cat": "player_weapons2",
+   "category": "坦克/駕駛員",
+   "guid": "6CB23E70-F191-4043-951A-B43D6D2CF4A2",
+   "image": "[BB_PREFIX]/gamedata/tunguska/49/26/PieperCarbine-31e63cfb.png",
+   "label": "Pistol Carbine - Semi - Pieper M1893",
+   "name": "皮珀 M1893",
+   "order": 10001,
+   "stats": {
+    "headshots": "c__wPCSPiep_hsh_g",
+    "hits": "c_wPCSPiep__shw_g",
+    "kills": "c_wPCSPiep__kw_g",
+    "seconds": "c_wPCSPiep__sw_g",
+    "shots": "c_wPCSPiep__sfw_g"
+   }
+  },
+  "wRElp": {
+   "cat": "player_weapons4",
+   "category": "配備",
+   "guid": "A1FE1029-31B9-441A-B2F8-36E9F53B8DD5",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/61/45/fire-gas-barrage-c32d4dda.png",
+   "label": "Livens Projector",
+   "name": "萊文斯毒氣發射器",
+   "order": 1028,
+   "stats": {
+    "headshots": "c__wRElp_hsh_g",
+    "hits": "c_wRElp__shw_g",
+    "kills": "c_wRElp__kw_g",
+    "seconds": "c_wRElp__sw_g",
+    "shots": "c_wRElp__sfw_g"
+   }
+  },
+  "wRIR03": {
+   "cat": "player_weapons2",
+   "category": "制式步槍",
+   "guid": "9EDA2088-C4CF-43A1-A99D-7BD051EB6372",
+   "image": "[BB_PREFIX]/gamedata/tunguska/56/82/SpringfieldM1903-c8ae5988.png",
+   "label": "Rifle - Single - Springfield M1903 Standard Issue",
+   "name": "M1903",
+   "order": 9001,
+   "stats": {
+    "headshots": "c__wRIR03_hsh_g",
+    "hits": "c_wRIR03__shw_g",
+    "kills": "c_wRIR03__kw_g",
+    "seconds": "c_wRIR03__sw_g",
+    "shots": "c_wRIR03__sfw_g"
+   }
+  },
+  "wRIR95": {
+   "cat": "player_weapons2",
+   "category": "制式步槍",
+   "guid": "51C25C93-D4B0-4A03-81BA-E9AC600E5168",
+   "image": "[BB_PREFIX]/gamedata/tunguska/120/80/Mannlicher1895-7850a8ec.png",
+   "label": "Rifle - Single - Steyr-Mannlicher M1895 Standard Issue",
+   "name": "Gewehr M.95",
+   "order": 9000,
+   "stats": {
+    "headshots": "c__wRIR95_hsh_g",
+    "hits": "c_wRIR95__shw_g",
+    "kills": "c_wRIR95__kw_g",
+    "seconds": "c_wRIR95__sw_g",
+    "shots": "c_wRIR95__sfw_g"
+   }
+  },
+  "wRIR98": {
+   "cat": "player_weapons2",
+   "category": "制式步槍",
+   "guid": "85D2A502-DCEC-42D9-AF11-91D52823FB17",
+   "image": "[BB_PREFIX]/gamedata/tunguska/15/89/MauserGewehr98-f159616f.png",
+   "label": "Rifle - Single - Mauser Gewehr 98 Standard Issue",
+   "name": "Gewehr 98",
+   "order": 9002,
+   "stats": {
+    "headshots": "c__wRIR98_hsh_g",
+    "hits": "c_wRIR98__shw_g",
+    "kills": "c_wRIR98__kw_g",
+    "seconds": "c_wRIR98__sw_g",
+    "shots": "c_wRIR98__sfw_g"
+   }
+  },
+  "wRIRLe": {
+   "cat": "player_weapons2",
+   "category": "制式步槍",
+   "guid": "03750E5A-0178-4CB2-9F5D-A7A65C2B1029",
+   "image": "[BB_PREFIX]/gamedata/tunguska/82/98/LeeEnfield-52626131.png",
+   "label": "Rifle - Single - Lee Enfield MK.III Standard Issue",
+   "name": "SMLE MKIII",
+   "order": 9003,
+   "stats": {
+    "headshots": "c__wRIRLe_hsh_g",
+    "hits": "c_wRIRLe__shw_g",
+    "kills": "c_wRIRLe__kw_g",
+    "seconds": "c_wRIRLe__sw_g",
+    "shots": "c_wRIRLe__sfw_g"
+   }
+  },
+  "wRIRLebel": {
+   "cat": "player_weapons2",
+   "category": "步槍",
+   "guid": "E1B701B5-0E4B-40C3-A61B-CE639A4B18A0",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/49/65/Lebel1886-31bf07f8.png",
+   "label": "Rifle - Single - Lebel 1886 Standard Issue",
+   "name": "勒貝爾 M1886",
+   "order": 7018,
+   "stats": {
+    "headshots": "c__wRIRLebel_hsh_g",
+    "hits": "c_wRIRLebel__shw_g",
+    "kills": "c_wRIRLebel__kw_g",
+    "seconds": "c_wRIRLebel__sw_g",
+    "shots": "c_wRIRLebel__sfw_g"
+   }
+  },
+  "wRIRMH": {
+   "cat": "player_weapons2",
+   "category": "制式步槍",
+   "image": null,
+   "label": "Rifle - Single - Martini Henry Standard Issue",
+   "name": "馬提尼·亨利步槍",
+   "order": 99247,
+   "stats": {
+    "headshots": "c__wRIRMH_hsh_g",
+    "hits": "c_wRIRMH__shw_g",
+    "kills": "c_wRIRMH__kw_g",
+    "seconds": "c_wRIRMH__sw_g",
+    "shots": "c_wRIRMH__sfw_g"
+   }
+  },
+  "wRIRMN": {
+   "cat": "player_weapons2",
+   "category": "制式步槍",
+   "guid": "59CBDD10-807F-42C8-B3B9-E6AA55380C92",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/6/62/MosinNagantM1891-fac2efac.png",
+   "label": "Rifle - Single - Mosin Nagant Standard Issue",
+   "name": "莫辛-納甘 M91 步槍",
+   "order": 9005,
+   "stats": {
+    "headshots": "c__wRIRMN_hsh_g",
+    "hits": "c_wRIRMN__shw_g",
+    "kills": "c_wRIRMN__kw_g",
+    "seconds": "c_wRIRMN__sw_g",
+    "shots": "c_wRIRMN__sfw_g"
+   }
+  },
+  "wRIRWi": {
+   "cat": "player_weapons2",
+   "category": "制式步槍",
+   "guid": "F6731994-3C9D-402C-B690-62ED2CC53306",
+   "image": "[BB_PREFIX]/gamedata/tunguska/105/43/Winchester1895-69d56c0b.png",
+   "label": "Rifle - Single - Winchester M1895 Standard Issue",
+   "name": "Russian 1895",
+   "order": 9004,
+   "stats": {
+    "headshots": "c__wRIRWi_hsh_g",
+    "hits": "c_wRIRWi__shw_g",
+    "kills": "c_wRIRWi__kw_g",
+    "seconds": "c_wRIRWi__sw_g",
+    "shots": "c_wRIRWi__sfw_g"
+   }
+  },
+  "wRSemBSA": {
+   "cat": "player_weapons4",
+   "category": "半自動步槍",
+   "guid": "11A0CC2F-9DE9-42FC-B528-91822B760819",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/61/14/BSA_Howell-c3f2e18b.png",
+   "label": "Rifle - Semi - BSAHowell",
+   "name": "Howell 自動步槍（原廠）",
+   "order": 2025,
+   "stats": {
+    "headshots": "c__wRSemBSA_hsh_g",
+    "hits": "c_wRSemBSA__shw_g",
+    "kills": "c_wRSemBSA__kw_g",
+    "seconds": "c_wRSemBSA__sw_g",
+    "shots": "c_wRSemBSA__sfw_g"
+   }
+  },
+  "wRSemBSAC": {
+   "cat": "player_weapons4",
+   "category": "半自動步槍",
+   "guid": "8DFC892E-00AE-47EC-A1D3-B866D40EE587",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/61/14/BSA_Howell-c3f2e18b.png",
+   "label": "Rifle - Semi - BSAHowell Scope",
+   "name": "Howell 自動步槍（狙擊手）",
+   "order": 2026,
+   "stats": {
+    "headshots": "c__wRSemBSAC_hsh_g",
+    "hits": "c_wRSemBSAC__shw_g",
+    "kills": "c_wRSemBSAC__kw_g",
+    "seconds": "c_wRSemBSAC__sw_g",
+    "shots": "c_wRSemBSAC__sfw_g"
+   }
+  },
+  "wRSemCei": {
+   "cat": "player_weapons2",
+   "category": "半自動步槍",
+   "guid": "12EE7056-0D58-4570-ADA6-06D9062DE408",
+   "image": "[BB_PREFIX]/gamedata/tunguska/118/31/CeiRigotti-8ae129e0.png",
+   "label": "Rifle - Semi - Cei-Rigotti M1985",
+   "name": "Cei-Rigotti（原廠）",
+   "order": 2002,
+   "stats": {
+    "headshots": "c__wRSemCei_hsh_g",
+    "hits": "c_wRSemCei__shw_g",
+    "kills": "c_wRSemCei__kw_g",
+    "seconds": "c_wRSemCei__sw_g",
+    "shots": "c_wRSemCei__sfw_g"
+   }
+  },
+  "wRSemCeiR": {
+   "cat": "player_weapons2",
+   "category": "半自動步槍",
+   "guid": "D71DA743-8F97-430B-A794-50F7974C28EC",
+   "image": "[BB_PREFIX]/gamedata/tunguska/118/31/CeiRigotti-8ae129e0.png",
+   "label": "Rifle - Semi - Cei-Rigotti M1985 Range",
+   "name": "Cei-Rigotti（瞄準鏡）",
+   "order": 2010,
+   "stats": {
+    "headshots": "c__wRSemCeiR_hsh_g",
+    "hits": "c_wRSemCeiR__shw_g",
+    "kills": "c_wRSemCeiR__kw_g",
+    "seconds": "c_wRSemCeiR__sw_g",
+    "shots": "c_wRSemCeiR__sfw_g"
+   }
+  },
+  "wRSemCeiT": {
+   "cat": "player_weapons2",
+   "category": "半自動步槍",
+   "guid": "DE3E0902-9C36-4CFA-B872-49282591F11C",
+   "image": "[BB_PREFIX]/gamedata/tunguska/118/31/CeiRigotti-8ae129e0.png",
+   "label": "Rifle - Semi - Cei-Rigotti M1985 Trench",
+   "name": "Cei-Rigotti（壕溝戰）",
+   "order": 2011,
+   "stats": {
+    "headshots": "c__wRSemCeiT_hsh_g",
+    "hits": "c_wRSemCeiT__shw_g",
+    "kills": "c_wRSemCeiT__kw_g",
+    "seconds": "c_wRSemCeiT__sw_g",
+    "shots": "c_wRSemCeiT__sfw_g"
+   }
+  },
+  "wRSemFarR": {
+   "cat": "player_weapons3",
+   "category": "半自動步槍",
+   "guid": "71A33B25-58E3-4F65-90EB-F69042978D99",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/17/11/FarquharHill-11f5925b.png",
+   "label": "Rifle - Semi - Farquhar-Hill Rifle Range",
+   "name": "Farquhar-Hill 步槍（瞄準鏡）",
+   "order": 2023,
+   "stats": {
+    "headshots": "c__wRSemFarR_hsh_g",
+    "hits": "c_wRSemFarR__shw_g",
+    "kills": "c_wRSemFarR__kw_g",
+    "seconds": "c_wRSemFarR__sw_g",
+    "shots": "c_wRSemFarR__sfw_g"
+   }
+  },
+  "wRSemFarS": {
+   "cat": "player_weapons3",
+   "category": "半自動步槍",
+   "guid": "53884B2B-4DEF-4A02-BEEE-0E7B6D39205E",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/17/11/FarquharHill-11f5925b.png",
+   "label": "Rifle - Semi - Farquhar-Hill Rifle Stab",
+   "name": "Farquhar-Hill 步槍（衝鋒）",
+   "order": 2024,
+   "stats": {
+    "headshots": "c__wRSemFarS_hsh_g",
+    "hits": "c_wRSemFarS__shw_g",
+    "kills": "c_wRSemFarS__kw_g",
+    "seconds": "c_wRSemFarS__sw_g",
+    "shots": "c_wRSemFarS__sfw_g"
+   }
+  },
+  "wRSemFedD": {
+   "cat": "player_weapons5",
+   "category": "半自動步槍",
+   "guid": "4CFA2055-EB98-48E6-9BD9-70AAE7AF04AE",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/19/73/FederovDegtyarev-ed497b9d.png",
+   "label": "Rifle - Semi - Fedorov Degtyarev",
+   "name": "費德洛夫 Degtyarev",
+   "order": 2027,
+   "stats": {
+    "headshots": "c__wRSemFedD_hsh_g",
+    "hits": "c_wRSemFedD__shw_g",
+    "kills": "c_wRSemFedD__kw_g",
+    "seconds": "c_wRSemFedD__sw_g",
+    "shots": "c_wRSemFedD__sfw_g"
+   }
+  },
+  "wRSemFedR": {
+   "cat": "player_weapons2",
+   "category": "半自動步槍",
+   "guid": "9E799054-23D4-4525-B777-6A30E99DA964",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/86/34/FederovAvtomat-aa228b15.png",
+   "label": "Rifle - Semi - Fedorov Avtomat Range",
+   "name": "費德洛夫自動步槍（瞄準鏡）",
+   "order": 2022,
+   "stats": {
+    "headshots": "c__wRSemFedR_hsh_g",
+    "hits": "c_wRSemFedR__shw_g",
+    "kills": "c_wRSemFedR__kw_g",
+    "seconds": "c_wRSemFedR__sw_g",
+    "shots": "c_wRSemFedR__sfw_g"
+   }
+  },
+  "wRSemFedT": {
+   "cat": "player_weapons2",
+   "category": "半自動步槍",
+   "guid": "207B1E7D-B45A-4622-B482-7CAE22C1539F",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/86/34/FederovAvtomat-aa228b15.png",
+   "label": "Rifle - Semi - Fedorov Avtomat Trench",
+   "name": "費德洛夫自動步槍（壕溝戰）",
+   "order": 2021,
+   "stats": {
+    "headshots": "c__wRSemFedT_hsh_g",
+    "hits": "c_wRSemFedT__shw_g",
+    "kills": "c_wRSemFedT__kw_g",
+    "seconds": "c_wRSemFedT__sw_g",
+    "shots": "c_wRSemFedT__sfw_g"
+   }
+  },
+  "wRSemLiu": {
+   "cat": "player_weapons2",
+   "category": "半自動步槍",
+   "guid": "652BC7DF-9F78-4D93-BF96-2B6F9B6CE75C",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/7/38/GeneralLiu-f926d015.png",
+   "label": "Rifle - Semi - General Liu",
+   "name": "劉將軍步槍（原廠）",
+   "order": 2020,
+   "stats": {
+    "headshots": "c__wRSemLiu_hsh_g",
+    "hits": "c_wRSemLiu__shw_g",
+    "kills": "c_wRSemLiu__kw_g",
+    "seconds": "c_wRSemLiu__sw_g",
+    "shots": "c_wRSemLiu__sfw_g"
+   }
+  },
+  "wRSemLiuS": {
+   "cat": "player_weapons2",
+   "category": "半自動步槍",
+   "guid": "52208E58-292B-4B03-90C7-B620C9F582C9",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/7/38/GeneralLiu-f926d015.png",
+   "label": "Rifle - Semi - General Liu Stab",
+   "name": "劉將軍步槍（衝鋒）",
+   "order": 2019,
+   "stats": {
+    "headshots": "c__wRSemLiuS_hsh_g",
+    "hits": "c_wRSemLiuS__shw_g",
+    "kills": "c_wRSemLiuS__kw_g",
+    "seconds": "c_wRSemLiuS__sw_g",
+    "shots": "c_wRSemLiuS__sfw_g"
+   }
+  },
+  "wRSemLug": {
+   "cat": "player_weapons2",
+   "category": "半自動步槍",
+   "guid": "47BEB21C-2CD6-4ED0-8253-33F8F980EB94",
+   "image": "[BB_PREFIX]/gamedata/tunguska/50/56/Luger1906-3238a6b3.png",
+   "label": "Rifle - Semi - Luger Rifle",
+   "name": "Selbstlader 1906（原廠）",
+   "order": 2005,
+   "stats": {
+    "headshots": "c__wRSemLug_hsh_g",
+    "hits": "c_wRSemLug__shw_g",
+    "kills": "c_wRSemLug__kw_g",
+    "seconds": "c_wRSemLug__sw_g",
+    "shots": "c_wRSemLug__sfw_g"
+   }
+  },
+  "wRSemLugC": {
+   "cat": "player_weapons2",
+   "category": "半自動步槍",
+   "guid": "5B483B03-DD23-4E38-83C7-CD841A6E9927",
+   "image": "[BB_PREFIX]/gamedata/tunguska/50/56/Luger1906-3238a6b3.png",
+   "label": "Rifle - Semi - Luger Rifle Scope",
+   "name": "Selbstlader 1906（狙擊手）",
+   "order": 2018,
+   "stats": {
+    "headshots": "c__wRSemLugC_hsh_g",
+    "hits": "c_wRSemLugC__shw_g",
+    "kills": "c_wRSemLugC__kw_g",
+    "seconds": "c_wRSemLugC__sw_g",
+    "shots": "c_wRSemLugC__sfw_g"
+   }
+  },
+  "wRSemMau": {
+   "cat": "player_weapons2",
+   "category": "半自動步槍",
+   "guid": "3DCA71EC-EBCC-464C-B3CD-7251372FC0AD",
+   "image": "[BB_PREFIX]/gamedata/tunguska/56/110/MauserSelbstladerM1916-c86e8775.png",
+   "label": "Rifle - Semi - Mauser Selbstlader M1916",
+   "name": "Selbstlader M1916（原廠）",
+   "order": 2007,
+   "stats": {
+    "headshots": "c__wRSemMau_hsh_g",
+    "hits": "c_wRSemMau__shw_g",
+    "kills": "c_wRSemMau__kw_g",
+    "seconds": "c_wRSemMau__sw_g",
+    "shots": "c_wRSemMau__sfw_g"
+   }
+  },
+  "wRSemMauC": {
+   "cat": "player_weapons2",
+   "category": "半自動步槍",
+   "guid": "EDF7E9DB-5847-4E21-9EF0-C1E01ED80D8B",
+   "image": "[BB_PREFIX]/gamedata/tunguska/56/110/MauserSelbstladerM1916-c86e8775.png",
+   "label": "Rifle - Semi - Mauser Selbstlader M1916 Scope",
+   "name": "Selbstlader M1916（神射手）",
+   "order": 2012,
+   "stats": {
+    "headshots": "c__wRSemMauC_hsh_g",
+    "hits": "c_wRSemMauC__shw_g",
+    "kills": "c_wRSemMauC__kw_g",
+    "seconds": "c_wRSemMauC__sw_g",
+    "shots": "c_wRSemMauC__sfw_g"
+   }
+  },
+  "wRSemMauR": {
+   "cat": "player_weapons2",
+   "category": "半自動步槍",
+   "guid": "88336091-0676-4B12-BA91-810C25ED67C4",
+   "image": "[BB_PREFIX]/gamedata/tunguska/56/110/MauserSelbstladerM1916-c86e8775.png",
+   "label": "Rifle - Semi - Mauser Selbstlader M1916 Range",
+   "name": "Selbstlader M1916（瞄準鏡）",
+   "order": 2008,
+   "stats": {
+    "headshots": "c__wRSemMauR_hsh_g",
+    "hits": "c_wRSemMauR__shw_g",
+    "kills": "c_wRSemMauR__kw_g",
+    "seconds": "c_wRSemMauR__sw_g",
+    "shots": "c_wRSemMauR__sfw_g"
+   }
+  },
+  "wRSemMonB": {
+   "cat": "player_weapons2",
+   "category": "半自動步槍",
+   "guid": "BEB31317-EBBF-45FB-A102-0E115DAA5551",
+   "image": "[BB_PREFIX]/gamedata/tunguska/93/107/Mondragon-a3950be7.png",
+   "label": "Rifle - Semi - Mondragon Bipod",
+   "name": "蒙德拉貢步槍（狙擊手）",
+   "order": 2009,
+   "stats": {
+    "headshots": "c__wRSemMonB_hsh_g",
+    "hits": "c_wRSemMonB__shw_g",
+    "kills": "c_wRSemMonB__kw_g",
+    "seconds": "c_wRSemMonB__sw_g",
+    "shots": "c_wRSemMonB__sfw_g"
+   }
+  },
+  "wRSemMonR": {
+   "cat": "player_weapons2",
+   "category": "半自動步槍",
+   "guid": "08AD9E6C-D453-48F4-BDE5-CF84652A12F0",
+   "image": "[BB_PREFIX]/gamedata/tunguska/93/107/Mondragon-a3950be7.png",
+   "label": "Rifle - Semi - Mondragon Range",
+   "name": "蒙德拉貢步槍（瞄準鏡）",
+   "order": 2001,
+   "stats": {
+    "headshots": "c__wRSemMonR_hsh_g",
+    "hits": "c_wRSemMonR__shw_g",
+    "kills": "c_wRSemMonR__kw_g",
+    "seconds": "c_wRSemMonR__sw_g",
+    "shots": "c_wRSemMonR__sfw_g"
+   }
+  },
+  "wRSemMonS": {
+   "cat": "player_weapons2",
+   "category": "半自動步槍",
+   "guid": "EDECA6B4-795F-45B2-BD3F-967E96D40C7D",
+   "image": "[BB_PREFIX]/gamedata/tunguska/93/107/Mondragon-a3950be7.png",
+   "label": "Rifle - Semi - Mondragon Stab",
+   "name": "蒙德拉貢步槍（衝鋒）",
+   "order": 2000,
+   "stats": {
+    "headshots": "c__wRSemMonS_hsh_g",
+    "hits": "c_wRSemMonS__shw_g",
+    "kills": "c_wRSemMonS__kw_g",
+    "seconds": "c_wRSemMonS__sw_g",
+    "shots": "c_wRSemMonS__sfw_g"
+   }
+  },
+  "wRSemR8": {
+   "cat": "player_weapons2",
+   "category": "半自動步槍",
+   "guid": "1F42E46E-603B-4325-AA42-31B86210D47C",
+   "image": "[BB_PREFIX]/gamedata/tunguska/57/125/RemingtonM8_Special-398391d9.png",
+   "label": "Rifle - Semi - Remington M8",
+   "name": "自動裝填步槍 8.35（原廠）",
+   "order": 2014,
+   "stats": {
+    "headshots": "c__wRSemR8_hsh_g",
+    "hits": "c_wRSemR8__shw_g",
+    "kills": "c_wRSemR8__kw_g",
+    "seconds": "c_wRSemR8__sw_g",
+    "shots": "c_wRSemR8__sfw_g"
+   }
+  },
+  "wRSemR8E": {
+   "cat": "player_weapons2",
+   "category": "半自動步槍",
+   "guid": "9E7BE0C2-E44D-4B4F-99A7-B05D4451D254",
+   "image": "[BB_PREFIX]/gamedata/tunguska/68/1/RemingtonM8_A-bc017a5f.png",
+   "label": "Rifle - Semi - Remington M8 Emag",
+   "name": "自動裝填步槍 8.25（加長）",
+   "order": 2004,
+   "stats": {
+    "headshots": "c__wRSemR8E_hsh_g",
+    "hits": "c_wRSemR8E__shw_g",
+    "kills": "c_wRSemR8E__kw_g",
+    "seconds": "c_wRSemR8E__sw_g",
+    "shots": "c_wRSemR8E__sfw_g"
+   }
+  },
+  "wRSemR8S": {
+   "cat": "player_weapons2",
+   "category": "半自動步槍",
+   "guid": "2066B449-91C9-4B9C-8C4C-40F5B9F0A58E",
+   "image": "[BB_PREFIX]/gamedata/tunguska/57/125/RemingtonM8_Special-398391d9.png",
+   "label": "Rifle - Semi - Remington M8 Scope",
+   "name": "自動裝填步槍 8.35（神射手）",
+   "order": 2015,
+   "stats": {
+    "headshots": "c__wRSemR8S_hsh_g",
+    "hits": "c_wRSemR8S__shw_g",
+    "kills": "c_wRSemR8S__kw_g",
+    "seconds": "c_wRSemR8S__sw_g",
+    "shots": "c_wRSemR8S__sfw_g"
+   }
+  },
+  "wRSemRSC": {
+   "cat": "player_weapons2",
+   "category": "半自動步槍",
+   "guid": "0051C834-6CF9-4CFB-BFBA-E54AF000A9E5",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/53/112/RSC1917-35904a91.png",
+   "label": "Rifle - Semi - RSC 1917",
+   "name": "RSC 1917（原廠）",
+   "order": 2016,
+   "stats": {
+    "headshots": "c__wRSemRSC_hsh_g",
+    "hits": "c_wRSemRSC__shw_g",
+    "kills": "c_wRSemRSC__kw_g",
+    "seconds": "c_wRSemRSC__sw_g",
+    "shots": "c_wRSemRSC__sfw_g"
+   }
+  },
+  "wRSemRSCR": {
+   "cat": "player_weapons2",
+   "category": "半自動步槍",
+   "guid": "F73F9323-CD36-41F6-BFB7-3A2244342E70",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/53/112/RSC1917-35904a91.png",
+   "label": "Rifle - Semi - RSC 1917 Range",
+   "name": "RSC 1917（瞄準鏡）",
+   "order": 2017,
+   "stats": {
+    "headshots": "c__wRSemRSCR_hsh_g",
+    "hits": "c_wRSemRSCR__shw_g",
+    "kills": "c_wRSemRSCR__kw_g",
+    "seconds": "c_wRSemRSCR__sw_g",
+    "shots": "c_wRSemRSCR__sfw_g"
+   }
+  },
+  "wRSemWin": {
+   "cat": "player_weapons2",
+   "category": "半自動步槍",
+   "guid": "DD36E432-B119-4D0F-95A1-541493BF7EE6",
+   "image": "[BB_PREFIX]/gamedata/tunguska/62/103/WinchesterM1907-3e99346c.png",
+   "label": "Rifle - Semi - Winchester M1907",
+   "name": "M1907 半自動步槍（原廠）",
+   "order": 2013,
+   "stats": {
+    "headshots": "c__wRSemWin_hsh_g",
+    "hits": "c_wRSemWin__shw_g",
+    "kills": "c_wRSemWin__kw_g",
+    "seconds": "c_wRSemWin__sw_g",
+    "shots": "c_wRSemWin__sfw_g"
+   }
+  },
+  "wRSemWinA": {
+   "cat": "player_weapons2",
+   "category": "半自動步槍",
+   "guid": "A9507FBD-8B45-49E6-803C-53A5D5EE0406",
+   "image": "[BB_PREFIX]/gamedata/tunguska/62/103/WinchesterM1907-3e99346c.png",
+   "label": "Rifle - Semi - Winchester M1907 Auto",
+   "name": "M1907 半自動步槍（掃蕩）",
+   "order": 2003,
+   "stats": {
+    "headshots": "c__wRSemWinA_hsh_g",
+    "hits": "c_wRSemWinA__shw_g",
+    "kills": "c_wRSemWinA__kw_g",
+    "seconds": "c_wRSemWinA__sw_g",
+    "shots": "c_wRSemWinA__sfw_g"
+   }
+  },
+  "wRSemWinT": {
+   "cat": "player_weapons2",
+   "category": "半自動步槍",
+   "guid": "2DFEF12D-7110-47F9-9185-78A081BDE76A",
+   "image": "[BB_PREFIX]/gamedata/tunguska/62/103/WinchesterM1907-3e99346c.png",
+   "label": "Rifle - Semi - Winchester M1907 Trench",
+   "name": "M1907 半自動步槍（壕溝戰）",
+   "order": 2006,
+   "stats": {
+    "headshots": "c__wRSemWinT_hsh_g",
+    "hits": "c_wRSemWinT__shw_g",
+    "kills": "c_wRSemWinT__kw_g",
+    "seconds": "c_wRSemWinT__sw_g",
+    "shots": "c_wRSemWinT__sfw_g"
+   }
+  },
+  "wRSiMa": {
+   "cat": "player_weapons2",
+   "category": "步槍",
+   "guid": "2EEF7FFC-A1A4-4143-A0DF-3F41EF611433",
+   "image": "[BB_PREFIX]/gamedata/tunguska/15/89/MauserGewehr98-f159616f.png",
+   "label": "Rifle - Single - Mauser Gewehr 98",
+   "name": "Gewehr 98（步兵）",
+   "order": 7008,
+   "stats": {
+    "headshots": "c__wRSiMa_hsh_g",
+    "hits": "c_wRSiMa__shw_g",
+    "kills": "c_wRSiMa__kw_g",
+    "seconds": "c_wRSiMa__sw_g",
+    "shots": "c_wRSiMa__sfw_g"
+   }
+  },
+  "wRSiMaC": {
+   "cat": "player_weapons2",
+   "category": "步槍",
+   "guid": "DA44F656-997F-4DD8-B3A2-34B9E057BE19",
+   "image": "[BB_PREFIX]/gamedata/tunguska/15/89/MauserGewehr98-f159616f.png",
+   "label": "Rifle - Single - Mauser Gewehr 98 Scope",
+   "name": "Gewehr 98（神射手）",
+   "order": 7003,
+   "stats": {
+    "headshots": "c__wRSiMaC_hsh_g",
+    "hits": "c_wRSiMaC__shw_g",
+    "kills": "c_wRSiMaC__kw_g",
+    "seconds": "c_wRSiMaC__sw_g",
+    "shots": "c_wRSiMaC__sfw_g"
+   }
+  },
+  "wRSiMaL": {
+   "cat": "player_weapons2",
+   "category": "步槍",
+   "guid": "2E2F512C-D9DC-470E-86E0-8B5F827FEA8A",
+   "image": "[BB_PREFIX]/gamedata/tunguska/15/89/MauserGewehr98-f159616f.png",
+   "label": "Rifle - Single - Mauser Gewehr 98 Long",
+   "name": "Gewehr 98（狙擊手）",
+   "order": 7016,
+   "stats": {
+    "headshots": "c__wRSiMaL_hsh_g",
+    "hits": "c_wRSiMaL__shw_g",
+    "kills": "c_wRSiMaL__kw_g",
+    "seconds": "c_wRSiMaL__sw_g",
+    "shots": "c_wRSiMaL__sfw_g"
+   }
+  },
+  "wRSin1917": {
+   "cat": "player_weapons4",
+   "category": "步槍",
+   "guid": "D8F58A20-88D8-4C25-B395-385641324ACF",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/45/63/Enfield1917-d33fc14d.png",
+   "label": "Rifle - Single - M1917 Enfield",
+   "name": "M1917 Enfield（步兵）",
+   "order": 7028,
+   "stats": {
+    "headshots": "c__wRSin1917_hsh_g",
+    "hits": "c_wRSin1917__shw_g",
+    "kills": "c_wRSin1917__kw_g",
+    "seconds": "c_wRSin1917__sw_g",
+    "shots": "c_wRSin1917__sfw_g"
+   }
+  },
+  "wRSinAriP": {
+   "cat": "player_weapons5",
+   "category": "佩槍",
+   "guid": "BB20B711-EF98-4708-998A-D78780B8B8C4",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/95/63/Type38Arisaka-a1c192e3.png",
+   "label": "Rifle - Single - Type 38 Arisaka Patrol",
+   "name": "三八式步槍（巡邏）",
+   "order": 4022,
+   "stats": {
+    "headshots": "c__wRSinAriP_hsh_g",
+    "hits": "c_wRSinAriP__shw_g",
+    "kills": "c_wRSinAriP__kw_g",
+    "seconds": "c_wRSinAriP__sw_g",
+    "shots": "c_wRSinAriP__sfw_g"
+   }
+  },
+  "wRSinCarP": {
+   "cat": "player_weapons5",
+   "category": "半自動步槍",
+   "guid": "4E317627-F7F8-4014-BB22-B0ABEB7E9141",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/52/125/M1891CarcanoCarbine-cc7d34a1.png",
+   "label": "Rifle - Single - Carcano M91 Patrol Carbine",
+   "name": "卡爾卡諾 M91 卡賓槍（巡邏）",
+   "order": 2028,
+   "stats": {
+    "headshots": "c__wRSinCarP_hsh_g",
+    "hits": "c_wRSinCarP__shw_g",
+    "kills": "c_wRSinCarP__kw_g",
+    "seconds": "c_wRSinCarP__sw_g",
+    "shots": "c_wRSinCarP__sfw_g"
+   }
+  },
+  "wRSinCarT": {
+   "cat": "player_weapons3",
+   "category": "步槍",
+   "guid": "D0DBCD64-BFAE-4B96-867E-C493641C269B",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/52/125/M1891CarcanoCarbine-cc7d34a1.png",
+   "label": "Rifle - Single - Carcano 1891 Carbine Trench",
+   "name": "卡爾卡諾 M91 卡賓槍",
+   "order": 7025,
+   "stats": {
+    "headshots": "c__wRSinCarT_hsh_g",
+    "hits": "c_wRSinCarT__shw_g",
+    "kills": "c_wRSinCarT__kw_g",
+    "seconds": "c_wRSinCarT__sw_g",
+    "shots": "c_wRSinCarT__sfw_g"
+   }
+  },
+  "wRSinEnfS": {
+   "cat": "player_weapons5",
+   "category": "步槍",
+   "guid": "374F5969-7A06-4188-BA76-266F91304FE4",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/45/63/Enfield1917-d33fc14d.png",
+   "label": "Rifle - Single - M1917 Enfield Silenced",
+   "name": "M1917 Enfield（消音器）",
+   "order": 7030,
+   "stats": {
+    "headshots": "c__wRSinEnfS_hsh_g",
+    "hits": "c_wRSinEnfS__shw_g",
+    "kills": "c_wRSinEnfS__kw_g",
+    "seconds": "c_wRSinEnfS__sw_g",
+    "shots": "c_wRSinEnfS__sfw_g"
+   }
+  },
+  "wRSinLeb": {
+   "cat": "player_weapons2",
+   "category": "步槍",
+   "guid": "59D35CF4-3530-4B8C-9519-A78E9577BA1A",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/49/65/Lebel1886-31bf07f8.png",
+   "label": "Rifle - Single - Lebel 1886",
+   "name": "勒貝爾 M1886（步兵）",
+   "order": 7017,
+   "stats": {
+    "headshots": "c__wRSinLeb_hsh_g",
+    "hits": "c_wRSinLeb__shw_g",
+    "kills": "c_wRSinLeb__kw_g",
+    "seconds": "c_wRSinLeb__sw_g",
+    "shots": "c_wRSinLeb__sfw_g"
+   }
+  },
+  "wRSinLebL": {
+   "cat": "player_weapons2",
+   "category": "步槍",
+   "guid": "85EFAE4D-6C60-4DA0-8F38-0548E1FB193F",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/49/65/Lebel1886-31bf07f8.png",
+   "label": "Rifle - Single - Lebel 1886 Long",
+   "name": "勒貝爾 M1886（狙擊手）",
+   "order": 7019,
+   "stats": {
+    "headshots": "c__wRSinLebL_hsh_g",
+    "hits": "c_wRSinLebL__shw_g",
+    "kills": "c_wRSinLebL__kw_g",
+    "seconds": "c_wRSinLebL__sw_g",
+    "shots": "c_wRSinLebL__sfw_g"
+   }
+  },
+  "wRSinLee": {
+   "cat": "player_weapons2",
+   "category": "步槍",
+   "guid": "CD35EDD7-6F6E-4B72-ACC7-37CD0E4D060A",
+   "image": "[BB_PREFIX]/gamedata/tunguska/82/98/LeeEnfield-52626131.png",
+   "label": "Rifle - Single - Lee Enfield MK.III",
+   "name": "SMLE MKIII（步兵）",
+   "order": 7007,
+   "stats": {
+    "headshots": "c__wRSinLee_hsh_g",
+    "hits": "c_wRSinLee__shw_g",
+    "kills": "c_wRSinLee__kw_g",
+    "seconds": "c_wRSinLee__sw_g",
+    "shots": "c_wRSinLee__sfw_g"
+   }
+  },
+  "wRSinLeeC": {
+   "cat": "player_weapons2",
+   "category": "步槍",
+   "guid": "F59A978F-54BB-43F9-8497-47EC8D907EA6",
+   "image": "[BB_PREFIX]/gamedata/tunguska/82/98/LeeEnfield-52626131.png",
+   "label": "Rifle - Single - Lee Enfield MK.III Scope",
+   "name": "SMLE MKIII（神射手）",
+   "order": 7005,
+   "stats": {
+    "headshots": "c__wRSinLeeC_hsh_g",
+    "hits": "c_wRSinLeeC__shw_g",
+    "kills": "c_wRSinLeeC__kw_g",
+    "seconds": "c_wRSinLeeC__sw_g",
+    "shots": "c_wRSinLeeC__sfw_g"
+   }
+  },
+  "wRSinLeeM": {
+   "cat": "player_weapons2",
+   "category": "步槍",
+   "guid": "DB650ACE-7B44-4FA1-A146-EAE44E94C68C",
+   "image": "[BB_PREFIX]/gamedata/tunguska/82/98/LeeEnfield-52626131.png",
+   "label": "Rifle - Single - Lee Enfield MK.III Med",
+   "name": "SMLE MKIII（卡賓槍）",
+   "order": 7015,
+   "stats": {
+    "headshots": "c__wRSinLeeM_hsh_g",
+    "hits": "c_wRSinLeeM__shw_g",
+    "kills": "c_wRSinLeeM__kw_g",
+    "seconds": "c_wRSinLeeM__sw_g",
+    "shots": "c_wRSinLeeM__sfw_g"
+   }
+  },
+  "wRSinLeeP": {
+   "cat": "player_weapons2",
+   "category": "步槍",
+   "guid": "1AC12662-F06E-4562-80A3-FFD598CEB7EB",
+   "image": "[BB_PREFIX]/gamedata/tunguska/82/98/LeeEnfield-52626131.png",
+   "label": "Rifle - Single - Lee Enfield MK.III PREORDER",
+   "name": "阿拉伯的勞倫斯的 SMLE",
+   "order": 7002,
+   "stats": {
+    "headshots": "c__wRSinLeeP_hsh_g",
+    "hits": "c_wRSinLeeP__shw_g",
+    "kills": "c_wRSinLeeP__kw_g",
+    "seconds": "c_wRSinLeeP__sw_g",
+    "shots": "c_wRSinLeeP__sfw_g"
+   }
+  },
+  "wRSinMH": {
+   "cat": "player_weapons2",
+   "category": "步槍",
+   "guid": "43E292F0-511B-458B-852A-7EBDB20F6B27",
+   "image": "[BB_PREFIX]/gamedata/tunguska/56/71/MartinHenry-c8477a11.png",
+   "label": "Rifle - Single - Martini Henry",
+   "name": "馬提尼·亨利步槍（步兵）",
+   "order": 7006,
+   "stats": {
+    "headshots": "c__wRSinMH_hsh_g",
+    "hits": "c_wRSinMH__shw_g",
+    "kills": "c_wRSinMH__kw_g",
+    "seconds": "c_wRSinMH__sw_g",
+    "shots": "c_wRSinMH__sfw_g"
+   }
+  },
+  "wRSinMHL": {
+   "cat": "player_weapons2",
+   "category": "步槍",
+   "guid": "0440A003-1E71-47A2-98A9-73EC23D83CB4",
+   "image": "[BB_PREFIX]/gamedata/tunguska/56/71/MartinHenry-c8477a11.png",
+   "label": "Rifle - Single - Martini Henry Long",
+   "name": "馬提尼·亨利步槍（狙擊手）",
+   "order": 7020,
+   "stats": {
+    "headshots": "c__wRSinMHL_hsh_g",
+    "hits": "c_wRSinMHL__shw_g",
+    "kills": "c_wRSinMHL__kw_g",
+    "seconds": "c_wRSinMHL__sw_g",
+    "shots": "c_wRSinMHL__sfw_g"
+   }
+  },
+  "wRSinMos": {
+   "cat": "player_weapons2",
+   "category": "步槍",
+   "guid": "FA55E980-2D48-4CFC-8700-1E0533C9CB4A",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/6/62/MosinNagantM1891-fac2efac.png",
+   "label": "Rifle - Single - Mosin Nagant",
+   "name": "莫辛-納甘 M91（步兵）",
+   "order": 7024,
+   "stats": {
+    "headshots": "c__wRSinMos_hsh_g",
+    "hits": "c_wRSinMos__shw_g",
+    "kills": "c_wRSinMos__kw_g",
+    "seconds": "c_wRSinMos__sw_g",
+    "shots": "c_wRSinMos__sfw_g"
+   }
+  },
+  "wRSinMosC": {
+   "cat": "player_weapons2",
+   "category": "步槍",
+   "guid": "9A1C2640-9684-414E-9D05-94F5A9858296",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/6/62/MosinNagantM1891-fac2efac.png",
+   "label": "Rifle - Single - Mosin Nagant Scope",
+   "name": "莫辛-納甘 M91（神射手）",
+   "order": 7023,
+   "stats": {
+    "headshots": "c__wRSinMosC_hsh_g",
+    "hits": "c_wRSinMosC__shw_g",
+    "kills": "c_wRSinMosC__kw_g",
+    "seconds": "c_wRSinMosC__sw_g",
+    "shots": "c_wRSinMosC__sfw_g"
+   }
+  },
+  "wRSinMosM": {
+   "cat": "player_weapons5",
+   "category": "步槍",
+   "guid": "4A392B4B-97FA-4672-B5D8-C4085A87CB39",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/35/82/MosinNagantM38-dd529587.png",
+   "label": "Rifle - Single - Mosin Nagant M38",
+   "name": "莫辛-納甘 M38 卡賓槍",
+   "order": 7029,
+   "stats": {
+    "headshots": "c__wRSinMosM_hsh_g",
+    "hits": "c_wRSinMosM__shw_g",
+    "kills": "c_wRSinMosM__kw_g",
+    "seconds": "c_wRSinMosM__sw_g",
+    "shots": "c_wRSinMosM__sfw_g"
+   }
+  },
+  "wRSinRoI": {
+   "cat": "player_weapons5",
+   "category": "步槍",
+   "guid": "8FAB67E1-A8ED-4EC0-8135-DB2BAA832890",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/8/112/Ross_Mk3-f8900bf5.png",
+   "label": "Rifle - Single - Ross Infantry",
+   "name": "羅斯 MKIII（步兵）",
+   "order": 7029,
+   "stats": {
+    "headshots": "c__wRSinRoI_hsh_g",
+    "hits": "c_wRSinRoI__shw_g",
+    "kills": "c_wRSinRoI__kw_g",
+    "seconds": "c_wRSinRoI__sw_g",
+    "shots": "c_wRSinRoI__sfw_g"
+   }
+  },
+  "wRSinRoS": {
+   "cat": "player_weapons4",
+   "category": "步槍",
+   "guid": "168D4F4B-AD76-40D3-AD86-EB52890872D8",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/8/112/Ross_Mk3-f8900bf5.png",
+   "label": "Rifle - Single - Ross Scope",
+   "name": "羅斯 MKIII（神射手）",
+   "order": 7027,
+   "stats": {
+    "headshots": "c__wRSinRoS_hsh_g",
+    "hits": "c_wRSinRoS__shw_g",
+    "kills": "c_wRSinRoS__kw_g",
+    "seconds": "c_wRSinRoS__sw_g",
+    "shots": "c_wRSinRoS__sfw_g"
+   }
+  },
+  "wRSinSprL": {
+   "cat": "player_weapons2",
+   "category": "步槍",
+   "guid": "BA5E14FF-D373-4927-9D0F-11CD9423AE4B",
+   "image": "[BB_PREFIX]/gamedata/tunguska/56/82/SpringfieldM1903-c8ae5988.png",
+   "label": "Rifle - Single - Springfield M1903 Long Range",
+   "name": "M1903（狙擊手）",
+   "order": 7013,
+   "stats": {
+    "headshots": "c__wRSinSprL_hsh_g",
+    "hits": "c_wRSinSprL__shw_g",
+    "kills": "c_wRSinSprL__kw_g",
+    "seconds": "c_wRSinSprL__sw_g",
+    "shots": "c_wRSinSprL__sfw_g"
+   }
+  },
+  "wRSinSprS": {
+   "cat": "player_weapons2",
+   "category": "步槍",
+   "guid": "B0987D7E-F43D-4AA7-9A8E-A33EFA985864",
+   "image": "[BB_PREFIX]/gamedata/tunguska/56/82/SpringfieldM1903-c8ae5988.png",
+   "label": "Rifle - Single - Springfield M1903 Scope",
+   "name": "M1903（神射手）",
+   "order": 7000,
+   "stats": {
+    "headshots": "c__wRSinSprS_hsh_g",
+    "hits": "c_wRSinSprS__shw_g",
+    "kills": "c_wRSinSprS__kw_g",
+    "seconds": "c_wRSinSprS__sw_g",
+    "shots": "c_wRSinSprS__sfw_g"
+   }
+  },
+  "wRSinSprT": {
+   "cat": "player_weapons2",
+   "category": "步槍",
+   "guid": "9984202B-FE89-447C-879B-25A2B797A176",
+   "image": "[BB_PREFIX]/gamedata/tunguska/56/82/SpringfieldM1903-c8ae5988.png",
+   "label": "Rifle - Single - Springfield M1903 Experimental",
+   "name": "M1903（實驗）",
+   "order": 7014,
+   "stats": {
+    "headshots": "c__wRSinSprT_hsh_g",
+    "hits": "c_wRSinSprT__shw_g",
+    "kills": "c_wRSinSprT__kw_g",
+    "seconds": "c_wRSinSprT__sw_g",
+    "shots": "c_wRSinSprT__sfw_g"
+   }
+  },
+  "wRSinSty": {
+   "cat": "player_weapons2",
+   "category": "步槍",
+   "guid": "E372F592-9278-4777-A9E3-C91B171FD1F7",
+   "image": "[BB_PREFIX]/gamedata/tunguska/120/80/Mannlicher1895-7850a8ec.png",
+   "label": "Rifle - Single - Steyr-Mannlicher M1895",
+   "name": "Gewehr M.95（步兵）",
+   "order": 7004,
+   "stats": {
+    "headshots": "c__wRSinSty_hsh_g",
+    "hits": "c_wRSinSty__shw_g",
+    "kills": "c_wRSinSty__kw_g",
+    "seconds": "c_wRSinSty__sw_g",
+    "shots": "c_wRSinSty__sfw_g"
+   }
+  },
+  "wRSinStyC": {
+   "cat": "player_weapons2",
+   "category": "步槍",
+   "guid": "7ED7AE0D-03C6-44D4-9072-261C6570B3BF",
+   "image": "[BB_PREFIX]/gamedata/tunguska/120/80/Mannlicher1895-7850a8ec.png",
+   "label": "Rifle - Single - Steyr-Mannlicher M1895 Scope",
+   "name": "Gewehr M.95（神射手）",
+   "order": 7010,
+   "stats": {
+    "headshots": "c__wRSinStyC_hsh_g",
+    "hits": "c_wRSinStyC__shw_g",
+    "kills": "c_wRSinStyC__kw_g",
+    "seconds": "c_wRSinStyC__sw_g",
+    "shots": "c_wRSinStyC__sfw_g"
+   }
+  },
+  "wRSinStyM": {
+   "cat": "player_weapons2",
+   "category": "步槍",
+   "guid": "7668C6B5-D793-442A-8AFA-74E4CD158F33",
+   "image": "[BB_PREFIX]/gamedata/tunguska/120/80/Mannlicher1895-7850a8ec.png",
+   "label": "Rifle - Single - Steyr-Mannlicher M1895 Med",
+   "name": "Gewehr M.95（卡賓槍）",
+   "order": 7009,
+   "stats": {
+    "headshots": "c__wRSinStyM_hsh_g",
+    "hits": "c_wRSinStyM__shw_g",
+    "kills": "c_wRSinStyM__kw_g",
+    "seconds": "c_wRSinStyM__sw_g",
+    "shots": "c_wRSinStyM__sfw_g"
+   }
+  },
+  "wRSinTyp": {
+   "cat": "player_weapons3",
+   "category": "步槍",
+   "guid": "A3A708E8-6719-4178-9958-36814E906FD4",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/95/63/Type38Arisaka-a1c192e3.png",
+   "label": "Rifle - Single - Type 38 Arisaka",
+   "name": "三八式步槍（步兵）",
+   "order": 7026,
+   "stats": {
+    "headshots": "c__wRSinTyp_hsh_g",
+    "hits": "c_wRSinTyp__shw_g",
+    "kills": "c_wRSinTyp__kw_g",
+    "seconds": "c_wRSinTyp__sw_g",
+    "shots": "c_wRSinTyp__sfw_g"
+   }
+  },
+  "wRSinVet": {
+   "cat": "player_weapons2",
+   "category": "步槍",
+   "guid": "4B831597-5062-461E-9CC9-9611BD1B50E3",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/6/83/Vetterli-VitaliM1870-87-faadf520.png",
+   "label": "Rifle - Single - Vetterli Vitali",
+   "name": "Vetterli-Vitali M1870/87（步兵）",
+   "order": 7022,
+   "stats": {
+    "headshots": "c__wRSinVet_hsh_g",
+    "hits": "c_wRSinVet__shw_g",
+    "kills": "c_wRSinVet__kw_g",
+    "seconds": "c_wRSinVet__sw_g",
+    "shots": "c_wRSinVet__sfw_g"
+   }
+  },
+  "wRSinVetM": {
+   "cat": "player_weapons2",
+   "category": "步槍",
+   "guid": "B6B5C8CB-0C40-4522-8907-4FCE5B243C83",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/6/83/Vetterli-VitaliM1870-87-faadf520.png",
+   "label": "Rifle - Single - Vetterli Vitali Med",
+   "name": "Vetterli-Vitali M1870/87（卡賓槍）",
+   "order": 7021,
+   "stats": {
+    "headshots": "c__wRSinVetM_hsh_g",
+    "hits": "c_wRSinVetM__shw_g",
+    "kills": "c_wRSinVetM__kw_g",
+    "seconds": "c_wRSinVetM__sw_g",
+    "shots": "c_wRSinVetM__sfw_g"
+   }
+  },
+  "wRSinWin": {
+   "cat": "player_weapons2",
+   "category": "步槍",
+   "guid": "4A960C79-5265-4559-B1D2-90E1B5BE7238",
+   "image": "[BB_PREFIX]/gamedata/tunguska/105/43/Winchester1895-69d56c0b.png",
+   "label": "Rifle - Single - Winchester M1895",
+   "name": "Russian 1895（步兵）",
+   "order": 7012,
+   "stats": {
+    "headshots": "c__wRSinWin_hsh_g",
+    "hits": "c_wRSinWin__shw_g",
+    "kills": "c_wRSinWin__kw_g",
+    "seconds": "c_wRSinWin__sw_g",
+    "shots": "c_wRSinWin__sfw_g"
+   }
+  },
+  "wRSinWinL": {
+   "cat": "player_weapons2",
+   "category": "步槍",
+   "guid": "5BD7640B-2308-4CB9-98EB-26E4AB5AB1C9",
+   "image": "[BB_PREFIX]/gamedata/tunguska/105/43/Winchester1895-69d56c0b.png",
+   "label": "Rifle - Single - Winchester M1895 Long",
+   "name": "Russian 1895（狙擊手）",
+   "order": 7001,
+   "stats": {
+    "headshots": "c__wRSinWinL_hsh_g",
+    "hits": "c_wRSinWinL__shw_g",
+    "kills": "c_wRSinWinL__kw_g",
+    "seconds": "c_wRSinWinL__sw_g",
+    "shots": "c_wRSinWinL__sfw_g"
+   }
+  },
+  "wRSinWinT": {
+   "cat": "player_weapons2",
+   "category": "步槍",
+   "guid": "11AAA000-BEA2-44E4-A463-11CE25CA4E93",
+   "image": "[BB_PREFIX]/gamedata/tunguska/105/43/Winchester1895-69d56c0b.png",
+   "label": "Rifle - Single - Winchester M1895 Trench",
+   "name": "Russian 1895（壕溝戰）",
+   "order": 7011,
+   "stats": {
+    "headshots": "c__wRSinWinT_hsh_g",
+    "hits": "c_wRSinWinT__shw_g",
+    "kills": "c_wRSinWinT__kw_g",
+    "seconds": "c_wRSinWinT__sw_g",
+    "shots": "c_wRSinWinT__sfw_g"
+   }
+  },
+  "wSMGB": {
+   "cat": "player_weapons2",
+   "category": "衝鋒槍",
+   "guid": "2439B810-3ACD-4069-B1E9-0CDC2CE51985",
+   "image": "[BB_PREFIX]/gamedata/tunguska/61/86/Beretta1918-3daab991.png",
+   "label": "MG - SMG - Beretta 1918",
+   "name": "M1918 自動衝鋒槍（原廠）",
+   "order": 11002,
+   "stats": {
+    "headshots": "c__wSMGB_hsh_g",
+    "hits": "c_wSMGB__shw_g",
+    "kills": "c_wSMGB__kw_g",
+    "seconds": "c_wSMGB__sw_g",
+    "shots": "c_wSMGB__sfw_g"
+   }
+  },
+  "wSMGBS": {
+   "cat": "player_weapons2",
+   "category": "衝鋒槍",
+   "guid": "29539D1A-A492-4398-BABF-6BC8DBD4BECA",
+   "image": "[BB_PREFIX]/gamedata/tunguska/61/86/Beretta1918-3daab991.png",
+   "label": "MG - SMG - Beretta 1918 Stab",
+   "name": "M1918 自動衝鋒槍（衝鋒）",
+   "order": 11004,
+   "stats": {
+    "headshots": "c__wSMGBS_hsh_g",
+    "hits": "c_wSMGBS__shw_g",
+    "kills": "c_wSMGBS__kw_g",
+    "seconds": "c_wSMGBS__sw_g",
+    "shots": "c_wSMGBS__sfw_g"
+   }
+  },
+  "wSMGBT": {
+   "cat": "player_weapons2",
+   "category": "衝鋒槍",
+   "guid": "58E00507-4123-49D9-A9DE-0F5C7A267CC4",
+   "image": "[BB_PREFIX]/gamedata/tunguska/61/86/Beretta1918-3daab991.png",
+   "label": "MG - SMG - Beretta 1918 Trench",
+   "name": "M1918 自動衝鋒槍（壕溝戰）",
+   "order": 11005,
+   "stats": {
+    "headshots": "c__wSMGBT_hsh_g",
+    "hits": "c_wSMGBT__shw_g",
+    "kills": "c_wSMGBT__kw_g",
+    "seconds": "c_wSMGBT__sw_g",
+    "shots": "c_wSMGBT__sfw_g"
+   }
+  },
+  "wSMGBergA": {
+   "cat": "player_weapons2",
+   "category": "衝鋒槍",
+   "guid": "765A6856-3A80-4196-8DB6-14A95B94AB85",
+   "image": "[BB_PREFIX]/gamedata/tunguska/118/26/BergmannSchmeisserMP18-761af430.png",
+   "label": "MG - SMG - Bergman Schmeisser MP18 Acc",
+   "name": "MP 18（瞄準鏡）",
+   "order": 11003,
+   "stats": {
+    "headshots": "c__wSMGBergA_hsh_g",
+    "hits": "c_wSMGBergA__shw_g",
+    "kills": "c_wSMGBergA__kw_g",
+    "seconds": "c_wSMGBergA__sw_g",
+    "shots": "c_wSMGBergA__sfw_g"
+   }
+  },
+  "wSMGBergB": {
+   "cat": "player_weapons2",
+   "category": "衝鋒槍",
+   "guid": "A498D568-2F50-449C-BA5D-6864AB34F8D2",
+   "image": "[BB_PREFIX]/gamedata/tunguska/118/26/BergmannSchmeisserMP18-761af430.png",
+   "label": "MG - SMG - Bergman Schmeisser MP18 Burst",
+   "name": "MP 18（實驗）",
+   "order": 11001,
+   "stats": {
+    "headshots": "c__wSMGBergB_hsh_g",
+    "hits": "c_wSMGBergB__shw_g",
+    "kills": "c_wSMGBergB__kw_g",
+    "seconds": "c_wSMGBergB__sw_g",
+    "shots": "c_wSMGBergB__sfw_g"
+   }
+  },
+  "wSMGBergT": {
+   "cat": "player_weapons2",
+   "category": "衝鋒槍",
+   "guid": "ADA8C89D-F213-401C-806C-B60483E2EEE7",
+   "image": "[BB_PREFIX]/gamedata/tunguska/118/26/BergmannSchmeisserMP18-761af430.png",
+   "label": "MG - SMG - Bergman Schmeisser MP18 Trench",
+   "name": "MP 18（壕溝戰）",
+   "order": 11000,
+   "stats": {
+    "headshots": "c__wSMGBergT_hsh_g",
+    "hits": "c_wSMGBergT__shw_g",
+    "kills": "c_wSMGBergT__kw_g",
+    "seconds": "c_wSMGBergT__sw_g",
+    "shots": "c_wSMGBergT__sfw_g"
+   }
+  },
+  "wSMGCSR": {
+   "cat": "player_weapons4",
+   "category": "衝鋒槍",
+   "guid": "6C3EE48B-0974-48B1-AFF7-96FD4D684E82",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/74/8/Chauchat-Ribeyrolles-4af8a912.png",
+   "label": "MG - SMG - CSRG SMG",
+   "name": "RSC 衝鋒槍（原廠）",
+   "order": 11013,
+   "stats": {
+    "headshots": "c__wSMGCSR_hsh_g",
+    "hits": "c_wSMGCSR__shw_g",
+    "kills": "c_wSMGCSR__kw_g",
+    "seconds": "c_wSMGCSR__sw_g",
+    "shots": "c_wSMGCSR__sfw_g"
+   }
+  },
+  "wSMGCSRA": {
+   "cat": "player_weapons4",
+   "category": "衝鋒槍",
+   "guid": "6DAFDE21-2502-41B4-878B-532E70905238",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/74/8/Chauchat-Ribeyrolles-4af8a912.png",
+   "label": "MG - SMG - CSRG SMG Accuracy",
+   "name": "RSC 衝鋒槍（瞄準鏡）",
+   "order": 11014,
+   "stats": {
+    "headshots": "c__wSMGCSRA_hsh_g",
+    "hits": "c_wSMGCSRA__shw_g",
+    "kills": "c_wSMGCSRA__kw_g",
+    "seconds": "c_wSMGCSRA__sw_g",
+    "shots": "c_wSMGCSRA__sfw_g"
+   }
+  },
+  "wSMGHell": {
+   "cat": "player_weapons2",
+   "category": "衝鋒槍",
+   "guid": "2B253855-7BA0-4FF6-9F25-57D53B15FE32",
+   "image": "[BB_PREFIX]/gamedata/tunguska/30/81/Hellriegel1915-e2513c1e.png",
+   "label": "MG - SMG - Hellriegel 1915",
+   "name": "Hellriegel 1915（原廠）",
+   "order": 11006,
+   "stats": {
+    "headshots": "c__wSMGHell_hsh_g",
+    "hits": "c_wSMGHell__shw_g",
+    "kills": "c_wSMGHell__kw_g",
+    "seconds": "c_wSMGHell__sw_g",
+    "shots": "c_wSMGHell__sfw_g"
+   }
+  },
+  "wSMGHellA": {
+   "cat": "player_weapons2",
+   "category": "衝鋒槍",
+   "guid": "B1E5A3BC-3D24-4FE5-84D1-4523D6DCE545",
+   "image": "[BB_PREFIX]/gamedata/tunguska/30/81/Hellriegel1915-e2513c1e.png",
+   "label": "MG - SMG - Hellriegel 1915 Acc",
+   "name": "Hellriegel 1915（防禦）",
+   "order": 11008,
+   "stats": {
+    "headshots": "c__wSMGHellA_hsh_g",
+    "hits": "c_wSMGHellA__shw_g",
+    "kills": "c_wSMGHellA__kw_g",
+    "seconds": "c_wSMGHellA__sw_g",
+    "shots": "c_wSMGHellA__sfw_g"
+   }
+  },
+  "wSMGMau": {
+   "cat": "player_weapons3",
+   "category": "衝鋒槍",
+   "guid": "1C5B531F-26B4-429F-839B-99252610A7F0",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/102/65/MauserM1917TrenchCarbine-9a4158a1.png",
+   "label": "MG - SMG - Mauser M1917 Trench Carbine",
+   "name": "M1917 戰壕卡賓槍",
+   "order": 11011,
+   "stats": {
+    "headshots": "c__wSMGMau_hsh_g",
+    "hits": "c_wSMGMau__shw_g",
+    "kills": "c_wSMGMau__kw_g",
+    "seconds": "c_wSMGMau__sw_g",
+    "shots": "c_wSMGMau__sfw_g"
+   }
+  },
+  "wSMGMauP": {
+   "cat": "player_weapons5",
+   "category": "半自動步槍",
+   "guid": "245A23B1-53BA-4AB2-A416-224794F15FCB",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/102/65/MauserM1917TrenchCarbine-9a4158a1.png",
+   "label": "MG - SMG - Mauser M1917 Patrol Carbine",
+   "name": "M1917 卡賓槍（巡邏）",
+   "order": 2027,
+   "stats": {
+    "headshots": "c__wSMGMauP_hsh_g",
+    "hits": "c_wSMGMauP__shw_g",
+    "kills": "c_wSMGMauP__kw_g",
+    "seconds": "c_wSMGMauP__sw_g",
+    "shots": "c_wSMGMauP__sfw_g"
+   }
+  },
+  "wSMGMax": {
+   "cat": "player_weapons2",
+   "category": "衝鋒槍",
+   "guid": "C4F8BC18-1908-4A83-ABB6-B812C05D49CE",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/61/86/MaximSMG-c3563db7.png",
+   "label": "MG - SMG - Maxim",
+   "name": "SMG 08/18（原廠）",
+   "order": 11010,
+   "stats": {
+    "headshots": "c__wSMGMax_hsh_g",
+    "hits": "c_wSMGMax__shw_g",
+    "kills": "c_wSMGMax__kw_g",
+    "seconds": "c_wSMGMax__sw_g",
+    "shots": "c_wSMGMax__sfw_g"
+   }
+  },
+  "wSMGMaxA": {
+   "cat": "player_weapons2",
+   "category": "衝鋒槍",
+   "guid": "DEC97287-AF0B-49E4-8FD8-CBC5FB5AF497",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/61/86/MaximSMG-c3563db7.png",
+   "label": "MG - SMG - Maxim Acc",
+   "name": "SMG 08/18（瞄準鏡）",
+   "order": 11009,
+   "stats": {
+    "headshots": "c__wSMGMaxA_hsh_g",
+    "hits": "c_wSMGMaxA__shw_g",
+    "kills": "c_wSMGMaxA__kw_g",
+    "seconds": "c_wSMGMaxA__sw_g",
+    "shots": "c_wSMGMaxA__sfw_g"
+   }
+  },
+  "wSMGRib": {
+   "cat": "player_weapons2",
+   "category": "衝鋒槍",
+   "guid": "6B07DE60-5568-43C0-B1F6-D51A13A9BD3C",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/14/67/Ribeyrolles-0e43197c.png",
+   "label": "MG - SMG - Ribeyrolles",
+   "name": "利貝羅勒 1918（原廠）",
+   "order": 11007,
+   "stats": {
+    "headshots": "c__wSMGRib_hsh_g",
+    "hits": "c_wSMGRib__shw_g",
+    "kills": "c_wSMGRib__kw_g",
+    "seconds": "c_wSMGRib__sw_g",
+    "shots": "c_wSMGRib__sfw_g"
+   }
+  },
+  "wSMGRibO": {
+   "cat": "player_weapons5",
+   "category": "衝鋒槍",
+   "guid": "C4B84F0E-D7FF-49D9-9796-E6CF95C058BD",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/14/67/Ribeyrolles-0e43197c.png",
+   "label": "MG - SMG - Ribeyrolles Optical",
+   "name": "Ribeyrolles 1918（瞄準鏡）",
+   "order": 11017,
+   "stats": {
+    "headshots": "c__wSMGRibO_hsh_g",
+    "hits": "c_wSMGRibO__shw_g",
+    "kills": "c_wSMGRibO__kw_g",
+    "seconds": "c_wSMGRibO__sw_g",
+    "shots": "c_wSMGRibO__sfw_g"
+   }
+  },
+  "wSMGStX": {
+   "cat": "player_weapons5",
+   "category": "衝鋒槍",
+   "guid": "39137F1F-B794-4265-BB30-490E1E182F81",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/95/83/SteyrM1912Stock-a1ad884f.png",
+   "label": "MG - SMG - Steyr M1912 Stock Experimental",
+   "name": "Maschinenpistole M1912/P.16（實驗）",
+   "order": 11016,
+   "stats": {
+    "headshots": "c__wSMGStX_hsh_g",
+    "hits": "c_wSMGStX__shw_g",
+    "kills": "c_wSMGStX__kw_g",
+    "seconds": "c_wSMGStX__sw_g",
+    "shots": "c_wSMGStX__sfw_g"
+   }
+  },
+  "wSMGSte": {
+   "cat": "player_weapons3",
+   "category": "衝鋒槍",
+   "guid": "E1297C9B-861A-4170-840B-83AC64A0C574",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/95/83/SteyrM1912Stock-a1ad884f.png",
+   "label": "MG - SMG - Steyr M1912 Stock",
+   "name": "M1912/P.16（衝鋒）",
+   "order": 11012,
+   "stats": {
+    "headshots": "c__wSMGSte_hsh_g",
+    "hits": "c_wSMGSte__shw_g",
+    "kills": "c_wSMGSte__kw_g",
+    "seconds": "c_wSMGSte__sw_g",
+    "shots": "c_wSMGSte__sfw_g"
+   }
+  },
+  "wSMGThomM": {
+   "cat": "player_weapons5",
+   "category": "衝鋒槍",
+   "guid": "A9985C95-7364-4AE3-BC77-C53651128EBE",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/28/9/M1919Thompson-1cf7343d.png",
+   "label": "MG - SMG - Thompson M1919",
+   "name": "M1919 衝鋒槍",
+   "order": 11015,
+   "stats": {
+    "headshots": "c__wSMGThomM_hsh_g",
+    "hits": "c_wSMGThomM__shw_g",
+    "kills": "c_wSMGThomM__kw_g",
+    "seconds": "c_wSMGThomM__sw_g",
+    "shots": "c_wSMGThomM__sfw_g"
+   }
+  },
+  "wSMGThomS": {
+   "cat": "player_weapons5",
+   "category": "衝鋒槍",
+   "image": null,
+   "label": "MG - SMG - Thompson Annihilator Storm",
+   "name": "Annihilator（風暴）",
+   "order": 99253,
+   "stats": {
+    "headshots": "c__wSMGThomS_hsh_g",
+    "hits": "c_wSMGThomS__shw_g",
+    "kills": "c_wSMGThomS__kw_g",
+    "seconds": "c_wSMGThomS__sw_g",
+    "shots": "c_wSMGThomS__sfw_g"
+   }
+  },
+  "wSMGThomT": {
+   "cat": "player_weapons5",
+   "category": "衝鋒槍",
+   "guid": "C70FE9E0-0A1C-470C-B377-68059953EAD8",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/26/102/ThompsonAnnihilatorTr-1a660e74.png",
+   "label": "MG - SMG - Thompson Annihilator Trench",
+   "name": "Annihilator（壕溝）",
+   "order": 11015,
+   "stats": {
+    "headshots": "c__wSMGThomT_hsh_g",
+    "hits": "c_wSMGThomT__shw_g",
+    "kills": "c_wSMGThomT__kw_g",
+    "seconds": "c_wSMGThomT__sw_g",
+    "shots": "c_wSMGThomT__sfw_g"
+   }
+  },
+  "wSPBG": {
+   "cat": "player_weapons1",
+   "category": "配備",
+   "guid": "BE041F1A-460B-4FD5-9E4B-F1C803C0F42F",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/14/24/GadgetBreechgun-f2188c3f.png",
+   "label": "Explosives - Breech Gun",
+   "name": "反坦克火箭砲",
+   "order": 1022,
+   "stats": {
+    "headshots": "c__wSPBG_hsh_g",
+    "hits": "c_wSPBG__shw_g",
+    "kills": "c_wSPBG__kw_g",
+    "seconds": "c_wSPBG__sw_g",
+    "shots": "c_wSPBG__sfw_g"
+   }
+  },
+  "wSPBGAA": {
+   "cat": "player_weapons4",
+   "category": "配備",
+   "guid": "AE96B513-1F05-4E63-A273-E98FA91EE4D0",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/73/92/AA-Rocket-Gun-49a4e8d1.png",
+   "label": "Explosives - Breech Gun Flak",
+   "name": "防空火箭砲",
+   "order": 1027,
+   "stats": {
+    "headshots": "c__wSPBGAA_hsh_g",
+    "hits": "c_wSPBGAA__shw_g",
+    "kills": "c_wSPBGAA__kw_g",
+    "seconds": "c_wSPBGAA__sw_g",
+    "shots": "c_wSPBGAA__sfw_g"
+   }
+  },
+  "wSPDefib": {
+   "cat": "player_weapons1",
+   "category": "配備",
+   "guid": "EBA4454E-EEB6-4AF1-9286-BD841E297ED4",
+   "image": "[BB_PREFIX]/gamedata/tunguska/26/57/GadgetSyringe-e6c764c2.png",
+   "label": "Special - Defibrillator",
+   "name": "醫療用針筒",
+   "order": 1010,
+   "stats": {
+    "headshots": "c__wSPDefib_hsh_g",
+    "hits": "c_wSPDefib__shw_g",
+    "kills": "c_wSPDefib__kw_g",
+    "seconds": "c_wSPDefib__sw_g",
+    "shots": "c_wSPDefib__sfw_g"
+   }
+  },
+  "wSPFGA": {
+   "cat": "player_weapons3",
+   "category": "配備",
+   "image": null,
+   "label": "Special - Flare Gun Signal",
+   "name": "信號槍（訊號）",
+   "order": 99248,
+   "stats": {
+    "headshots": "c__wSPFGA_hsh_g",
+    "hits": "c_wSPFGA__shw_g",
+    "kills": "c_wSPFGA__kw_g",
+    "seconds": "c_wSPFGA__sw_g",
+    "shots": "c_wSPFGA__sfw_g"
+   }
+  },
+  "wSPFlShot": {
+   "cat": "player_weapons1",
+   "category": "配備",
+   "guid": "ADAD5F72-BD74-46EF-AB42-99F95D88DF8E",
+   "image": "[BB_PREFIX]/gamedata/tunguska/64/78/GadgetWebleyScottFlaregunFlash-40b27cca.png",
+   "label": "Special - Flash Flare",
+   "name": "信號槍（閃光）",
+   "order": 1008,
+   "stats": {
+    "headshots": "c__wSPFlShot_hsh_g",
+    "hits": "c_wSPFlShot__shw_g",
+    "kills": "c_wSPFlShot__kw_g",
+    "seconds": "c_wSPFlShot__sw_g",
+    "shots": "c_wSPFlShot__sfw_g"
+   }
+  },
+  "wSPFlame": {
+   "cat": "player_weapons1",
+   "category": "戰場裝備",
+   "guid": "D4A1023A-6C3B-48DF-9515-C35A9463794D",
+   "image": "[BB_PREFIX]/gamedata/tunguska/19/14/WEXFlammenwerfer-13f2b3af.png",
+   "label": "Special - Flamethrower",
+   "name": "Wex",
+   "order": 0,
+   "stats": {
+    "headshots": "c__wSPFlame_hsh_g",
+    "hits": "c_wSPFlame__shw_g",
+    "kills": "c_wSPFlame__kw_g",
+    "seconds": "c_wSPFlame__sw_g",
+    "shots": "c_wSPFlame__sfw_g"
+   }
+  },
+  "wSPFlare": {
+   "cat": "player_weapons1",
+   "category": "配備",
+   "guid": "2543311A-B9BC-4F72-8E71-C9D32DCA9CFC",
+   "image": "[BB_PREFIX]/gamedata/tunguska/68/56/GadgetWebleyScottFlaregun-4438a413.png",
+   "label": "Special - Spotting Flare",
+   "name": "信號槍（偵察）",
+   "order": 1013,
+   "stats": {
+    "headshots": "c__wSPFlare_hsh_g",
+    "hits": "c_wSPFlare__shw_g",
+    "kills": "c_wSPFlare__kw_g",
+    "seconds": "c_wSPFlare__sw_g",
+    "shots": "c_wSPFlare__sfw_g"
+   }
+  },
+  "wSPKb": {
+   "cat": "player_weapons1",
+   "category": "配備",
+   "guid": "2D64B139-27C8-4EDB-AB14-734993A96008",
+   "image": "[BB_PREFIX]/gamedata/tunguska/14/63/GadgetKBullets-0ec1f92a.png",
+   "label": "Special - K Bullet",
+   "name": "K 彈",
+   "order": 1005,
+   "stats": {
+    "headshots": "c__wSPKb_hsh_g",
+    "hits": "c_wSPKb__shw_g",
+    "kills": "c_wSPKb__kw_g",
+    "seconds": "c_wSPKb__sw_g",
+    "shots": "c_wSPKb__sfw_g"
+   }
+  },
+  "wSPMHGL": {
+   "cat": "player_weapons3",
+   "category": "戰場裝備",
+   "guid": "1B74E3E0-2484-3BF0-AF8F-25BFA008B6F0",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/101/30/MartiniHenryGrenadeLauncher-65e27bf0.png",
+   "label": "Special - Martini Henry GL",
+   "name": "馬提尼·亨利步槍榴彈發射器",
+   "order": 4,
+   "stats": {
+    "headshots": "c__wSPMHGL_hsh_g",
+    "hits": "c_wSPMHGL__shw_g",
+    "kills": "c_wSPMHGL__kw_g",
+    "seconds": "c_wSPMHGL__sw_g",
+    "shots": "c_wSPMHGL__sfw_g"
+   }
+  },
+  "wSPMask": {
+   "cat": "player_weapons4",
+   "category": "配備",
+   "image": null,
+   "label": "Special - Gas Mask",
+   "name": "防毒面具",
+   "order": 99249,
+   "stats": {
+    "headshots": "c__wSPMask_hsh_g",
+    "hits": "c_wSPMask__shw_g",
+    "kills": "c_wSPMask__kw_g",
+    "seconds": "c_wSPMask__sw_g",
+    "shots": "c_wSPMask__sfw_g"
+   }
+  },
+  "wSPMaxim": {
+   "cat": "player_weapons1",
+   "category": "戰場裝備",
+   "guid": "0B575357-B536-45FF-BC1B-386560AE2163",
+   "image": "[BB_PREFIX]/gamedata/tunguska/8/121/Maxim0815-0879ffaa.png",
+   "label": "Special - Maxim MG",
+   "name": "MG 08/15",
+   "order": 1,
+   "stats": {
+    "headshots": "c__wSPMaxim_hsh_g",
+    "hits": "c_wSPMaxim__shw_g",
+    "kills": "c_wSPMaxim__kw_g",
+    "seconds": "c_wSPMaxim__sw_g",
+    "shots": "c_wSPMaxim__sfw_g"
+   }
+  },
+  "wSPRepair": {
+   "cat": "player_weapons1",
+   "category": "配備",
+   "guid": "F59AA727-6618-4C1D-A5E2-007044CA3B89",
+   "image": "[BB_PREFIX]/gamedata/tunguska/7/30/GadgetWrench-07e2c76d.png",
+   "label": "Special - Repairtool",
+   "name": "維修工具",
+   "order": 1026,
+   "stats": {
+    "headshots": "c__wSPRepair_hsh_g",
+    "hits": "c_wSPRepair__shw_g",
+    "kills": "c_wSPRepair__kw_g",
+    "seconds": "c_wSPRepair__sw_g",
+    "shots": "c_wSPRepair__sfw_g"
+   }
+  },
+  "wSPTG": {
+   "cat": "player_weapons1",
+   "category": "戰場裝備",
+   "guid": "A9DBBCBD-E028-4EE9-8123-252B983D8CD6",
+   "image": "[BB_PREFIX]/gamedata/tunguska/82/33/MauserTankgewehr1918-aedf4c56.png",
+   "label": "Special - Tankgewehr",
+   "name": "Tankgewehr M1918",
+   "order": 2,
+   "stats": {
+    "headshots": "c__wSPTG_hsh_g",
+    "hits": "c_wSPTG__shw_g",
+    "kills": "c_wSPTG__kw_g",
+    "seconds": "c_wSPTG__sw_g",
+    "shots": "c_wSPTG__sfw_g"
+   }
+  },
+  "wSPVP": {
+   "cat": "player_weapons1",
+   "category": "戰場裝備",
+   "guid": "BCF1DDDF-C812-43E6-9F5A-F08109BAB746",
+   "image": "[BB_PREFIX]/gamedata/tunguska/75/89/VillarPerosa-4ba7d141.png",
+   "label": "Special - Villar Perosa",
+   "name": "維拉·佩羅薩衝鋒槍",
+   "order": 3,
+   "stats": {
+    "headshots": "c__wSPVP_hsh_g",
+    "hits": "c_wSPVP__shw_g",
+    "kills": "c_wSPVP__kw_g",
+    "seconds": "c_wSPVP__sw_g",
+    "shots": "c_wSPVP__sfw_g"
+   }
+  },
+  "wShot19": {
+   "cat": "player_weapons2",
+   "category": "霰彈槍",
+   "guid": "CCA1F8F7-5658-4DCA-BAA8-2C930C2EF5F0",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/24/11/RemingtonModel1900-e80b885b.png",
+   "label": "Shotgun - Remington M1900",
+   "name": "Model 1900（原廠）",
+   "order": 3011,
+   "stats": {
+    "headshots": "c__wShot19_hsh_g",
+    "hits": "c_wShot19__shw_g",
+    "kills": "c_wShot19__kw_g",
+    "seconds": "c_wShot19__sw_g",
+    "shots": "c_wShot19__sfw_g"
+   }
+  },
+  "wShot19U": {
+   "cat": "player_weapons2",
+   "category": "霰彈槍",
+   "guid": "55381B1D-7E17-44BE-AC0B-33542A64BF96",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/24/11/RemingtonModel1900-e80b885b.png",
+   "label": "Shotgun - Remington M1900 Slug",
+   "name": "Model 1900（霰彈塊）",
+   "order": 3012,
+   "stats": {
+    "headshots": "c__wShot19U_hsh_g",
+    "hits": "c_wShot19U__shw_g",
+    "kills": "c_wShot19U__kw_g",
+    "seconds": "c_wShot19U__sw_g",
+    "shots": "c_wShot19U__sfw_g"
+   }
+  },
+  "wShotBA5C": {
+   "cat": "player_weapons2",
+   "category": "霰彈槍",
+   "guid": "31D6D032-5B6F-4494-A04A-0FB8EDB130BB",
+   "image": "[BB_PREFIX]/gamedata/tunguska/107/78/BrowingA5-95b260b4.png",
+   "label": "Shotgun - Browning Auto 5 Choke",
+   "name": "12g 自動霰彈槍（獵人）",
+   "order": 3001,
+   "stats": {
+    "headshots": "c__wShotBA5C_hsh_g",
+    "hits": "c_wShotBA5C__shw_g",
+    "kills": "c_wShotBA5C__kw_g",
+    "seconds": "c_wShotBA5C__sw_g",
+    "shots": "c_wShotBA5C__sfw_g"
+   }
+  },
+  "wShotBA5E": {
+   "cat": "player_weapons2",
+   "category": "霰彈槍",
+   "guid": "D7A0DED9-EC54-4523-9294-656FA1881FE9",
+   "image": "[BB_PREFIX]/gamedata/tunguska/107/78/BrowingA5-95b260b4.png",
+   "label": "Shotgun - Browning Auto 5 Extension Tube",
+   "name": "12g 自動霰彈槍（加長）",
+   "order": 3008,
+   "stats": {
+    "headshots": "c__wShotBA5E_hsh_g",
+    "hits": "c_wShotBA5E__shw_g",
+    "kills": "c_wShotBA5E__kw_g",
+    "seconds": "c_wShotBA5E__sw_g",
+    "shots": "c_wShotBA5E__sfw_g"
+   }
+  },
+  "wShotBA5L": {
+   "cat": "player_weapons2",
+   "category": "霰彈槍",
+   "guid": "FA78AFDF-D06D-4CBE-B325-945F9B4091C3",
+   "image": "[BB_PREFIX]/gamedata/tunguska/107/78/BrowingA5-95b260b4.png",
+   "label": "Shotgun - Browning Auto 5 Low Recoil",
+   "name": "12g 自動霰彈槍（Back-Bored）",
+   "order": 3004,
+   "stats": {
+    "headshots": "c__wShotBA5L_hsh_g",
+    "hits": "c_wShotBA5L__shw_g",
+    "kills": "c_wShotBA5L__kw_g",
+    "seconds": "c_wShotBA5L__sw_g",
+    "shots": "c_wShotBA5L__sfw_g"
+   }
+  },
+  "wShotRem": {
+   "cat": "player_weapons2",
+   "category": "霰彈槍",
+   "guid": "ED262207-65C8-46E1-B5D4-D7468143790F",
+   "image": "[BB_PREFIX]/gamedata/tunguska/8/85/RemingtonM10-08ab3f5b.png",
+   "label": "Shotgun - Remington M10",
+   "name": "Model 10-A（原廠）",
+   "order": 3002,
+   "stats": {
+    "headshots": "c__wShotRem_hsh_g",
+    "hits": "c_wShotRem__shw_g",
+    "kills": "c_wShotRem__kw_g",
+    "seconds": "c_wShotRem__sw_g",
+    "shots": "c_wShotRem__sfw_g"
+   }
+  },
+  "wShotRemC": {
+   "cat": "player_weapons2",
+   "category": "霰彈槍",
+   "guid": "508E534A-A7A5-41A1-8F8F-FEDFA0AFDA93",
+   "image": "[BB_PREFIX]/gamedata/tunguska/8/85/RemingtonM10-08ab3f5b.png",
+   "label": "Shotgun - Remington M10 Choke",
+   "name": "Model 10-A（獵人）",
+   "order": 3003,
+   "stats": {
+    "headshots": "c__wShotRemC_hsh_g",
+    "hits": "c_wShotRemC__shw_g",
+    "kills": "c_wShotRemC__kw_g",
+    "seconds": "c_wShotRemC__sw_g",
+    "shots": "c_wShotRemC__sfw_g"
+   }
+  },
+  "wShotRemU": {
+   "cat": "player_weapons2",
+   "category": "霰彈槍",
+   "guid": "16D7C222-5ACA-4728-854D-6282E44846DC",
+   "image": "[BB_PREFIX]/gamedata/tunguska/8/85/RemingtonM10-08ab3f5b.png",
+   "label": "Shotgun - Remington M10 Slug",
+   "name": "Model 10-A（霰彈塊）",
+   "order": 3007,
+   "stats": {
+    "headshots": "c__wShotRemU_hsh_g",
+    "hits": "c_wShotRemU__shw_g",
+    "kills": "c_wShotRemU__kw_g",
+    "seconds": "c_wShotRemU__sw_g",
+    "shots": "c_wShotRemU__sfw_g"
+   }
+  },
+  "wShotSO": {
+   "cat": "player_weapons2",
+   "category": "坦克/駕駛員",
+   "guid": "7085A5B9-6A77-4766-83CD-3666DA3EDF28",
+   "image": "[BB_PREFIX]/gamedata/tunguska/45/30/SawedOfShotgun-d31e0dd8.png",
+   "label": "Shotgun - Sawed Off Shotgun",
+   "name": "短管霰彈槍",
+   "order": 10000,
+   "stats": {
+    "headshots": "c__wShotSO_hsh_g",
+    "hits": "c_wShotSO__shw_g",
+    "kills": "c_wShotSO__kw_g",
+    "seconds": "c_wShotSO__sw_g",
+    "shots": "c_wShotSO__sfw_g"
+   }
+  },
+  "wShotSjo": {
+   "cat": "player_weapons2",
+   "category": "霰彈槍",
+   "guid": "5D89166E-58E1-46FD-B854-69641E9DCEF7",
+   "image": "[BB_PREFIX]/gamedata/tunguska/23/91/SjogrenShotgun-e95b3db0.png",
+   "label": "Shotgun - Sjogren",
+   "name": "Sjögren Inertial（原廠）",
+   "order": 3010,
+   "stats": {
+    "headshots": "c__wShotSjo_hsh_g",
+    "hits": "c_wShotSjo__shw_g",
+    "kills": "c_wShotSjo__kw_g",
+    "seconds": "c_wShotSjo__sw_g",
+    "shots": "c_wShotSjo__sfw_g"
+   }
+  },
+  "wShotSjoS": {
+   "cat": "player_weapons5",
+   "category": "霰彈槍",
+   "guid": "42B442BF-6ACE-4592-A53B-96424B4ACABF",
+   "image": "[BB_PREFIX]/gamedata/tunguska/23/91/SjogrenShotgun-e95b3db0.png",
+   "label": "Shotgun - Sjogren Slug",
+   "name": "Sjögren Inertial（霰彈塊）",
+   "order": 3013,
+   "stats": {
+    "headshots": "c__wShotSjoS_hsh_g",
+    "hits": "c_wShotSjoS__shw_g",
+    "kills": "c_wShotSjoS__kw_g",
+    "seconds": "c_wShotSjoS__sw_g",
+    "shots": "c_wShotSjoS__sfw_g"
+   }
+  },
+  "wShotWinC": {
+   "cat": "player_weapons2",
+   "category": "霰彈槍",
+   "guid": "20D21E3D-BA5F-4239-8F90-42FCDDA12F51",
+   "image": "[BB_PREFIX]/gamedata/tunguska/69/69/WinchesterM1897-bb453195.png",
+   "label": "Shotgun - Winchester 1897 Choke",
+   "name": "M97 戰壕槍（獵人）",
+   "order": 3005,
+   "stats": {
+    "headshots": "c__wShotWinC_hsh_g",
+    "hits": "c_wShotWinC__shw_g",
+    "kills": "c_wShotWinC__kw_g",
+    "seconds": "c_wShotWinC__sw_g",
+    "shots": "c_wShotWinC__sfw_g"
+   }
+  },
+  "wShotWinL": {
+   "cat": "player_weapons2",
+   "category": "霰彈槍",
+   "guid": "EA7C6CF1-5801-4C52-8685-51B4C7B90CE9",
+   "image": "[BB_PREFIX]/gamedata/tunguska/69/69/WinchesterM1897-bb453195.png",
+   "label": "Shotgun - Winchester 1897 Low",
+   "name": "M97 戰壕槍（Back-Bored）",
+   "order": 3006,
+   "stats": {
+    "headshots": "c__wShotWinL_hsh_g",
+    "hits": "c_wShotWinL__shw_g",
+    "kills": "c_wShotWinL__kw_g",
+    "seconds": "c_wShotWinL__sw_g",
+    "shots": "c_wShotWinL__sfw_g"
+   }
+  },
+  "wShotWinP": {
+   "cat": "player_weapons2",
+   "category": "霰彈槍",
+   "guid": "8F241031-A76D-436B-AE5F-CD797B504A7A",
+   "image": "[BB_PREFIX]/gamedata/tunguska/69/69/WinchesterM1897-bb453195.png",
+   "label": "Shotgun - Winchester 1897 PREORDER",
+   "name": "地獄戰士戰壕霰彈槍",
+   "order": 3000,
+   "stats": {
+    "headshots": "c__wShotWinP_hsh_g",
+    "hits": "c_wShotWinP__shw_g",
+    "kills": "c_wShotWinP__kw_g",
+    "seconds": "c_wShotWinP__sw_g",
+    "shots": "c_wShotWinP__sfw_g"
+   }
+  },
+  "wShotWinW": {
+   "cat": "player_weapons2",
+   "category": "霰彈槍",
+   "guid": "9F97B37E-2A81-4AE3-A96A-4402B30BF184",
+   "image": "[BB_PREFIX]/gamedata/tunguska/69/69/WinchesterM1897-bb453195.png",
+   "label": "Shotgun - Winchester 1897 Sweeper",
+   "name": "M97 戰壕槍（掃蕩）",
+   "order": 3009,
+   "stats": {
+    "headshots": "c__wShotWinW_hsh_g",
+    "hits": "c_wShotWinW__shw_g",
+    "kills": "c_wShotWinW__kw_g",
+    "seconds": "c_wShotWinW__sw_g",
+    "shots": "c_wShotWinW__sfw_g"
+   }
+  },
+  "wXATG": {
+   "cat": "player_weapons1",
+   "category": "配備",
+   "guid": "72CCBF3E-C0FE-4657-A1A7-EACDB2D11985",
+   "image": "[BB_PREFIX]/gamedata/tunguska/75/19/GadgetATGrenade-4b135d46.png",
+   "label": "Explosives - AT Grenade",
+   "name": "反坦克手榴彈",
+   "order": 1007,
+   "stats": {
+    "headshots": "c__wXATG_hsh_g",
+    "hits": "c_wXATG__shw_g",
+    "kills": "c_wXATG__kw_g",
+    "seconds": "c_wXATG__sw_g",
+    "shots": "c_wXATG__sfw_g"
+   }
+  },
+  "wXATM": {
+   "cat": "player_weapons1",
+   "category": "配備",
+   "guid": "6DFD1536-BBBB-4528-917A-7E2821FB4B6B",
+   "image": "[BB_PREFIX]/gamedata/tunguska/82/124/GadgetMine-527cef72.png",
+   "label": "Explosives - AT Mine",
+   "name": "反坦克地雷",
+   "order": 1009,
+   "stats": {
+    "headshots": "c__wXATM_hsh_g",
+    "hits": "c_wXATM__shw_g",
+    "kills": "c_wXATM__kw_g",
+    "seconds": "c_wXATM__sw_g",
+    "shots": "c_wXATM__sfw_g"
+   }
+  },
+  "wXCBHE": {
+   "cat": "player_weapons1",
+   "category": "配備",
+   "guid": "60D24A79-BFD6-4C8F-B54F-D1AA6D2620DE",
+   "image": "[BB_PREFIX]/gamedata/tunguska/95/61/crossbow-5f3dc5e6.png",
+   "label": "Explosives - Crossbow HE",
+   "name": "十字弓發射器（高爆）",
+   "order": 1002,
+   "stats": {
+    "headshots": "c__wXCBHE_hsh_g",
+    "hits": "c_wXCBHE__shw_g",
+    "kills": "c_wXCBHE__kw_g",
+    "seconds": "c_wXCBHE__sw_g",
+    "shots": "c_wXCBHE__sfw_g"
+   }
+  },
+  "wXD": {
+   "cat": "player_weapons1",
+   "category": "配備",
+   "guid": "079D8793-073C-4332-A959-19C74A9D2A46",
+   "image": "[BB_PREFIX]/gamedata/tunguska/74/40/GadgetDynamite-b6283212.png",
+   "label": "Explosives - Dynamite",
+   "name": "炸藥",
+   "order": 1024,
+   "stats": {
+    "headshots": "c__wXD_hsh_g",
+    "hits": "c_wXD__shw_g",
+    "kills": "c_wXD__kw_g",
+    "seconds": "c_wXD__sw_g",
+    "shots": "c_wXD__sfw_g"
+   }
+  },
+  "wXGAT": {
+   "cat": "player_weapons1",
+   "category": "手榴彈",
+   "guid": "D4A99456-2ABA-4376-9870-200FD24C5D45",
+   "image": "[BB_PREFIX]/gamedata/tunguska/90/87/GadgetTrooperATGrenade-a6575030.png",
+   "label": "Explosives - Light AT Grenade",
+   "name": "輕型反坦克手榴彈",
+   "order": 8008,
+   "stats": {
+    "headshots": "c__wXGAT_hsh_g",
+    "hits": "c_wXGAT__shw_g",
+    "kills": "c_wXGAT__kw_g",
+    "seconds": "c_wXGAT__sw_g",
+    "shots": "c_wXGAT__sfw_g"
+   }
+  },
+  "wXGF": {
+   "cat": "player_weapons1",
+   "category": "手榴彈",
+   "guid": "F0B75644-5B3F-45CD-9E42-9B67F3D4D37F",
+   "image": "[BB_PREFIX]/gamedata/tunguska/116/21/GadgetFragmented-8c15152e.png",
+   "label": "Explosives - Frag Grenade",
+   "name": "破片手榴彈",
+   "order": 8003,
+   "stats": {
+    "headshots": "c__wXGF_hsh_g",
+    "hits": "c_wXGF__shw_g",
+    "kills": "c_wXGF__kw_g",
+    "seconds": "c_wXGF__sw_g",
+    "shots": "c_wXGF__sfw_g"
+   }
+  },
+  "wXGG": {
+   "cat": "player_weapons1",
+   "category": "手榴彈",
+   "guid": "EE6AC80E-FFDF-4E5A-923D-209CE9B86BF4",
+   "image": "[BB_PREFIX]/gamedata/tunguska/43/18/GadgetGas-2bee4386.png",
+   "label": "Explosives - Gas Grenade",
+   "name": "毒氣手榴彈",
+   "order": 8007,
+   "stats": {
+    "headshots": "c__wXGG_hsh_g",
+    "hits": "c_wXGG__shw_g",
+    "kills": "c_wXGG__kw_g",
+    "seconds": "c_wXGG__sw_g",
+    "shots": "c_wXGG__sfw_g"
+   }
+  },
+  "wXGI": {
+   "cat": "player_weapons1",
+   "category": "手榴彈",
+   "guid": "F9A8C36F-F5B6-4946-B3B9-F5923564CD51",
+   "image": "[BB_PREFIX]/gamedata/tunguska/16/57/GadgetImpact-f0c7f39e.png",
+   "label": "Explosives - Impact Grenade",
+   "name": "衝擊手榴彈",
+   "order": 8002,
+   "stats": {
+    "headshots": "c__wXGI_hsh_g",
+    "hits": "c_wXGI__shw_g",
+    "kills": "c_wXGI__kw_g",
+    "seconds": "c_wXGI__sw_g",
+    "shots": "c_wXGI__sfw_g"
+   }
+  },
+  "wXGM": {
+   "cat": "player_weapons4",
+   "category": "手榴彈",
+   "guid": "55D01566-4322-4EAE-AD13-9DDAF2C2F399",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/2/88/ImprovisedGrenade-fea87071.png",
+   "label": "Explosives - Improvised Grenade",
+   "name": "土製手榴彈",
+   "order": 8011,
+   "stats": {
+    "headshots": "c__wXGM_hsh_g",
+    "hits": "c_wXGM__shw_g",
+    "kills": "c_wXGM__kw_g",
+    "seconds": "c_wXGM__sw_g",
+    "shots": "c_wXGM__sfw_g"
+   }
+  },
+  "wXGN": {
+   "cat": "player_weapons1",
+   "category": "手榴彈",
+   "guid": "8219207A-41E6-4ED2-A3E8-9690752EC40C",
+   "image": "[BB_PREFIX]/gamedata/tunguska/104/44/GadgetIncindiary-68d49a3a.png",
+   "label": "Explosives - Incendiary Grenade",
+   "name": "燃燒手榴彈",
+   "order": 8000,
+   "stats": {
+    "headshots": "c__wXGN_hsh_g",
+    "hits": "c_wXGN__shw_g",
+    "kills": "c_wXGN__kw_g",
+    "seconds": "c_wXGN__sw_g",
+    "shots": "c_wXGN__sfw_g"
+   }
+  },
+  "wXGO": {
+   "cat": "player_weapons1",
+   "category": "手榴彈",
+   "guid": "67B5683D-D897-4881-BB86-DACB9947264E",
+   "image": "[BB_PREFIX]/gamedata/tunguska/45/25/GadgetMiniOffensive-2d19e08a.png",
+   "label": "Explosives - Offensive Grenade",
+   "name": "小型手榴彈",
+   "order": 8005,
+   "stats": {
+    "headshots": "c__wXGO_hsh_g",
+    "hits": "c_wXGO__shw_g",
+    "kills": "c_wXGO__kw_g",
+    "seconds": "c_wXGO__sw_g",
+    "shots": "c_wXGO__sfw_g"
+   }
+  },
+  "wXGS": {
+   "cat": "player_weapons1",
+   "category": "手榴彈",
+   "guid": "04CDC06B-F4B6-4696-BE9C-08E1D0D36347",
+   "image": "[BB_PREFIX]/gamedata/tunguska/81/124/GadgetSmoke-af84f434.png",
+   "label": "Explosives - Smoke Grenade",
+   "name": "煙霧手榴彈",
+   "order": 8006,
+   "stats": {
+    "headshots": "c__wXGS_hsh_g",
+    "hits": "c_wXGS__shw_g",
+    "kills": "c_wXGS__kw_g",
+    "seconds": "c_wXGS__sw_g",
+    "shots": "c_wXGS__sfw_g"
+   }
+  },
+  "wXLM": {
+   "cat": "player_weapons1",
+   "category": "配備",
+   "guid": "95A5E9D8-E949-46C2-B5CA-36B3CA4C2E9D",
+   "image": "[BB_PREFIX]/gamedata/tunguska/90/41/GadgetLimpetMine-a6d78b8f.png",
+   "label": "Explosives - Limpet Mine",
+   "name": "磁吸地雷",
+   "order": 1025,
+   "stats": {
+    "headshots": "c__wXLM_hsh_g",
+    "hits": "c_wXLM__shw_g",
+    "kills": "c_wXLM__kw_g",
+    "seconds": "c_wXLM__sw_g",
+    "shots": "c_wXLM__sfw_g"
+   }
+  },
+  "wXRCBF": {
+   "cat": "player_weapons1",
+   "category": "配備",
+   "guid": "02D4481F-FBC3-4C57-AAAC-1B37DC92751E",
+   "image": "[BB_PREFIX]/gamedata/tunguska/95/61/crossbow-5f3dc5e6.png",
+   "label": "Explosives - Crossbow Frag",
+   "name": "十字弓發射器（破片）",
+   "order": 1014,
+   "stats": {
+    "headshots": "c__wXRCBF_hsh_g",
+    "hits": "c_wXRCBF__shw_g",
+    "kills": "c_wXRCBF__kw_g",
+    "seconds": "c_wXRCBF__sw_g",
+    "shots": "c_wXRCBF__sfw_g"
+   }
+  },
+  "wXRGF": {
+   "cat": "player_weapons1",
+   "category": "手榴彈",
+   "guid": "F34B3039-7B3A-0272-14E7-628980A60F06",
+   "image": "[BB_PREFIX]/gamedata/tunguska/89/18/MedicRifleLauncher_B-a712e224.png",
+   "label": "Explosives - Rifle Frag",
+   "name": "步槍手榴彈（破片）",
+   "order": 8001,
+   "stats": {
+    "headshots": "c__wXRGF_hsh_g",
+    "hits": "c_wXRGF__shw_g",
+    "kills": "c_wXRGF__kw_g",
+    "seconds": "c_wXRGF__sw_g",
+    "shots": "c_wXRGF__sfw_g"
+   }
+  },
+  "wXRGHE": {
+   "cat": "player_weapons1",
+   "category": "手榴彈",
+   "guid": "165ED044-C2C5-43A1-BE04-8618FA5072D4",
+   "image": "[BB_PREFIX]/gamedata/tunguska/89/18/MedicRifleLauncher_B-a712e224.png",
+   "label": "Explosives - Rifle HE",
+   "name": "步槍手榴彈（高爆）",
+   "order": 8009,
+   "stats": {
+    "headshots": "c__wXRGHE_hsh_g",
+    "hits": "c_wXRGHE__shw_g",
+    "kills": "c_wXRGHE__kw_g",
+    "seconds": "c_wXRGHE__sw_g",
+    "shots": "c_wXRGHE__sfw_g"
+   }
+  },
+  "wXRGS": {
+   "cat": "player_weapons1",
+   "category": "手榴彈",
+   "guid": "03FDF635-8E98-4F74-A176-DB4960304DF5",
+   "image": "[BB_PREFIX]/gamedata/tunguska/67/117/MedicRifleLauncher_A-438b725e.png",
+   "label": "Explosives - Rifle Smoke",
+   "name": "步槍手榴彈（煙霧）",
+   "order": 8004,
+   "stats": {
+    "headshots": "c__wXRGS_hsh_g",
+    "hits": "c_wXRGS__shw_g",
+    "kills": "c_wXRGS__kw_g",
+    "seconds": "c_wXRGS__sw_g",
+    "shots": "c_wXRGS__sfw_g"
+   }
+  },
+  "wXTB": {
+   "cat": "player_weapons1",
+   "category": "配備",
+   "guid": "EF1C7B9B-8912-4298-8FCB-29CC75DD0E7F",
+   "image": "[BB_PREFIX]/gamedata/tunguska/22/24/GadgetTripWireGrenade-1618bbc3.png",
+   "label": "Explosives - Tripwire Bomb",
+   "name": "絆索炸彈（高爆）",
+   "order": 1011,
+   "stats": {
+    "headshots": "c__wXTB_hsh_g",
+    "hits": "c_wXTB__shw_g",
+    "kills": "c_wXTB__kw_g",
+    "seconds": "c_wXTB__sw_g",
+    "shots": "c_wXTB__sfw_g"
+   }
+  },
+  "wXTG": {
+   "cat": "player_weapons1",
+   "category": "配備",
+   "guid": "033299D1-A8E6-4A5A-8932-6F2091745A9D",
+   "image": "[BB_PREFIX]/gamedata/tunguska/15/22/GadgetTripWireBombGas-f1eabac0.png",
+   "label": "Explosives - Tripwire Gas",
+   "name": "絆索炸彈（毒氣）",
+   "order": 1004,
+   "stats": {
+    "headshots": "c__wXTG_hsh_g",
+    "hits": "c_wXTG__shw_g",
+    "kills": "c_wXTG__kw_g",
+    "seconds": "c_wXTG__sw_g",
+    "shots": "c_wXTG__sfw_g"
+   }
+  },
+  "wXTI": {
+   "cat": "player_weapons1",
+   "category": "配備",
+   "guid": "9CF9EA1C-39A1-4365-85A1-3645B9621901",
+   "image": "[BB_PREFIX]/gamedata/tunguska/106/102/TripWireBombINC-6a9a41fb.png",
+   "label": "Explosives - Tripwire Gas Burn",
+   "name": "絆索炸彈（燃燒）",
+   "order": 1012,
+   "stats": {
+    "headshots": "c__wXTI_hsh_g",
+    "hits": "c_wXTI__shw_g",
+    "kills": "c_wXTI__kw_g",
+    "seconds": "c_wXTI__sw_g",
+    "shots": "c_wXTI__sfw_g"
+   }
+  }
+ }
+}

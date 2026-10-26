@@ -1,15 +1,15 @@
-"""BF1 战绩提取的纯函数单测
+"""BF1 战绩组装的纯函数单测
 
-覆盖 _build_summary（生涯综合）与 _build_soldiers（兵种分布）从 EA
-detailedStats result 字典的提取逻辑：基础值（basicStats）、战斗细分项
-（result 顶层）、载具/步战击杀拆分、最佳兵种、兵种分布，以及各类缺失降级。
-字段名取自 EA 该接口的真实返回。
+_build_summary / _build_soldiers 从 Blaze 生涯数据（BlazeCareer）组装综合战绩与兵种分布，
+_build_weapons / _build_vehicles 按武器目录把 Blaze 统计组装成列表并关联皮肤。
 """
 
 from __future__ import annotations
 
 import pytest
+from app.domain.games.bf1.blaze_stats import career_stat_names, parse_career
 from app.domain.games.bf1.maps import normalize_emblem_url
+from app.services.bf1 import stats_service
 from app.services.bf1.stats_service import (
     _build_platoon,
     _build_soldiers,
@@ -25,133 +25,92 @@ from app.services.bf1.stats_service import (
 )
 
 
-def _make_result() -> dict:
-    """模拟 EA detailedStatsByPersonaId 返回的 result 字典（截取关键字段）"""
+def _make_values() -> dict[str, float]:
+    """Blaze Stats.getStats 合并后的 {统计名: 数值}（截取关键统计）"""
     return {
-        "basicStats": {
-            "timePlayed": 1_200_000,
-            "wins": 980,
-            "losses": 540,
-            "kills": 35_000,
-            "deaths": 12_000,
-            "kpm": 1.85,
-            "spm": 720.0,
-            "skill": 418.0,
-            "rank": None,
-        },
-        # 战斗细分项在 result 顶层
-        "killAssists": 4_800.0,
-        "revives": 2_100.0,
-        "heals": 9_500.0,
-        "repairs": 1_200.0,
-        "dogtagsTaken": 320,
-        "highestKillStreak": 32,
-        "longestHeadShot": 412.0,
-        "favoriteClass": "Medic",
-        "vehicleStats": [
-            {"killsAs": 4_000.0, "name": "Heavy Tank"},
-            {"killsAs": 2_800.0, "name": "Fighter"},
-        ],
-        "kitStats": [
-            {
-                "kits": 1,
-                "name": "Assault",
-                "prettyName": "突擊兵",
-                "kills": 8_000.0,
-                "score": 1.2e6,
-                "secondsAs": 220_000.0,
-            },
-            {
-                "kits": 3,
-                "name": "Medic",
-                "prettyName": "醫療兵",
-                "kills": 15_000.0,
-                "score": 2.8e6,
-                "secondsAs": 540_000.0,
-            },
-            {
-                "kits": 4,
-                "name": "Scout",
-                "prettyName": "偵察兵",
-                "kills": 4_000.0,
-                "score": 7.2e5,
-                "secondsAs": 180_000.0,
-            },
-        ],
+        "kills": 35_000.0,
+        "c___d_g": 12_000.0,
+        "c_mwin__roo_g": 980.0,
+        "c_mlos__roo_g": 540.0,
+        "c___kak_g": 4_800.0,
+        "c___re_g": 2_100.0,
+        "c___h_g": 9_500.0,
+        "c___r_g": 1_200.0,
+        "c___dt_g": 320.0,
+        "c___k_ghvs": 32.0,
+        "c___hsd_ghva": 412.5,
+        "c_av__ki_g": 6_800.0,
+        "score": 12_000_000.0,
+        "rank": 121.0,
+        "skill": 418.0,
+        "c_as__ks_g": 8_000.0,
+        "c_as__sa_g": 220_000.0,
+        "sc_assault": 1_200_000.0,
+        "c_md__ks_g": 15_000.0,
+        "c_md__sa_g": 540_000.0,
+        "sc_medic": 2_800_000.0,
+        "c_sc__ks_g": 4_000.0,
+        "c_sc__sa_g": 180_000.0,
+        "sc_scout": 720_000.0,
+        # 精英兵只计入总时长
+        "c_kfk__sa_g": 60_000.0,
     }
 
 
+def test_career_stat_names_cover_every_parsed_stat() -> None:
+    # parse_career 读到的统计名都必须在请求名单里，否则线上会一直按 0 处理
+    names = {n for ns in career_stat_names().values() for n in ns}
+    assert set(_make_values()) <= names
+
+
+def test_parse_career_rounds_int_fields_and_sums_time() -> None:
+    c = parse_career({**_make_values(), "c___kak_g": 4_800.4})
+    assert c.assists == 4_800
+    assert c.seconds == 220_000 + 540_000 + 180_000 + 60_000
+    assert c.best_kit == "medic"
+    assert parse_career({}).best_kit is None
+
+
 def test_build_summary_extracts_all_fields() -> None:
-    s = _build_summary(901001001, _make_result())
+    s = _build_summary(901001001, parse_career(_make_values()))
     assert s.persona_id == 901001001
     assert s.kills == 35_000
     assert s.deaths == 12_000
     assert s.wins == 980
     assert s.losses == 540
     assert s.kd == 35_000 / 12_000
-    assert s.kpm == 1.85
-    assert s.sps == 720.0 / 60.0
-    assert s.time_played_seconds == 1_200_000
+    assert s.time_played_seconds == 1_000_000
+    assert s.kpm == 35_000 / 1_000_000 * 60
+    assert s.sps == 12_000_000 / 1_000_000
+    assert s.rank == 121
     assert s.skill == 418.0
-    # 载具击杀 = 4000 + 2800，步战击杀 = 35000 - 6800
     assert s.vehicle_kills == 6_800
     assert s.infantry_kills == 28_200
-    # 战斗细分项来自 result 顶层
     assert s.assists == 4_800
     assert s.revives == 2_100
     assert s.heals == 9_500
     assert s.repairs == 1_200
     assert s.dogtags == 320
     assert s.max_killstreak == 32
-    assert s.longest_headshot_meters == 412.0
-    # 最佳兵种 favoriteClass 转小写
+    assert s.longest_headshot_meters == 412.5
     assert s.best_class == "medic"
 
 
-def test_build_summary_computes_rank_from_spm_when_ea_rank_missing() -> None:
-    # EA rank 为 None 时由 spm * timePlayed / 60 推算，结果应为正整数等级
-    s = _build_summary(1, _make_result())
-    assert s.rank is not None
-    assert s.rank > 0
-
-
-def test_build_summary_leaves_kill_split_empty_without_vehicle_stats() -> None:
-    raw = _make_result()
-    del raw["vehicleStats"]
-    s = _build_summary(1, raw)
-    # 无 vehicleStats 时步战/载具击杀无法拆分，留空而非填 0
-    assert s.infantry_kills is None
-    assert s.vehicle_kills is None
-    # 总击杀仍应正常
-    assert s.kills == 35_000
-
-
-def test_build_summary_handles_empty_result() -> None:
-    s = _build_summary(42, {})
-    assert s.persona_id == 42
+def test_build_summary_handles_empty_career() -> None:
+    s = _build_summary(42, parse_career({}))
     assert s.kills == 0
-    assert s.deaths == 0
     assert s.kd is None  # deaths 为 0 时不计算 kd
-    assert s.skill is None
+    assert s.kpm is None
+    assert s.sps is None
+    assert s.rank is None
     assert s.assists is None
-    assert s.infantry_kills is None
-    assert s.vehicle_kills is None
     assert s.longest_headshot_meters is None
     assert s.best_class is None
 
 
-def test_build_summary_skill_zero_is_preserved() -> None:
-    # skill 为 0 是合法值（新号），应保留 0.0 而非降为 None
-    raw = _make_result()
-    raw["basicStats"]["skill"] = 0
-    s = _build_summary(1, raw)
-    assert s.skill == 0.0
-
-
 def test_build_soldiers_extracts_class_distribution() -> None:
-    soldiers = _build_soldiers(_make_result())
-    assert len(soldiers) == 3
-    # 兵种代号转小写，序列化 key 为 "class"
+    soldiers = _build_soldiers(parse_career(_make_values()))
+    # 没玩过的兵种不列
     assert [s.class_name for s in soldiers] == ["assault", "medic", "scout"]
     medic = soldiers[1]
     assert medic.kills == 15_000
@@ -161,19 +120,6 @@ def test_build_soldiers_extracts_class_distribution() -> None:
     dumped = medic.model_dump(by_alias=True)
     assert dumped["class"] == "medic"
     assert "class_name" not in dumped
-
-
-def test_build_soldiers_empty_without_kit_stats() -> None:
-    raw = _make_result()
-    del raw["kitStats"]
-    assert _build_soldiers(raw) == []
-    assert _build_soldiers({}) == []
-
-
-def test_build_soldiers_skips_items_without_name() -> None:
-    raw = {"kitStats": [{"kills": 100}, {"name": "", "kills": 50}, {"name": "Pilot", "kills": 30}]}
-    soldiers = _build_soldiers(raw)
-    assert [s.class_name for s in soldiers] == ["pilot"]
 
 
 def test_parse_online_player_in_server() -> None:
@@ -324,88 +270,149 @@ def test_pick_skin_none_when_no_hit() -> None:
     assert _pick_skin(None) is None
 
 
-def _make_weapons_result() -> list:
-    return [
-        {
-            "name": "輕機槍",
-            "weapons": [
-                {
-                    "name": "帕拉貝倫 MG14/17",
-                    "guid": "ab-12",
-                    "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/1/2/PARABELLUM-123.png",
-                    "stats": {
-                        "values": {
-                            "kills": 500,
-                            "headshots": 50,
-                            "hits": 300,
-                            "shots": 100,
-                            "seconds": 3600,
-                        }
-                    },
-                },
-                {
-                    "name": "無 guid 武器",
-                    "imageUrl": None,
-                    "stats": {"values": {"kills": 10, "shots": 0}},
-                },
-            ],
-        }
-    ]
+_WEAPONS = {
+    "wLMGPara": {
+        "name": "帕拉貝倫 MG14/17",
+        "category": "輕機槍",
+        "guid": "ab-12",
+        "image": "[BB_PREFIX]/gamedata/Tunguska/1/2/PARABELLUM-123.png",
+        "order": 2,
+        "cat": "player_weapons2",
+        "stats": {
+            "kills": "c_wLMGPara__kw_g",
+            "seconds": "c_wLMGPara__sw_g",
+            "shots": "c_wLMGPara__sfw_g",
+            "hits": "c_wLMGPara__shw_g",
+            "headshots": "c__wLMGPara_hsh_g",
+        },
+    },
+    # Gateway 没有的条目：无 guid、无图片
+    "wSPMask": {
+        "name": "防毒面具",
+        "category": "配備",
+        "image": None,
+        "order": 99001,
+        "cat": "player_weapons4",
+        "stats": {
+            "kills": "c_wSPMask__kw_g",
+            "seconds": "c_wSPMask__sw_g",
+            "shots": "c_wSPMask__sfw_g",
+        },
+    },
+    "wUnused": {
+        "name": "沒用過",
+        "category": "配備",
+        "order": 1,
+        "cat": "player_weapons1",
+        "stats": {"kills": "c_wUnused__kw_g", "seconds": "c_wUnused__sw_g"},
+    },
+}
+_WEAPON_VALUES = {
+    "c_wLMGPara__kw_g": 500.0,
+    "c_wLMGPara__sw_g": 3600.0,
+    "c_wLMGPara__sfw_g": 100.0,
+    "c_wLMGPara__shw_g": 300.0,
+    "c__wLMGPara_hsh_g": 50.0,
+    "c_wSPMask__kw_g": 3.0,
+    "c_wSPMask__sw_g": 0.0,
+    "c_wSPMask__sfw_g": 0.0,
+}
+
+_VEHICLES = {
+    "taHtA7V": {
+        "name": "A7V 重型坦克",
+        "category": "重型坦克",
+        "sort_order": 5,
+        "image": "[BB_PREFIX]/gamedata/Tunguska/3/4/A7V-456.png",
+        "order": 0,
+        "cat": "player_statcategory",
+        "stats": {
+            "kills": "c_taHtA7V__ki_g",
+            "seconds": "c_taHtA7V__si_g",
+            "destroyed": "c__taHtA7V_di_g",
+        },
+    },
+    "ShDeLa": {
+        "name": "L 級驅逐艦",
+        "category": "驅逐艦",
+        "sort_order": 14,
+        "order": 1,
+        "cat": "player_statcategory3",
+        "stats": {"kills": "c_ShDeLa__ki_g", "seconds": "c_ShDeLa__si_g"},
+    },
+    "plAtHal": {
+        "name": "哈爾伯施塔特 CL.II 攻擊機",
+        "category": "攻擊機",
+        "sort_order": 0,
+        "order": 2,
+        "cat": "player_statcategory",
+        "stats": {"kills": "c_plAtHal__ki_g", "seconds": "c_plAtHal__si_g"},
+    },
+}
+_VEHICLE_VALUES = {
+    "c_taHtA7V__ki_g": 800.0,
+    "c_taHtA7V__si_g": 7200.0,
+    "c__taHtA7V_di_g": 60.0,
+    "c_ShDeLa__ki_g": 5.0,
+    "c_plAtHal__ki_g": 30.0,
+}
 
 
-def test_build_weapons_fills_skin_fields_by_guid() -> None:
-    weapons = _build_weapons(_make_weapons_result(), {"AB-12": [_FAKE_GUID, _WEAPON_SKIN_GUID]})
+@pytest.fixture
+def fake_catalog(monkeypatch):
+    tables = {"weapons": _WEAPONS, "vehicles": _VEHICLES}
+    monkeypatch.setattr(stats_service, "catalog", lambda kind: tables[kind])
+
+
+def test_build_weapons_maps_catalog_and_skips_unused(fake_catalog) -> None:
+    weapons = _build_weapons(_WEAPON_VALUES, {})
+    # 按 Gateway 顺序排列，没用过的不列，目录外的 Blaze 独有条目也在
+    assert [w.name for w in weapons] == ["帕拉貝倫 MG14/17", "防毒面具"]
+    para = weapons[0]
+    assert para.kills == 500
+    assert para.headshots == 50
+    assert para.time_seconds == 3600
+    # 命中率用 hits/shots 自算（霰弹枪多弹丸可 > 100）
+    assert para.accuracy == 300.0
+    assert para.category == "輕機槍"
+    assert para.image == (
+        "https://eaassets-a.akamaihd.net/battlelog/battlebinary/gamedata/Tunguska/1/2/PARABELLUM-123.png"
+    )
+    mask = weapons[1]
+    assert mask.accuracy is None
+    assert mask.image is None
+    assert mask.time_seconds is None
+
+
+def test_build_weapons_fills_skin_fields_by_guid(fake_catalog) -> None:
+    weapons = _build_weapons(_WEAPON_VALUES, {"AB-12": [_FAKE_GUID, _WEAPON_SKIN_GUID]})
     assert weapons[0].skin_name == "普魯士人"
     assert weapons[0].skin_rarity == "Superior"
     assert weapons[0].skin_image is not None
     assert weapons[0].skin_image.startswith("https://eaassets-a.akamaihd.net/")
-    # 无 guid / 无候选的武器三字段为 None
+    # 无 guid 的条目三字段为 None
     assert weapons[1].skin_name is None
     assert weapons[1].skin_rarity is None
     assert weapons[1].skin_image is None
 
 
-def test_build_weapons_keeps_existing_field_behavior() -> None:
-    # 回归：accuracy 用 hits/shots 自算（霰弹枪多弹丸可 > 100），image 展开占位符
-    weapons = _build_weapons(_make_weapons_result(), {})
-    assert weapons[0].accuracy == 300.0
-    assert weapons[0].image == (
-        "https://eaassets-a.akamaihd.net/battlelog/battlebinary/gamedata/Tunguska/1/2/PARABELLUM-123.png"
+def test_build_vehicles_maps_catalog_fields(fake_catalog) -> None:
+    vehicles = _build_vehicles(_VEHICLE_VALUES, {})
+    assert [v.name for v in vehicles] == ["A7V 重型坦克", "L 級驅逐艦", "哈爾伯施塔特 CL.II 攻擊機"]
+    a7v = vehicles[0]
+    assert a7v.category == "重型坦克"
+    assert a7v.kills == 800
+    assert a7v.destroyed == 60
+    assert a7v.time_seconds == 7200
+    assert a7v.image == (
+        "https://eaassets-a.akamaihd.net/battlelog/battlebinary/gamedata/Tunguska/3/4/A7V-456.png"
     )
-    assert weapons[0].kills == 500
-    assert weapons[0].category == "輕機槍"
-    assert weapons[1].accuracy is None
+    assert vehicles[1].destroyed is None
 
 
-def _make_vehicles_result() -> list:
-    return [
-        {
-            "name": "重型坦克",
-            "sortOrder": 5,
-            "vehicles": [
-                {
-                    "name": "A7V 重型坦克",
-                    "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/3/4/A7V-456.png",
-                    "stats": {"values": {"kills": 800, "destroyed": 60, "seconds": 7200}},
-                }
-            ],
-        },
-        {
-            "name": "驅逐艦",
-            "sortOrder": 14,
-            "vehicles": [{"name": "L 級驅逐艦", "stats": {"values": {"kills": 5}}}],
-        },
-        {
-            "name": "攻擊機",
-            "sortOrder": 0,
-            "vehicles": [{"name": "哈爾伯施塔特 CL.II 攻擊機", "stats": {"values": {"kills": 30}}}],
-        },
-    ]
-
-
-def test_build_vehicles_fills_skin_by_kit_number() -> None:
+def test_build_vehicles_fills_skin_by_kit_number(fake_catalog) -> None:
     vehicles = _build_vehicles(
-        _make_vehicles_result(),
+        _VEHICLE_VALUES,
         {"17": [_VEHICLE_SKIN_GUID], "23": [_FAKE_GUID, _VEHICLE_SKIN_GUID]},
     )
     # 重型坦克：sortOrder 5 -> kit 17
@@ -417,14 +424,3 @@ def test_build_vehicles_fills_skin_by_kit_number() -> None:
     assert vehicles[2].skin_name is None
     assert vehicles[2].skin_rarity is None
     assert vehicles[2].skin_image is None
-
-
-def test_build_vehicles_keeps_existing_field_behavior() -> None:
-    vehicles = _build_vehicles(_make_vehicles_result(), {})
-    assert vehicles[0].name == "A7V 重型坦克"
-    assert vehicles[0].category == "重型坦克"
-    assert vehicles[0].kills == 800
-    assert vehicles[0].destroyed == 60
-    assert vehicles[0].image == (
-        "https://eaassets-a.akamaihd.net/battlelog/battlebinary/gamedata/Tunguska/3/4/A7V-456.png"
-    )

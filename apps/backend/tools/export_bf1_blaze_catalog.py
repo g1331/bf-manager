@@ -42,29 +42,62 @@ VEHICLE_CATEGORIES = ["player_statcategory", "player_statcategory3", "player_sta
 SAMPLE_SIZE = 160
 
 # Gateway 没有、只在 Blaze 里有的条目：英文描述 → (繁体名, 分类)。分类沿用 Gateway 的分类名。
-# Blaze 标签 → (名称, 分类[, 借图的 Blaze 标签])。Gateway 里同名同分类的条目（样本里没人用过、
-# 对不上数值）会沿用它的图片与 GUID；Gateway 没有的（维和者、防毒面具等）可以借同款武器的图，
-# 否则没有图片。
-EXTRA_NAMES: dict[str, tuple[str, ...]] = {
-    "Handgun - Revolver - Colt SAA": ("維和者", "佩槍"),
-    "Handgun - Semi - Colt 1911 Triforce": ("Triforce M1911", "佩槍", "Handgun - Semi - Colt 1911"),
-    "Special - Gas Mask": ("防毒面具", "配備"),
-    "Special - Flare Gun Signal": ("信號槍（訊號）", "配備", "Special - Spotting Flare"),
-    "Explosives - Mortar (Only for Custom Games)": (
-        "迫擊砲（自訂遊戲）", "配備", "Equipment - Mortars - HE",
-    ),
-    "Melee - Lance Cavalry Charge": ("騎兵長槍（衝鋒）", "近戰武器", "Melee - Lance Cavalry"),
-    "Melee - Ararebo": ("霰棒", "近戰武器"),
-    "Melee - Arditi Dagger": ("敢死隊匕首", "近戰武器"),
-    "Rifle - Single - Martini Henry Standard Issue": (
-        "馬提尼·亨利步槍", "制式步槍", "Rifle - Single - Martini Henry",
-    ),
-    "MG - LMG - Burton LMG Optical": ("伯頓 LMR（瞄準鏡）", "輕機槍"),
-    "MG - LMG - Burton LMG Trench": ("伯頓 LMR（壕溝）", "輕機槍"),
-    "MG - SMG - Thompson Annihilator Storm": (
-        "Annihilator（風暴）", "衝鋒槍", "MG - SMG - Thompson Annihilator Trench",
-    ),
-    "Stationary Weapons - SK45 Coastal Cannon": ("SK45 岸防砲", "定點武器"),
+# Blaze 标签 → 名称、分类，可选 image / image_from（借另一个 Blaze 标签的图）/ guid。
+# Gateway 里同名同分类的条目（样本里没人用过、对不上数值）自动沿用它的图片与 GUID。
+# 2018 年夏季更新后加的武器（维和者、伯顿）Gateway 和 EA CDN 都没有：图标是游戏文件里的原图
+# （BF1ServerTools 解包，md5 前 8 位与文件名哈希一致），放在前端 public/bf1/weapons；GUID 同样取自它。
+# 防毒面具、SK45 岸防炮游戏里没有武器图标。
+_BB = "[BB_PREFIX]/gamedata"
+EXTRA_NAMES: dict[str, dict[str, str]] = {
+    "Handgun - Revolver - Colt SAA": {
+        "name": "維和者", "category": "佩槍",
+        "image": "/bf1/weapons/Colt_SAA-ef15294c.png",
+        "guid": "B9333E7C-3D7D-4147-A569-9FC9BB2B4F5D",
+    },
+    "Handgun - Semi - Colt 1911 Triforce": {
+        "name": "Triforce M1911", "category": "佩槍",
+        "image_from": "Handgun - Semi - Colt 1911",
+        "guid": "F7CED576-7629-402A-8598-4A4998C02E0A",
+    },
+    "MG - LMG - Burton LMG Optical": {
+        "name": "伯頓 LMR（瞄準鏡）", "category": "輕機槍",
+        "image": "/bf1/weapons/WinchesterBurton-ce3988cc.png",
+        "guid": "708392C1-38F7-4CFA-81E3-04FC90434021",
+    },
+    "MG - LMG - Burton LMG Trench": {
+        "name": "伯頓 LMR（壕溝）", "category": "輕機槍",
+        "image": "/bf1/weapons/WinchesterBurton-ce3988cc.png",
+        "guid": "6C8284DF-9CEC-4391-9E1B-0E355C2D1310",
+    },
+    "MG - SMG - Thompson Annihilator Storm": {
+        "name": "Annihilator（衝鋒）", "category": "衝鋒槍",
+        "image_from": "MG - SMG - Thompson Annihilator Trench",
+    },
+    # Gateway 只列玩家拥有的武器，样本 160 人没人有金碎棒；名称、图片、GUID 取自一名拥有者的 Gateway 数据
+    "Melee - Ararebo": {
+        "name": "金碎棒", "category": "近戰武器",
+        "image": f"{_BB}/Tunguska/79/111/ArareboClub-4f916d72.png",
+        "guid": "5BCDA8AE-E088-4106-B4D6-1AEC26B7F140",
+    },
+    "Melee - Arditi Dagger": {"name": "敢死隊匕首", "category": "近戰武器"},
+    "Melee - Lance Cavalry Charge": {
+        "name": "騎兵長槍（衝鋒）", "category": "近戰武器", "image_from": "Melee - Lance Cavalry",
+    },
+    # 精英兵（哨兵）的信号枪
+    "Special - Flare Gun Signal": {
+        "name": "信號槍（信號）", "category": "配備",
+        "image_from": "Special - Flash Flare",
+        "guid": "9D1BEE08-C101-4FF3-8ECA-244240171801",
+    },
+    "Special - Gas Mask": {"name": "防毒面具", "category": "配備"},
+    "Explosives - Mortar (Only for Custom Games)": {
+        "name": "迫擊砲（自訂遊戲）", "category": "配備", "image_from": "Equipment - Mortars - HE",
+    },
+    "Rifle - Single - Martini Henry Standard Issue": {
+        "name": "馬提尼·亨利步槍", "category": "制式步槍",
+        "image_from": "Rifle - Single - Martini Henry",
+    },
+    "Stationary Weapons - SK45 Coastal Cannon": {"name": "SK45 岸防砲", "category": "定點武器"},
 }  # fmt: skip
 # 不是玩家能挑的武器：遥控类与突破模式的炮击支援
 IGNORED_LABELS = {"Remote", "Artillery - Rush Artillery"}
@@ -408,20 +441,22 @@ def build(sample_path: Path) -> None:
                 if code in unmatched:
                     missing.append(c["label"])
                 continue
-            name, category = EXTRA_NAMES[c["label"]][:2]
-            key = by_name.get((name, category))
+            extra = EXTRA_NAMES[c["label"]]
+            key = by_name.get((extra["name"], extra["category"]))
             it = gw[key] if key else {"image": None, "order": 99000 + len(out)}
             out[code] = {
-                "name": name, "category": category, "image": it["image"], "order": it["order"],
+                "name": extra["name"], "category": extra["category"],
+                "image": extra.get("image") or it["image"], "order": it["order"],
                 "label": c["label"], "cat": c["cat"], "stats": c["stats"],
             }  # fmt: skip
-            if key and "/" not in key:
-                out[code]["guid"] = key
+            guid = extra.get("guid") or (key if key and "/" not in key else None)
+            if guid:
+                out[code]["guid"] = guid
         by_label = {e["label"]: e for e in out.values()}
         for e in out.values():
-            borrow = EXTRA_NAMES.get(e["label"], ())[2:]
-            if not e["image"] and borrow:
-                e["image"] = by_label[borrow[0]]["image"]
+            src = EXTRA_NAMES.get(e["label"], {}).get("image_from")
+            if src and not e["image"]:
+                e["image"] = by_label[src]["image"]
         used = set(matched.values())
         guids = {e.get("guid") for e in out.values()}
         listed = {(e["name"], e["category"]) for e in out.values()}

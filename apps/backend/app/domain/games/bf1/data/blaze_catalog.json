@@ -930,6 +930,7 @@
   "wHSColtT": {
    "cat": "player_weapons1",
    "category": "佩槍",
+   "guid": "F7CED576-7629-402A-8598-4A4998C02E0A",
    "image": "[BB_PREFIX]/gamedata/tunguska/19/50/Colt1911-ed324bf1.png",
    "label": "Handgun - Semi - Colt 1911 Triforce",
    "name": "Triforce M1911",
@@ -1169,7 +1170,8 @@
   "wHSSAA": {
    "cat": "player_weapons5",
    "category": "佩槍",
-   "image": null,
+   "guid": "B9333E7C-3D7D-4147-A569-9FC9BB2B4F5D",
+   "image": "/bf1/weapons/Colt_SAA-ef15294c.png",
    "label": "Handgun - Revolver - Colt SAA",
    "name": "維和者",
    "order": 99250,
@@ -1392,7 +1394,8 @@
   "wLMGBurtO": {
    "cat": "player_weapons5",
    "category": "輕機槍",
-   "image": null,
+   "guid": "708392C1-38F7-4CFA-81E3-04FC90434021",
+   "image": "/bf1/weapons/WinchesterBurton-ce3988cc.png",
    "label": "MG - LMG - Burton LMG Optical",
    "name": "伯頓 LMR（瞄準鏡）",
    "order": 99251,
@@ -1407,7 +1410,8 @@
   "wLMGBurtT": {
    "cat": "player_weapons5",
    "category": "輕機槍",
-   "image": null,
+   "guid": "6C8284DF-9CEC-4391-9E1B-0E355C2D1310",
+   "image": "/bf1/weapons/WinchesterBurton-ce3988cc.png",
    "label": "MG - LMG - Burton LMG Trench",
    "name": "伯頓 LMR（壕溝）",
    "order": 99252,
@@ -1726,9 +1730,10 @@
   "wMARA": {
    "cat": "player_weapons1",
    "category": "近戰武器",
-   "image": null,
+   "guid": "5BCDA8AE-E088-4106-B4D6-1AEC26B7F140",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/79/111/ArareboClub-4f916d72.png",
    "label": "Melee - Ararebo",
-   "name": "霰棒",
+   "name": "金碎棒",
    "order": 99246,
    "stats": {
     "headshots": "c__wMARA_hsh_g",
@@ -3996,7 +4001,7 @@
    "category": "衝鋒槍",
    "image": "[BB_PREFIX]/gamedata/Tunguska/26/102/ThompsonAnnihilatorTr-1a660e74.png",
    "label": "MG - SMG - Thompson Annihilator Storm",
-   "name": "Annihilator（風暴）",
+   "name": "Annihilator（衝鋒）",
    "order": 99253,
    "stats": {
     "headshots": "c__wSMGThomS_hsh_g",
@@ -4073,9 +4078,10 @@
   "wSPFGA": {
    "cat": "player_weapons3",
    "category": "配備",
-   "image": "[BB_PREFIX]/gamedata/tunguska/68/56/GadgetWebleyScottFlaregun-4438a413.png",
+   "guid": "9D1BEE08-C101-4FF3-8ECA-244240171801",
+   "image": "[BB_PREFIX]/gamedata/tunguska/64/78/GadgetWebleyScottFlaregunFlash-40b27cca.png",
    "label": "Special - Flare Gun Signal",
-   "name": "信號槍（訊號）",
+   "name": "信號槍（信號）",
    "order": 99248,
    "stats": {
     "headshots": "c__wSPFGA_hsh_g",

@@ -2142,6 +2142,37 @@ class Platoons(_BF1GatewayBase):
             }
         )
 
+    async def getMembers(
+        self, platoon_guid: str, page_index: int = 0, page_size: int = 100
+    ) -> dict:
+        """
+        获取战队成员。pageIndex、pageSize 都必填，pageSize 最大 100（与战队人数上限相同）
+        :param platoon_guid:
+        :return:
+        eg:
+        {
+            "result": [
+                {
+                    "personaId": "1005329919565",
+                    "platformId": "1010834919565",
+                    "role": "role9",  // role9 将军 / role6 上校 / role3 中尉 / role0 列兵
+                    "displayName": "sakuara_master",
+                    "avatar": "",
+                    "accountId": "0"
+                }
+            ]
+        }
+        战队不存在时 error.code = -35150「找不到戰隊」
+        """
+        return await self.api_call(
+            {
+                "jsonrpc": "2.0",
+                "method": "Platoons.getMembers",
+                "params": {"guid": platoon_guid, "pageIndex": page_index, "pageSize": page_size},
+                "id": await get_a_uuid(),
+            }
+        )
+
     async def getServersWithPlayers(self, platoon_guid: str) -> dict:
         """
         获取战队正在游玩的服务器

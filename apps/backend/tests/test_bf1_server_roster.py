@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 import pytest
 from app.api.errors import NotFoundError
@@ -10,6 +10,7 @@ from app.models.bf1.server_roster import Bf1ServerPlayerDay
 from app.schemas.bf1.server import ServerSummary
 from app.services.bf1 import server_player_count_service as spc
 from app.services.bf1.server_roster_service import (
+    LEFT,
     QUEUE,
     SPECTATOR,
     TEAM1,
@@ -18,6 +19,7 @@ from app.services.bf1.server_roster_service import (
     decode_events,
     encode_event,
     extract_rosters,
+    tally_playtime,
 )
 from sqlalchemy import func, select
 
@@ -154,3 +156,61 @@ async def test_roster_page_paginates(test_session, monkeypatch: pytest.MonkeyPat
     rest = await spc.list_roster_points(test_session, 1, before=first.next_before, limit=3)
     assert [p.joined for p in rest.items] == [1, 2]
     assert rest.items[-1].ts == int(start.timestamp())
+
+
+def test_tally_playtime_counts_team_time_joins_and_clips() -> None:
+    day = date(2026, 10, 25)
+    base = int(datetime(2026, 10, 25, tzinfo=UTC).timestamp())
+    a = "".join(
+        encode_event(s, st)
+        for s, st in [
+            (3600, TEAM1),
+            (7200, QUEUE),
+            (7300, TEAM2),
+            (9000, LEFT),
+            (10000, TEAM1),
+            (10600, LEFT),
+        ]
+    )
+    # b 跨天延续（第 0 秒）不算进服，最后一段到 until 仍在服
+    b = encode_event(0, TEAM2)
+    until = base + 3600 * 5
+    out = tally_playtime([(day, 1, a), (day, 2, b)], base, until)
+    assert out[1]["seconds"] == 3600 + 1700 + 600
+    assert out[1]["joins"] == 2
+    assert out[1]["last_seen"] == base + 10600
+    assert out[1]["online"] is False
+    assert out[2] == {
+        "seconds": until - base,
+        "joins": 0,
+        "days": {date(2026, 10, 25)},  # UTC 零点 = 北京 8 点，同一天
+        "last_seen": until,
+        "online": True,
+    }
+    # 窗口从 a 第一段中间开始：只算窗口内的部分，窗口前的进服不算
+    clipped = tally_playtime([(day, 1, a)], base + 5400, until)
+    assert clipped[1]["seconds"] == 1800 + 1700 + 600
+    assert clipped[1]["joins"] == 1
+
+
+async def test_leaderboard_ranks_by_team_time(
+    test_session, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(spc, "datetime", _Clock)
+    monkeypatch.setattr(spc, "roster_tracker", RosterTracker())
+    start = datetime.now(UTC) - timedelta(hours=1)
+    a, b, c = 201, 202, 203
+    await _round(test_session, start, {a: TEAM1, b: QUEUE, c: SPECTATOR})
+    await _round(test_session, start + timedelta(minutes=1), {a: TEAM1, b: TEAM2, c: SPECTATOR})
+    await _round(test_session, start + timedelta(minutes=2), {b: TEAM2})
+    _Clock.current = start + timedelta(minutes=3)
+
+    board = await spc.get_leaderboard(test_session, 1, days=1)
+    # 观战的 c 没有在队时长，不上榜；b 排队那一分钟不算
+    assert board.total_players == 2
+    assert [(e.persona_id, e.seconds, e.online) for e in board.items] == [
+        (a, 120, False),
+        (b, 120, True),
+    ]
+    assert board.items[0].name == "p201"
+    assert board.items[0].joins == 1 and board.items[0].days == 1

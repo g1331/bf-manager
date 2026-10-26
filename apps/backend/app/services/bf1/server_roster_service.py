@@ -18,7 +18,7 @@ from __future__ import annotations
 import base64
 from collections import defaultdict
 from collections.abc import Iterable
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta, timezone
 from typing import Any
 
 from sqlalchemy import delete, func, select
@@ -34,6 +34,8 @@ SLOT_NAMES = {TEAM1: "team1", TEAM2: "team2", QUEUE: "queue", SPECTATOR: "specta
 QUEUE_TIDX = 65535
 
 RETENTION = timedelta(days=7)
+# 排行榜按北京时间数活跃天数，玩家感知的「一天」从零点开始，而不是 UTC 零点（北京 8 点）
+BEIJING = timezone(timedelta(hours=8))
 # 两轮名单间隔超过它就视为断档，与人数曲线的 MAX_SAMPLE_SPAN 一致
 MAX_GAP_SECONDS = 420
 # 一条 upsert 的行数上限，避开 Postgres 单语句 32767 个参数的限制
@@ -275,12 +277,61 @@ async def read_roster(db: AsyncSession, game_id: int, ts: int) -> list[dict[str,
         elif before != LEFT:
             out.append({"pid": pid, "slot": SLOT_NAMES[before], "change": "left"})
     if out:
-        name_rows = await db.execute(
-            select(Bf1PlayerName.pid, Bf1PlayerName.name).where(
-                Bf1PlayerName.pid.in_([p["pid"] for p in out])
-            )
-        )
-        names: dict[int, str] = dict(name_rows.tuples().all())
+        names = await read_names(db, [p["pid"] for p in out])
         for p in out:
             p["name"] = names.get(p["pid"])
     return sorted(out, key=lambda p: p["pid"])
+
+
+def tally_playtime(
+    rows: Iterable[tuple[date, int, str]], since: int, until: int
+) -> dict[int, dict[str, Any]]:
+    """按 (UTC 日期, pid, 事件串) 累计每人在 [since, until) 内的在队时长。
+
+    只有 team1 / team2 计时，排队与观战不算；活跃天数按北京时间日期去重；进服次数只数从离开变为
+    在服的事件，第 0 秒的跨天延续不算。最后一段到当天结束（今天则到 until）仍在服的记为 online。
+    """
+    out: dict[int, dict[str, Any]] = {}
+    for day, pid, events in rows:
+        base = int(datetime(day.year, day.month, day.day, tzinfo=UTC).timestamp())
+        day_end = min(base + 86400, until)
+        evs = decode_events(events)
+        t = out.setdefault(
+            pid, {"seconds": 0, "joins": 0, "days": set(), "last_seen": 0, "online": False}
+        )
+        prev = LEFT
+        for i, (at, state) in enumerate(evs):
+            start = base + at
+            end = base + evs[i + 1][0] if i + 1 < len(evs) else day_end
+            lo, hi = max(start, since), min(end, until)
+            if state != LEFT and prev == LEFT and at > 0 and since <= start < until:
+                t["joins"] += 1
+            if state != LEFT and hi > lo:
+                t["last_seen"] = max(t["last_seen"], hi)
+                if state in (TEAM1, TEAM2):
+                    t["seconds"] += hi - lo
+                    t["days"].add(datetime.fromtimestamp(lo, BEIJING).date())
+                if i + 1 == len(evs) and end >= until:
+                    t["online"] = True
+            prev = state
+    return out
+
+
+async def read_playtime(
+    db: AsyncSession, game_ids: Iterable[int], since: int, until: int
+) -> dict[int, dict[str, Any]]:
+    """这些局（同一台服重启前后的 game_id）在 [since, until) 内每人的在队时长等。"""
+    since_day = datetime.fromtimestamp(since, UTC).date()
+    rows = await db.execute(
+        select(Bf1ServerPlayerDay.day, Bf1ServerPlayerDay.pid, Bf1ServerPlayerDay.events).where(
+            Bf1ServerPlayerDay.game_id.in_(list(game_ids)), Bf1ServerPlayerDay.day >= since_day
+        )
+    )
+    return tally_playtime(rows.tuples().all(), since, until)
+
+
+async def read_names(db: AsyncSession, pids: list[int]) -> dict[int, str]:
+    rows = await db.execute(
+        select(Bf1PlayerName.pid, Bf1PlayerName.name).where(Bf1PlayerName.pid.in_(pids))
+    )
+    return dict(rows.tuples().all())

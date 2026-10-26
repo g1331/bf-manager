@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Copy, ShieldCheck } from "lucide-react";
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
@@ -10,7 +11,15 @@ import { bf1Api, type ServerExtras } from "@/lib/api/bf1";
 import { cn } from "@/lib/utils";
 
 /** 服务器档案：服主、战队、租期与各类 ID */
-export function ServerProfilePanel({ extras, now }: { extras: ServerExtras; now: number }) {
+export function ServerProfilePanel({
+  extras,
+  now,
+  game,
+}: {
+  extras: ServerExtras;
+  now: number;
+  game: string;
+}) {
   const { owner, platoon, lifecycle } = extras;
   const created = lifecycle.created_at ? Date.parse(lifecycle.created_at) / 1000 : null;
   const expires = lifecycle.expires_at ? Date.parse(lifecycle.expires_at) / 1000 : null;
@@ -44,7 +53,16 @@ export function ServerProfilePanel({ extras, now }: { extras: ServerExtras; now:
             displayName={owner.display_name}
             size="sm"
           />
-          <span className="truncate text-white">{owner.display_name}</span>
+          {ownerId ? (
+            <Link
+              href={`/${game}/player/${ownerId}`}
+              className="truncate text-white hover:text-amber-300"
+            >
+              {owner.display_name}
+            </Link>
+          ) : (
+            <span className="truncate text-white">{owner.display_name}</span>
+          )}
           {owner.platform ? (
             <span className="shrink-0 border border-white/20 px-1 text-[10px] leading-4 text-white/60">
               {owner.platform.toUpperCase()}
@@ -102,9 +120,18 @@ export function ServerProfilePanel({ extras, now }: { extras: ServerExtras; now:
           )}
           <div className="min-w-0 text-sm">
             <div className="flex flex-wrap items-baseline gap-x-2">
-              <span className="font-medium text-white">
-                [{platoon.tag ?? "—"}] {platoon.name}
-              </span>
+              {platoon.guid ? (
+                <Link
+                  href={`/${game}/platoon/${platoon.guid}`}
+                  className="font-medium text-white hover:text-amber-300"
+                >
+                  [{platoon.tag ?? "—"}] {platoon.name}
+                </Link>
+              ) : (
+                <span className="font-medium text-white">
+                  [{platoon.tag ?? "—"}] {platoon.name}
+                </span>
+              )}
               {platoon.size != null ? (
                 <span className="text-xs text-white/45">{platoon.size} 人</span>
               ) : null}

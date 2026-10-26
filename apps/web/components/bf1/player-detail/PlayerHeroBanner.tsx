@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { Clock4, Copy, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
@@ -25,6 +26,7 @@ export function PlayerHeroBanner({
   onlineServer,
   ban,
   platoon,
+  game,
 }: {
   personaId: number;
   displayName: string;
@@ -34,6 +36,7 @@ export function PlayerHeroBanner({
   onlineServer: string | null;
   ban: BanStatus | undefined;
   platoon: PlayerPlatoon | null;
+  game: string;
 }) {
   const banned = ban?.bfban === "hit" || ban?.bfeac === "hit";
   const best = isKnownClass(summary.best_class) ? summary.best_class : null;
@@ -113,10 +116,20 @@ export function PlayerHeroBanner({
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={platoon.emblem_url} alt="" className="size-5 object-contain" />
                 ) : null}
-                <span className="truncate">
-                  {platoon.name ?? platoon.tag}
-                  {platoon.size != null ? ` · ${platoon.size} 人` : ""}
-                </span>
+                {platoon.guid ? (
+                  <Link
+                    href={`/${game}/platoon/${platoon.guid}`}
+                    className="truncate transition-colors hover:text-amber-300"
+                  >
+                    {platoon.name ?? platoon.tag}
+                    {platoon.size != null ? ` · ${platoon.size} 人` : ""}
+                  </Link>
+                ) : (
+                  <span className="truncate">
+                    {platoon.name ?? platoon.tag}
+                    {platoon.size != null ? ` · ${platoon.size} 人` : ""}
+                  </span>
+                )}
                 {platoon.verified ? <span className="text-amber-300/90">已认证</span> : null}
               </div>
             ) : null}

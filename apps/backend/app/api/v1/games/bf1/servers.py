@@ -7,6 +7,7 @@ from fastapi import APIRouter, Query
 from app.api.deps import DbDep
 from app.schemas.bf1.server import (
     ServerDetail,
+    ServerLeaderboard,
     ServerListResponse,
     ServerMapStat,
     ServerPlayerCountPoint,
@@ -16,6 +17,7 @@ from app.schemas.bf1.server import (
 )
 from app.services.bf1.blaze_service import get_server_players
 from app.services.bf1.server_player_count_service import (
+    get_leaderboard,
     get_roster_snapshot,
     list_map_stats,
     list_player_counts,
@@ -84,6 +86,17 @@ async def get_server_map_stats(
 ) -> list[ServerMapStat]:
     # 由人数采样里的地图字段聚合，采样保留 7 天，days 最多 7
     return await list_map_stats(db, game_id, days=days)
+
+
+@router.get("/{game_id}/leaderboard", response_model=ServerLeaderboard)
+async def get_server_leaderboard(
+    game_id: int,
+    db: DbDep,
+    days: int = Query(7, ge=1, le=7),
+    limit: int = Query(50, ge=1, le=100),
+) -> ServerLeaderboard:
+    # 由快照名单的进出事件算在队时长，名单保留 7 天，days 最多 7
+    return await get_leaderboard(db, game_id, days=days, limit=limit)
 
 
 @router.get("/{game_id}/snapshots", response_model=ServerRosterPage)

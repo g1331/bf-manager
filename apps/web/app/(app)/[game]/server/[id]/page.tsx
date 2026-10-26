@@ -1039,7 +1039,7 @@ function RotationGrid({
             m.is_current ? "ring-amber-400/80" : "ring-white/10",
           )}
         >
-          <div className="relative aspect-[16/8] w-full bg-white/[0.04]">
+          <div className="relative aspect-[16/8] w-full overflow-hidden bg-white/[0.04]">
             {m.map_image_url ? (
               // EA CDN 自带缩放与缓存，不走 next/image
               // eslint-disable-next-line @next/next/no-img-element

@@ -107,7 +107,8 @@ def create_app() -> FastAPI:
         # （含未授权探测）污染访问量与活跃用户统计。
         if request.method != "OPTIONS" and response.status_code < 400:
             user_id = user_id_from_token(request.cookies.get("bfm_access_token"))
-            await record_request(path=request.url.path, user_id=user_id)
+            client_ip = request.client.host if request.client else None
+            await record_request(path=request.url.path, user_id=user_id, client_ip=client_ip)
         return response
 
     # 统一错误响应

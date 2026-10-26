@@ -8,11 +8,14 @@
 - 接口分组取路径 ``/api/v1/`` 之后的前两段非数字片段，数字 id 段不计入分组，
   从而把 ``/bf1/stats/123`` 与 ``/bf1/stats/456`` 归入同一组 ``bf1/stats``。
 - 活跃用户按天用 HyperLogLog 去重统计，跨天合并即得多日去重数。
+- 未登录游客按客户端 IP 另用一组 HyperLogLog 去重（只存哈希，读不回 IP）；回环与内网
+  地址是本机调试或服务间调用，不计。同一人当天先逛后登录会在两边各计一次。
 - Redis 在本项目属可选依赖，写入与读取全程吞掉 ``RedisError`` 降级，绝不影响主流程。
 """
 
 from __future__ import annotations
 
+import ipaddress
 from datetime import UTC, datetime, timedelta
 
 from jose import JWTError
@@ -70,6 +73,17 @@ def user_id_from_token(token: str | None) -> int | None:
         return None
 
 
+def guest_key(client_ip: str | None) -> str | None:
+    """游客去重键：仅公网 IP 计入，缺失、非法、回环或内网地址返回 None。"""
+    if not client_ip:
+        return None
+    try:
+        ip = ipaddress.ip_address(client_ip)
+    except ValueError:
+        return None
+    return str(ip) if ip.is_global else None
+
+
 def _day_key(now: datetime | None = None) -> str:
     return (now or datetime.now(UTC)).strftime("%Y%m%d")
 
@@ -84,7 +98,7 @@ def _fmt_date(day_key: str) -> str:
     return f"{day_key[0:4]}-{day_key[4:6]}-{day_key[6:8]}"
 
 
-async def record_request(*, path: str, user_id: int | None) -> None:
+async def record_request(*, path: str, user_id: int | None, client_ip: str | None = None) -> None:
     """登记一次请求。最佳努力写入，Redis 不可用时静默降级。"""
     group = classify_path(path)
     if group is None:
@@ -92,6 +106,8 @@ async def record_request(*, path: str, user_id: int | None) -> None:
     today = _day_key()
     req_day_key = f"{PREFIX}:req:day:{today}"
     user_day_key = f"{PREFIX}:users:day:{today}"
+    guest_day_key = f"{PREFIX}:guests:day:{today}"
+    guest = guest_key(client_ip) if user_id is None else None
     try:
         r = await get_redis()
         pipe = r.pipeline()
@@ -102,6 +118,9 @@ async def record_request(*, path: str, user_id: int | None) -> None:
         if user_id is not None:
             pipe.pfadd(user_day_key, str(user_id))
             pipe.expire(user_day_key, DAY_TTL_SECONDS)
+        if guest is not None:
+            pipe.pfadd(guest_day_key, guest)
+            pipe.expire(guest_day_key, DAY_TTL_SECONDS)
         await pipe.execute()
     except Exception as e:
         # 埋点处于请求响应热路径，任何失败都不得把成功的业务响应变成 500。Redis 为可选依赖，
@@ -114,10 +133,11 @@ async def read_metrics() -> AdminMetrics:
     """读取并汇总访问运维快照。Redis 不可用时返回 available=False 的空快照。
 
     所有读取合并进单个 pipeline 一次往返：总量、当日各天请求、接口分组、各天去重活跃用户、
-    以及 7 天合并去重活跃用户。各命令结果按入队顺序对应 pipeline 返回列表。
+    以及 7 天合并去重活跃用户，游客同理。各命令结果按入队顺序对应 pipeline 返回列表。
     """
     days = _recent_days(WINDOW_DAYS)
     user_keys = [f"{PREFIX}:users:day:{d}" for d in days]
+    guest_keys = [f"{PREFIX}:guests:day:{d}" for d in days]
     try:
         r = await get_redis()
         pipe = r.pipeline()
@@ -127,6 +147,9 @@ async def read_metrics() -> AdminMetrics:
         for key in user_keys:
             pipe.pfcount(key)
         pipe.pfcount(*user_keys)
+        for key in guest_keys:
+            pipe.pfcount(key)
+        pipe.pfcount(*guest_keys)
         res = await pipe.execute()
     except Exception as e:
         # 读取同样静默降级：Redis 不可用或 redis_url 配置非法时返回空快照而非 500。
@@ -139,14 +162,22 @@ async def read_metrics() -> AdminMetrics:
     group_map = res[2] or {}
     daily_active = res[3 : 3 + n]
     active_7d = int(res[3 + n] or 0)
+    daily_guests = res[4 + n : 4 + 2 * n]
+    guests_7d = int(res[4 + 2 * n] or 0)
 
     daily: list[DailyCount] = [
-        DailyCount(date=_fmt_date(day), requests=int(raw or 0), active_users=int(active or 0))
-        for day, raw, active in zip(days, req_vals, daily_active, strict=True)
+        DailyCount(
+            date=_fmt_date(day),
+            requests=int(raw or 0),
+            active_users=int(active or 0),
+            guests=int(guest or 0),
+        )
+        for day, raw, active, guest in zip(days, req_vals, daily_active, daily_guests, strict=True)
     ]
 
     requests_today = daily[0].requests if daily else 0
     active_today = daily[0].active_users if daily else 0
+    guests_today = daily[0].guests if daily else 0
     requests_7d = sum(d.requests for d in daily)
 
     top_endpoints = sorted(
@@ -165,6 +196,8 @@ async def read_metrics() -> AdminMetrics:
         requests_7d=requests_7d,
         active_users_today=active_today,
         active_users_7d=active_7d,
+        guests_today=guests_today,
+        guests_7d=guests_7d,
         top_endpoints=top_endpoints,
         daily=daily,
     )

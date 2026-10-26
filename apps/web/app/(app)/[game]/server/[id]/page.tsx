@@ -124,12 +124,33 @@ function ServerDetailView({
 }) {
   const session = useSession();
   const isLoggedIn = !!session.data;
-  const { summary, map_rotation, extras } = detail;
+  const { map_rotation, extras } = detail;
   const memberCount = extras.admins.length + extras.vips.length + extras.banned.length;
   // 自动换图只对行动服的服管开放
   const isOperationServer = map_rotation.some((m) => m.operation);
   const myRole = useMyServerRole(gameId, isLoggedIn && isOperationServer);
   const canAutoSwitch = canDo("kick", myRole.data);
+
+  // 实时名单要等 Blaze 与战绩好几秒，进页就在后台预取，切到「玩家」分区时直接可用
+  const players = useQuery({
+    queryKey: ["bf1-server-players", gameId],
+    queryFn: () => bf1Api.getServerPlayers(gameId),
+    staleTime: 15_000,
+    // 行动服的区域进度随对局推进，页面可见时定时刷新；战绩后端按玩家缓存 10 分钟，刷新多半命中缓存
+    refetchInterval: (q) => (q.state.data?.operation ? 30_000 : false),
+  });
+  // 详情按 Gateway 缓存更新慢，人数以实时名单为准（名单定时刷新，横幅与分区计数随之同步）
+  const summary = useMemo(() => {
+    const live = players.data;
+    return live && !live.is_mock
+      ? {
+          ...detail.summary,
+          player_count: live.player_count,
+          queue_count: live.queue_count,
+          spectator_count: live.spectator_count,
+        }
+      : detail.summary;
+  }, [detail.summary, players.data]);
 
   const tabs: ReadonlyArray<{ key: TabKey; label: string; count?: number }> = [
     { key: "overview", label: "概览" },
@@ -155,14 +176,6 @@ function ServerDetailView({
     queryKey: ["bf1-server-map-stats", gameId],
     queryFn: () => bf1Api.getServerMapStats(gameId),
     staleTime: 5 * 60_000,
-  });
-  // 实时名单要等 Blaze 与战绩好几秒，进页就在后台预取，切到「玩家」分区时直接可用
-  const players = useQuery({
-    queryKey: ["bf1-server-players", gameId],
-    queryFn: () => bf1Api.getServerPlayers(gameId),
-    staleTime: 15_000,
-    // 行动服的区域进度随对局推进，页面可见时定时刷新；战绩后端按玩家缓存 10 分钟，刷新多半命中缓存
-    refetchInterval: (q) => (q.state.data?.operation ? 30_000 : false),
   });
   const points = useMemo(() => counts.data ?? [], [counts.data]);
   const stats = useMemo(() => mapStats.data ?? [], [mapStats.data]);

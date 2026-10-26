@@ -153,9 +153,9 @@ class ServerPlayer(BaseModel):
 
 
 class BlazePlayerStats(BaseModel):
-    """单个玩家的生涯综合战绩（来自 EA detailedStats，玩家列表按需合并）。
+    """单个玩家的生涯综合战绩（来自 Blaze Stats.getStats 批量查询，玩家列表按需合并）。
 
-    全部允许为空：detailedStats 查询失败、限流或未开启战绩合并时该字段整体为 None，
+    全部允许为空：Blaze 查询失败或未开启战绩合并时该字段整体为 None，
     前端对应列显示占位。win_rate 为百分比（0-100），time_hours 为游玩时长（小时）。
     """
 

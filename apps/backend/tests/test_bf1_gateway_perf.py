@@ -128,39 +128,52 @@ class _FakeCache:
         self.data[key] = value
 
 
-class _FakeStatsClient:
-    def __init__(self) -> None:
-        self.queried: list[int] = []
-
-    async def detailedStatsByPersonaId(self, pid):  # noqa: N802
-        self.queried.append(pid)
-        basic = {"kills": 10, "deaths": 5, "wins": 3, "losses": 1, "timePlayed": 7200}
-        return {"result": {"basicStats": {**basic, "kpm": 1.0, "spm": 500, "extra": "x"}}}
-
-
 @pytest.mark.asyncio
-async def test_gather_stats_uses_cache_on_second_call(monkeypatch):
+async def test_gather_stats_batches_misses_and_uses_cache(monkeypatch):
     cache = _FakeCache()
 
     async def fake_stats_cache():
         return cache
 
+    calls: list[list[int]] = []
+
+    async def fake_fetch_stats(db, pids, names):
+        calls.append(list(pids))
+        stat = {"kills": 10.0, "c___d_g": 5.0, "c_mwin__roo_g": 3.0, "c_mlos__roo_g": 1.0}
+        return {pid: {**stat, "rank": 50.0 + pid, "c_as__sa_g": 7200.0} for pid in pids}
+
     monkeypatch.setattr(blaze_service, "_stats_cache", fake_stats_cache)
-    client = _FakeStatsClient()
+    monkeypatch.setattr(blaze_service, "fetch_stats", fake_fetch_stats)
 
-    first, _ = await blaze_service._gather_stats(client, [1, 2])
-    second, ranks = await blaze_service._gather_stats(client, [1, 2])
+    first, _ = await blaze_service._gather_stats(None, [1, 2])
+    second, ranks = await blaze_service._gather_stats(None, [1, 2, 3])
 
-    assert client.queried == [1, 2]
-    assert second == first
+    # 第一次两人一个批量请求，第二次只补没缓存的 3 号
+    assert calls == [[1, 2], [3]]
+    assert second[1] == first[1]
     assert second[1].kd == 2.0
-    assert set(ranks) == {1, 2}
-    assert "extra" not in cache.data[f"{blaze_service.STATS_CACHE_PREFIX}:1"]
+    assert second[1].win_rate == 75.0
+    assert second[1].kpm == pytest.approx(10 / 120)
+    assert second[1].time_hours == 2.0
+    assert ranks == {1: 51, 2: 52, 3: 53}
+
+
+@pytest.mark.asyncio
+async def test_gather_stats_degrades_when_blaze_fails(monkeypatch):
+    async def no_cache():
+        return None
+
+    async def failing_fetch(db, pids, names):
+        raise blaze_service.EAApiError(code="BLAZE_STATS_FAILED", message="x")
+
+    monkeypatch.setattr(blaze_service, "_stats_cache", no_cache)
+    monkeypatch.setattr(blaze_service, "fetch_stats", failing_fetch)
+    assert await blaze_service._gather_stats(None, [1]) == ({}, {})
 
 
 @pytest.mark.asyncio
 async def test_server_players_estimates_rank_for_queue_and_spectators(monkeypatch):
-    # roster 不带等级，排队 / 观战玩家也要查战绩估算，否则列表里显示 0 级
+    # roster 不带等级，排队 / 观战玩家也要查生涯等级，否则列表里显示 0 级
     class _Socket:
         async def send(self, packet, timeout):
             return {}
@@ -176,16 +189,9 @@ async def test_server_players_estimates_rank_for_queue_and_spectators(monkeypatc
         "attributes": {},
     }
 
-    class _Client:
-        async def __aenter__(self):
-            return self
-
-        async def __aexit__(self, *exc):
-            return False
-
     queried: list[int] = []
 
-    async def fake_gather(client, pids):
+    async def fake_gather(db, pids):
         queried.extend(pids)
         return {}, {pid: 100 + pid for pid in pids}
 
@@ -194,7 +200,6 @@ async def test_server_players_estimates_rank_for_queue_and_spectators(monkeypatc
 
     monkeypatch.setattr(blaze_service, "_pool", _Pool())
     monkeypatch.setattr(blaze_service.BlazeData, "player_list_handle", lambda _r: {7: room})
-    monkeypatch.setattr(blaze_service, "get_bf1_client", lambda db: _Client())
     monkeypatch.setattr(blaze_service, "_gather_stats", fake_gather)
     monkeypatch.setattr(blaze_service, "_fetch_registered_ids", no_registered)
 

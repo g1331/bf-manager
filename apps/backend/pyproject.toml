@@ -98,6 +98,8 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S", "PL"]
+# 目录生成脚本：按需局部导入（只在容器里拉取时才加载应用配置），流程长的函数不拆
+"tools/export_bf1_blaze_catalog.py" = ["PLC0415", "PLR0912", "PLR0915"]
 "alembic/versions/**" = ["E", "F", "I", "N"]
 # EA 协议封装与历史工具代码，保留原貌避免一次性大改影响功能，未来重构时再分批清理
 "app/domain/ea/blaze_protocol/**" = ["E", "F", "W", "I", "B", "C4", "UP", "N", "S", "A", "RET", "SIM", "TID", "PL", "RUF"]

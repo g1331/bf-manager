@@ -10,10 +10,9 @@ from pydantic import BaseModel, Field
 class PlayerStatsSummary(BaseModel):
     """生涯综合战绩（关键指标）
 
-    字段来自 EA detailedStats 的 result：基础值在 basicStats，战斗细分项
-    （协助/复活/治疗/修理/狗牌/连杀/最远爆头）在 result 顶层，载具击杀按
-    vehicleStats[].killsAs 求和、步战击杀为总击杀减载具击杀，最佳兵种取
-    favoriteClass。缺失值为 None，前端按需展示。
+    字段来自 Blaze Stats.getStats（映射见 domain/games/bf1/blaze_stats.py）：载具击杀为
+    All Vehicles 击杀、步战击杀为总击杀减载具击杀，最佳兵种为在场时间最长的兵种。
+    缺失值为 None，前端按需展示。
     """
 
     persona_id: int
@@ -28,35 +27,32 @@ class PlayerStatsSummary(BaseModel):
     kills: int | None = None
     deaths: int | None = None
     # 扩展字段
-    skill: float | None = None  # 技巧值（basicStats.skill）
+    skill: float | None = None  # 技巧值
     infantry_kills: int | None = None  # 步战击杀 = 总击杀 - 载具击杀
-    vehicle_kills: int | None = None  # 载具击杀 = sum(vehicleStats[].killsAs)
-    assists: int | None = None  # 协助击杀（killAssists）
-    revives: int | None = None  # 复活数（revives）
-    heals: int | None = None  # 治疗数（heals）
-    repairs: int | None = None  # 修理数（repairs）
-    dogtags: int | None = None  # 狗牌数（dogtagsTaken）
-    max_killstreak: int | None = None  # 最高连杀（highestKillStreak）
-    longest_headshot_meters: float | None = None  # 最远爆头（longestHeadShot）
-    best_class: str | None = None  # 最佳兵种代号（小写，来自 favoriteClass）
+    vehicle_kills: int | None = None  # 载具击杀（含船只与巨兽）
+    assists: int | None = None  # 协助击杀
+    revives: int | None = None  # 复活数
+    heals: int | None = None  # 治疗数
+    repairs: int | None = None  # 修理数
+    dogtags: int | None = None  # 狗牌数
+    max_killstreak: int | None = None  # 最高连杀
+    longest_headshot_meters: float | None = None  # 最远爆头
+    best_class: str | None = None  # 最佳兵种代号（小写）
 
 
 class SoldierClassStat(BaseModel):
-    """单个兵种的战绩，来自 EA detailedStats.result.kitStats[]
-
-    EA 返回七个兵种，name 为英文代号 Assault/Support/Medic/Scout/Tanker/
-    Cavalry/Pilot；本 schema 把它转小写后用 JSON key "class" 暴露，与前端
-    兵种代号对齐。
+    """单个兵种的战绩（Blaze），七个兵种 assault/support/medic/scout/tanker/cavalry/pilot，
+    用 JSON key "class" 暴露，与前端兵种代号对齐。
     """
 
     class_name: str = Field(serialization_alias="class")  # 兵种代号（小写）
     kills: int = 0
     score: int = 0
-    time_seconds: int = 0  # 来自 kitStats[].secondsAs
+    time_seconds: int = 0  # 在场秒数
 
 
 class PlayerStatsDetail(BaseModel):
-    """完整战绩，包含兵种分布与 EA 原始 JSON（前端按需展示）"""
+    """完整战绩，包含兵种分布与 Blaze 原始统计 {统计名: 数值}（前端按需展示）"""
 
     summary: PlayerStatsSummary
     soldiers: list[SoldierClassStat] = []

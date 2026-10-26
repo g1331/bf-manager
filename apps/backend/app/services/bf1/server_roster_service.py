@@ -252,7 +252,7 @@ async def _write_names(db: AsyncSession, names: dict[int, str], now: datetime) -
 async def read_roster(db: AsyncSession, game_id: int, ts: int) -> list[dict[str, Any]]:
     """game_id 这一局在采样时刻 ts 的名单，附这一轮的变化。
 
-    返回在场的人（change 为 joined / switched / None）和这一轮离开的人（change 为 left，
+    返回在场的人（change 为 joined / seated / switched / None）和这一轮离开的人（change 为 left，
     slot 是离开前的位置），按 pid 排序。
     """
     day, sec = _day_and_sec(ts)
@@ -272,7 +272,12 @@ async def read_roster(db: AsyncSession, game_id: int, ts: int) -> list[dict[str,
             if at <= sec:
                 after = state
         if after != LEFT:
-            change = "joined" if before == LEFT else "switched" if before != after else None
+            if before == LEFT:
+                change = "joined"
+            elif before in (QUEUE, SPECTATOR) and after in (TEAM1, TEAM2):
+                change = "seated"  # 排队或观战的人进场，不是换队
+            else:
+                change = "switched" if before != after else None
             out.append({"pid": pid, "slot": SLOT_NAMES[after], "change": change})
         elif before != LEFT:
             out.append({"pid": pid, "slot": SLOT_NAMES[before], "change": "left"})

@@ -123,7 +123,7 @@ async def test_rounds_record_changes_and_read_back(
     snap = await spc.get_roster_snapshot(test_session, 1, ts[1])
     assert _view(snap) == {
         a: ("team2", "switched"),
-        b: ("team1", "switched"),
+        b: ("team1", "seated"),
         c: ("team1", "joined"),
     }
     assert {p.name for p in snap.roster} == {"p101", "p102", "p103"}

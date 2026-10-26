@@ -235,7 +235,7 @@ export interface ServerRosterPage {
 }
 
 export type RosterSlot = "team1" | "team2" | "queue" | "spectator";
-export type RosterChange = "joined" | "left" | "switched";
+export type RosterChange = "joined" | "left" | "seated" | "switched";
 
 /** 快照名单里的一个人；离开的人 slot 是离开前的位置 */
 export interface RosterPlayer {

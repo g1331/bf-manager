@@ -21,11 +21,13 @@ type MapInfo = (mapName: string, mode: string | null) => { name: string; mode: s
 const CHANGE_LABEL: Record<RosterChange, string> = {
   joined: "进入",
   left: "退出",
+  seated: "进场",
   switched: "换队",
 };
 const CHANGE_STYLE: Record<RosterChange, string> = {
   joined: "bg-emerald-500/15 text-emerald-300",
   left: "bg-amber-500/15 text-amber-200",
+  seated: "bg-teal-500/15 text-teal-300",
   switched: "bg-sky-500/15 text-sky-300",
 };
 const ROW_STYLE: Partial<Record<RosterChange, string>> = {
@@ -33,7 +35,13 @@ const ROW_STYLE: Partial<Record<RosterChange, string>> = {
   left: "bg-amber-500/[0.07] text-white/55",
 };
 // 进入的排最前、退出的排最后，一眼看到这一轮的变化
-const CHANGE_ORDER: Record<string, number> = { joined: 0, switched: 1, none: 2, left: 3 };
+const CHANGE_ORDER: Record<string, number> = {
+  joined: 0,
+  seated: 1,
+  switched: 2,
+  none: 3,
+  left: 4,
+};
 
 function formatStamp(ts: number): string {
   return new Date(ts * 1000).toLocaleString("zh-CN", {
@@ -253,6 +261,10 @@ function SnapshotRoster({
     }
     return by;
   }, [snap.data, keyword]);
+  // 进入数含新排队的人，他们在下方排队区，单独标出来免得和两队人数对不上
+  const queued = snap.data?.roster.filter(
+    (p) => p.slot === "queue" && p.change === "joined",
+  ).length;
 
   return (
     <section className="min-w-0">
@@ -275,6 +287,7 @@ function SnapshotRoster({
         <div className="flex gap-2">
           <span className={cn("rounded-sm px-2 py-0.5", CHANGE_STYLE.joined)}>
             进入 {point.joined}
+            {queued ? `（排队 ${queued}）` : ""}
           </span>
           <span className={cn("rounded-sm px-2 py-0.5", CHANGE_STYLE.left)}>退出 {point.left}</span>
         </div>

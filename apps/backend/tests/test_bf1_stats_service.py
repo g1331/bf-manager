@@ -7,6 +7,7 @@ _build_weapons / _build_vehicles 按武器目录把 Blaze 统计组装成列表�
 from __future__ import annotations
 
 import pytest
+from app.domain.games.bf1 import blaze_catalog
 from app.domain.games.bf1.blaze_stats import career_stat_names, parse_career
 from app.domain.games.bf1.maps import normalize_emblem_url
 from app.services.bf1 import stats_service
@@ -299,6 +300,17 @@ _WEAPONS = {
             "shots": "c_wSPMask__sfw_g",
         },
     },
+    # Blaze 没有单项统计的配备：stats 为空，总是列出
+    "9BCDB1F5": {
+        "name": "繃帶包",
+        "category": "配備",
+        "guid": "9BCDB1F5",
+        "image": "[BB_PREFIX]/gamedata/tunguska/29/31/GadgetBandages-1d1fc900.png",
+        "order": 3,
+        "label": None,
+        "cat": None,
+        "stats": {},
+    },
     "wUnused": {
         "name": "沒用過",
         "category": "配備",
@@ -366,8 +378,8 @@ def fake_catalog(monkeypatch):
 
 def test_build_weapons_maps_catalog_and_skips_unused(fake_catalog) -> None:
     weapons = _build_weapons(_WEAPON_VALUES, {})
-    # 按 Gateway 顺序排列，没用过的不列，目录外的 Blaze 独有条目也在
-    assert [w.name for w in weapons] == ["帕拉貝倫 MG14/17", "防毒面具"]
+    # 按 Gateway 顺序排列，没用过的不列，无统计的配备照列，目录外的 Blaze 独有条目也在
+    assert [w.name for w in weapons] == ["帕拉貝倫 MG14/17", "繃帶包", "防毒面具"]
     para = weapons[0]
     assert para.kills == 500
     assert para.headshots == 50
@@ -378,10 +390,24 @@ def test_build_weapons_maps_catalog_and_skips_unused(fake_catalog) -> None:
     assert para.image == (
         "https://eaassets-a.akamaihd.net/battlelog/battlebinary/gamedata/Tunguska/1/2/PARABELLUM-123.png"
     )
-    mask = weapons[1]
+    bandage = weapons[1]
+    assert (bandage.kills, bandage.time_seconds, bandage.accuracy) == (None, None, None)
+    assert bandage.image is not None
+    mask = weapons[2]
     assert mask.accuracy is None
     assert mask.image is None
     assert mask.time_seconds is None
+
+
+def test_stat_names_skips_entries_without_stats(monkeypatch) -> None:
+    monkeypatch.setattr(blaze_catalog, "catalog", lambda kind: _WEAPONS)
+    names = blaze_catalog.stat_names("weapons")
+    assert None not in names
+    assert names["player_weapons4"] == [
+        "c_wSPMask__kw_g",
+        "c_wSPMask__sw_g",
+        "c_wSPMask__sfw_g",
+    ]
 
 
 def test_build_weapons_fills_skin_fields_by_guid(fake_catalog) -> None:
@@ -390,10 +416,9 @@ def test_build_weapons_fills_skin_fields_by_guid(fake_catalog) -> None:
     assert weapons[0].skin_rarity == "Superior"
     assert weapons[0].skin_image is not None
     assert weapons[0].skin_image.startswith("https://eaassets-a.akamaihd.net/")
-    # 无 guid 的条目三字段为 None
-    assert weapons[1].skin_name is None
-    assert weapons[1].skin_rarity is None
-    assert weapons[1].skin_image is None
+    # 没装皮肤 / 无 guid 的条目三字段为 None
+    for w in weapons[1:]:
+        assert (w.skin_name, w.skin_rarity, w.skin_image) == (None, None, None)
 
 
 def test_build_vehicles_maps_catalog_fields(fake_catalog) -> None:

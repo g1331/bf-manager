@@ -675,6 +675,86 @@
   }
  },
  "weapons": {
+  "2B0EC5C1-81A5-424A-A181-29B1E9920DDA": {
+   "cat": null,
+   "category": "配備",
+   "guid": "2B0EC5C1-81A5-424A-A181-29B1E9920DDA",
+   "image": "[BB_PREFIX]/gamedata/tunguska/97/12/GadgetAmmoCrate-61f48e78.png",
+   "label": null,
+   "name": "彈藥箱",
+   "order": 1021,
+   "stats": {}
+  },
+  "370323AD-6AFD-4D44-899E-7FB8144E580F": {
+   "cat": null,
+   "category": "配備",
+   "guid": "370323AD-6AFD-4D44-899E-7FB8144E580F",
+   "image": "[BB_PREFIX]/gamedata/tunguska/102/111/GadgetShield-9a6f10a4.png",
+   "label": null,
+   "name": "狙擊手護盾",
+   "order": 1019,
+   "stats": {}
+  },
+  "52B19C38-72C0-4E0F-B051-EF11103F6220": {
+   "cat": null,
+   "category": "配備",
+   "guid": "52B19C38-72C0-4E0F-B051-EF11103F6220",
+   "image": "[BB_PREFIX]/gamedata/tunguska/88/55/GadgetSmallAmmoPack-5837fde5.png",
+   "label": null,
+   "name": "彈藥包",
+   "order": 1015,
+   "stats": {}
+  },
+  "670F817E-89A6-4048-B8B2-D9997DD97982": {
+   "cat": null,
+   "category": "配備",
+   "guid": "670F817E-89A6-4048-B8B2-D9997DD97982",
+   "image": "[BB_PREFIX]/gamedata/tunguska/21/97/GadgetMedicBag-159f240b.png",
+   "label": null,
+   "name": "醫護箱",
+   "order": 1017,
+   "stats": {}
+  },
+  "9BCDB1F5-5E1C-4C3E-824C-8C05CC0CE21A": {
+   "cat": null,
+   "category": "配備",
+   "guid": "9BCDB1F5-5E1C-4C3E-824C-8C05CC0CE21A",
+   "image": "[BB_PREFIX]/gamedata/tunguska/29/31/GadgetBandages-1d1fc900.png",
+   "label": null,
+   "name": "繃帶包",
+   "order": 1001,
+   "stats": {}
+  },
+  "C43D1466-F9D1-474B-A737-3820B6989819": {
+   "cat": null,
+   "category": "配備",
+   "guid": "C43D1466-F9D1-474B-A737-3820B6989819",
+   "image": "[BB_PREFIX]/gamedata/tunguska/39/22/GadgetTrenchPeriscope-d916e58e.png",
+   "label": null,
+   "name": "戰壕潛望鏡",
+   "order": 1003,
+   "stats": {}
+  },
+  "C85A5030-C6DA-4DEF-8BA5-3087A80DEC17": {
+   "cat": null,
+   "category": "配備",
+   "guid": "C85A5030-C6DA-4DEF-8BA5-3087A80DEC17",
+   "image": "[BB_PREFIX]/gamedata/tunguska/24/42/GadgetHelmetDecoy-182ae8c4.png",
+   "label": null,
+   "name": "狙擊手誘餌",
+   "order": 1016,
+   "stats": {}
+  },
+  "DD1BBA84-A6AB-4A66-986F-2B2556F6E7B1": {
+   "cat": null,
+   "category": "手榴彈",
+   "guid": "DD1BBA84-A6AB-4A66-986F-2B2556F6E7B1",
+   "image": "[BB_PREFIX]/gamedata/Tunguska/89/30/RU_Grenade-a7e29a54.png",
+   "label": null,
+   "name": "俄羅斯標準手榴彈",
+   "order": 8010,
+   "stats": {}
+  },
   "aeqmair": {
    "cat": "player_statcategory",
    "category": "配備",
@@ -850,7 +930,7 @@
   "wHSColtT": {
    "cat": "player_weapons1",
    "category": "佩槍",
-   "image": null,
+   "image": "[BB_PREFIX]/gamedata/tunguska/19/50/Colt1911-ed324bf1.png",
    "label": "Handgun - Semi - Colt 1911 Triforce",
    "name": "Triforce M1911",
    "order": 99242,
@@ -1837,7 +1917,7 @@
   "wMCavLC": {
    "cat": "player_weapons1",
    "category": "近戰武器",
-   "image": null,
+   "image": "[BB_PREFIX]/gamedata/Tunguska/118/57/GadgetLance-8a390645.png",
    "label": "Melee - Lance Cavalry Charge",
    "name": "騎兵長槍（衝鋒）",
    "order": 99244,
@@ -2156,7 +2236,7 @@
   "wMOR": {
    "cat": "player_weapons1",
    "category": "配備",
-   "image": null,
+   "image": "[BB_PREFIX]/gamedata/tunguska/124/29/GadgetMortar-84e30045.png",
    "label": "Explosives - Mortar (Only for Custom Games)",
    "name": "迫擊砲（自訂遊戲）",
    "order": 99243,
@@ -2587,7 +2667,7 @@
   "wRIRMH": {
    "cat": "player_weapons2",
    "category": "制式步槍",
-   "image": null,
+   "image": "[BB_PREFIX]/gamedata/tunguska/56/71/MartinHenry-c8477a11.png",
    "label": "Rifle - Single - Martini Henry Standard Issue",
    "name": "馬提尼·亨利步槍",
    "order": 99247,
@@ -3914,7 +3994,7 @@
   "wSMGThomS": {
    "cat": "player_weapons5",
    "category": "衝鋒槍",
-   "image": null,
+   "image": "[BB_PREFIX]/gamedata/Tunguska/26/102/ThompsonAnnihilatorTr-1a660e74.png",
    "label": "MG - SMG - Thompson Annihilator Storm",
    "name": "Annihilator（風暴）",
    "order": 99253,
@@ -3993,7 +4073,7 @@
   "wSPFGA": {
    "cat": "player_weapons3",
    "category": "配備",
-   "image": null,
+   "image": "[BB_PREFIX]/gamedata/tunguska/68/56/GadgetWebleyScottFlaregun-4438a413.png",
    "label": "Special - Flare Gun Signal",
    "name": "信號槍（訊號）",
    "order": 99248,

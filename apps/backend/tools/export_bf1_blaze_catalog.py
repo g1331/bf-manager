@@ -42,23 +42,30 @@ VEHICLE_CATEGORIES = ["player_statcategory", "player_statcategory3", "player_sta
 SAMPLE_SIZE = 160
 
 # Gateway 没有、只在 Blaze 里有的条目：英文描述 → (繁体名, 分类)。分类沿用 Gateway 的分类名。
-# Blaze 标签 → (名称, 分类)。Gateway 里同名同分类的条目（样本里没人用过、对不上数值）会沿用
-# 它的图片与 GUID；Gateway 没有的（维和者、防毒面具等）没有图片。
-EXTRA_NAMES: dict[str, tuple[str, str]] = {
+# Blaze 标签 → (名称, 分类[, 借图的 Blaze 标签])。Gateway 里同名同分类的条目（样本里没人用过、
+# 对不上数值）会沿用它的图片与 GUID；Gateway 没有的（维和者、防毒面具等）可以借同款武器的图，
+# 否则没有图片。
+EXTRA_NAMES: dict[str, tuple[str, ...]] = {
     "Handgun - Revolver - Colt SAA": ("維和者", "佩槍"),
-    "Handgun - Semi - Colt 1911 Triforce": ("Triforce M1911", "佩槍"),
+    "Handgun - Semi - Colt 1911 Triforce": ("Triforce M1911", "佩槍", "Handgun - Semi - Colt 1911"),
     "Special - Gas Mask": ("防毒面具", "配備"),
-    "Special - Flare Gun Signal": ("信號槍（訊號）", "配備"),
-    "Explosives - Mortar (Only for Custom Games)": ("迫擊砲（自訂遊戲）", "配備"),
-    "Melee - Lance Cavalry Charge": ("騎兵長槍（衝鋒）", "近戰武器"),
+    "Special - Flare Gun Signal": ("信號槍（訊號）", "配備", "Special - Spotting Flare"),
+    "Explosives - Mortar (Only for Custom Games)": (
+        "迫擊砲（自訂遊戲）", "配備", "Equipment - Mortars - HE",
+    ),
+    "Melee - Lance Cavalry Charge": ("騎兵長槍（衝鋒）", "近戰武器", "Melee - Lance Cavalry"),
     "Melee - Ararebo": ("霰棒", "近戰武器"),
     "Melee - Arditi Dagger": ("敢死隊匕首", "近戰武器"),
-    "Rifle - Single - Martini Henry Standard Issue": ("馬提尼·亨利步槍", "制式步槍"),
+    "Rifle - Single - Martini Henry Standard Issue": (
+        "馬提尼·亨利步槍", "制式步槍", "Rifle - Single - Martini Henry",
+    ),
     "MG - LMG - Burton LMG Optical": ("伯頓 LMR（瞄準鏡）", "輕機槍"),
     "MG - LMG - Burton LMG Trench": ("伯頓 LMR（壕溝）", "輕機槍"),
-    "MG - SMG - Thompson Annihilator Storm": ("Annihilator（風暴）", "衝鋒槍"),
+    "MG - SMG - Thompson Annihilator Storm": (
+        "Annihilator（風暴）", "衝鋒槍", "MG - SMG - Thompson Annihilator Trench",
+    ),
     "Stationary Weapons - SK45 Coastal Cannon": ("SK45 岸防砲", "定點武器"),
-}
+}  # fmt: skip
 # 不是玩家能挑的武器：遥控类与突破模式的炮击支援
 IGNORED_LABELS = {"Remote", "Artillery - Rush Artillery"}
 
@@ -401,7 +408,7 @@ def build(sample_path: Path) -> None:
                 if code in unmatched:
                     missing.append(c["label"])
                 continue
-            name, category = EXTRA_NAMES[c["label"]]
+            name, category = EXTRA_NAMES[c["label"]][:2]
             key = by_name.get((name, category))
             it = gw[key] if key else {"image": None, "order": 99000 + len(out)}
             out[code] = {
@@ -410,7 +417,28 @@ def build(sample_path: Path) -> None:
             }  # fmt: skip
             if key and "/" not in key:
                 out[code]["guid"] = key
+        by_label = {e["label"]: e for e in out.values()}
+        for e in out.values():
+            borrow = EXTRA_NAMES.get(e["label"], ())[2:]
+            if not e["image"] and borrow:
+                e["image"] = by_label[borrow[0]]["image"]
         used = set(matched.values())
+        guids = {e.get("guid") for e in out.values()}
+        listed = {(e["name"], e["category"]) for e in out.values()}
+        # 绷带包、弹药包、潜望镜等配备 Blaze 没有单项统计，Gateway 也一直全是 0：照样列出，不带统计
+        for k, it in gw.items():
+            if k in used or k in guids or (it["name"], it["category"]) in listed:
+                continue
+            # 同一配备在两个兵种下各有一个 GUID（如绷带包），没有统计可分，只列一条
+            listed.add((it["name"], it["category"]))
+            if not any(any(t) for t in it["vals"].values()):
+                out[k] = {
+                    "name": it["name"], "category": it["category"], "image": it["image"],
+                    "order": it["order"], "label": None, "cat": None, "stats": {},
+                }  # fmt: skip
+                if "/" not in k:
+                    out[k]["guid"] = k
+                print(f"[{kind}] 无统计条目：", it["name"], it["category"])
         lost = [
             (it["name"], it["category"])
             for k, it in gw.items()

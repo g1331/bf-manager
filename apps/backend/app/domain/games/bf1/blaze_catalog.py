@@ -3,7 +3,8 @@
 数据文件 data/blaze_catalog.json 由 tools/export_bf1_blaze_catalog.py 生成：拿一批玩家，把每个
 Blaze 代号的数值与 Gateway 武器 / 载具条目逐一对上，名称、分类、图片、GUID 沿用 Gateway；
 Gateway 没有的条目（维和者、防毒面具等）在工具里手工补名，没有图片。每项的 ``cat`` / ``stats``
-是取数用的 Blaze 类别与统计名，``order`` 是 Gateway 里的展示顺序。
+是取数用的 Blaze 类别与统计名，``order`` 是 Gateway 里的展示顺序。绷带包、弹药包等配备 Blaze 没有
+单项统计，``stats`` 为空，照样列出。
 """
 
 from __future__ import annotations
@@ -41,5 +42,6 @@ def stat_names(kind: str) -> dict[str, list[str]]:
     """{Blaze 类别: 该类条目用到的全部统计名}，供 Stats.getStats 按类别批量取"""
     out: dict[str, list[str]] = {}
     for entry in catalog(kind).values():
-        out.setdefault(entry["cat"], []).extend(entry["stats"].values())
+        if entry["stats"]:
+            out.setdefault(entry["cat"], []).extend(entry["stats"].values())
     return out

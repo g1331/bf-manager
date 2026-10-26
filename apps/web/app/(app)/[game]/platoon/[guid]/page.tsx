@@ -60,6 +60,14 @@ export default function PlatoonDetailPage() {
 }
 
 function PlatoonView({ game, platoon }: { game: string; platoon: PlatoonDetail }) {
+  // EA 成员列表的 avatar 基本为空，与服务器成员名单共用批量头像接口补上（战队最多 100 人）
+  const ids = platoon.members.map((m) => m.persona_id);
+  const avatars = useQuery({
+    queryKey: ["bf1-avatars", ids],
+    queryFn: () => bf1Api.getAvatars(ids),
+    enabled: ids.length > 0,
+    staleTime: 60 * 60_000,
+  });
   const groups = (["general", "colonel", "lieutenant", "private"] as const)
     .map((role) => ({
       label: ROLE_LABEL[role],
@@ -168,7 +176,12 @@ function PlatoonView({ game, platoon }: { game: string; platoon: PlatoonDetail }
             </div>
             <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
               {g.members.map((m) => (
-                <MemberCard key={m.persona_id} game={game} member={m} />
+                <MemberCard
+                  key={m.persona_id}
+                  game={game}
+                  member={m}
+                  avatarUrl={m.avatar_url || avatars.data?.[m.persona_id] || null}
+                />
               ))}
             </ul>
           </div>
@@ -179,14 +192,22 @@ function PlatoonView({ game, platoon }: { game: string; platoon: PlatoonDetail }
   );
 }
 
-function MemberCard({ game, member }: { game: string; member: PlatoonMember }) {
+function MemberCard({
+  game,
+  member,
+  avatarUrl,
+}: {
+  game: string;
+  member: PlatoonMember;
+  avatarUrl: string | null;
+}) {
   return (
     <li>
       <Link
         href={`/${game}/player/${member.persona_id}`}
         className="flex items-center gap-3 border border-white/10 bg-black/40 px-3 py-2 transition-colors hover:border-white/30 hover:bg-white/[0.06]"
       >
-        <PlayerAvatar avatarUrl={member.avatar_url} displayName={member.name} size="sm" />
+        <PlayerAvatar avatarUrl={avatarUrl} displayName={member.name} size="sm" />
         <span className="truncate text-sm text-white">{member.name}</span>
       </Link>
     </li>

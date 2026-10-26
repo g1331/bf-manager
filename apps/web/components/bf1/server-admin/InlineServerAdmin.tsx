@@ -75,7 +75,12 @@ interface ServerAdminContextValue {
   // ——— 操作（触发二次确认） ———
   act: (kind: SingleKind, player: PlayerRef) => void;
   actBatch: (kind: BatchKind, players: PlayerRef[]) => void;
-  chooseLevel: (levelIndex: number, mapName: string) => void;
+  /** restart：换到当前地图（重开）；warning：确认框里额外显示的警告，并改用警示样式 */
+  chooseLevel: (
+    levelIndex: number,
+    mapName: string,
+    opts?: { restart?: boolean; warning?: string },
+  ) => void;
   loading: boolean;
 }
 
@@ -104,7 +109,7 @@ export function useServerAdmin(): ServerAdminContextValue {
 type Pending =
   | { mode: "single"; kind: SingleKind; player: PlayerRef }
   | { mode: "batch"; kind: BatchKind; players: PlayerRef[] }
-  | { mode: "level"; levelIndex: number; mapName: string }
+  | { mode: "level"; levelIndex: number; mapName: string; restart?: boolean; warning?: string }
   | null;
 
 const DEFAULT_REASON = "violation of rules";
@@ -188,9 +193,12 @@ export function ServerAdminProvider({ gameId, children }: { gameId: number; chil
     setReason(DEFAULT_REASON);
     setPending({ mode: "batch", kind, players });
   }, []);
-  const chooseLevel = useCallback((levelIndex: number, mapName: string) => {
-    setPending({ mode: "level", levelIndex, mapName });
-  }, []);
+  const chooseLevel = useCallback(
+    (levelIndex: number, mapName: string, opts?: { restart?: boolean; warning?: string }) => {
+      setPending({ mode: "level", levelIndex, mapName, ...opts });
+    },
+    [],
+  );
 
   const close = useCallback(() => setPending(null), []);
 
@@ -272,13 +280,13 @@ export function ServerAdminProvider({ gameId, children }: { gameId: number; chil
       ? `${SINGLE_VERB[pending.kind]} ${pending.player.display_name}？`
       : pending.mode === "batch"
         ? `${SINGLE_VERB[pending.kind]}选中的 ${pending.players.length} 名玩家？`
-        : `切换到 ${pending.mapName}？`;
+        : `${pending.restart ? "重开" : "切换到"} ${pending.mapName}？`;
   // isMove / batch 分支须先于 isBan 判断：批量时对应 kind 的标志同样为真，若不前置会错误回退到
   // 单人 / 通用文案。换边无论单人或批量都要提示 forceKill 会强制阵亡一次。
   const confirmDescription = !pending
     ? undefined
     : pending.mode === "level"
-      ? levelDescription
+      ? [pending.warning, levelDescription].filter(Boolean).join("。")
       : isMove
         ? pending.mode === "batch"
           ? "换边会强制玩家阵亡一次后移到对方阵营；将对所有选中玩家依次执行，部分失败不会中断其余项"
@@ -301,7 +309,9 @@ export function ServerAdminProvider({ gameId, children }: { gameId: number; chil
         description={confirmDescription}
         confirmText="确认"
         cancelText="取消"
-        variant={isBan ? "destructive" : "default"}
+        variant={
+          isBan || (pending?.mode === "level" && pending.warning) ? "destructive" : "default"
+        }
         loading={loading}
         onConfirm={execute}
       >

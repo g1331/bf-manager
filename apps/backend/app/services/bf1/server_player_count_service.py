@@ -264,8 +264,11 @@ async def get_roster_snapshot(db: AsyncSession, game_id: int, ts: int) -> Server
     if point is None:
         raise NotFoundError(resource=f"服务器 gameId={game_id} 在 {ts} 的快照")
     roster = await read_roster(db, point.game_id, ts)
+    teams = MapData.MapTeamDict.get(point.map_name or "") or {}
     return ServerRosterSnapshot(
         **_roster_point(point),
+        team1_faction=teams.get("Team1"),
+        team2_faction=teams.get("Team2"),
         roster=[
             RosterPlayer(persona_id=p["pid"], name=p["name"], slot=p["slot"], change=p["change"])
             for p in roster

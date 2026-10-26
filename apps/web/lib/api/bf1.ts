@@ -221,6 +221,9 @@ export interface RosterPlayer {
 /** 某个采样时刻的完整名单 */
 export interface ServerRosterSnapshot extends ServerRosterPoint {
   roster: RosterPlayer[];
+  /** 当时地图的阵营，未知地图为 null */
+  team1_faction: string | null;
+  team2_faction: string | null;
 }
 
 /** 私服近 N 天在某张地图（地图 + 模式）上的累计情况，last_seen 为 unix 秒 */

@@ -60,7 +60,9 @@ def test_extract_rosters_private_only_without_private_fields() -> None:
 
 
 def _summary(gid: int, players: int) -> ServerSummary:
-    return ServerSummary(server_id=0, game_id=gid, name="mine", player_count=players)
+    return ServerSummary(
+        server_id=0, game_id=gid, name="mine", player_count=players, map_name="MP_Amiens"
+    )
 
 
 class _Clock(datetime):
@@ -114,6 +116,8 @@ async def test_rounds_record_changes_and_read_back(
 
     snap = await spc.get_roster_snapshot(test_session, 1, ts[0])
     assert _view(snap) == {a: ("team1", "joined"), b: ("queue", "joined")}
+    # 阵营按当时地图查：亚眠 Team1 德意志帝国、Team2 大英帝国
+    assert (snap.team1_faction, snap.team2_faction) == ("德意志帝国", "大英帝国")
     snap = await spc.get_roster_snapshot(test_session, 1, ts[1])
     assert _view(snap) == {
         a: ("team2", "switched"),

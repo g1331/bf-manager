@@ -3,7 +3,7 @@
 /**
  * BF1 战队搜索页
  *
- * EA 没有按名字搜战队的接口，后端借用 gametools 的战队索引，关键字至少 3 个字符。
+ * 后端调 EA Platoons.findByPartialName：只按战队名匹配（不含简称），关键字至少 3 个字符，最多 10 条。
  * 关键词记在地址栏（?q=），从详情页返回、刷新或分享链接都能看到同一组结果。
  */
 
@@ -82,7 +82,7 @@ function PlatoonSearch() {
         </div>
         <h1 className="font-display mt-3 text-4xl font-bold tracking-wide sm:text-5xl">战队</h1>
         <p className="mt-2 text-sm text-white/55">
-          按战队名或简称搜索，查看成员和他们正在玩的服务器
+          按战队名搜索（不支持简称），查看成员和他们正在玩的服务器
         </p>
       </header>
 
@@ -98,8 +98,8 @@ function PlatoonSearch() {
             <DarkInput
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="战队名或简称"
-              aria-label="战队名或简称"
+              placeholder="战队名"
+              aria-label="战队名"
               autoComplete="off"
               autoCapitalize="off"
               spellCheck={false}
@@ -143,12 +143,17 @@ function PlatoonSearch() {
           tone="error"
         />
       ) : items.length === 0 ? (
-        <Notice text={`没有找到名字或简称包含「${q}」的战队`} />
+        <Notice text={`没有找到名字包含「${q}」的战队`} />
       ) : (
         <section>
           <div className="mb-3 flex items-baseline justify-between">
             <SectionHeading className="mb-0">搜索结果</SectionHeading>
-            <span className="text-xs text-white/45 tabular-nums">{items.length} 个战队</span>
+            <span className="text-xs text-white/45 tabular-nums">
+              {/* EA 每次最多返回 10 条，满 10 条说明可能还有更多 */}
+              {items.length >= 10
+                ? "前 10 个，换个更完整的名字可缩小范围"
+                : `${items.length} 个战队`}
+            </span>
           </div>
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {items.map((p, i) => (

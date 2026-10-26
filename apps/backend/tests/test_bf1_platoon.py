@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import pytest
 from app.api.errors import NotFoundError
-from app.services.bf1.platoon_service import build_detail, get_platoon_detail
+from app.domain.games.bf1.maps import normalize_emblem_url
+from app.services.bf1.platoon_service import build_detail, build_search, get_platoon_detail
 
 INFO = {
     "result": {
@@ -74,3 +75,29 @@ def test_build_detail_tolerates_member_and_server_failures() -> None:
 async def test_invalid_guid_is_not_found_without_calling_ea() -> None:
     with pytest.raises(NotFoundError):
         await get_platoon_detail(None, "not-a-guid")  # type: ignore[arg-type]
+
+
+def test_build_search_maps_fields_and_upgrades_http_emblem() -> None:
+    res = {
+        "result": [
+            {
+                "guid": "128f4998-63f2-43a4-a8b6-958e8f4ab6c4",
+                "name": "Grumpy Old Warriors",
+                "size": 2,
+                "tag": "GOW",
+                "emblem": "http://eaassets-a.akamaihd.net/battlelog/prod/emblem/693/916/[SIZE]/1.[FORMAT]?v=1",
+                "verified": False,
+                "displayMembers": [],
+            },
+            {"name": "no guid"},
+        ]
+    }
+    items = build_search(res)
+    assert [(i.guid, i.tag, i.size) for i in items] == [
+        ("128f4998-63f2-43a4-a8b6-958e8f4ab6c4", "GOW", 2)
+    ]
+    assert items[0].emblem_url == (
+        "https://eaassets-a.akamaihd.net/battlelog/prod/emblem/693/916/512/1.png?v=1"
+    )
+    assert build_search("戰隊名稱太短") == []
+    assert normalize_emblem_url(None) is None

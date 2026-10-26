@@ -231,4 +231,7 @@ def normalize_emblem_url(raw: str | None) -> str | None:
     """
     if not raw:
         return None
+    # 老战队的徽章是 http 地址，同一个 CDN 支持 https，换掉免得在 https 页面里被拦
+    if raw.startswith("http://"):
+        raw = "https://" + raw[len("http://") :]
     return raw.replace("[SIZE]", "512").replace("[FORMAT]", "png")

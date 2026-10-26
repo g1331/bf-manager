@@ -10,12 +10,13 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from loguru import logger
 from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.errors import EAApiError
+from app.api.errors import EAApiError, NotFoundError
 from app.core.cache import get_cache
 from app.domain.games.bf1.maps import (
     MapData,
@@ -25,7 +26,17 @@ from app.domain.games.bf1.maps import (
 )
 from app.models.bf1.server_player_count import Bf1ServerPlayerCount
 from app.models.server import Server
-from app.schemas.bf1.server import ServerMapStat, ServerPlayerCountPoint, ServerSummary
+from app.schemas.bf1.server import (
+    RosterPlayer,
+    ServerMapStat,
+    ServerPlayerCountPoint,
+    ServerRosterPage,
+    ServerRosterPoint,
+    ServerRosterSnapshot,
+    ServerSummary,
+)
+from app.services.bf1.server_roster_service import Rosters, read_roster
+from app.services.bf1.server_roster_service import tracker as roster_tracker
 from app.services.bf1.server_service import BF1ServerService
 
 RETENTION = timedelta(days=7)
@@ -91,42 +102,61 @@ async def resolve_server_ids(db: AsyncSession, summaries: list[ServerSummary]) -
 
 
 async def record_player_counts(
-    db: AsyncSession, summaries: list[ServerSummary], server_ids: dict[int, int] | None = None
+    db: AsyncSession,
+    summaries: list[ServerSummary],
+    server_ids: dict[int, int] | None = None,
+    rosters: Rosters | None = None,
 ) -> int:
-    """距上次采样满 1 分钟时，为本轮所有私服写一个点并清理过期点，返回写入条数。"""
+    """距上次采样满 1 分钟时，为本轮所有私服写一个点并清理过期点，返回写入条数。
+
+    带了名单（快照这一轮成功）时一并写名单变化，点上记进出人数；没带时进出人数留空。
+    """
     now = datetime.now(UTC)
     last = await db.scalar(select(func.max(Bf1ServerPlayerCount.sampled_at)))
     # sqlite 读回的是无时区时间，按写入时的 UTC 补上
     if last is not None and now - last.replace(tzinfo=last.tzinfo or UTC) < SAMPLE_INTERVAL:
         return 0
-    rows = [
-        Bf1ServerPlayerCount(
-            game_id=s.game_id,
-            server_id=(server_ids or {}).get(int(s.game_id or 0)),
-            name=s.name,
-            map_name=s.map_name,
-            game_mode=s.game_mode,
-            player_count=s.player_count,
-            queue_count=s.queue_count,
-            spectator_count=s.spectator_count,
-            max_player_count=s.max_player_count,
-            sampled_at=now,
+    try:
+        changes: dict[int, tuple[int | None, int | None]] = {}
+        unchanged: tuple[int | None, int | None] = (None, None)
+        if rosters is not None:
+            changes.update(await roster_tracker.stage(db, rosters, now))
+            unchanged = (0, 0)
+        rows = [
+            Bf1ServerPlayerCount(
+                game_id=s.game_id,
+                server_id=(server_ids or {}).get(int(s.game_id or 0)),
+                name=s.name,
+                map_name=s.map_name,
+                game_mode=s.game_mode,
+                player_count=s.player_count,
+                queue_count=s.queue_count,
+                spectator_count=s.spectator_count,
+                max_player_count=s.max_player_count,
+                joined_count=changes.get(int(s.game_id or 0), unchanged)[0],
+                left_count=changes.get(int(s.game_id or 0), unchanged)[1],
+                sampled_at=now,
+            )
+            for s in summaries
+            if _is_private(s)
+        ]
+        db.add_all(rows)
+        await db.execute(
+            delete(Bf1ServerPlayerCount).where(Bf1ServerPlayerCount.sampled_at < now - RETENTION)
         )
-        for s in summaries
-        if _is_private(s)
-    ]
-    db.add_all(rows)
-    await db.execute(
-        delete(Bf1ServerPlayerCount).where(Bf1ServerPlayerCount.sampled_at < now - RETENTION)
-    )
-    await db.commit()
+        await db.commit()
+    except Exception:
+        # 名单差分没落库，丢掉内存里的上一轮，下一轮从库里重建
+        roster_tracker.reset()
+        raise
+    roster_tracker.commit()
     return len(rows)
 
 
 async def _server_rows(
-    db: AsyncSession, game_id: int, since: datetime
+    db: AsyncSession, game_id: int, since: datetime, until: datetime | None = None
 ) -> list[Bf1ServerPlayerCount]:
-    """某私服 since 之后的采样点，按时间升序。
+    """某私服 [since, until) 之间的采样点，按时间升序。
 
     先由 game_id 找到这个服最近一个点，解析到了 serverId 就按它取点（重启、改名都不影响）；
     还没解析到时退回按服名取点。同一时刻有多个同名私服时（生产上真有），只取本 game_id 的点，
@@ -145,9 +175,12 @@ async def _server_rows(
         if latest.server_id
         else Bf1ServerPlayerCount.name == latest.name
     )
+    in_range = Bf1ServerPlayerCount.sampled_at >= since
+    if until is not None:
+        in_range &= Bf1ServerPlayerCount.sampled_at < until
     rows = await db.scalars(
         select(Bf1ServerPlayerCount)
-        .where(same_server, Bf1ServerPlayerCount.sampled_at >= since)
+        .where(same_server, in_range)
         .order_by(Bf1ServerPlayerCount.sampled_at)
     )
     by_time: dict[datetime, list[Bf1ServerPlayerCount]] = {}
@@ -183,6 +216,61 @@ async def list_player_counts(
         )
         for p in rows
     ]
+
+
+# 快照列表每次往前看的时间窗
+ROSTER_PAGE_WINDOW = timedelta(hours=24)
+
+
+def _roster_point(p: Bf1ServerPlayerCount) -> dict[str, Any]:
+    return {
+        "ts": _ts(p),
+        "players": p.player_count,
+        "queue": p.queue_count,
+        "spectators": p.spectator_count,
+        "max_players": p.max_player_count,
+        "map_name": p.map_name,
+        "game_mode": p.game_mode,
+        "joined": p.joined_count or 0,
+        "left": p.left_count or 0,
+    }
+
+
+async def list_roster_points(
+    db: AsyncSession, game_id: int, *, before: int | None = None, limit: int = 50
+) -> ServerRosterPage:
+    """某私服 before 之前、往前 ROSTER_PAGE_WINDOW 内有名单的采样点，按时间倒序最多 limit 个。
+
+    这一窗没取满时 next_before 指向窗口起点，前端可以继续往前翻，直到超出保留期。
+    """
+    now = datetime.now(UTC)
+    until = datetime.fromtimestamp(before, UTC) if before else None
+    since = (until or now) - ROSTER_PAGE_WINDOW
+    rows = [r for r in await _server_rows(db, game_id, since, until) if r.joined_count is not None]
+    items = [ServerRosterPoint(**_roster_point(r)) for r in reversed(rows[-limit:])]
+    next_before: int | None
+    if len(rows) > limit:
+        next_before = items[-1].ts
+    else:
+        next_before = int(since.timestamp()) if since > now - RETENTION else None
+    return ServerRosterPage(items=items, next_before=next_before)
+
+
+async def get_roster_snapshot(db: AsyncSession, game_id: int, ts: int) -> ServerRosterSnapshot:
+    """某私服在采样时刻 ts 的完整名单与这一轮的进出。服重启过也按 serverId / 服名找到当时那一局。"""
+    at = datetime.fromtimestamp(ts, UTC)
+    rows = await _server_rows(db, game_id, at, at + timedelta(seconds=1))
+    point = next((r for r in rows if _ts(r) == ts and r.joined_count is not None), None)
+    if point is None:
+        raise NotFoundError(resource=f"服务器 gameId={game_id} 在 {ts} 的快照")
+    roster = await read_roster(db, point.game_id, ts)
+    return ServerRosterSnapshot(
+        **_roster_point(point),
+        roster=[
+            RosterPlayer(persona_id=p["pid"], name=p["name"], slot=p["slot"], change=p["change"])
+            for p in roster
+        ],
+    )
 
 
 # 相邻点间隔超过它说明中间服务器空了（空服不采样），断档前的点只算 60 秒；

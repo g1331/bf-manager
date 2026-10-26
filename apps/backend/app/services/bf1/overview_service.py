@@ -37,6 +37,7 @@ from app.services.bf1.server_player_count_service import (
     record_player_counts,
     resolve_server_ids,
 )
+from app.services.bf1.server_roster_service import Rosters, extract_rosters
 from app.services.bf1.server_service import _to_summary
 from app.services.bf1.server_snapshot_cache import write_server_snapshot
 
@@ -260,11 +261,13 @@ def build_overview_from_snapshot(updates: list[dict[str, Any]]) -> BF1Overview:
     return build_overview(snapshot_summaries(updates), sample_pulls=1, raw_count=len(updates))
 
 
-async def fetch_overview(db: AsyncSession) -> tuple[BF1Overview, list[ServerSummary], str]:
+async def fetch_overview(
+    db: AsyncSession,
+) -> tuple[BF1Overview, list[ServerSummary], str, Rosters | None]:
     """拉取并聚合全服统计：先试 Blaze 快照，失败（含超时）打 warning 后回退 searchServers。
 
-    返回 (统计, 去重后的服务器摘要, 数据源 snapshot/search)。无任何数据时抛出，由调用方
-    决定是否覆盖缓存。
+    返回 (统计, 去重后的服务器摘要, 数据源 snapshot/search, 私服名单)。名单只有快照有，
+    回退时为 None。无任何数据时抛出，由调用方决定是否覆盖缓存。
     """
     if not get_settings().blaze_mock_mode:
         try:
@@ -275,9 +278,9 @@ async def fetch_overview(db: AsyncSession) -> tuple[BF1Overview, list[ServerSumm
         else:
             logger.info("BF1 overview source=snapshot games={}", len(summaries))
             overview = build_overview(summaries, sample_pulls=1, raw_count=len(updates))
-            return overview, summaries, "snapshot"
+            return overview, summaries, "snapshot", extract_rosters(updates)
     overview, summaries = await _fetch_overview_by_search(db)
-    return overview, summaries, "search"
+    return overview, summaries, "search", None
 
 
 async def _fetch_overview_by_search(db: AsyncSession) -> tuple[BF1Overview, list[ServerSummary]]:
@@ -325,11 +328,11 @@ async def refresh_overview_cache(db: AsyncSession) -> BF1Overview:
     快照与趋势历史分开存储：快照整体覆盖写，历史按采样点追加并裁剪到最近 24h，
     读取端再把两者拼装成完整响应。
     """
-    overview, summaries, source = await fetch_overview(db)
+    overview, summaries, source, rosters = await fetch_overview(db)
     cache = await get_cache()
     await cache.set(OVERVIEW_CACHE_KEY, overview.model_dump(), ttl=OVERVIEW_CACHE_TTL)
     await write_server_snapshot(summaries, source=source, ttl=OVERVIEW_CACHE_TTL)
-    _spawn_record_player_counts(summaries)
+    _spawn_record_player_counts(summaries, rosters)
     point = TrendPoint(
         ts=int(datetime.now(UTC).timestamp()),
         players=overview.players.total,
@@ -355,9 +358,13 @@ async def refresh_overview_cache(db: AsyncSession) -> BF1Overview:
 _background_tasks: set[asyncio.Task[None]] = set()
 
 
-async def _record_player_counts(summaries: list[ServerSummary]) -> None:
+# 名单差分依赖上一轮的内存状态，写点任务若慢过一轮也要排队，不能交叉执行
+_record_lock = asyncio.Lock()
+
+
+async def _record_player_counts(summaries: list[ServerSummary], rosters: Rosters | None) -> None:
     try:
-        async with get_sessionmaker()() as db:
+        async with _record_lock, get_sessionmaker()() as db:
             try:
                 server_ids = await resolve_server_ids(db, summaries)
             except Exception as e:
@@ -365,15 +372,15 @@ async def _record_player_counts(summaries: list[ServerSummary]) -> None:
                 logger.warning("BF1 serverId resolve skipped: {}", e)
                 await db.rollback()
                 server_ids = {}
-            written = await record_player_counts(db, summaries, server_ids)
+            written = await record_player_counts(db, summaries, server_ids, rosters)
         logger.debug("BF1 server player counts recorded: {}", written)
     except Exception as e:
         logger.warning("BF1 server player count write failed: {}", e)
 
 
-def _spawn_record_player_counts(summaries: list[ServerSummary]) -> None:
-    """人数点写库放到独立任务和会话里，不阻塞、不拖慢快照轮询。"""
-    task = asyncio.create_task(_record_player_counts(summaries))
+def _spawn_record_player_counts(summaries: list[ServerSummary], rosters: Rosters | None) -> None:
+    """人数点与名单变化写库放到独立任务和会话里，不阻塞、不拖慢快照轮询。"""
+    task = asyncio.create_task(_record_player_counts(summaries, rosters))
     _background_tasks.add(task)
     task.add_done_callback(_background_tasks.discard)
 

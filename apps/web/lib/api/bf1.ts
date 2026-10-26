@@ -195,6 +195,34 @@ export interface ServerPlayerCountPoint {
   game_mode: string | null;
 }
 
+/** 服务器快照列表里的一项：有名单的采样点，附这一轮相对上一轮进入 / 退出的人数 */
+export interface ServerRosterPoint extends ServerPlayerCountPoint {
+  joined: number;
+  left: number;
+}
+
+/** 快照列表按时间倒序分页，next_before 传回 before 取更早的一页，null 表示没有更早的了 */
+export interface ServerRosterPage {
+  items: ServerRosterPoint[];
+  next_before: number | null;
+}
+
+export type RosterSlot = "team1" | "team2" | "queue" | "spectator";
+export type RosterChange = "joined" | "left" | "switched";
+
+/** 快照名单里的一个人；离开的人 slot 是离开前的位置 */
+export interface RosterPlayer {
+  persona_id: number;
+  name: string | null;
+  slot: RosterSlot;
+  change: RosterChange | null;
+}
+
+/** 某个采样时刻的完整名单 */
+export interface ServerRosterSnapshot extends ServerRosterPoint {
+  roster: RosterPlayer[];
+}
+
 /** 私服近 N 天在某张地图（地图 + 模式）上的累计情况，last_seen 为 unix 秒 */
 export interface ServerMapStat {
   map_name: string;
@@ -518,6 +546,12 @@ export const bf1Api = {
     api.get<ServerPlayerCountPoint[]>(`/bf1/servers/${gameId}/player-counts`),
   getServerMapStats: (gameId: number, days = 7) =>
     api.get<ServerMapStat[]>(`/bf1/servers/${gameId}/map-stats?days=${days}`),
+  getServerSnapshots: (gameId: number, before?: number | null) =>
+    api.get<ServerRosterPage>(
+      `/bf1/servers/${gameId}/snapshots${before ? `?before=${before}` : ""}`,
+    ),
+  getServerSnapshot: (gameId: number, ts: number) =>
+    api.get<ServerRosterSnapshot>(`/bf1/servers/${gameId}/snapshots/${ts}`),
 
   getServerPlayers: (gameId: number, includeStats = true) =>
     api.get<ServerPlayersResponse>(

@@ -33,6 +33,7 @@ import { ServerAboutPanel } from "@/components/bf1/server-detail/ServerAboutPane
 import { ServerProfilePanel } from "@/components/bf1/server-detail/ServerProfilePanel";
 import { ServerHeroBanner } from "@/components/bf1/server-detail/ServerHeroBanner";
 import { ServerHistoryPanel } from "@/components/bf1/server-detail/ServerHistoryPanel";
+import { SnapshotPanel } from "@/components/bf1/server-detail/SnapshotPanel";
 import {
   GAP_SECONDS,
   buildMapColors,
@@ -75,6 +76,7 @@ const ACTION_LABEL: Record<string, string> = {
 const TAB_KEYS = [
   "overview",
   "players",
+  "snapshots",
   "maps",
   "autoswitch",
   "rules",
@@ -155,6 +157,7 @@ function ServerDetailView({
   const tabs: ReadonlyArray<{ key: TabKey; label: string; count?: number }> = [
     { key: "overview", label: "概览" },
     { key: "players", label: "玩家", count: summary.player_count },
+    { key: "snapshots", label: "快照" },
     { key: "maps", label: "地图", count: map_rotation.length },
     ...(canAutoSwitch ? ([{ key: "autoswitch", label: "自动换图" }] as const) : []),
     { key: "rules", label: "规则" },
@@ -264,6 +267,7 @@ function ServerDetailView({
                 <PlayersList gameId={gameId} game={game} />
               </Panel>
             )}
+            {tab === "snapshots" && <SnapshotPanel gameId={gameId} game={game} mapInfo={mapInfo} />}
             {tab === "maps" && (
               <RotationGrid
                 items={map_rotation}

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import BigInteger, DateTime, Index, String, func
+from sqlalchemy import BigInteger, DateTime, Index, SmallInteger, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
@@ -26,6 +26,9 @@ class Bf1ServerPlayerCount(Base):
     queue_count: Mapped[int] = mapped_column(default=0, nullable=False)
     spectator_count: Mapped[int] = mapped_column(default=0, nullable=False)
     max_player_count: Mapped[int] = mapped_column(default=0, nullable=False)
+    # 本轮名单相对上一轮进入 / 退出的人数；为空表示这一轮没拿到名单（快照失败回退了 searchServers）
+    joined_count: Mapped[int | None] = mapped_column(SmallInteger)
+    left_count: Mapped[int | None] = mapped_column(SmallInteger)
 
     sampled_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

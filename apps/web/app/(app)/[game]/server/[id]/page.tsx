@@ -1004,7 +1004,17 @@ function RotationGrid({
     const stat = m.map_name ? statByKey.get(mapKey(m.map_name, m.game_mode)) : undefined;
     const step = operationStep(m);
     const sectors = step >= 0 ? m.operation![step].sectors : null;
-    const switchable = canSwitch && serverInitialized && !m.is_current;
+    const switchable = canSwitch && serverInitialized;
+    const switchLabel = m.is_current ? "重开" : "换到";
+    // 私服行动只能从战役第一张正常开局，切到中间的图要先警告
+    const switchToMap = () =>
+      chooseLevel(i, mapLabel, {
+        restart: m.is_current,
+        warning:
+          step > 0
+            ? `这是战役第 ${step + 1} 张图，行动只能从战役第一张图正常开始，换到这里可能无法按战役推进`
+            : undefined,
+      });
     return (
       <li key={`${m.map_name}-${i}`}>
         <Bf1Panel
@@ -1031,13 +1041,13 @@ function RotationGrid({
             {switchable ? (
               <button
                 type="button"
-                aria-label={`换到 ${mapLabel}`}
-                onClick={() => chooseLevel(i, mapLabel)}
+                aria-label={`${switchLabel} ${mapLabel}`}
+                onClick={switchToMap}
                 className="absolute inset-0 hidden items-center justify-center bg-black/35 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:hover)]:flex"
               >
                 <span className="inline-flex items-center gap-1.5 bg-white/90 px-4 py-2 text-sm font-semibold text-black shadow-lg">
                   <ArrowRightLeft className="size-4" />
-                  换到这张图
+                  {m.is_current ? "重开这张图" : "换到这张图"}
                 </span>
               </button>
             ) : null}
@@ -1088,16 +1098,22 @@ function RotationGrid({
                 <div className="text-[11px] text-white/35">近 7 天没玩过</div>
               )}
             </div>
-            {canSwitch && !m.is_current ? (
+            {canSwitch ? (
               <button
                 type="button"
                 disabled={!serverInitialized}
-                title={serverInitialized ? "切换到此地图" : "服务器尚未初始化，暂不可换图"}
-                onClick={() => chooseLevel(i, mapLabel)}
+                title={
+                  serverInitialized
+                    ? m.is_current
+                      ? "重开当前地图"
+                      : "切换到此地图"
+                    : "服务器尚未初始化，暂不可换图"
+                }
+                onClick={switchToMap}
                 className="compact-action inline-flex h-8 shrink-0 items-center gap-1.5 bg-white/[0.08] px-3 text-xs font-medium text-white/85 ring-1 ring-white/15 transition-colors group-hover:bg-white/15 hover:!bg-white hover:text-black disabled:bg-transparent disabled:text-white/35"
               >
                 <ArrowRightLeft className="size-3.5" />
-                换图
+                {m.is_current ? "重开" : "换图"}
               </button>
             ) : null}
           </div>
@@ -1129,7 +1145,9 @@ function RotationGrid({
                     ? `${current ? "重开" : "换到"} ${m.map_display_name ?? m.map_name}`
                     : "服务器尚未初始化，暂不可换图"
                 }
-                onClick={() => chooseLevel(i, m.map_display_name ?? m.map_name ?? "")}
+                onClick={() =>
+                  chooseLevel(i, m.map_display_name ?? m.map_name ?? "", { restart: m.is_current })
+                }
                 className={cn(
                   "compact-action inline-flex h-9 items-center gap-2 pr-3 text-xs ring-1 transition-colors",
                   current

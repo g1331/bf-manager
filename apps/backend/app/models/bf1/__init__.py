@@ -11,16 +11,19 @@ from app.models.bf1.server_admins import (
     Bf1ServerVip,
 )
 from app.models.bf1.server_player_count import Bf1ServerPlayerCount
+from app.models.bf1.server_roster import Bf1PlayerName, Bf1ServerPlayerDay
 
 __all__ = [
     "Bf1AutoSwitch",
     "Bf1ExchangeSnapshot",
     "Bf1Match",
     "Bf1MatchIdCache",
+    "Bf1PlayerName",
     "Bf1ServerAdmin",
     "Bf1ServerBan",
     "Bf1ServerManagerVip",
     "Bf1ServerOwner",
     "Bf1ServerPlayerCount",
+    "Bf1ServerPlayerDay",
     "Bf1ServerVip",
 ]

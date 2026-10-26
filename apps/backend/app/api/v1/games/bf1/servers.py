@@ -11,9 +11,16 @@ from app.schemas.bf1.server import (
     ServerMapStat,
     ServerPlayerCountPoint,
     ServerPlayersResponse,
+    ServerRosterPage,
+    ServerRosterSnapshot,
 )
 from app.services.bf1.blaze_service import get_server_players
-from app.services.bf1.server_player_count_service import list_map_stats, list_player_counts
+from app.services.bf1.server_player_count_service import (
+    get_roster_snapshot,
+    list_map_stats,
+    list_player_counts,
+    list_roster_points,
+)
 from app.services.bf1.server_service import BF1ServerService
 
 router = APIRouter()
@@ -77,3 +84,21 @@ async def get_server_map_stats(
 ) -> list[ServerMapStat]:
     # 由人数采样里的地图字段聚合，采样保留 7 天，days 最多 7
     return await list_map_stats(db, game_id, days=days)
+
+
+@router.get("/{game_id}/snapshots", response_model=ServerRosterPage)
+async def get_server_snapshots(
+    game_id: int,
+    db: DbDep,
+    before: int | None = Query(
+        None, description="只取这个 unix 秒之前的快照，传上一页的 next_before"
+    ),
+    limit: int = Query(50, ge=1, le=200),
+) -> ServerRosterPage:
+    # 名单随全服统计每分钟记录一次，只有私服有，保留 7 天
+    return await list_roster_points(db, game_id, before=before, limit=limit)
+
+
+@router.get("/{game_id}/snapshots/{ts}", response_model=ServerRosterSnapshot)
+async def get_server_snapshot(game_id: int, ts: int, db: DbDep) -> ServerRosterSnapshot:
+    return await get_roster_snapshot(db, game_id, ts)

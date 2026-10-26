@@ -239,8 +239,9 @@ async def test_fetch_overview_prefers_snapshot(monkeypatch: pytest.MonkeyPatch) 
 
     monkeypatch.setattr(overview_service, "fetch_game_list_snapshot", fake_snapshot)
     monkeypatch.setattr(overview_service, "_fetch_overview_by_search", no_search)
-    ov, summaries, source = await overview_service.fetch_overview(object())  # type: ignore[arg-type]
+    ov, summaries, source, rosters = await overview_service.fetch_overview(object())  # type: ignore[arg-type]
     assert ov.players.total == 10
+    assert rosters == {1: {}}
     assert ov.sample_pulls == 1
     assert [s.game_id for s in summaries] == [1]
     assert source == "snapshot"
@@ -263,7 +264,7 @@ async def test_fetch_overview_falls_back_to_search(
 
     monkeypatch.setattr(overview_service, "fetch_game_list_snapshot", failing_snapshot)
     monkeypatch.setattr(overview_service, "_fetch_overview_by_search", fake_search)
-    assert await overview_service.fetch_overview(object()) == (fallback, [], "search")  # type: ignore[arg-type]
+    assert await overview_service.fetch_overview(object()) == (fallback, [], "search", None)  # type: ignore[arg-type]
 
 
 def test_snapshot_summary_fills_list_fields() -> None:
@@ -300,7 +301,7 @@ async def test_refresh_writes_server_snapshot_and_spawns_counts(
     ov = overview_service.build_overview(summaries, sample_pulls=1, raw_count=1)
 
     async def fake_fetch(_db: object) -> tuple:
-        return ov, summaries, "snapshot"
+        return ov, summaries, "snapshot", {1: {}}
 
     class _Cache:
         def __init__(self) -> None:
@@ -321,14 +322,16 @@ async def test_refresh_writes_server_snapshot_and_spawns_counts(
     monkeypatch.setattr(overview_service, "fetch_overview", fake_fetch)
     monkeypatch.setattr(overview_service, "get_cache", fake_get_cache)
     monkeypatch.setattr(server_snapshot_cache, "get_cache", fake_get_cache)
-    monkeypatch.setattr(overview_service, "_spawn_record_player_counts", spawned.append)
+    monkeypatch.setattr(
+        overview_service, "_spawn_record_player_counts", lambda *a: spawned.append(a)
+    )
     await overview_service.refresh_overview_cache(object())  # type: ignore[arg-type]
 
     value, ttl = cache.data[server_snapshot_cache.SERVER_SNAPSHOT_CACHE_KEY]
     assert ttl == overview_service.OVERVIEW_CACHE_TTL
     assert value["source"] == "snapshot"
     assert [i["game_id"] for i in value["items"]] == [1]
-    assert spawned == [summaries]
+    assert spawned == [(summaries, {1: {}})]
 
 
 class _FakeSocket:

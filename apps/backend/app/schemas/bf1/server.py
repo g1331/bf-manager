@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, field_validator
 
@@ -56,6 +56,36 @@ class ServerPlayerCountPoint(BaseModel):
     max_players: int = 0
     map_name: str | None = None
     game_mode: str | None = None
+
+
+class ServerRosterPoint(ServerPlayerCountPoint):
+    """服务器快照列表里的一项：一个有名单的采样点，附这一轮相对上一轮进入 / 退出的人数"""
+
+    joined: int = 0
+    left: int = 0
+
+
+class ServerRosterPage(BaseModel):
+    """快照列表按时间倒序分页；next_before 传回 before 取更早的一页，为空表示没有更早的了"""
+
+    items: list[ServerRosterPoint]
+    next_before: int | None = None
+
+
+class RosterPlayer(BaseModel):
+    """快照名单里的一个人。slot 为 team1 / team2 / queue / spectator，离开的人是离开前的位置；
+    change 为这一轮的变化：joined 进入、left 退出、switched 换队，没变为空"""
+
+    persona_id: int
+    name: str | None = None
+    slot: Literal["team1", "team2", "queue", "spectator"]
+    change: Literal["joined", "left", "switched"] | None = None
+
+
+class ServerRosterSnapshot(ServerRosterPoint):
+    """某个采样时刻的完整名单"""
+
+    roster: list[RosterPlayer] = []
 
 
 class ServerMapStat(BaseModel):

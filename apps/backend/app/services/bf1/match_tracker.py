@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 
 from loguru import logger
 
+from app.core import ea_metrics
 from app.domain.games.bf1.round_stats import (
     FINISHED,
     LEFT_EARLY,
@@ -226,7 +227,8 @@ class MatchTracker:
         if not pids:
             return
         try:
-            values = await fetch(pids, PROBE_NAMES)
+            with ea_metrics.ea_source("tracker_probe"):
+                values = await fetch(pids, PROBE_NAMES)
         except Exception as e:
             logger.warning("BF1 match tracker probe failed: {}", e)
             return

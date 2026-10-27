@@ -20,6 +20,7 @@ from loguru import logger
 from redis.exceptions import RedisError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core import ea_metrics
 from app.core.cache import get_cache
 from app.core.config import get_settings
 from app.db.session import get_sessionmaker
@@ -366,6 +367,7 @@ _record_lock = asyncio.Lock()
 
 
 async def _record_player_counts(summaries: list[ServerSummary], rosters: Rosters | None) -> None:
+    ea_metrics.set_source("server_id")
     try:
         async with _record_lock, get_sessionmaker()() as db:
             try:
@@ -420,6 +422,7 @@ async def read_overview_cache() -> BF1Overview:
 
 async def overview_poller() -> None:
     """后台定时轮询循环。在应用 lifespan 中以 asyncio 任务启动。"""
+    ea_metrics.set_source("snapshot")
     while True:
         try:
             async with get_sessionmaker()() as db:

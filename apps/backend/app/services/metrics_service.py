@@ -21,9 +21,17 @@ from datetime import UTC, datetime, timedelta
 from jose import JWTError
 from loguru import logger
 
+from app.core import ea_metrics
 from app.core.cache import get_redis
 from app.core.security import decode_access_token
-from app.schemas.admin import AdminMetrics, DailyCount, EndpointCount
+from app.schemas.admin import (
+    AdminMetrics,
+    DailyCount,
+    EaHourCount,
+    EaMethodCount,
+    EaSourceCount,
+    EndpointCount,
+)
 
 # 键统一挂在 bfm:metrics 命名空间下，与 Cache 的 bfm 前缀保持一致。
 PREFIX = "bfm:metrics"
@@ -32,6 +40,8 @@ DAY_TTL_SECONDS = 60 * 60 * 24 * 40
 # 趋势窗口与热门接口展示条数
 WINDOW_DAYS = 7
 TOP_ENDPOINT_LIMIT = 10
+EA_METHOD_LIMIT = 30
+EA_HOURS = 24
 
 
 def classify_path(path: str) -> str | None:
@@ -136,6 +146,8 @@ async def read_metrics() -> AdminMetrics:
     以及 7 天合并去重活跃用户，游客同理。各命令结果按入队顺序对应 pipeline 返回列表。
     """
     days = _recent_days(WINDOW_DAYS)
+    now = datetime.now(UTC).replace(minute=0, second=0, microsecond=0)
+    hours = [now - timedelta(hours=i) for i in range(EA_HOURS - 1, -1, -1)]
     user_keys = [f"{PREFIX}:users:day:{d}" for d in days]
     guest_keys = [f"{PREFIX}:guests:day:{d}" for d in days]
     try:
@@ -150,6 +162,11 @@ async def read_metrics() -> AdminMetrics:
         for key in guest_keys:
             pipe.pfcount(key)
         pipe.pfcount(*guest_keys)
+        for d in days:
+            pipe.hgetall(f"{ea_metrics.PREFIX}:day:{d}")
+        pipe.hgetall(f"{ea_metrics.PREFIX}:pids:day:{days[0]}")
+        for h in hours:
+            pipe.hgetall(f"{ea_metrics.PREFIX}:hour:{h:%Y%m%d%H}")
         res = await pipe.execute()
     except Exception as e:
         # 读取同样静默降级：Redis 不可用或 redis_url 配置非法时返回空快照而非 500。
@@ -164,6 +181,10 @@ async def read_metrics() -> AdminMetrics:
     active_7d = int(res[3 + n] or 0)
     daily_guests = res[4 + n : 4 + 2 * n]
     guests_7d = int(res[4 + 2 * n] or 0)
+    ea_days = res[5 + 2 * n : 5 + 3 * n]
+    ea_pids = res[5 + 3 * n] or {}
+    ea_hours = res[6 + 3 * n :]
+    ea_daily = [sum(int(c) for c in (h or {}).values()) for h in ea_days]
 
     daily: list[DailyCount] = [
         DailyCount(
@@ -171,8 +192,11 @@ async def read_metrics() -> AdminMetrics:
             requests=int(raw or 0),
             active_users=int(active or 0),
             guests=int(guest or 0),
+            ea_calls=ea,
         )
-        for day, raw, active, guest in zip(days, req_vals, daily_active, daily_guests, strict=True)
+        for day, raw, active, guest, ea in zip(
+            days, req_vals, daily_active, daily_guests, ea_daily, strict=True
+        )
     ]
 
     requests_today = daily[0].requests if daily else 0
@@ -189,6 +213,8 @@ async def read_metrics() -> AdminMetrics:
     # 前端按日期从左到右画趋势，故返回升序
     daily.reverse()
 
+    ea_sources, ea_methods = _ea_breakdown(ea_days[0] or {}, ea_pids)
+
     return AdminMetrics(
         available=True,
         total_requests=total,
@@ -200,4 +226,35 @@ async def read_metrics() -> AdminMetrics:
         guests_7d=guests_7d,
         top_endpoints=top_endpoints,
         daily=daily,
+        ea_calls_today=ea_daily[0],
+        ea_calls_7d=sum(ea_daily),
+        ea_sources=ea_sources,
+        ea_methods=ea_methods,
+        ea_hourly=[
+            EaHourCount(
+                hour=h.strftime("%Y-%m-%dT%H:00Z"),
+                count=sum(int(c) for c in (raw or {}).values()),
+            )
+            for h, raw in zip(hours, ea_hours, strict=True)
+        ],
     )
+
+
+def _ea_breakdown(
+    day: dict[str, str], pids: dict[str, str]
+) -> tuple[list[EaSourceCount], list[EaMethodCount]]:
+    """把当天的「通道|方法|来源」计数拆成按来源汇总和按方法明细，都按次数从多到少。"""
+    by_source: dict[str, int] = {}
+    methods: list[EaMethodCount] = []
+    for field, raw in day.items():
+        channel, method, source = [*field.split("|", 2), "", ""][:3]
+        count = int(raw)
+        by_source[source] = by_source.get(source, 0) + count
+        methods.append(EaMethodCount(channel=channel, method=method, source=source, count=count))
+    sources = [
+        EaSourceCount(source=src, calls=calls, pids=int(pids.get(src) or 0))
+        for src, calls in by_source.items()
+    ]
+    sources.sort(key=lambda x: x.calls, reverse=True)
+    methods.sort(key=lambda x: x.count, reverse=True)
+    return sources, methods[:EA_METHOD_LIMIT]

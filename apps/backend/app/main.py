@@ -15,8 +15,10 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.errors import AppError
 from app.api.v1.router import api_router
+from app.core import ea_metrics
 from app.core.cache import close_redis, get_redis
 from app.core.config import get_settings
+from app.core.ea_metrics import ea_metrics_flusher
 from app.core.logging import setup_logging
 from app.db.session import close_engine
 from app.domain.ea.login.task_manager import close_task_manager, init_task_manager
@@ -28,7 +30,7 @@ from app.services.bf1.blaze_service import close_blaze_pool
 from app.services.bf1.exchange_service import exchange_poller
 from app.services.bf1.overview_service import overview_poller
 from app.services.ea_login_finalizer import EALoginFinalizer
-from app.services.metrics_service import record_request, user_id_from_token
+from app.services.metrics_service import classify_path, record_request, user_id_from_token
 
 
 @asynccontextmanager
@@ -55,9 +57,9 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 
     # BF1 后台轮询：仅在启用 bf1 时启动。全服统计写 Redis 供 /bf1/overview 只读；
     # 交换每小时检查一次换期，入库后供历史查询；行动服自动换图每 5 秒检查开启的服
-    pollers: list[asyncio.Task[None]] = []
+    pollers: list[asyncio.Task[None]] = [asyncio.create_task(ea_metrics_flusher())]
     if "bf1" in settings.games:
-        pollers = [
+        pollers += [
             asyncio.create_task(overview_poller()),
             asyncio.create_task(exchange_poller()),
             asyncio.create_task(auto_switch_poller()),
@@ -102,6 +104,8 @@ def create_app() -> FastAPI:
     async def _metrics_middleware(
         request: Request, call_next: Callable[[Request], Awaitable[Response]]
     ) -> Response:
+        # EA 调用计数按接口分组记来源；call_next 在子任务里跑，创建时继承这里设的值
+        ea_metrics.set_source(f"api:{classify_path(request.url.path) or 'other'}")
         response = await call_next(request)
         # 仅对成功返回（2xx/3xx）的非 OPTIONS 请求计数，避免预检与 4xx/5xx 错误流量
         # （含未授权探测）污染访问量与活跃用户统计。

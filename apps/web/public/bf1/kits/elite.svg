@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- 精英兵：哨兵重甲头盔，护面上一道观察缝 -->
+  <path fill="#fff" fill-rule="evenodd" d="M32 4c-12.7 0-22 9.6-22 22.5V40l-4 5v6l9 6h34l9-6v-6l-4-5V26.5C54 13.6 44.7 4 32 4Zm-15 28h30v6H17Z"/>
+  <path fill="#fff" d="M30 2h4v4h-4z"/>
+</svg>

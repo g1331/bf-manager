@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import asyncio
 from collections import defaultdict
+from collections.abc import Coroutine
 from datetime import UTC, datetime
 from typing import Any
 
@@ -33,6 +34,7 @@ from app.schemas.bf1.overview import BF1Overview, CountBreakdown, NamedCount, Tr
 from app.schemas.bf1.server import ServerSummary
 from app.services.bf1.blaze_service import fetch_game_list_snapshot
 from app.services.bf1.gateway_factory import get_bf1_client
+from app.services.bf1.round_service import run_match_tick
 from app.services.bf1.server_player_count_service import (
     record_player_counts,
     resolve_server_ids,
@@ -379,11 +381,20 @@ async def _record_player_counts(summaries: list[ServerSummary], rosters: Rosters
         logger.warning("BF1 server player count write failed: {}", e)
 
 
-def _spawn_record_player_counts(summaries: list[ServerSummary], rosters: Rosters | None) -> None:
-    """人数点与名单变化写库放到独立任务和会话里，不阻塞、不拖慢快照轮询。"""
-    task = asyncio.create_task(_record_player_counts(summaries, rosters))
+def _spawn(coro: Coroutine[Any, Any, None]) -> None:
+    task = asyncio.create_task(coro)
     _background_tasks.add(task)
     task.add_done_callback(_background_tasks.discard)
+
+
+def _spawn_record_player_counts(summaries: list[ServerSummary], rosters: Rosters | None) -> None:
+    """人数点与名单变化写库、对局跟踪都放到独立任务和会话里，不阻塞、不拖慢快照轮询。
+
+    对局跟踪要按名单差分，只在快照成功（有名单）的轮次跑。
+    """
+    _spawn(_record_player_counts(summaries, rosters))
+    if rosters is not None:
+        _spawn(run_match_tick(summaries, rosters))
 
 
 async def read_overview_cache() -> BF1Overview:

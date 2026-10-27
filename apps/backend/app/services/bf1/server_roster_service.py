@@ -34,6 +34,8 @@ SLOT_NAMES = {TEAM1: "team1", TEAM2: "team2", QUEUE: "queue", SPECTATOR: "specta
 QUEUE_TIDX = 65535
 
 RETENTION = timedelta(days=7)
+# 名字表也给对局详情用，对局保留 90 天，名字跟着留 90 天（每人一行，量不大）
+NAME_RETENTION = timedelta(days=90)
 # 排行榜按北京时间数活跃天数，玩家感知的「一天」从零点开始，而不是 UTC 零点（北京 8 点）
 BEIJING = timezone(timedelta(hours=8))
 # 两轮名单间隔超过它就视为断档，与人数曲线的 MAX_SAMPLE_SPAN 一致
@@ -173,7 +175,9 @@ class RosterTracker:
             await db.execute(
                 delete(Bf1ServerPlayerDay).where(Bf1ServerPlayerDay.day < cutoff.date())
             )
-            await db.execute(delete(Bf1PlayerName).where(Bf1PlayerName.seen_at < cutoff))
+            await db.execute(
+                delete(Bf1PlayerName).where(Bf1PlayerName.seen_at < now - NAME_RETENTION)
+            )
         self._pending = (
             {
                 gid: {pid: state for pid, (state, _) in ps.items()}

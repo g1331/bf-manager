@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Query
 
 from app.api.deps import DbDep
+from app.schemas.bf1.rounds import RoundPage
 from app.schemas.bf1.server import (
     ServerDetail,
     ServerLeaderboard,
@@ -16,6 +17,7 @@ from app.schemas.bf1.server import (
     ServerRosterSnapshot,
 )
 from app.services.bf1.blaze_service import get_server_players
+from app.services.bf1.round_service import list_server_rounds
 from app.services.bf1.server_player_count_service import (
     get_leaderboard,
     get_roster_snapshot,
@@ -115,3 +117,16 @@ async def get_server_snapshots(
 @router.get("/{game_id}/snapshots/{ts}", response_model=ServerRosterSnapshot)
 async def get_server_snapshot(game_id: int, ts: int, db: DbDep) -> ServerRosterSnapshot:
     return await get_roster_snapshot(db, game_id, ts)
+
+
+@router.get("/{game_id}/rounds", response_model=RoundPage)
+async def get_server_rounds(
+    game_id: int,
+    db: DbDep,
+    before: int | None = Query(
+        None, description="只取结束时间在这个 unix 秒之前的对局，传上一页的 next_before"
+    ),
+    limit: int = Query(30, ge=1, le=100),
+) -> RoundPage:
+    # 对局由生涯差分算出，服重启前后的实例合在一起，保留 90 天
+    return await list_server_rounds(db, game_id, before=before, limit=limit)

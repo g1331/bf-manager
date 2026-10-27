@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class ServerSummary(BaseModel):
@@ -37,6 +37,9 @@ class ServerSummary(BaseModel):
     is_ranked: bool = False
     has_password: bool = False
     description: str | None = None
+    # 快照 ATTR.owner 非 0：有服主、能解析出 RSP serverId。servertype 为 OFFICIAL 的服里也有这种
+    # 租用服，owner 为 0 的才是真官服。只供采集归并用，不进接口与缓存；searchServers 回退时恒为 False
+    has_owner: bool = Field(False, exclude=True)
 
 
 class ServerListResponse(BaseModel):

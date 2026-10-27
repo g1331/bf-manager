@@ -1,4 +1,4 @@
-"""BF1 私服名单时间线（服务器快照）
+"""BF1 服务器名单时间线（服务器快照）
 
 全服统计每分钟拿到的快照里带着每个服的完整名单（ROST）。这里和上一轮名单做差分，只把变化
 写进库：每人每服每天一行，进服、换队、离开各是一个事件，追加在这一行的 events 后面。
@@ -73,12 +73,12 @@ def _slot(player: dict[str, Any]) -> int:
 
 
 def extract_rosters(updates: Iterable[dict[str, Any]]) -> Rosters:
-    """从快照 UPDT 项取出私服名单。只留 PID、名字与所在位置，HNET 等隐私字段不往外传。"""
+    """从快照 UPDT 项取出各服名单（官服也记）。只留 PID、名字与所在位置，HNET 等隐私字段不往外传。"""
     rosters: Rosters = {}
     for update in updates:
         game = update.get("GAM") or update
         gid = game.get("GID")
-        if gid is None or (game.get("ATTR") or {}).get("servertype") == "OFFICIAL":
+        if gid is None:
             continue
         rosters[int(gid)] = {
             int(p["PID"]): (_slot(p), str(p.get("NAME") or ""))
@@ -215,7 +215,8 @@ def _carry_over(
     return prev, True
 
 
-def _insert(db: AsyncSession, table: Any) -> Any:
+def insert_for(db: AsyncSession, table: Any) -> Any:
+    """按方言取支持 on_conflict 的 insert：生产是 Postgres，测试是 sqlite"""
     insert = pg_insert if db.get_bind().dialect.name == "postgresql" else sqlite_insert
     return insert(table)
 
@@ -228,7 +229,7 @@ def _chunks(items: list[Any]) -> Iterable[list[Any]]:
 async def _write_events(db: AsyncSession, appends: dict[tuple[int, date, int], str]) -> None:
     rows = [{"game_id": g, "day": d, "pid": p, "events": e} for (g, d, p), e in appends.items()]
     for chunk in _chunks(rows):
-        stmt = _insert(db, Bf1ServerPlayerDay).values(chunk)
+        stmt = insert_for(db, Bf1ServerPlayerDay).values(chunk)
         await db.execute(
             stmt.on_conflict_do_update(
                 index_elements=["game_id", "day", "pid"],
@@ -240,7 +241,7 @@ async def _write_events(db: AsyncSession, appends: dict[tuple[int, date, int], s
 async def _write_names(db: AsyncSession, names: dict[int, str], now: datetime) -> None:
     rows = [{"pid": p, "name": n[:64], "seen_at": now} for p, n in names.items()]
     for chunk in _chunks(rows):
-        stmt = _insert(db, Bf1PlayerName).values(chunk)
+        stmt = insert_for(db, Bf1PlayerName).values(chunk)
         await db.execute(
             stmt.on_conflict_do_update(
                 index_elements=["pid"],

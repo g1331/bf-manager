@@ -60,7 +60,7 @@ function toLocalInput(ts: number): string {
 }
 
 /**
- * 服务器快照：全服统计每分钟记一次私服名单，这里按时间列出采样点，点开看那一刻两队都有谁、
+ * 服务器快照：全服统计每分钟记一次各服名单（官服也记），这里按时间列出采样点，点开看那一刻两队都有谁、
  * 这一轮谁进谁出谁换队。名单保留 7 天。
  */
 export function SnapshotPanel({
@@ -147,7 +147,7 @@ export function SnapshotPanel({
             ))}
             {!list.isLoading && shown.length === 0 ? (
               <li className="py-8 text-center text-xs text-white/40">
-                {list.hasNextPage ? "这段时间没有记录，可以继续往前加载" : "暂无快照（只记录私服）"}
+                {list.hasNextPage ? "这段时间没有记录，可以继续往前加载" : "暂无快照"}
               </li>
             ) : null}
           </ol>

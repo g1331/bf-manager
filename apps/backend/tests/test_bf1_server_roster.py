@@ -35,7 +35,7 @@ def _p(pid: int, tidx: int, *, role: str = "soldier") -> dict:
     return {"PID": pid, "NAME": f"p{pid}", "TIDX": tidx, "ROLE": role, "HNET": "secret"}
 
 
-def test_extract_rosters_private_only_without_private_fields() -> None:
+def test_extract_rosters_includes_official_without_private_fields() -> None:
     updates = [
         {"GAM": {"GID": 1, "ATTR": {"servertype": "OFFICIAL"}, "ROST": [_p(9, 0)]}},
         {
@@ -49,6 +49,7 @@ def test_extract_rosters_private_only_without_private_fields() -> None:
     ]
     rosters = extract_rosters(updates)
     assert rosters == {
+        1: {9: (TEAM1, "p9")},
         2: {
             1: (TEAM1, "p1"),
             2: (TEAM2, "p2"),

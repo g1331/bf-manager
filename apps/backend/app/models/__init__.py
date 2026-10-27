@@ -5,6 +5,7 @@ from app.models.base import Base
 from app.models.bf1 import (
     Bf1AutoSwitch,
     Bf1ExchangeSnapshot,
+    Bf1GameInstance,
     Bf1Match,
     Bf1MatchIdCache,
     Bf1PlayerName,
@@ -26,6 +27,7 @@ __all__ = [
     "Base",
     "Bf1AutoSwitch",
     "Bf1ExchangeSnapshot",
+    "Bf1GameInstance",
     "Bf1Match",
     "Bf1MatchIdCache",
     "Bf1PlayerName",

@@ -30,7 +30,7 @@ function fmtAgo(ts: number, now: number): string {
 
 /**
  * 服务器排行：由每分钟的名单快照算出每人在这台服两队里待了多久（排队、观战不算），
- * 服务器重启前后的各局合并计算。名单只保留 7 天，也只记录私服。
+ * 服务器重启前后的各个实例按 serverId 合并计算（真官服没有持久身份，只算当前实例）。名单只保留 7 天。
  */
 export function LeaderboardPanel({ gameId, game }: { gameId: number; game: string }) {
   const [days, setDays] = usePageState<number>("server-leaderboard-days", 7);
@@ -124,7 +124,7 @@ export function LeaderboardPanel({ gameId, game }: { gameId: number; game: strin
         </table>
         {!board.isLoading && items.length === 0 ? (
           <p className="py-10 text-center text-xs text-white/40">
-            {board.isError ? "排行加载失败，请稍后重试" : "这段时间没有记录（只统计私服）"}
+            {board.isError ? "排行加载失败，请稍后重试" : "这段时间没有记录"}
           </p>
         ) : null}
         {board.isLoading ? (

@@ -167,7 +167,7 @@ function ServerDetailView({
     tabs.map((t) => t.key),
   );
 
-  // 人数采样只有私服有；空列表时战况与热门地图整块不渲染
+  // 人数采样每分钟一次，刚开的服还没有点；空列表时战况与热门地图整块不渲染
   const counts = useQuery({
     queryKey: ["bf1-server-player-counts", gameId],
     queryFn: () => bf1Api.getServerPlayerCounts(gameId),

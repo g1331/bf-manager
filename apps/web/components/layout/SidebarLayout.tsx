@@ -64,7 +64,7 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
         {/* 主内容列：桌面端固定满高、自身不滚，滚动交给内部页面区，使顶栏与子标签常驻 */}
         <div className="flex min-w-0 flex-1 flex-col lg:min-h-0 lg:overflow-hidden">
           {/* 顶部 Header：纯浮层，无边框、无实色块；桌面端左侧嵌二级 tab，右侧厂牌与账户 */}
-          <header className="relative z-40 flex h-32 items-end px-6 pb-3 sm:px-10">
+          <header className="relative z-40 flex h-20 items-end px-6 pb-3 sm:px-10">
             {/* 移动端汉堡 */}
             <div className="flex items-center pb-1 lg:hidden">
               <Button

@@ -33,7 +33,7 @@ export function FriendsRail() {
           左侧大片留白即主内容预留的右侧空间 */}
       <div
         className={cn(
-          "flex h-full flex-col items-end pt-[6.5rem] pr-6 transition-opacity duration-300",
+          "flex h-full flex-col items-end pt-[3.5rem] pr-6 transition-opacity duration-300",
           open ? "pointer-events-none opacity-0" : "opacity-100",
         )}
       >

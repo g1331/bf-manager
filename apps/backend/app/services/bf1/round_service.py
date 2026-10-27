@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from datetime import UTC, date, datetime, timedelta
 
 from loguru import logger
@@ -17,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.errors import NotFoundError
 from app.core import ea_metrics
+from app.core.cache import get_redis
 from app.core.config import get_settings
 from app.db.session import get_sessionmaker
 from app.domain.games.bf1.blaze_stats import KITS
@@ -59,7 +61,7 @@ from app.schemas.bf1.rounds import (
 )
 from app.schemas.bf1.server import ServerSummary
 from app.services.bf1.blaze_service import fetch_stats
-from app.services.bf1.match_tracker import ClosedRound, MatchTracker
+from app.services.bf1.match_tracker import MAX_GAP, ClosedRound, MatchTracker
 from app.services.bf1.match_tracker import tracker as default_tracker
 from app.services.bf1.server_player_count_service import server_game_ids
 from app.services.bf1.server_roster_service import Rosters, insert_for, read_names
@@ -133,6 +135,10 @@ async def purge_expired(db: AsyncSession, now: datetime) -> None:
 _tick_lock = asyncio.Lock()
 # 过期清理每个 UTC 日跑一次，记下上次跑的日期
 _purged_on: dict[str, date] = {}
+# 停机时把跟踪器状态存在这里，新进程启动时取走；断档超过 MAX_GAP 的状态本来也会被丢弃，键随之过期
+STATE_KEY = "bfm:bf1:match_tracker_state"
+# 停机时最多等这么久让进行中的一轮跑完，等不到就不存
+SAVE_WAIT = 5
 
 
 async def run_match_tick(
@@ -313,3 +319,42 @@ async def list_player_rounds(
         if rid in rounds
     ]
     return PlayerRoundPage(items=items, next_before=page[-1][0] if more and page else None)
+
+
+async def save_tracker_state(*, tracker: MatchTracker | None = None) -> None:
+    """停机时导出跟踪器状态。部署重启一般一两分钟，新进程接着跟，不用全服重查基线、也不丢进行中的局。"""
+    t = tracker or default_tracker
+    if t.last_tick is None:
+        return
+    try:
+        async with asyncio.timeout(SAVE_WAIT), _tick_lock:
+            data = json.dumps(t.dump(), separators=(",", ":"))
+        r = await get_redis()
+        await r.set(STATE_KEY, data, ex=MAX_GAP)
+        logger.info("BF1 match tracker state saved: {} rounds, {} bytes", len(t.rounds), len(data))
+    except Exception as e:
+        logger.warning("BF1 match tracker state not saved: {}", e)
+
+
+async def restore_tracker_state(*, tracker: MatchTracker | None = None) -> None:
+    """启动时取回上一个进程存下的状态（取走即删）；太旧或解析失败就从头开始。"""
+    t = tracker or default_tracker
+    try:
+        r = await get_redis()
+        raw = await r.getdel(STATE_KEY)
+        if not raw:
+            return
+        data = json.loads(raw)
+        age = int(datetime.now(UTC).timestamp()) - int(data["last_tick"])
+        if age > MAX_GAP:
+            logger.info("BF1 match tracker state too old ({}s), starting fresh", age)
+            return
+        t.load(data)
+        logger.info(
+            "BF1 match tracker state restored: {} rounds, {} seats, {}s old",
+            len(t.rounds),
+            sum(len(rnd.seats) for rnd in t.rounds.values()),
+            age,
+        )
+    except Exception as e:
+        logger.warning("BF1 match tracker state not restored: {}", e)

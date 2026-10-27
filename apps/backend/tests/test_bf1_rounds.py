@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import json
+from collections import Counter
 from datetime import UTC, datetime, timedelta
 
 import pytest
 from app.api.errors import NotFoundError
+from app.core import ea_metrics
 from app.domain.games.bf1.round_stats import (
     DEATHS,
     FINISHED,
@@ -13,6 +16,7 @@ from app.domain.games.bf1.round_stats import (
     KIT_BASE,
     LEFT_EARLY,
     LOSSES,
+    PROBE_NAMES,
     ROUND_STATS,
     ROUNDS,
     SCORE,
@@ -297,3 +301,106 @@ async def test_tracker_caps_queries_and_prioritizes_leavers(monkeypatch) -> None
     assert stats_calls[-1] == [1, 4, 5]
     await tr.tick(roster, MAP, t0 + 120, career.fetch)
     assert all(s.base is not None for s in tr.rounds[1].seats.values())
+
+
+def _probe_calls(career: Career) -> list[list[int]]:
+    return [pids for pids, names in career.calls if names == PROBE_NAMES]
+
+
+async def test_tracker_probe_two_stages() -> None:
+    career, tr = Career(), MatchTracker()
+    for p in (1, 2, 3, 4):
+        career.add(p)
+    t0 = 1_800_000_000
+    roster = _roster(p1=TEAM1, p2=TEAM1, p3=TEAM2, p4=TEAM2)
+    await tr.tick(roster, MAP, t0, career.fetch)
+    # 没结算：第一段 2 人都没变，不补查
+    await tr.tick(roster, MAP, t0 + 60, career.fetch)
+    assert _probe_calls(career) == [[1, 2]]
+    # 只有 1 个人 +1：同一轮补查另外 2 人，4 人里 1 人不过半
+    career.add(1, w=1, r=1)
+    await tr.tick(roster, MAP, t0 + 120, career.fetch)
+    assert _probe_calls(career)[1:] == [[1, 2], [3, 4]]
+    assert tr.rounds[1].settle_seen_at is None
+    # 正常结算：第一段 2 人都 +1 就够了
+    career.settle(winners=[2, 3], losers=[4])
+    career.add(1, l=1, r=1)
+    await tr.tick(roster, MAP, t0 + 180, career.fetch)
+    assert _probe_calls(career)[3:] == [[1, 2]]
+    assert tr.rounds[1].settle_seen_at == t0 + 180
+
+
+async def test_tracker_counts_hops_and_rechecks(monkeypatch) -> None:
+    events: Counter[str] = Counter()
+    monkeypatch.setattr(ea_metrics, "count_event", lambda name, n=1: events.update({name: n}))
+    career, tr = Career(), MatchTracker()
+    for p in (1, 2, 3):
+        career.add(p)
+    t0 = 1_800_000_000
+    maps = {1: MAP[1], 2: MAP[1]}
+    await tr.tick({1: {1: (TEAM1, "p1"), 2: (TEAM2, "p2")}}, maps, t0, career.fetch)
+    # 1 从 1 号服换到 2 号服（离开时的终值已查到，可当基线），3 从离线直接进 2 号服
+    await tr.tick({1: {2: (TEAM2, "p2")}}, maps, t0 + 60, career.fetch)
+    rosters = {1: {2: (TEAM2, "p2")}, 2: {1: (TEAM1, "p1"), 3: (TEAM2, "p3")}}
+    await tr.tick(rosters, maps, t0 + 120, career.fetch)
+    assert (tr.rounds[2].seats[1].hop, tr.rounds[2].seats[3].hop) == (True, False)
+    assert (events["join_hop"], events["join_fresh"], events["join_reusable"]) == (1, 3, 1)
+    # 1 带着上一台服迟到的胜负；到点复查时查出变化，2、3 没变化
+    career.add(1, w=1, r=1)
+    for t in range(t0 + 180, t0 + 121 + RECHECK_AFTER, 60):
+        await tr.tick(rosters, maps, t, career.fetch)
+    assert (events["recheck_changed_hop"], events["recheck_same_fresh"]) == (1, 2)
+    # 1 进 2 号服时虽然有现成的终值，现在仍重查一次基线（join_reusable 记的就是这种）
+    assert (events["want_leave"], events["want_recheck"], events["want_join"]) == (1, 3, 4)
+
+
+async def test_tracker_dump_and_load_continue_the_round() -> None:
+    career, tr = Career(), MatchTracker()
+    for p in (1, 2, 3, 4):
+        career.add(p)
+    t0 = 1_800_000_000
+    roster = _roster(p1=TEAM1, p2=TEAM1, p3=TEAM2, p4=TEAM2)
+    await tr.tick(roster, MAP, t0, career.fetch)
+    await tr.tick(roster, MAP, t0 + 60, career.fetch)
+    # 换进程：导出成 JSON 再导入，接着跟到结算
+    restored = MatchTracker()
+    restored.load(json.loads(json.dumps(tr.dump())))
+    assert restored.dump() == tr.dump()
+    base_calls = len(career.calls)
+    career.settle(winners=[1, 2], losers=[3, 4])
+    await restored.tick(roster, MAP, t0 + 120, career.fetch)
+    [closed] = await restored.tick(roster, MAP, t0 + 180, career.fetch)
+    assert closed.observed_start is False and closed.winner == 1
+    assert {ln.pid: ln.delta[WINS] for ln in closed.lines} == {1: 1, 2: 1, 3: 0, 4: 0}
+    # 不用重查基线：导入后只有探测和收尾的查询
+    assert all(len(pids) <= 4 for pids, _ in career.calls[base_calls:])
+
+
+async def test_save_and_restore_tracker_state(monkeypatch) -> None:
+    store: dict[str, str] = {}
+
+    class Redis:
+        async def set(self, key: str, value: str, ex: int) -> None:
+            store[key] = value
+
+        async def getdel(self, key: str) -> str | None:
+            return store.pop(key, None)
+
+    async def fake_redis() -> Redis:
+        return Redis()
+
+    monkeypatch.setattr(round_service, "get_redis", fake_redis)
+    career, tr = Career(), MatchTracker()
+    career.add(1)
+    now = int(datetime.now(UTC).timestamp())
+    await tr.tick(_roster(p1=TEAM1), MAP, now - 30, career.fetch)
+    await round_service.save_tracker_state(tracker=tr)
+    fresh = MatchTracker()
+    await round_service.restore_tracker_state(tracker=fresh)
+    assert fresh.dump() == tr.dump() and not store
+    # 太旧的状态不用
+    tr.last_tick = now - 10_000
+    await round_service.save_tracker_state(tracker=tr)
+    stale = MatchTracker()
+    await round_service.restore_tracker_state(tracker=stale)
+    assert stale.rounds == {} and stale.last_tick is None

@@ -78,7 +78,7 @@ async def test_flush_failure_drops_batch_quietly() -> None:
 
     ea_metrics.count("blaze", "Util.ping")
     await ea_metrics.flush(Broken())
-    calls, _ = ea_metrics._take()
+    calls, _, _ = ea_metrics._take()
     assert not calls
 
 
@@ -116,6 +116,7 @@ async def test_read_metrics_includes_ea_section(monkeypatch: pytest.MonkeyPatch)
             "gateway|RSP.getServerDetails|api:bf1/servers": "2",
         },
         f"bfm:metrics:ea:pids:day:{today}": {"tracker": "2500"},
+        f"bfm:metrics:ea:tracker:day:{today}": {"want_join": "7", "join_hop": "3"},
         f"bfm:metrics:ea:hour:{hour}": {"blaze|Stats.getStats|tracker": "40"},
     }
 
@@ -154,5 +155,6 @@ async def test_read_metrics_includes_ea_section(monkeypatch: pytest.MonkeyPatch)
         ("tracker", 40, 2500),
         ("api:bf1/servers", 2, 0),
     ]
+    assert [(e.name, e.count) for e in m.tracker_events] == [("join_hop", 3), ("want_join", 7)]
     assert len(m.ea_hourly) == 24
     assert m.ea_hourly[-1].count == 40 and m.ea_hourly[0].count == 0

@@ -18,6 +18,7 @@ import {
   type EaHourCount,
   type EaMethodCount,
   type EaSourceCount,
+  type TrackerEventCount,
 } from "@/lib/api/admin";
 
 /**
@@ -276,6 +277,7 @@ function EaCalls({ m }: { m: AdminMetrics }) {
           <EaSources sources={m.ea_sources} />
           <EaMethods methods={m.ea_methods} />
         </div>
+        <TrackerEvents events={m.tracker_events} />
       </div>
     </section>
   );
@@ -376,6 +378,64 @@ function EaMethods({ methods }: { methods: EaMethodCount[] }) {
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+/** 对局跟踪器各环节的人数，分三组：本轮查了谁、进服的人从哪来、复查查出了什么 */
+const TRACKER_GROUPS: { title: string; items: [string, string][] }[] = [
+  {
+    title: "按原因查询的人数",
+    items: [
+      ["want_settle", "结算收尾"],
+      ["want_leave", "离开"],
+      ["want_recheck", "进服后复查"],
+      ["want_join", "进服基线"],
+    ],
+  },
+  {
+    title: "进服的人",
+    items: [
+      ["join_fresh", "从离线进服"],
+      ["join_hop", "15 分钟内从别的服换来"],
+      ["join_reusable", "进服时已有 10 分钟内的值"],
+    ],
+  },
+  {
+    title: "复查结果",
+    items: [
+      ["recheck_changed_hop", "有变化 · 换服来的"],
+      ["recheck_same_hop", "没变化 · 换服来的"],
+      ["recheck_changed_fresh", "有变化 · 离线进服的"],
+      ["recheck_same_fresh", "没变化 · 离线进服的"],
+    ],
+  },
+];
+
+function TrackerEvents({ events }: { events: TrackerEventCount[] }) {
+  const byName = new Map(events.map((e) => [e.name, e.count]));
+  return (
+    <div className="border-border bg-card rounded-sm border p-5">
+      <div className="text-muted-foreground mb-4 text-xs font-medium tracking-[0.15em] uppercase">
+        对局跟踪（今日人数）
+      </div>
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+        {TRACKER_GROUPS.map((g) => (
+          <div key={g.title}>
+            <div className="text-muted-foreground mb-2 text-xs">{g.title}</div>
+            <ul className="space-y-1.5 text-sm">
+              {g.items.map(([name, label]) => (
+                <li key={name} className="flex justify-between gap-3">
+                  <span>{label}</span>
+                  <span className="text-muted-foreground tabular-nums">
+                    {(byName.get(name) ?? 0).toLocaleString("en-US")}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

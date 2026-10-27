@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Flag } from "lucide-react";
 import { Panel } from "@/components/bf1/player-detail/CareerOverview";
 import {
   FactionFlag,
@@ -127,7 +127,9 @@ function RoundCard({
         {faction ? (
           <FactionFlag faction={faction} className="size-9" />
         ) : (
-          <span className="size-9 rounded-full bg-white/10" />
+          <span className="flex size-9 items-center justify-center text-white/25" title="阵营未知">
+            <Flag className="size-5" />
+          </span>
         )}
         <span className={cn("font-display text-sm leading-none font-bold tracking-wide", o.text)}>
           {o.label}

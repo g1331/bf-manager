@@ -25,6 +25,8 @@ class RoundSummary(BaseModel):
     # 看到了结算；为假时服务器中途关掉或采集断档，这一局没打完
     settled: bool
     winner: Literal[1, 2] | None = None
+    team1_faction: str | None = None
+    team2_faction: str | None = None
     player_count: int
 
 
@@ -54,8 +56,6 @@ class RoundPlayer(BaseModel):
 
 
 class RoundDetail(RoundSummary):
-    team1_faction: str | None = None
-    team2_faction: str | None = None
     players: list[RoundPlayer]
 
 

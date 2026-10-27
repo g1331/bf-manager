@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { bf1Api, type RoundPlayer, type RoundSummary } from "@/lib/api/bf1";
-import { classLabel, isKnownClass } from "@/components/bf1/player-detail/format";
+import { bf1Api, type RoundDetail, type RoundPlayer, type RoundSummary } from "@/lib/api/bf1";
+import { classLabel } from "@/components/bf1/player-detail/format";
 import { FACTION_SLUG } from "@/lib/bf1/factions";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +14,10 @@ export function formatRoundTime(ts: number): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function formatClock(ts: number): string {
+  return new Date(ts * 1000).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
 }
 
 /** 对局时长；没看到开局的局只知道「至少」这么久 */
@@ -27,28 +31,49 @@ export function kitLabel(kit: string | null): string {
   return kit === "elite" ? "精英兵" : classLabel(kit);
 }
 
+const KIT_ICONS = new Set(["assault", "medic", "support", "scout", "tanker", "pilot", "cavalry"]);
+
+/**
+ * 兵种图标：BF1 游戏内的兵种标志（突击爆炸、医疗十字、支援子弹、侦察瞄准镜、坦克齿轮、
+ * 飞行螺旋桨、骑兵马蹄铁），白色单色图放在 public/bf1/kits。精英兵没有对应图标，用文字。
+ */
 export function KitIcon({ kit, className }: { kit: string | null; className?: string }) {
-  if (!isKnownClass(kit)) return null;
+  if (kit && KIT_ICONS.has(kit)) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={`/bf1/kits/${kit}.png`}
+        alt={kitLabel(kit)}
+        title={kitLabel(kit)}
+        className={cn("size-4 shrink-0 object-contain opacity-75", className)}
+      />
+    );
+  }
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={`/bf1/soldiers/${kit}.png`}
-      alt={kitLabel(kit)}
+    <span
       title={kitLabel(kit)}
-      className={cn("size-4 shrink-0 object-contain opacity-80", className)}
-    />
+      className={cn(
+        "inline-flex size-4 shrink-0 items-center justify-center text-[9px] leading-none font-bold whitespace-nowrap",
+        kit === "elite" ? "text-amber-300" : "text-white/25",
+        className,
+      )}
+    >
+      {kit === "elite" ? "精英" : "—"}
+    </span>
   );
 }
 
-const STATUS_BADGE: Record<RoundPlayer["status"], string | null> = {
+const STATUS_TAG: Record<RoundPlayer["status"], string | null> = {
   finished: null,
-  left: "中途退出",
+  left: "退出",
   suspect: "存疑",
 };
 
+type Team = 1 | 2;
+
 /**
- * 单局详情：两队各人这一局的击杀、死亡、得分等。战绩是进出服时的生涯差值，中途退出的人没有胜负；
- * 「存疑」是增量里混进了别的局（如刚从别的服过来、那边的结算晚到），数字仅供参考。
+ * 单局详情：上方地图横幅给出两队对阵与胜负，下方两队计分板。战绩是进服前与结算（或退出）后的
+ * 生涯差值，中途退出的人没有胜负；「存疑」是增量里混进了别的局，数字仅供参考。
  */
 export function RoundDetailView({
   roundId,
@@ -66,74 +91,217 @@ export function RoundDetailView({
     staleTime: Infinity,
   });
   if (q.isLoading) {
-    return <div className="py-10 text-center text-sm text-white/40">正在加载对局…</div>;
+    return <div className="py-16 text-center text-sm text-white/40">正在加载对局…</div>;
   }
   if (q.isError || !q.data) {
-    return <div className="py-10 text-center text-sm text-white/45">这一局的数据暂时取不到</div>;
+    return <div className="py-16 text-center text-sm text-white/45">这一局的数据暂时取不到</div>;
   }
   const r = q.data;
-  const teams = [1, 2] as const;
-  const faction = (t: 1 | 2) => (t === 1 ? r.team1_faction : r.team2_faction);
+  const byTeam = (t: Team) =>
+    r.players.filter((p) => p.team === t).sort((a, b) => b.score - a.score);
+  const teams = [byTeam(1), byTeam(2)] as const;
 
   return (
     <section className="min-w-0">
-      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-white/10 pb-3">
-        <div className="min-w-0">
-          <div className="text-lg font-semibold text-white">
-            {r.map_display_name ?? r.map_name ?? "未知地图"}
-          </div>
-          <div className="truncate text-xs text-white/50">
-            {formatRoundTime(r.started_at)} – {formatRoundTime(r.ended_at)} · {roundDuration(r)}
-            {r.mode_display_name ? ` · ${r.mode_display_name}` : ""}
-          </div>
-          {r.server_name ? (
-            <Link
-              href={`/${game}/server/${r.game_id}`}
-              className="mt-0.5 block truncate text-xs text-white/40 hover:text-amber-300"
-            >
-              {r.server_name}
-            </Link>
-          ) : null}
-        </div>
-        <div className="flex flex-wrap gap-1.5 text-[11px]">
-          {!r.settled ? (
-            <span className="rounded-sm bg-white/10 px-2 py-0.5 text-white/60">未打完</span>
-          ) : null}
-          {!r.observed_start ? (
-            <span
-              className="rounded-sm bg-white/10 px-2 py-0.5 text-white/60"
-              title="开始统计时这一局已经开打，开局后很快退出的人可能不全"
-            >
-              中途接手统计
-            </span>
-          ) : null}
-        </div>
-      </div>
-
-      <div className="mt-4 grid grid-cols-1 gap-x-8 gap-y-6 xl:grid-cols-2">
-        {teams.map((t) => (
-          <TeamTable
+      <RoundBanner r={r} teams={teams} game={game} />
+      <div className="mt-5 grid grid-cols-1 gap-x-8 gap-y-6 lg:grid-cols-2">
+        {([1, 2] as const).map((t) => (
+          <TeamBoard
             key={t}
-            title={faction(t) ?? `队伍 ${t}`}
-            faction={faction(t)}
+            team={t}
+            faction={t === 1 ? r.team1_faction : r.team2_faction}
             won={r.winner == null ? null : r.winner === t}
-            players={r.players.filter((p) => p.team === t)}
+            players={teams[t - 1]}
             game={game}
             highlight={highlight}
-            className={t === 2 ? "xl:border-l xl:border-white/15 xl:pl-8" : undefined}
+            className={t === 2 ? "lg:border-l lg:border-white/15 lg:pl-8" : undefined}
           />
         ))}
       </div>
       <p className="mt-4 text-[11px] leading-relaxed text-white/35">
-        战绩是进服前与结算（或退出）后的生涯差值；时长按各兵种在场时间计。中途退出的人没有胜负，
-        「存疑」表示增量里可能混进了别的局。
+        {"战绩是进服前与结算（或退出）后的生涯差值，得分含结算奖励。名字前是在场最久的兵种，" +
+          "悬停可看在场时长和 SPM。中途退出的人没有胜负，「存疑」表示增量里可能混进了别的局。"}
       </p>
     </section>
   );
 }
 
-function TeamTable({
-  title,
+/** 地图横幅：地图图做底，左右两队旗帜与胜负，中间地图、模式与时间 */
+function RoundBanner({
+  r,
+  teams,
+  game,
+}: {
+  r: RoundDetail;
+  teams: readonly [RoundPlayer[], RoundPlayer[]];
+  game: string;
+}) {
+  return (
+    <div className="relative overflow-hidden border border-white/10 [clip-path:polygon(0_0,100%_0,100%_calc(100%-14px),calc(100%-14px)_100%,0_100%)]">
+      {r.map_image_url ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={r.map_image_url}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover opacity-45"
+        />
+      ) : null}
+      <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/85" />
+      <div className="relative grid grid-cols-2 items-center gap-x-4 gap-y-4 px-5 py-5 sm:px-7 lg:grid-cols-[1fr_auto_1fr]">
+        <div className="col-span-2 text-center lg:order-2 lg:col-span-1">
+          <div className="font-display text-2xl leading-tight font-bold tracking-wide text-white sm:text-3xl">
+            {r.map_display_name ?? r.map_name ?? "未知地图"}
+          </div>
+          {r.mode_display_name ? (
+            <div className="mt-0.5 text-sm font-semibold text-amber-300">{r.mode_display_name}</div>
+          ) : null}
+          <div className="mt-1.5 text-xs text-white/55 tabular-nums">
+            {formatRoundTime(r.started_at)} – {formatClock(r.ended_at)} · {roundDuration(r)}
+          </div>
+          {r.server_name ? (
+            <Link
+              href={`/${game}/server/${r.game_id}`}
+              className="mx-auto mt-1 block max-w-[22rem] truncate text-[11px] text-white/40 hover:text-amber-300"
+            >
+              {r.server_name}
+            </Link>
+          ) : null}
+          <div className="mt-2 flex flex-wrap justify-center gap-1.5 text-[11px] empty:hidden">
+            {!r.settled ? (
+              <span className="rounded-sm bg-white/10 px-2 py-0.5 text-white/60">未打完</span>
+            ) : null}
+            {!r.observed_start ? (
+              <span
+                className="rounded-sm bg-white/10 px-2 py-0.5 text-white/60"
+                title="开始统计时这一局已经开打，开局后很快退出的人可能不全"
+              >
+                中途接手统计
+              </span>
+            ) : null}
+          </div>
+        </div>
+        <TeamSide
+          faction={r.team1_faction}
+          fallback="队伍 1"
+          won={r.winner == null ? null : r.winner === 1}
+          players={teams[0]}
+          className="lg:order-1"
+        />
+        <TeamSide
+          faction={r.team2_faction}
+          fallback="队伍 2"
+          won={r.winner == null ? null : r.winner === 2}
+          players={teams[1]}
+          className="lg:order-3"
+          alignEnd
+        />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 阵营旗帜，同时表达胜负（BF1 结算画面的做法）：胜方全彩加金边微光，败方褪成灰色半透明。
+ * won 不传或为 null 时按原样显示。
+ */
+export function FactionFlag({
+  faction,
+  won,
+  className,
+}: {
+  faction: string | null;
+  won?: boolean | null;
+  className?: string;
+}) {
+  const slug = faction ? FACTION_SLUG[faction] : undefined;
+  if (!slug) return null;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={`/factions/${slug}.png`}
+      alt={faction ?? ""}
+      className={cn(
+        "shrink-0 object-contain",
+        won === true &&
+          "outline-2 outline-offset-2 outline-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.55)]",
+        won === false && "opacity-45 grayscale",
+        won == null && "drop-shadow",
+        className,
+      )}
+    />
+  );
+}
+
+/** 胜负文字：宽字距，胜利琥珀色、失败灰色，不加底色和图标 */
+export function ResultTag({ won, className }: { won: boolean | null; className?: string }) {
+  if (won == null) return null;
+  return (
+    <span
+      className={cn(
+        "text-xs font-extrabold tracking-[0.12em] whitespace-nowrap",
+        won ? "text-amber-400" : "text-white/40",
+        className,
+      )}
+    >
+      {won ? "胜利" : "失败"}
+    </span>
+  );
+}
+
+function teamTotals(players: RoundPlayer[]) {
+  return players.reduce(
+    (s, p) => ({ kills: s.kills + p.kills, deaths: s.deaths + p.deaths, score: s.score + p.score }),
+    { kills: 0, deaths: 0, score: 0 },
+  );
+}
+
+function TeamSide({
+  faction,
+  fallback,
+  won,
+  players,
+  alignEnd,
+  className,
+}: {
+  faction: string | null;
+  fallback: string;
+  won: boolean | null;
+  players: RoundPlayer[];
+  alignEnd?: boolean;
+  className?: string;
+}) {
+  const t = teamTotals(players);
+  return (
+    <div
+      className={cn(
+        "flex min-w-0 items-center gap-3",
+        alignEnd && "flex-row-reverse text-right",
+        className,
+      )}
+    >
+      <FactionFlag faction={faction} won={won} className="size-12 sm:size-14" />
+      <div className="min-w-0">
+        <div className={cn("flex items-center gap-2", alignEnd && "flex-row-reverse")}>
+          <span
+            className={cn(
+              "truncate text-base font-bold sm:text-lg",
+              won === false ? "text-white/60" : "text-white",
+            )}
+          >
+            {faction ?? fallback}
+          </span>
+          <ResultTag won={won} />
+        </div>
+        <div className="mt-0.5 text-xs text-white/55 tabular-nums">
+          {players.length} 人 · 击杀 {t.kills} · 得分 {t.score.toLocaleString("en-US")}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TeamBoard({
+  team,
   faction,
   won,
   players,
@@ -141,7 +309,7 @@ function TeamTable({
   highlight,
   className,
 }: {
-  title: string;
+  team: Team;
   faction: string | null;
   won: boolean | null;
   players: RoundPlayer[];
@@ -149,97 +317,144 @@ function TeamTable({
   highlight?: number;
   className?: string;
 }) {
-  const slug = faction ? FACTION_SLUG[faction] : undefined;
-  const sum = (k: "kills" | "deaths" | "score") => players.reduce((n, p) => n + p[k], 0);
+  const t = teamTotals(players);
   return (
-    <div className={cn("min-w-0", className)}>
-      <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-white">
-        {slug ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={`/factions/${slug}.png`}
-            alt={title}
-            className="h-7 w-7 shrink-0 object-contain drop-shadow"
-          />
-        ) : null}
-        <span className="truncate">{title}</span>
-        {won != null ? (
-          <span
-            className={cn(
-              "rounded-sm px-1.5 text-[11px] font-semibold",
-              won ? "bg-amber-400 text-black" : "bg-white/10 text-white/60",
-            )}
-          >
-            {won ? "胜" : "负"}
-          </span>
-        ) : null}
-        <span className="ml-auto text-[11px] font-normal text-white/45 tabular-nums">
-          {players.length} 人 · 击杀 {sum("kills")} · 得分 {sum("score").toLocaleString("en-US")}
+    // 两队并排时列容器等高，表格撑满后由占位空行把合计行顶到底，两边合计对齐同一条线
+    <div className={cn("flex min-w-0 flex-col", className)}>
+      <div className="mb-2 flex items-center gap-2">
+        <FactionFlag faction={faction} won={won} className="size-6" />
+        <span className="truncate text-sm font-semibold text-white">
+          {faction ?? `队伍 ${team}`}
         </span>
+        <ResultTag won={won} />
       </div>
       {players.length === 0 ? (
-        <div className="py-4 text-xs text-white/35">无</div>
+        <div className="border-t border-white/25 py-6 text-center text-xs text-white/35">
+          这一队没有算出战绩的玩家
+        </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[420px] text-[13px]">
+        <div className="flex-1 overflow-x-auto lg:overflow-x-visible">
+          {/* 只留四列数字并拉开间距，名字列吃满剩余宽度；兵种、在场时长、SPM 放进名字和悬停提示 */}
+          <table className="h-full w-full min-w-[24rem] border-collapse text-[13px] tabular-nums lg:min-w-0">
+            <colgroup>
+              <col className="w-7" />
+              <col />
+              <col className="w-16" />
+              <col className="w-16" />
+              <col className="w-[4.5rem]" />
+              <col className="w-24" />
+            </colgroup>
             <thead>
-              <tr className="border-b border-white/10 text-left text-[11px] text-white/40">
-                <th className="w-7 py-1.5 font-normal" />
-                <th className="py-1.5 font-normal">玩家</th>
-                <th className="py-1.5 text-right font-normal">击杀</th>
-                <th className="py-1.5 text-right font-normal">死亡</th>
-                <th className="py-1.5 text-right font-normal">得分</th>
-                <th className="py-1.5 text-right font-normal">SPM</th>
-                <th className="py-1.5 text-right font-normal">KD</th>
+              <tr className="text-[11px] text-white/50">
+                <th className="pb-2 font-medium" />
+                <th className="pb-2 pl-2 text-left font-medium">玩家</th>
+                <Th>击杀</Th>
+                <Th>死亡</Th>
+                <Th>K/D</Th>
+                <Th>得分</Th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="border-t border-white/25">
               {players.map((p, i) => (
-                <tr
+                <PlayerRow
                   key={p.persona_id}
-                  className={cn(
-                    "border-b border-white/[0.06] last:border-0",
-                    p.persona_id === highlight && "bg-amber-400/10",
-                    p.status !== "finished" && "text-white/55",
-                  )}
-                >
-                  <td className="py-[5px] pr-1 text-right text-[11px] text-white/35 tabular-nums">
-                    {i + 1}
-                  </td>
-                  <td className="max-w-0 py-[5px] pl-2">
-                    <div className="flex min-w-0 items-center gap-1.5">
-                      <KitIcon kit={p.kit} />
-                      <Link
-                        href={`/${game}/player/${p.persona_id}`}
-                        className="min-w-0 truncate font-medium hover:underline"
-                        title={`${p.name ?? p.persona_id} · ${kitLabel(p.kit)}`}
-                      >
-                        {p.name ?? p.persona_id}
-                      </Link>
-                      {STATUS_BADGE[p.status] ? (
-                        <span className="shrink-0 rounded-sm bg-white/10 px-1.5 text-[10px] text-white/55">
-                          {STATUS_BADGE[p.status]}
-                        </span>
-                      ) : null}
-                    </div>
-                  </td>
-                  <td className="py-[5px] pl-2 text-right tabular-nums">{p.kills}</td>
-                  <td className="py-[5px] pl-2 text-right tabular-nums">{p.deaths}</td>
-                  <td className="py-[5px] pl-2 text-right tabular-nums">
-                    {p.score.toLocaleString("en-US")}
-                  </td>
-                  <td className="py-[5px] pl-2 text-right text-white/70 tabular-nums">
-                    {p.spm ?? "—"}
-                  </td>
-                  <td className="py-[5px] pl-2 text-right text-white/70 tabular-nums">
-                    {p.kd != null ? p.kd.toFixed(2) : p.kills ? "∞" : "—"}
-                  </td>
-                </tr>
+                  player={p}
+                  seq={i + 1}
+                  game={game}
+                  highlighted={p.persona_id === highlight}
+                />
               ))}
+              <tr aria-hidden className="h-full">
+                <td colSpan={6} />
+              </tr>
             </tbody>
+            <tfoot>
+              <tr className="border-t border-white/20 text-[12.5px] font-semibold text-amber-300/90">
+                <td colSpan={2} className="pt-2.5 pl-2">
+                  合计
+                </td>
+                <td className="pt-2.5 pl-4 text-right">{t.kills}</td>
+                <td className="pt-2.5 pl-4 text-right">{t.deaths}</td>
+                <td className="pt-2.5 pl-4 text-right">
+                  {t.deaths ? (t.kills / t.deaths).toFixed(2) : "—"}
+                </td>
+                <td className="pt-2.5 pl-4 text-right">{t.score.toLocaleString("en-US")}</td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       )}
     </div>
+  );
+}
+
+function Th({ children }: { children: React.ReactNode }) {
+  return <th className="pb-2 pl-4 text-right font-medium whitespace-nowrap">{children}</th>;
+}
+
+function PlayerRow({
+  player: p,
+  seq,
+  game,
+  highlighted,
+}: {
+  player: RoundPlayer;
+  seq: number;
+  game: string;
+  highlighted: boolean;
+}) {
+  const tag = STATUS_TAG[p.status];
+  const minutes = Math.round(p.seconds / 60);
+  const hint = [
+    p.name ?? String(p.persona_id),
+    kitLabel(p.kit),
+    minutes ? `在场 ${minutes} 分钟` : null,
+    p.spm != null ? `SPM ${p.spm}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  return (
+    <tr
+      className={cn(
+        "border-b border-white/[0.06] transition-colors last:border-0 hover:bg-white/[0.05]",
+        highlighted && "bg-amber-400/12 hover:bg-amber-400/15",
+      )}
+    >
+      <td
+        className={cn(
+          "py-[7px] pr-1 text-right text-[11px]",
+          seq <= 3 ? "font-semibold text-amber-400" : "text-white/35",
+        )}
+      >
+        {seq}
+      </td>
+      <td className="w-full max-w-0 py-[7px] pl-2">
+        <div className="flex min-w-0 items-center gap-2" title={hint}>
+          <KitIcon kit={p.kit} />
+          <Link
+            href={`/${game}/player/${p.persona_id}`}
+            className={cn(
+              "min-w-0 truncate font-medium hover:underline",
+              tag ? "text-white/55" : "text-white/90",
+            )}
+          >
+            {p.name ?? p.persona_id}
+          </Link>
+          {tag ? (
+            <span className="shrink-0 rounded-sm bg-white/10 px-1 text-[10px] leading-[1.5] text-white/50">
+              {tag}
+            </span>
+          ) : null}
+        </div>
+      </td>
+      <td className="py-[7px] pl-4 text-right text-white/90">{p.kills}</td>
+      <td className="py-[7px] pl-4 text-right text-white/60">{p.deaths}</td>
+      <td className="py-[7px] pl-4 text-right text-white/75">
+        {p.kd != null ? p.kd.toFixed(2) : p.kills ? "∞" : "—"}
+      </td>
+      <td className="py-[7px] pl-4 text-right font-semibold text-white">
+        {p.score.toLocaleString("en-US")}
+      </td>
+    </tr>
   );
 }

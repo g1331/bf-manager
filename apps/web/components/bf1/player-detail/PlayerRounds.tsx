@@ -2,13 +2,14 @@
 
 import { useMemo, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Flag } from "lucide-react";
 import { Panel } from "@/components/bf1/player-detail/CareerOverview";
 import {
+  FactionFlag,
   KitIcon,
+  kitLabel,
   RoundDetailView,
   formatRoundTime,
-  kitLabel,
   roundDuration,
 } from "@/components/bf1/rounds/RoundDetailView";
 import { RowsSkeleton } from "@/components/layout/PageSkeleton";
@@ -17,7 +18,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * 玩家对局：我们跟踪到的每一局（私服和官服都有，保留 90 天），由这一局前后的生涯差值算出。
- * 点开一局看双方全员。
+ * 每局一张卡片，左侧是所在阵营的旗帜和胜负，点开看双方全员。
  */
 export function PlayerRounds({ personaId, game }: { personaId: number; game: string }) {
   const [open, setOpen] = useState<number | null>(null);
@@ -40,16 +41,16 @@ export function PlayerRounds({ personaId, game }: { personaId: number; game: str
     );
   return (
     <Panel>
-      <ol className="divide-y divide-white/[0.06]">
+      <ol className="space-y-2">
         {items.map((it) => (
           <li key={it.round.id}>
-            <RoundRow
+            <RoundCard
               item={it}
               expanded={open === it.round.id}
               onToggle={() => setOpen(open === it.round.id ? null : it.round.id)}
             />
             {open === it.round.id ? (
-              <div className="border-t border-white/[0.06] px-1 pt-4 pb-5">
+              <div className="border-x border-b border-white/10 bg-black/25 px-4 pt-4 pb-5">
                 <RoundDetailView roundId={it.round.id} game={game} highlight={personaId} />
               </div>
             ) : null}
@@ -73,7 +74,32 @@ export function PlayerRounds({ personaId, game }: { personaId: number; game: str
   );
 }
 
-function RoundRow({
+type Outcome = "win" | "loss" | "left" | "unknown";
+
+const OUTCOME: Record<Outcome, { label: string; text: string; bar: string; tint: string }> = {
+  win: {
+    label: "胜利",
+    text: "text-amber-400",
+    bar: "bg-amber-400",
+    tint: "from-amber-400/20",
+  },
+  loss: { label: "失败", text: "text-white/60", bar: "bg-white/30", tint: "from-white/[0.07]" },
+  left: { label: "中途退出", text: "text-white/45", bar: "bg-white/15", tint: "from-white/[0.04]" },
+  unknown: {
+    label: "胜负不明",
+    text: "text-white/45",
+    bar: "bg-white/15",
+    tint: "from-white/[0.04]",
+  },
+};
+
+function outcomeOf(p: PlayerRound["player"]): Outcome {
+  if (p.status === "left") return "left";
+  if (p.won == null) return "unknown";
+  return p.won ? "win" : "loss";
+}
+
+function RoundCard({
   item: { round: r, player: p },
   expanded,
   onToggle,
@@ -82,43 +108,84 @@ function RoundRow({
   expanded: boolean;
   onToggle: () => void;
 }) {
-  const result = p.status === "left" ? "退出" : p.won == null ? "—" : p.won ? "胜" : "负";
+  const o = OUTCOME[outcomeOf(p)];
+  const faction = p.team === 1 ? r.team1_faction : r.team2_faction;
   return (
     <button
       type="button"
       onClick={onToggle}
       aria-expanded={expanded}
-      className="group flex w-full items-center gap-4 px-1 py-3 text-left transition-colors hover:bg-white/[0.04]"
+      className={cn(
+        "group relative flex w-full items-center gap-4 overflow-hidden border border-white/10 bg-gradient-to-r to-transparent to-45% py-2.5 pr-3 pl-4 text-left transition-colors hover:border-white/25",
+        o.tint,
+        expanded && "border-white/25",
+      )}
     >
-      <span
-        className={cn(
-          "w-9 shrink-0 rounded-sm py-0.5 text-center text-xs font-semibold",
-          p.won ? "bg-amber-400 text-black" : "bg-white/10 text-white/60",
+      <span className={cn("absolute inset-y-0 left-0 w-1", o.bar)} />
+
+      {/* 阵营旗帜 + 胜负 */}
+      <div className="flex w-[4.5rem] shrink-0 flex-col items-center gap-0.5">
+        {faction ? (
+          <FactionFlag
+            faction={faction}
+            won={p.status === "left" ? false : p.won}
+            className="size-9"
+          />
+        ) : (
+          <span className="flex size-9 items-center justify-center text-white/25" title="阵营未知">
+            <Flag className="size-5" />
+          </span>
         )}
-      >
-        {result}
-      </span>
+        <span
+          className={cn(
+            "mt-1 text-xs leading-none font-extrabold tracking-[0.12em] whitespace-nowrap",
+            o.text,
+          )}
+        >
+          {o.label}
+        </span>
+      </div>
+
+      {/* 地图缩略图 */}
+      <div className="relative hidden h-12 w-20 shrink-0 overflow-hidden [clip-path:polygon(0_0,100%_0,100%_calc(100%-8px),calc(100%-8px)_100%,0_100%)] sm:block">
+        {r.map_image_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={r.map_image_url} alt="" loading="lazy" className="h-full w-full object-cover" />
+        ) : (
+          <div className="h-full w-full bg-white/[0.06]" />
+        )}
+      </div>
+
       <div className="min-w-0 flex-1">
-        <div className="truncate font-medium text-white">
+        <div className="truncate text-[15px] font-semibold text-white">
           {r.map_display_name ?? r.map_name ?? "未知地图"}
           {r.mode_display_name ? (
-            <span className="text-amber-300/80"> · {r.mode_display_name}</span>
+            <span className="ml-2 text-xs font-medium text-amber-300/80">
+              {r.mode_display_name}
+            </span>
           ) : null}
         </div>
         <div className="mt-0.5 truncate text-xs text-white/45">
           {formatRoundTime(r.ended_at)} · {roundDuration(r)}
+          {faction ? ` · ${faction}` : ""}
           {r.server_name ? ` · ${r.server_name}` : ""}
         </div>
       </div>
-      <div className="hidden items-center gap-1.5 text-xs text-white/55 sm:flex">
-        <KitIcon kit={p.kit} />
-        {kitLabel(p.kit)}
+
+      <div className="hidden w-16 shrink-0 flex-col items-center gap-1 md:flex">
+        <KitIcon kit={p.kit} className="size-6 opacity-85" />
+        <span className="text-[10px] text-white/45">{kitLabel(p.kit)}</span>
       </div>
-      <dl className="grid shrink-0 grid-cols-3 gap-x-4 text-right text-xs tabular-nums sm:grid-cols-4">
-        <Num label="击杀/死亡" value={`${p.kills}/${p.deaths}`} />
-        <Num label="得分" value={p.score.toLocaleString("en-US")} />
-        <Num label="SPM" value={p.spm ?? "—"} />
-        <Num label="KD" value={p.kd != null ? p.kd.toFixed(2) : "—"} className="hidden sm:block" />
+
+      <dl className="grid shrink-0 grid-cols-3 gap-x-5 text-right tabular-nums sm:grid-cols-4">
+        <Stat label="击杀 / 死亡" value={`${p.kills} / ${p.deaths}`} />
+        <Stat label="得分" value={p.score.toLocaleString("en-US")} />
+        <Stat label="SPM" value={p.spm ?? "—"} />
+        <Stat
+          label="K/D"
+          value={p.kd != null ? p.kd.toFixed(2) : p.kills ? "∞" : "—"}
+          className="hidden sm:block"
+        />
       </dl>
       <ChevronDown
         className={cn(
@@ -130,7 +197,7 @@ function RoundRow({
   );
 }
 
-function Num({
+function Stat({
   label,
   value,
   className,
@@ -141,8 +208,8 @@ function Num({
 }) {
   return (
     <div className={className}>
-      <dt className="text-[10px] text-white/35">{label}</dt>
-      <dd className="text-white">{value}</dd>
+      <dt className="text-[10px] whitespace-nowrap text-white/40">{label}</dt>
+      <dd className="text-[15px] font-semibold whitespace-nowrap text-white">{value}</dd>
     </div>
   );
 }

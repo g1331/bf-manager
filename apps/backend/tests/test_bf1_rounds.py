@@ -271,6 +271,8 @@ async def test_save_and_query_rounds(test_session) -> None:
 
     mine = await round_service.list_player_rounds(test_session, a, limit=1)
     assert [i.player.kills for i in mine.items] == [30]
+    # 列表也带阵营，玩家对局页据此显示所在队伍的旗帜
+    assert mine.items[0].round.team1_faction == detail.team1_faction
     rest = await round_service.list_player_rounds(test_session, a, before=mine.next_before)
     assert [i.player.kills for i in rest.items] == [20] and rest.next_before is None
 

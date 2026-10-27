@@ -11,7 +11,14 @@ import { SectionHeading } from "@/components/layout/SectionHeading";
 import { useSession } from "@/hooks/useSession";
 import { eaAccountsApi, type EAAccountItem } from "@/lib/api/ea-accounts";
 import { membershipsApi } from "@/lib/api/memberships";
-import { adminApi, type AdminMetrics, type DailyCount } from "@/lib/api/admin";
+import {
+  adminApi,
+  type AdminMetrics,
+  type DailyCount,
+  type EaHourCount,
+  type EaMethodCount,
+  type EaSourceCount,
+} from "@/lib/api/admin";
 
 /**
  * 管理员运维概览：平台整体运行情况入口。
@@ -112,6 +119,8 @@ export default function AdminOverviewPage() {
           </div>
         )}
       </section>
+
+      {m?.available ? <EaCalls m={m} /> : null}
 
       <section>
         <SectionHeading>运维入口</SectionHeading>
@@ -221,6 +230,148 @@ function TopEndpoints({ endpoints }: { endpoints: { group: string; count: number
                   style={{ width: `${Math.max(2, (e.count / max) * 100)}%` }}
                 />
               </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/** 后台任务的来源名；api:xxx 是用户访问对应接口分组时发出的 */
+const EA_SOURCE_LABEL: Record<string, string> = {
+  tracker: "对局跟踪",
+  tracker_probe: "结算探测",
+  snapshot: "全服快照",
+  server_id: "serverId 解析",
+  auto_switch: "自动换图",
+  exchange: "交换",
+  other: "其他",
+};
+
+function eaSourceLabel(source: string): string {
+  if (source.startsWith("api:")) return `接口 ${source.slice(4)}`;
+  return EA_SOURCE_LABEL[source] ?? source;
+}
+
+/**
+ * 发给 EA 的请求：Blaze 长连接、Gateway JSON-RPC 和登录用的 HTTP 请求，按来源拆开。
+ * 每 30 秒合并写入一次，所以最新半分钟还没算进来；日期和小时都按 UTC 分桶。
+ */
+function EaCalls({ m }: { m: AdminMetrics }) {
+  const lastHour = m.ea_hourly.at(-1)?.count ?? 0;
+  const prevHour = m.ea_hourly.at(-2)?.count ?? 0;
+  return (
+    <section>
+      <SectionHeading>EA 请求</SectionHeading>
+      <div className="space-y-6">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <MiniStat label="今日（UTC）" value={m.ea_calls_today} suffix="次" />
+          <MiniStat label="近 7 日" value={m.ea_calls_7d} suffix="次" />
+          <MiniStat label="本小时" value={lastHour} suffix="次" />
+          <MiniStat label="上一小时平均" value={Math.round(prevHour / 60)} suffix="次/分" />
+        </div>
+        <EaHourly hours={m.ea_hourly} />
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <EaSources sources={m.ea_sources} />
+          <EaMethods methods={m.ea_methods} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function EaHourly({ hours }: { hours: EaHourCount[] }) {
+  const max = Math.max(1, ...hours.map((h) => h.count));
+  return (
+    <div className="border-border bg-card rounded-sm border p-5">
+      <div className="text-muted-foreground mb-4 text-xs font-medium tracking-[0.15em] uppercase">
+        近 24 小时
+      </div>
+      <div className="flex items-stretch gap-1" style={{ height: 120 }}>
+        {hours.map((h) => {
+          const at = new Date(h.hour);
+          const label = `${String(at.getHours()).padStart(2, "0")}:00`;
+          return (
+            <div key={h.hour} className="flex flex-1 flex-col items-center gap-1">
+              <div className="flex w-full flex-1 items-end">
+                <div
+                  className="bg-foreground/25 hover:bg-foreground/40 w-full rounded-sm transition-colors"
+                  style={{ height: `${Math.max(2, (h.count / max) * 100)}%` }}
+                  title={`${label} · ${h.count} 次`}
+                />
+              </div>
+              <span className="text-muted-foreground text-[9px] tabular-nums">
+                {at.getHours() % 3 === 0 ? label.slice(0, 2) : "\u00a0"}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function EaSources({ sources }: { sources: EaSourceCount[] }) {
+  return (
+    <div className="border-border bg-card rounded-sm border p-5">
+      <div className="text-muted-foreground mb-4 text-xs font-medium tracking-[0.15em] uppercase">
+        今日按来源
+      </div>
+      {sources.length === 0 ? (
+        <p className="text-muted-foreground text-sm">暂无数据</p>
+      ) : (
+        <table className="w-full text-sm">
+          <thead className="text-muted-foreground text-xs">
+            <tr>
+              <th className="pb-2 text-left font-normal">来源</th>
+              <th className="pb-2 text-right font-normal">请求</th>
+              <th className="pb-2 text-right font-normal" title="Stats.getStats 查询的人次">
+                查询人次
+              </th>
+            </tr>
+          </thead>
+          <tbody className="tabular-nums">
+            {sources.map((s) => (
+              <tr key={s.source} className="border-border border-t">
+                <td className="py-1.5">{eaSourceLabel(s.source)}</td>
+                <td className="py-1.5 text-right">{s.calls.toLocaleString("en-US")}</td>
+                <td className="text-muted-foreground py-1.5 text-right">
+                  {s.pids ? s.pids.toLocaleString("en-US") : "—"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
+function EaMethods({ methods }: { methods: EaMethodCount[] }) {
+  return (
+    <div className="border-border bg-card rounded-sm border p-5">
+      <div className="text-muted-foreground mb-4 text-xs font-medium tracking-[0.15em] uppercase">
+        今日按方法
+      </div>
+      {methods.length === 0 ? (
+        <p className="text-muted-foreground text-sm">暂无数据</p>
+      ) : (
+        <ul className="max-h-80 space-y-1.5 overflow-y-auto pr-1">
+          {methods.map((e) => (
+            <li
+              key={`${e.channel}|${e.method}|${e.source}`}
+              className="flex items-baseline justify-between gap-3 text-sm"
+            >
+              <span className="min-w-0 truncate">
+                <span className="font-mono text-xs">{e.method}</span>
+                <span className="text-muted-foreground ml-2 text-xs">
+                  {e.channel} · {eaSourceLabel(e.source)}
+                </span>
+              </span>
+              <span className="text-muted-foreground shrink-0 tabular-nums">
+                {e.count.toLocaleString("en-US")}
+              </span>
             </li>
           ))}
         </ul>

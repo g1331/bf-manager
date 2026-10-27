@@ -29,6 +29,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.errors import EAApiError, NotFoundError
+from app.core import ea_metrics
 from app.core.cache import Cache, get_cache
 from app.core.config import get_settings
 from app.domain.ea.account_pool import EACredentials
@@ -233,6 +234,7 @@ async def fetch_stats(
             "type": "Command",
             "data": {"CAT  1": cat, "EID  40": batch, "NAME 41": stat_names},
         }
+        ea_metrics.count_pids(len(batch))
         try:
             response = await socket.send(packet, timeout=BLAZE_QUERY_TIMEOUT)
         except (TimeoutError, ConnectionError, OSError) as exc:

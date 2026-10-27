@@ -26,6 +26,7 @@ import aiohttp
 import httpx
 from loguru import logger
 
+from app.core import ea_metrics
 from app.core.config import get_settings
 from app.domain.games.bf1.profile import BF1Profile
 
@@ -343,6 +344,7 @@ class _BF1GatewayBase:
 
     async def _post_jsonrpc(self, body: dict[str, Any]) -> Any:
         """发送 JSON-RPC 请求，返回原始 JSON；网络或格式错误返回错误描述字符串。"""
+        ea_metrics.count("gateway", str(body.get("method")))
         try:
             async with self.http_session.post(
                 url=self.api_url,
@@ -385,6 +387,7 @@ class _BF1GatewayBase:
             "Content-Type": "application/json",
             "Cookie": f"remid={self.remid}; sid={self.sid}",
         }
+        ea_metrics.count("accounts", "connect/auth:token")
         response = await self.http_session.get(
             url=url, headers=header, timeout=10, ssl=False, proxy=_get_proxy()
         )
@@ -426,6 +429,7 @@ class _BF1GatewayBase:
             "X-Origin-Platform": "PCWIN",
         }
         try:
+            ea_metrics.count("accounts", "connect/auth:code")
             async with httpx.AsyncClient(verify=False) as client:
                 response2 = await client.get(url2, headers=header2)
             authcode = response2.headers["location"]
@@ -484,6 +488,7 @@ class _BF1GatewayBase:
             "Accept-Language": "zh-TW",
             "Cookie": f"remid={remid}; sid={sid}",
         }
+        ea_metrics.count("accounts", "connect/auth:blaze")
         response = await self.http_session.get(
             url=url, headers=header, timeout=10, allow_redirects=False, proxy=_get_proxy()
         )
@@ -523,6 +528,7 @@ class _BF1GatewayBase:
             "X-HostingGameId": "tunguska",
             "X-Sparta-Info": "tenancyRootEnv = unknown;tenancyBlazeEnv = unknown",
         }
+        ea_metrics.count("gateway", "Authentication.getEnvIdViaAuthCode")
         try:
             response = await self.http_session.post(
                 url=self.api_url,
@@ -604,6 +610,7 @@ class _BF1GatewayBase:
             "Cookie": f"sid={self.sid or ''}; remid={self.remid}",
             "Upgrade-Insecure-Requests": "1",
         }
+        ea_metrics.count("accounts", "connect/auth:desktop")
         try:
             async with self.http_session.get(
                 url=url,
@@ -756,6 +763,7 @@ class _BF1GatewayBase:
             "Referer": "https://pc.ea.com/zh-hans",
             "Accept-Encoding": "gzip, deflate, br",
         }
+        ea_metrics.count("sal", "getPersonasByName")
         try:
             async with self.http_session.post(
                 url=url,

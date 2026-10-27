@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from zhconv import zhconv
 
 from app.api.errors import EAApiError, NotFoundError
+from app.core import ea_metrics
 from app.core.cache import get_cache
 from app.db.session import get_sessionmaker
 from app.domain.games.bf1.maps import normalize_map_image_url
@@ -99,6 +100,7 @@ async def refresh_exchange(db: AsyncSession) -> bool:
 
 async def exchange_poller() -> None:
     """后台定时轮询交换。在应用 lifespan 中以 asyncio 任务启动。"""
+    ea_metrics.set_source("exchange")
     while True:
         try:
             async with get_sessionmaker()() as db:

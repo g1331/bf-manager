@@ -20,6 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.api.errors import EAApiError, ForbiddenError, ValidationError
+from app.core import ea_metrics
 from app.db.session import get_sessionmaker
 from app.domain.games.bf1.client_provider import BindingFirstBF1ClientProvider
 from app.domain.games.bf1.maps import operation_maps, translate_map_name
@@ -267,6 +268,7 @@ async def _step(db: AsyncSession, row: Bf1AutoSwitch, info: dict[str, Any]) -> N
 
 async def auto_switch_poller() -> None:
     """后台定时轮询开启了自动换图的服。在应用 lifespan 中以 asyncio 任务启动。"""
+    ea_metrics.set_source("auto_switch")
     while True:
         try:
             async with get_sessionmaker()() as db:

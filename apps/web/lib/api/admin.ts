@@ -15,6 +15,29 @@ export interface DailyCount {
   requests: number;
   active_users: number;
   guests: number;
+  /** 当天发给 EA 的请求数 */
+  ea_calls: number;
+}
+
+/** 今天某个来源发给 EA 的请求数；pids 为其中 Stats.getStats 查询的人次 */
+export interface EaSourceCount {
+  source: string;
+  calls: number;
+  pids: number;
+}
+
+/** 今天按通道（blaze / gateway / accounts / sal）、方法、来源细分的 EA 请求数 */
+export interface EaMethodCount {
+  channel: string;
+  method: string;
+  source: string;
+  count: number;
+}
+
+/** 某个整点小时（UTC，ISO 格式）内的 EA 请求总数 */
+export interface EaHourCount {
+  hour: string;
+  count: number;
 }
 
 export interface AdminMetrics {
@@ -29,6 +52,12 @@ export interface AdminMetrics {
   top_endpoints: EndpointCount[];
   /** 最近 7 天，按日期升序排列 */
   daily: DailyCount[];
+  ea_calls_today: number;
+  ea_calls_7d: number;
+  ea_sources: EaSourceCount[];
+  ea_methods: EaMethodCount[];
+  /** 最近 24 小时，按小时升序 */
+  ea_hourly: EaHourCount[];
 }
 
 export const adminApi = {

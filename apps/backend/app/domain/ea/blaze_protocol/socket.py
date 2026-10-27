@@ -6,6 +6,7 @@ from typing import Union
 import httpx
 from loguru import logger
 
+from app.core import ea_metrics
 from app.domain.ea.blaze_protocol.protocol import QType, Blaze, keepalive
 
 context = ssl.create_default_context()
@@ -223,6 +224,7 @@ class BlazeSocket:
             self.id = 1
         if isinstance(packet, bytes):
             packet = Blaze(packet).decode()
+        ea_metrics.count("blaze", str(packet.get("method")))
 
         future = asyncio.Future()
         if "id" not in packet:

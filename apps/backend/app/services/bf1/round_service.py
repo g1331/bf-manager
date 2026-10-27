@@ -16,6 +16,7 @@ from sqlalchemy import LargeBinary, cast, delete, select, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.errors import NotFoundError
+from app.core import ea_metrics
 from app.core.config import get_settings
 from app.db.session import get_sessionmaker
 from app.domain.games.bf1.blaze_stats import KITS
@@ -143,6 +144,7 @@ async def run_match_tick(
     """全服统计每轮快照成功后调用：跑一轮对局跟踪并落库。异常只记日志。"""
     if not get_settings().bf1_match_tracking or _tick_lock.locked():
         return
+    ea_metrics.set_source("tracker")
     t = tracker or default_tracker
     maps = {int(s.game_id): (s.map_name, s.game_mode) for s in summaries if s.game_id}
     now = datetime.now(UTC)

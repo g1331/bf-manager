@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Trophy } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { bf1Api, type RoundDetail, type RoundPlayer, type RoundSummary } from "@/lib/api/bf1";
 import { classLabel } from "@/components/bf1/player-detail/format";
@@ -215,16 +216,18 @@ export function FactionFlag({
   );
 }
 
+/** 胜负标签：胜方琥珀底加奖杯，败方灰底 */
 export function ResultTag({ won, className }: { won: boolean | null; className?: string }) {
   if (won == null) return null;
   return (
     <span
       className={cn(
-        "inline-block rounded-sm px-1.5 text-[11px] leading-[1.5] font-bold",
+        "inline-flex items-center gap-1 rounded-sm px-2 py-px text-xs leading-[1.5] font-bold",
         won ? "bg-amber-400 text-black" : "bg-white/12 text-white/60",
         className,
       )}
     >
+      {won ? <Trophy className="size-3.5" strokeWidth={2.5} aria-hidden /> : null}
       {won ? "胜利" : "失败"}
     </span>
   );

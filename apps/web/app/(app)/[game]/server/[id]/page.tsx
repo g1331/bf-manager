@@ -30,6 +30,7 @@ import { SectionNav, useTabHash } from "@/components/bf1/SectionNav";
 import { MembersPanel } from "@/components/bf1/server-admin/MembersPanel";
 import { AutoSwitchPanel } from "@/components/bf1/server-detail/AutoSwitchPanel";
 import { LeaderboardPanel } from "@/components/bf1/server-detail/LeaderboardPanel";
+import { RoundsPanel } from "@/components/bf1/server-detail/RoundsPanel";
 import { MapStatsPanel } from "@/components/bf1/server-detail/MapStatsPanel";
 import { ServerAboutPanel } from "@/components/bf1/server-detail/ServerAboutPanel";
 import { ServerProfilePanel } from "@/components/bf1/server-detail/ServerProfilePanel";
@@ -79,6 +80,7 @@ const TAB_KEYS = [
   "overview",
   "players",
   "snapshots",
+  "rounds",
   "leaderboard",
   "maps",
   "autoswitch",
@@ -155,6 +157,7 @@ function ServerDetailView({
     { key: "overview", label: "概览" },
     { key: "players", label: "玩家", count: summary.player_count },
     { key: "snapshots", label: "快照" },
+    { key: "rounds", label: "对局" },
     { key: "leaderboard", label: "排行" },
     { key: "maps", label: "地图", count: map_rotation.length },
     ...(canAutoSwitch ? ([{ key: "autoswitch", label: "自动换图" }] as const) : []),
@@ -266,6 +269,7 @@ function ServerDetailView({
               </Panel>
             )}
             {tab === "snapshots" && <SnapshotPanel gameId={gameId} game={game} mapInfo={mapInfo} />}
+            {tab === "rounds" && <RoundsPanel gameId={gameId} game={game} />}
             {tab === "leaderboard" && <LeaderboardPanel gameId={gameId} game={game} />}
             {tab === "maps" && (
               <RotationGrid

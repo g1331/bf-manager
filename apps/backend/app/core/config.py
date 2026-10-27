@@ -64,6 +64,9 @@ class Settings(BaseSettings):
     # （队伍/延迟/等级/语言）。开启 mock 后玩家列表接口直接返回内置 fixture，不建立真实
     # 连接，便于本地无凭据时在浏览器预览前端效果；生产默认关闭。
     blaze_mock_mode: bool = False
+    # 对局跟踪：每轮快照后批量查进出服玩家的核心生涯，差分出每局战绩。会占用 Blaze 连接
+    # （约每分钟几十个请求），EA 侧有异常时可关掉，关掉后已有对局仍可查询
+    bf1_match_tracking: bool = True
 
     # ===== 外部封禁查询 =====
     # BFEAC 案件查询按 EA 昵称发起，需要 API key；BFBAN（gametools）按 persona id

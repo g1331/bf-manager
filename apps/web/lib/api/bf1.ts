@@ -272,6 +272,70 @@ export interface ServerLeaderboard {
   items: ServerLeaderboardEntry[];
 }
 
+/** 一局的概要（由生涯差分算出），时间为 unix 秒。observed_start 为假时开局时间是接手的时刻；
+ * settled 为假时服务器中途关掉或采集断档，这一局没打完；winner 为 1 / 2，判不出为 null */
+export interface RoundSummary {
+  id: number;
+  game_id: number;
+  server_name: string | null;
+  map_name: string | null;
+  map_display_name: string | null;
+  map_image_url: string | null;
+  game_mode: string | null;
+  mode_display_name: string | null;
+  started_at: number;
+  ended_at: number;
+  observed_start: boolean;
+  settled: boolean;
+  winner: 1 | 2 | null;
+  player_count: number;
+}
+
+/** 一个人在一局里的战绩：finished 打到结算、left 中途退出（没有胜负）、suspect 混了别的局。
+ * seconds 为各兵种在场秒数之和，kd / kpm / spm 都按它算；kit 为在场最久的兵种（含 elite） */
+export interface RoundPlayer {
+  persona_id: number;
+  name: string | null;
+  team: 1 | 2;
+  status: "finished" | "left" | "suspect";
+  won: boolean | null;
+  kills: number;
+  deaths: number;
+  score: number;
+  assists: number;
+  revives: number;
+  heals: number;
+  repairs: number;
+  dogtags: number;
+  vehicle_kills: number;
+  seconds: number;
+  kit: string | null;
+  kd: number | null;
+  kpm: number | null;
+  spm: number | null;
+}
+
+export interface RoundDetail extends RoundSummary {
+  team1_faction: string | null;
+  team2_faction: string | null;
+  players: RoundPlayer[];
+}
+
+export interface RoundPage {
+  items: RoundSummary[];
+  next_before: number | null;
+}
+
+export interface PlayerRound {
+  round: RoundSummary;
+  player: RoundPlayer;
+}
+
+export interface PlayerRoundPage {
+  items: PlayerRound[];
+  next_before: number | null;
+}
+
 /** 私服近 N 天在某张地图（地图 + 模式）上的累计情况，last_seen 为 unix 秒 */
 export interface ServerMapStat {
   map_name: string;
@@ -610,6 +674,12 @@ export const bf1Api = {
     ),
   getServerSnapshot: (gameId: number, ts: number) =>
     api.get<ServerRosterSnapshot>(`/bf1/servers/${gameId}/snapshots/${ts}`),
+
+  getServerRounds: (gameId: number, before?: number | null) =>
+    api.get<RoundPage>(`/bf1/servers/${gameId}/rounds${before ? `?before=${before}` : ""}`),
+  getRound: (roundId: number) => api.get<RoundDetail>(`/bf1/rounds/${roundId}`),
+  getPlayerRounds: (personaId: number, before?: number | null) =>
+    api.get<PlayerRoundPage>(`/bf1/stats/${personaId}/rounds${before ? `?before=${before}` : ""}`),
 
   getServerPlayers: (gameId: number, includeStats = true) =>
     api.get<ServerPlayersResponse>(

@@ -6,6 +6,7 @@ from fastapi import APIRouter, Query
 
 from app.api.deps import DbDep
 from app.schemas.bf1.ban import BanStatus
+from app.schemas.bf1.rounds import PlayerRoundPage
 from app.schemas.bf1.stats import (
     OnlineStatus,
     PlayerPlatoon,
@@ -15,6 +16,7 @@ from app.schemas.bf1.stats import (
     WeaponStats,
 )
 from app.services.bf1.ban_service import BF1BanService
+from app.services.bf1.round_service import list_player_rounds
 from app.services.bf1.stats_service import BF1StatsService
 
 router = APIRouter()
@@ -38,6 +40,17 @@ async def get_vehicles(persona_id: int, db: DbDep) -> VehicleStats:
 @router.get("/{persona_id}/recent-servers", response_model=RecentServers)
 async def get_recent_servers(persona_id: int, db: DbDep) -> RecentServers:
     return await BF1StatsService(db).get_recent_servers(persona_id)
+
+
+@router.get("/{persona_id}/rounds", response_model=PlayerRoundPage)
+async def get_player_rounds(
+    persona_id: int,
+    db: DbDep,
+    before: int | None = Query(None, description="上一页的 next_before（对局 id）"),
+    limit: int = Query(20, ge=1, le=100),
+) -> PlayerRoundPage:
+    # 我们跟踪到的对局（含官服），由生涯差分算出，保留 90 天
+    return await list_player_rounds(db, persona_id, before=before, limit=limit)
 
 
 @router.get("/{persona_id}/online", response_model=OnlineStatus)

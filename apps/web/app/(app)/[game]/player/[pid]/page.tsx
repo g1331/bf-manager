@@ -23,6 +23,7 @@ import {
   type GearColumn,
 } from "@/components/bf1/player-detail/EquipmentTable";
 import { PlayerHeroBanner } from "@/components/bf1/player-detail/PlayerHeroBanner";
+import { PlayerRounds } from "@/components/bf1/player-detail/PlayerRounds";
 import { fmtFixed, fmtFull, perMinute } from "@/components/bf1/player-detail/format";
 import { PlayerDetailSkeleton, RowsSkeleton } from "@/components/layout/PageSkeleton";
 import {
@@ -37,7 +38,7 @@ import { pushRecentPlayer } from "@/lib/bf1/recent-players";
 import { useBack } from "@/hooks/useNavigation";
 import { formatDuration } from "@/lib/utils";
 
-const TAB_KEYS = ["overview", "weapons", "vehicles", "recent"] as const;
+const TAB_KEYS = ["overview", "weapons", "vehicles", "rounds", "recent"] as const;
 
 const fmtPctValue = (v: number | null) => (v == null ? "—" : `${v.toFixed(1)}%`);
 const fmtTime = (v: number | null) => (v == null ? "—" : formatDuration(v));
@@ -138,6 +139,7 @@ function PlayerDetailView({
     { key: "overview" as const, label: "概览" },
     { key: "weapons" as const, label: "武器", count: usedCount(weapons) },
     { key: "vehicles" as const, label: "载具", count: usedCount(vehicles) },
+    { key: "rounds" as const, label: "对局" },
     { key: "recent" as const, label: "最近" },
   ];
   const [tab, setTab] = useTabHash(TAB_KEYS, TAB_KEYS);
@@ -227,6 +229,7 @@ function PlayerDetailView({
               emptyText="暂无载具数据"
             />
           )}
+          {tab === "rounds" && <PlayerRounds personaId={personaId} game={game} />}
           {tab === "recent" && (
             <RecentServers
               game={game}

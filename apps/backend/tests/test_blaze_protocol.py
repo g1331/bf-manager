@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 
 import pytest
+from app.domain.ea.blaze_protocol import socket as socket_module
 from app.domain.ea.blaze_protocol.protocol import Blaze
 from app.domain.ea.blaze_protocol.socket import BlazeSocket
 
@@ -146,6 +147,37 @@ async def test_user_unauthenticated_closes_connection() -> None:
     assert not sock.connect
     with pytest.raises(ConnectionError):
         futures[9].result()
+
+
+class _HangingWriter:
+    """对端不回 close_notify 的连接：wait_closed 永远不返回。"""
+
+    def __init__(self) -> None:
+        self.aborted = False
+        self.transport = self
+
+    def close(self) -> None:
+        pass
+
+    def abort(self) -> None:
+        self.aborted = True
+
+    async def wait_closed(self) -> None:
+        await asyncio.Event().wait()
+
+
+async def test_close_does_not_hang_on_unanswered_tls_shutdown(monkeypatch) -> None:
+    """被 EA 注销后关连接：等待中的请求立即失败，关闭握手等不到就按上限放弃。"""
+    monkeypatch.setattr(socket_module, "CLOSE_TIMEOUT", 0.05)
+    sock, futures = _socket_with_pending(11)
+    writer = _HangingWriter()
+    sock.writer = writer
+    closing = asyncio.ensure_future(sock.close())
+    await asyncio.sleep(0)
+    with pytest.raises(ConnectionError):
+        futures[11].result()
+    await asyncio.wait_for(closing, 1)
+    assert writer.aborted and not sock.connect
 
 
 async def test_encode_error_keeps_connection() -> None:

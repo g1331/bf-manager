@@ -297,7 +297,8 @@ function TeamBoard({
 }) {
   const t = teamTotals(players);
   return (
-    <div className={cn("min-w-0", className)}>
+    // 两队并排时列容器等高，表格撑满后由占位空行把合计行顶到底，两边合计对齐同一条线
+    <div className={cn("flex min-w-0 flex-col", className)}>
       <div className="mb-2 flex items-center gap-2">
         <FactionFlag faction={faction} className="size-6" />
         <span className="truncate text-sm font-semibold text-white">
@@ -310,9 +311,9 @@ function TeamBoard({
           这一队没有算出战绩的玩家
         </div>
       ) : (
-        <div className="overflow-x-auto lg:overflow-x-visible">
+        <div className="flex-1 overflow-x-auto lg:overflow-x-visible">
           {/* 只留四列数字并拉开间距，名字列吃满剩余宽度；兵种、在场时长、SPM 放进名字和悬停提示 */}
-          <table className="w-full min-w-[24rem] border-collapse text-[13px] tabular-nums lg:min-w-0">
+          <table className="h-full w-full min-w-[24rem] border-collapse text-[13px] tabular-nums lg:min-w-0">
             <colgroup>
               <col className="w-7" />
               <col />
@@ -341,6 +342,9 @@ function TeamBoard({
                   highlighted={p.persona_id === highlight}
                 />
               ))}
+              <tr aria-hidden className="h-full">
+                <td colSpan={6} />
+              </tr>
             </tbody>
             <tfoot>
               <tr className="border-t border-white/20 text-[12.5px] font-semibold text-amber-300/90">

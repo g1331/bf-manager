@@ -40,43 +40,41 @@ export function RoundsPanel({ gameId, game }: { gameId: number; game: string }) 
         <span className="text-[11px] text-white/40">由每局前后的生涯差值算出 · 保留 90 天</span>
       </div>
 
-      <div className="mt-4 grid grid-cols-1 gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
-        <aside className="flex min-h-0 flex-col">
-          <ol className="max-h-[680px] space-y-1.5 overflow-y-auto pr-1">
-            {items.map((r) => (
-              <RoundItem
-                key={r.id}
-                round={r}
-                active={r.id === active?.id}
-                onClick={() => setSelected(r.id)}
-              />
-            ))}
-            {!list.isLoading && items.length === 0 ? (
-              <li className="py-8 text-center text-xs text-white/40">
-                {list.isError ? "对局加载失败，请稍后重试" : "还没有记录到对局"}
-              </li>
+      {items.length === 0 ? (
+        <div className="flex min-h-[240px] items-center justify-center text-sm text-white/40">
+          {list.isLoading
+            ? "正在加载对局…"
+            : list.isError
+              ? "对局加载失败，请稍后重试"
+              : "还没有记录到对局，每局结束后一两分钟出现在这里"}
+        </div>
+      ) : (
+        <div className="mt-4 grid grid-cols-1 gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
+          <aside className="flex min-h-0 flex-col">
+            <ol className="max-h-[680px] space-y-1.5 overflow-y-auto pr-1">
+              {items.map((r) => (
+                <RoundItem
+                  key={r.id}
+                  round={r}
+                  active={r.id === active?.id}
+                  onClick={() => setSelected(r.id)}
+                />
+              ))}
+            </ol>
+            {list.hasNextPage ? (
+              <button
+                type="button"
+                disabled={list.isFetchingNextPage}
+                onClick={() => list.fetchNextPage()}
+                className="mt-2 h-8 rounded-sm border border-white/15 text-xs text-white/70 hover:bg-white/10 disabled:opacity-50"
+              >
+                {list.isFetchingNextPage ? "加载中…" : "加载更早的"}
+              </button>
             ) : null}
-          </ol>
-          {list.hasNextPage ? (
-            <button
-              type="button"
-              disabled={list.isFetchingNextPage}
-              onClick={() => list.fetchNextPage()}
-              className="mt-2 h-8 rounded-sm border border-white/15 text-xs text-white/70 hover:bg-white/10 disabled:opacity-50"
-            >
-              {list.isFetchingNextPage ? "加载中…" : "加载更早的"}
-            </button>
-          ) : null}
-        </aside>
-
-        {active ? (
-          <RoundDetailView roundId={active.id} game={game} />
-        ) : (
-          <div className="flex min-h-[240px] items-center justify-center text-sm text-white/40">
-            {list.isLoading ? "正在加载对局…" : "每局结束后一两分钟出现在这里"}
-          </div>
-        )}
-      </div>
+          </aside>
+          {active ? <RoundDetailView roundId={active.id} game={game} /> : null}
+        </div>
+      )}
     </Bf1Panel>
   );
 }

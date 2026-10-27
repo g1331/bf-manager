@@ -73,6 +73,8 @@ class BlazeServerREQ:
 HEADER_SIZE = 16
 # 单帧上限：超出视为流已错位（或对端异常），断开连接而不是无限缓冲
 MAX_FRAME_SIZE = 64 * 1024 * 1024
+# 关闭时等 TLS 关闭握手的上限（秒）
+CLOSE_TIMEOUT = 2.0
 # 能匹配等待中请求的包类型（命令的应答）
 _REPLY_TYPES = ("Result", "Error")
 
@@ -171,18 +173,23 @@ class BlazeSocket:
                 future.set_exception(ConnectionError(reason))
 
     async def close(self):
-        # 关闭连接
+        # 关闭连接。先让等待中的请求立即失败，再等 TLS 关闭握手：对端被 EA 注销会话后常常不回
+        # close_notify，wait_closed 会一直挂着，曾让所有 Blaze 查询连同重连一起卡住近一分钟
         self.connect = False
-        if self.writer:
-            self.writer.close()
+        writer = self.writer
+        self._mark_disconnected("连接已关闭")
+        if writer is not None:
             try:
-                await self.writer.wait_closed()
+                await asyncio.wait_for(writer.wait_closed(), CLOSE_TIMEOUT)
+            except TimeoutError:
+                logger.debug("Blaze 连接关闭握手超时，直接丢弃")
+                with contextlib.suppress(Exception):
+                    writer.transport.abort()
             except ssl.SSLError as e:
                 # 处理SSL错误：APPLICATION_DATA_AFTER_CLOSE_NOTIFY
                 logger.warning(f"SSL关闭连接时出现错误 (可忽略): {e}")
             except Exception as e:
                 logger.exception(f"关闭连接时出现错误: {e}")
-        self._mark_disconnected("连接已关闭")
         # close 可能在接收任务内部被调用（会话过期分支），不能取消自己
         current = asyncio.current_task()
         for task in list(self._tasks):

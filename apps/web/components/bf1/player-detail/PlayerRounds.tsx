@@ -2,11 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { ChevronDown, Flag, Trophy } from "lucide-react";
+import { ChevronDown, Flag } from "lucide-react";
 import { Panel } from "@/components/bf1/player-detail/CareerOverview";
 import {
   FactionFlag,
-  KitTag,
+  KitIcon,
+  kitLabel,
   RoundDetailView,
   formatRoundTime,
   roundDuration,
@@ -125,7 +126,11 @@ function RoundCard({
       {/* 阵营旗帜 + 胜负 */}
       <div className="flex w-[4.5rem] shrink-0 flex-col items-center gap-0.5">
         {faction ? (
-          <FactionFlag faction={faction} className="size-9" />
+          <FactionFlag
+            faction={faction}
+            won={p.status === "left" ? false : p.won}
+            className="size-9"
+          />
         ) : (
           <span className="flex size-9 items-center justify-center text-white/25" title="阵营未知">
             <Flag className="size-5" />
@@ -133,11 +138,10 @@ function RoundCard({
         )}
         <span
           className={cn(
-            "font-display flex items-center gap-1 text-sm leading-none font-bold tracking-wide",
+            "mt-1 text-xs leading-none font-extrabold tracking-[0.12em] whitespace-nowrap",
             o.text,
           )}
         >
-          {o === OUTCOME.win ? <Trophy className="size-3.5" strokeWidth={2.5} aria-hidden /> : null}
           {o.label}
         </span>
       </div>
@@ -168,9 +172,9 @@ function RoundCard({
         </div>
       </div>
 
-      <div className="hidden w-10 shrink-0 text-right md:block">
-        <div className="text-[10px] text-white/40">兵种</div>
-        <KitTag kit={p.kit} className="text-[15px] font-semibold" />
+      <div className="hidden w-16 shrink-0 flex-col items-center gap-1 md:flex">
+        <KitIcon kit={p.kit} className="size-6 opacity-85" />
+        <span className="text-[10px] text-white/45">{kitLabel(p.kit)}</span>
       </div>
 
       <dl className="grid shrink-0 grid-cols-3 gap-x-5 text-right tabular-nums sm:grid-cols-4">

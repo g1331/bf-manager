@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { Trophy } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { bf1Api, type RoundDetail, type RoundPlayer, type RoundSummary } from "@/lib/api/bf1";
 import { classLabel } from "@/components/bf1/player-detail/format";
@@ -32,30 +31,34 @@ export function kitLabel(kit: string | null): string {
   return kit === "elite" ? "精英兵" : classLabel(kit);
 }
 
-/** 兵种简称与颜色：表格里一眼分出兵种，比缩小的立绘清楚 */
-const KIT_TAG: Record<string, { short: string; color: string }> = {
-  assault: { short: "突击", color: "text-rose-300" },
-  medic: { short: "医疗", color: "text-emerald-300" },
-  support: { short: "支援", color: "text-amber-200" },
-  scout: { short: "侦察", color: "text-sky-300" },
-  tanker: { short: "坦克", color: "text-stone-300" },
-  pilot: { short: "飞行", color: "text-indigo-300" },
-  cavalry: { short: "骑兵", color: "text-orange-300" },
-  elite: { short: "精英", color: "text-yellow-300" },
-};
+const KIT_ICONS = new Set(["assault", "medic", "support", "scout", "tanker", "pilot", "cavalry"]);
 
-export function KitTag({ kit, className }: { kit: string | null; className?: string }) {
-  const tag = kit ? KIT_TAG[kit] : undefined;
+/**
+ * 兵种图标：BF1 游戏内的兵种标志（突击爆炸、医疗十字、支援子弹、侦察瞄准镜、坦克齿轮、
+ * 飞行螺旋桨、骑兵马蹄铁），白色单色图放在 public/bf1/kits。精英兵没有对应图标，用文字。
+ */
+export function KitIcon({ kit, className }: { kit: string | null; className?: string }) {
+  if (kit && KIT_ICONS.has(kit)) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={`/bf1/kits/${kit}.png`}
+        alt={kitLabel(kit)}
+        title={kitLabel(kit)}
+        className={cn("size-4 shrink-0 object-contain opacity-75", className)}
+      />
+    );
+  }
   return (
     <span
+      title={kitLabel(kit)}
       className={cn(
-        "text-[11px] font-medium whitespace-nowrap",
-        tag?.color ?? "text-white/25",
+        "inline-flex size-4 shrink-0 items-center justify-center text-[9px] leading-none font-bold whitespace-nowrap",
+        kit === "elite" ? "text-amber-300" : "text-white/25",
         className,
       )}
-      title={kitLabel(kit)}
     >
-      {tag?.short ?? "—"}
+      {kit === "elite" ? "精英" : "—"}
     </span>
   );
 }
@@ -144,8 +147,8 @@ function RoundBanner({
         />
       ) : null}
       <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/85" />
-      <div className="relative grid grid-cols-2 items-center gap-x-4 gap-y-4 px-5 py-5 sm:grid-cols-[1fr_auto_1fr] sm:px-7">
-        <div className="col-span-2 text-center sm:order-2 sm:col-span-1">
+      <div className="relative grid grid-cols-2 items-center gap-x-4 gap-y-4 px-5 py-5 sm:px-7 lg:grid-cols-[1fr_auto_1fr]">
+        <div className="col-span-2 text-center lg:order-2 lg:col-span-1">
           <div className="font-display text-2xl leading-tight font-bold tracking-wide text-white sm:text-3xl">
             {r.map_display_name ?? r.map_name ?? "未知地图"}
           </div>
@@ -182,14 +185,14 @@ function RoundBanner({
           fallback="队伍 1"
           won={r.winner == null ? null : r.winner === 1}
           players={teams[0]}
-          className="sm:order-1"
+          className="lg:order-1"
         />
         <TeamSide
           faction={r.team2_faction}
           fallback="队伍 2"
           won={r.winner == null ? null : r.winner === 2}
           players={teams[1]}
-          className="sm:order-3"
+          className="lg:order-3"
           alignEnd
         />
       </div>
@@ -197,11 +200,17 @@ function RoundBanner({
   );
 }
 
+/**
+ * 阵营旗帜，同时表达胜负（BF1 结算画面的做法）：胜方全彩加金边微光，败方褪成灰色半透明。
+ * won 不传或为 null 时按原样显示。
+ */
 export function FactionFlag({
   faction,
+  won,
   className,
 }: {
   faction: string | null;
+  won?: boolean | null;
   className?: string;
 }) {
   const slug = faction ? FACTION_SLUG[faction] : undefined;
@@ -211,23 +220,29 @@ export function FactionFlag({
     <img
       src={`/factions/${slug}.png`}
       alt={faction ?? ""}
-      className={cn("shrink-0 object-contain drop-shadow", className)}
+      className={cn(
+        "shrink-0 object-contain",
+        won === true &&
+          "outline-2 outline-offset-2 outline-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.55)]",
+        won === false && "opacity-45 grayscale",
+        won == null && "drop-shadow",
+        className,
+      )}
     />
   );
 }
 
-/** 胜负标签：胜方琥珀底加奖杯，败方灰底 */
+/** 胜负文字：宽字距，胜利琥珀色、失败灰色，不加底色和图标 */
 export function ResultTag({ won, className }: { won: boolean | null; className?: string }) {
   if (won == null) return null;
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-sm px-2 py-px text-xs leading-[1.5] font-bold",
-        won ? "bg-amber-400 text-black" : "bg-white/12 text-white/60",
+        "text-xs font-extrabold tracking-[0.12em] whitespace-nowrap",
+        won ? "text-amber-400" : "text-white/40",
         className,
       )}
     >
-      {won ? <Trophy className="size-3.5" strokeWidth={2.5} aria-hidden /> : null}
       {won ? "胜利" : "失败"}
     </span>
   );
@@ -261,14 +276,18 @@ function TeamSide({
       className={cn(
         "flex min-w-0 items-center gap-3",
         alignEnd && "flex-row-reverse text-right",
-        won === false && "opacity-75",
         className,
       )}
     >
-      <FactionFlag faction={faction} className="size-12 sm:size-14" />
+      <FactionFlag faction={faction} won={won} className="size-12 sm:size-14" />
       <div className="min-w-0">
         <div className={cn("flex items-center gap-2", alignEnd && "flex-row-reverse")}>
-          <span className="truncate text-base font-bold text-white sm:text-lg">
+          <span
+            className={cn(
+              "truncate text-base font-bold sm:text-lg",
+              won === false ? "text-white/60" : "text-white",
+            )}
+          >
             {faction ?? fallback}
           </span>
           <ResultTag won={won} />
@@ -303,7 +322,7 @@ function TeamBoard({
     // 两队并排时列容器等高，表格撑满后由占位空行把合计行顶到底，两边合计对齐同一条线
     <div className={cn("flex min-w-0 flex-col", className)}>
       <div className="mb-2 flex items-center gap-2">
-        <FactionFlag faction={faction} className="size-6" />
+        <FactionFlag faction={faction} won={won} className="size-6" />
         <span className="truncate text-sm font-semibold text-white">
           {faction ?? `队伍 ${team}`}
         </span>
@@ -411,7 +430,7 @@ function PlayerRow({
       </td>
       <td className="w-full max-w-0 py-[7px] pl-2">
         <div className="flex min-w-0 items-center gap-2" title={hint}>
-          <KitTag kit={p.kit} className="w-6 shrink-0 text-[10.5px]" />
+          <KitIcon kit={p.kit} />
           <Link
             href={`/${game}/player/${p.persona_id}`}
             className={cn(

@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { Trophy } from "lucide-react";
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
 import { SectionHeading } from "@/components/layout/SectionHeading";
 import {
@@ -121,12 +120,8 @@ function RoundCard({
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 to-black/30" />
         {active ? <span className="absolute inset-x-0 bottom-0 h-0.5 bg-amber-400" /> : null}
         {winner ? (
-          <span
-            className="absolute right-2 bottom-1.5 flex items-center gap-1 text-[10px] font-semibold text-amber-300"
-            title={`${winner} 胜`}
-          >
-            <Trophy className="size-3.5" strokeWidth={2.5} aria-hidden />
-            <FactionFlag faction={winner} className="size-6" />
+          <span className="absolute right-2.5 bottom-2 flex" title={`${winner} 胜`}>
+            <FactionFlag faction={winner} won className="size-6" />
           </span>
         ) : null}
         <div className="relative flex h-full flex-col justify-between px-2.5 py-1.5">

@@ -76,7 +76,7 @@ async def get_server_players_route(
 
 @router.get("/{game_id}/player-counts", response_model=list[ServerPlayerCountPoint])
 async def get_server_player_counts(game_id: int, db: DbDep) -> list[ServerPlayerCountPoint]:
-    # 只有私服有人数点，由全服统计轮询每分钟写入一次
+    # 人数点由全服统计轮询每分钟写入一次，服重启前后的实例合在一起
     return await list_player_counts(db, game_id)
 
 
@@ -108,7 +108,7 @@ async def get_server_snapshots(
     ),
     limit: int = Query(50, ge=1, le=200),
 ) -> ServerRosterPage:
-    # 名单随全服统计每分钟记录一次，只有私服有，保留 7 天
+    # 名单随全服统计每分钟记录一次，保留 7 天
     return await list_roster_points(db, game_id, before=before, limit=limit)
 
 

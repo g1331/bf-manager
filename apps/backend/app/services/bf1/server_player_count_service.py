@@ -1,9 +1,12 @@
-"""BF1 私服人数与地图时序
+"""BF1 服务器人数与地图时序
 
-全服统计每 60 秒拿到一轮快照摘要，这里每分钟为其中所有私服各写一个点（人数 + 当前地图 /
-模式），并清理超过保留期的旧点；服务器详情页据此画 24 小时人数曲线，地图字段留给热门地图统计。
+全服统计每 60 秒拿到一轮快照摘要，这里每分钟为其中所有服务器（官服也记）各写一个点（人数 +
+当前地图 / 模式），并清理超过保留期的旧点；服务器详情页据此画 24 小时人数曲线，地图字段留给
+热门地图统计。
 
-快照只有随重启变化的 gameId，稳定的 RSP serverId 要拿 gameId 问 Gateway。解析结果按 gameId
+点和名单都按 gameId 写：它在一次开服期间不变，写入时就能拿到。服务器身份另记在
+bf1_game_instances：有服主的服重启后靠 RSP serverId 串起各个实例，读的时候按它归并；
+真官服没有持久身份，一个实例就是一台服。serverId 要拿 gameId 问 Gateway，解析结果按 gameId
 缓存，同一局只问一次，所以除首轮外只有服务器重启后才会产生请求。
 """
 
@@ -24,6 +27,7 @@ from app.domain.games.bf1.maps import (
     translate_map_name,
     translate_mode_name,
 )
+from app.models.bf1.game_instance import Bf1GameInstance
 from app.models.bf1.server_player_count import Bf1ServerPlayerCount
 from app.models.server import Server
 from app.schemas.bf1.server import (
@@ -37,11 +41,19 @@ from app.schemas.bf1.server import (
     ServerRosterSnapshot,
     ServerSummary,
 )
-from app.services.bf1.server_roster_service import Rosters, read_names, read_playtime, read_roster
+from app.services.bf1.server_roster_service import (
+    Rosters,
+    insert_for,
+    read_names,
+    read_playtime,
+    read_roster,
+)
 from app.services.bf1.server_roster_service import tracker as roster_tracker
 from app.services.bf1.server_service import BF1ServerService
 
 RETENTION = timedelta(days=7)
+# 实例记录留得比点和名单久，以后更长期的数据（如对局）也靠它归并
+INSTANCE_RETENTION = timedelta(days=90)
 # 每轮轮询采一次；留 10 秒余量，免得轮询抖动把间隔拖成 2 分钟。同一轮被重复触发时只记一次
 SAMPLE_INTERVAL = timedelta(minutes=1) - timedelta(seconds=10)
 
@@ -53,20 +65,27 @@ SERVER_ID_TTL = int(timedelta(days=3).total_seconds())
 MISSING_SERVER_ID_TTL = int(timedelta(hours=1).total_seconds())
 
 
-def _is_private(s: ServerSummary) -> bool:
-    return not s.is_official and bool(s.game_id) and bool(s.name)
+def _is_recorded(s: ServerSummary) -> bool:
+    return bool(s.game_id) and bool(s.name)
+
+
+def _is_true_official(s: ServerSummary) -> bool:
+    """真官服没有服主，也就没有 RSP serverId，不必去问 Gateway。"""
+    return s.is_official and not s.has_owner
 
 
 async def resolve_server_ids(db: AsyncSession, summaries: list[ServerSummary]) -> dict[int, int]:
-    """返回本轮私服的 gameId → serverId。
+    """返回本轮有服主的服 gameId → serverId。
 
-    先查缓存，未命中的每轮最多问 Gateway RESOLVE_PER_ROUND 个；新解析到的顺手回填这一局已写的
-    采样点，并把登记表里同一 serverId 的 game_id 更新成当前这一局。
+    先查缓存，未命中的每轮最多问 Gateway RESOLVE_PER_ROUND 个；新解析到的顺手把登记表里同一
+    serverId 的 game_id 更新成当前这一局。实例表由 record_player_counts 随点一起写。
     """
     cache = await get_cache()
     resolved: dict[int, int] = {}
     budget = RESOLVE_PER_ROUND
-    for s in filter(_is_private, summaries):
+    for s in summaries:
+        if not _is_recorded(s) or _is_true_official(s):
+            continue
         gid = int(s.game_id or 0)
         key = SERVER_ID_CACHE_KEY.format(gid)
         cached = await cache.get(key)
@@ -90,11 +109,6 @@ async def resolve_server_ids(db: AsyncSession, summaries: list[ServerSummary]) -
             continue
         resolved[gid] = server_id
         await db.execute(
-            update(Bf1ServerPlayerCount)
-            .where(Bf1ServerPlayerCount.game_id == gid, Bf1ServerPlayerCount.server_id.is_(None))
-            .values(server_id=server_id)
-        )
-        await db.execute(
             update(Server)
             .where(Server.game == "bf1", Server.server_id == server_id)
             .values(game_id=gid)
@@ -103,13 +117,45 @@ async def resolve_server_ids(db: AsyncSession, summaries: list[ServerSummary]) -
     return resolved
 
 
+async def _write_instances(
+    db: AsyncSession, summaries: list[ServerSummary], server_ids: dict[int, int], now: datetime
+) -> None:
+    """登记本轮看到的实例：新实例插入，老实例刷新服名与最后出现时间；serverId 解析到了才覆盖。"""
+    rows = [
+        {
+            "game_id": int(s.game_id or 0),
+            "server_id": server_ids.get(int(s.game_id or 0)),
+            "official": _is_true_official(s),
+            "name": s.name[:255],
+            "first_seen": now,
+            "last_seen": now,
+        }
+        for s in summaries
+        if _is_recorded(s)
+    ]
+    if not rows:
+        return
+    stmt = insert_for(db, Bf1GameInstance).values(rows)
+    await db.execute(
+        stmt.on_conflict_do_update(
+            index_elements=["game_id"],
+            set_={
+                "server_id": func.coalesce(stmt.excluded.server_id, Bf1GameInstance.server_id),
+                "official": stmt.excluded.official,
+                "name": stmt.excluded.name,
+                "last_seen": stmt.excluded.last_seen,
+            },
+        )
+    )
+
+
 async def record_player_counts(
     db: AsyncSession,
     summaries: list[ServerSummary],
     server_ids: dict[int, int] | None = None,
     rosters: Rosters | None = None,
 ) -> int:
-    """距上次采样满 1 分钟时，为本轮所有私服写一个点并清理过期点，返回写入条数。
+    """距上次采样满 1 分钟时，为本轮所有服写一个点、登记实例并清理过期数据，返回写入条数。
 
     带了名单（快照这一轮成功）时一并写名单变化，点上记进出人数；没带时进出人数留空。
     """
@@ -124,11 +170,10 @@ async def record_player_counts(
         if rosters is not None:
             changes.update(await roster_tracker.stage(db, rosters, now))
             unchanged = (0, 0)
+        await _write_instances(db, summaries, server_ids or {}, now)
         rows = [
             Bf1ServerPlayerCount(
                 game_id=s.game_id,
-                server_id=(server_ids or {}).get(int(s.game_id or 0)),
-                name=s.name,
                 map_name=s.map_name,
                 game_mode=s.game_mode,
                 player_count=s.player_count,
@@ -140,11 +185,14 @@ async def record_player_counts(
                 sampled_at=now,
             )
             for s in summaries
-            if _is_private(s)
+            if _is_recorded(s)
         ]
         db.add_all(rows)
         await db.execute(
             delete(Bf1ServerPlayerCount).where(Bf1ServerPlayerCount.sampled_at < now - RETENTION)
+        )
+        await db.execute(
+            delete(Bf1GameInstance).where(Bf1GameInstance.last_seen < now - INSTANCE_RETENTION)
         )
         await db.commit()
     except Exception:
@@ -155,45 +203,42 @@ async def record_player_counts(
     return len(rows)
 
 
+async def server_game_ids(db: AsyncSession, game_id: int) -> list[int]:
+    """game_id 所在服务器的全部实例：解析到 serverId 的按它找齐重启前后的 gameId，否则只有自己。"""
+    server_id = await db.scalar(
+        select(Bf1GameInstance.server_id).where(Bf1GameInstance.game_id == game_id)
+    )
+    if not server_id:
+        return [game_id]
+    ids = set(
+        await db.scalars(
+            select(Bf1GameInstance.game_id).where(Bf1GameInstance.server_id == server_id)
+        )
+    )
+    return sorted(ids | {game_id})
+
+
 async def _server_rows(
     db: AsyncSession, game_id: int, since: datetime, until: datetime | None = None
 ) -> list[Bf1ServerPlayerCount]:
-    """某私服 [since, until) 之间的采样点，按时间升序。
+    """某服 [since, until) 之间的采样点，重启前后的实例合在一起，按时间升序。
 
-    先由 game_id 找到这个服最近一个点，解析到了 serverId 就按它取点（重启、改名都不影响）；
-    还没解析到时退回按服名取点。同一时刻有多个同名私服时（生产上真有），只取本 game_id 的点，
-    分不清归属的时刻跳过。
+    同一时刻同一台服有两个实例（旧实例还没从快照里消失）时只取一个，优先本 game_id。
     """
-    latest = await db.scalar(
-        select(Bf1ServerPlayerCount)
-        .where(Bf1ServerPlayerCount.game_id == game_id)
-        .order_by(Bf1ServerPlayerCount.sampled_at.desc())
-        .limit(1)
+    game_ids = await server_game_ids(db, game_id)
+    in_range = Bf1ServerPlayerCount.game_id.in_(game_ids) & (
+        Bf1ServerPlayerCount.sampled_at >= since
     )
-    if latest is None:
-        return []
-    same_server = (
-        Bf1ServerPlayerCount.server_id == latest.server_id
-        if latest.server_id
-        else Bf1ServerPlayerCount.name == latest.name
-    )
-    in_range = Bf1ServerPlayerCount.sampled_at >= since
     if until is not None:
         in_range &= Bf1ServerPlayerCount.sampled_at < until
     rows = await db.scalars(
-        select(Bf1ServerPlayerCount)
-        .where(same_server, in_range)
-        .order_by(Bf1ServerPlayerCount.sampled_at)
+        select(Bf1ServerPlayerCount).where(in_range).order_by(Bf1ServerPlayerCount.sampled_at)
     )
-    by_time: dict[datetime, list[Bf1ServerPlayerCount]] = {}
+    by_time: dict[datetime, Bf1ServerPlayerCount] = {}
     for row in rows:
-        by_time.setdefault(row.sampled_at, []).append(row)
-    picked = []
-    for same_time in by_time.values():
-        own = [r for r in same_time if r.game_id == game_id]
-        if own or len(same_time) == 1:
-            picked.append((own or same_time)[0])
-    return picked
+        if row.sampled_at not in by_time or row.game_id == game_id:
+            by_time[row.sampled_at] = row
+    return list(by_time.values())
 
 
 def _ts(row: Bf1ServerPlayerCount) -> int:
@@ -204,7 +249,7 @@ def _ts(row: Bf1ServerPlayerCount) -> int:
 async def list_player_counts(
     db: AsyncSession, game_id: int, *, hours: int = 24
 ) -> list[ServerPlayerCountPoint]:
-    """某私服最近 hours 小时的人数点（附当时地图 / 模式），按时间升序。"""
+    """某服最近 hours 小时的人数点（附当时地图 / 模式），按时间升序。"""
     rows = await _server_rows(db, game_id, datetime.now(UTC) - timedelta(hours=hours))
     return [
         ServerPlayerCountPoint(
@@ -241,7 +286,7 @@ def _roster_point(p: Bf1ServerPlayerCount) -> dict[str, Any]:
 async def list_roster_points(
     db: AsyncSession, game_id: int, *, before: int | None = None, limit: int = 50
 ) -> ServerRosterPage:
-    """某私服 before 之前、往前 ROSTER_PAGE_WINDOW 内有名单的采样点，按时间倒序最多 limit 个。
+    """某服 before 之前、往前 ROSTER_PAGE_WINDOW 内有名单的采样点，按时间倒序最多 limit 个。
 
     这一窗没取满时 next_before 指向窗口起点，前端可以继续往前翻，直到超出保留期。
     """
@@ -259,7 +304,7 @@ async def list_roster_points(
 
 
 async def get_roster_snapshot(db: AsyncSession, game_id: int, ts: int) -> ServerRosterSnapshot:
-    """某私服在采样时刻 ts 的完整名单与这一轮的进出。服重启过也按 serverId / 服名找到当时那一局。"""
+    """某服在采样时刻 ts 的完整名单与这一轮的进出。服重启过也按 serverId 找到当时那一局。"""
     at = datetime.fromtimestamp(ts, UTC)
     rows = await _server_rows(db, game_id, at, at + timedelta(seconds=1))
     point = next((r for r in rows if _ts(r) == ts and r.joined_count is not None), None)
@@ -281,11 +326,10 @@ async def get_roster_snapshot(db: AsyncSession, game_id: int, ts: int) -> Server
 async def get_leaderboard(
     db: AsyncSession, game_id: int, *, days: int = 7, limit: int = 50
 ) -> ServerLeaderboard:
-    """某私服近 days 天按在队时长排序的前 limit 名。服重启过也按 serverId / 服名把各局合起来算。"""
+    """某服近 days 天按在队时长排序的前 limit 名。服重启过也按 serverId 把各实例合起来算。"""
     now = datetime.now(UTC)
     since = now - timedelta(days=days)
-    rows = await _server_rows(db, game_id, since)
-    game_ids = {r.game_id for r in rows} | {game_id}
+    game_ids = await server_game_ids(db, game_id)
     tallies = await read_playtime(db, game_ids, int(since.timestamp()), int(now.timestamp()))
     ranked = sorted(
         ((pid, t) for pid, t in tallies.items() if t["seconds"] > 0),
@@ -319,7 +363,7 @@ NEW_ROUND_GAP = 600
 
 
 async def list_map_stats(db: AsyncSession, game_id: int, *, days: int = 7) -> list[ServerMapStat]:
-    """某私服最近 days 天各地图的累计时长、人·分钟、平均人数与轮次，按人·分钟降序。
+    """某服最近 days 天各地图的累计时长、人·分钟、平均人数与轮次，按人·分钟降序。
 
     时长按相邻采样点的时间差累加（超过 MAX_SAMPLE_SPAN 秒视为断档，只算 60 秒），轮次按「地图或模式变化、
     或中断超过 NEW_ROUND_GAP 秒」切段计数。

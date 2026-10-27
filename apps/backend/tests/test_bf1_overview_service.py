@@ -279,6 +279,7 @@ def test_snapshot_summary_fills_list_fields() -> None:
             "description3": "",
             "country": "JP",
             "tickRate": "60",
+            "owner": "1006748902196",
         }
     )
     s = overview_service._snapshot_summary(game)
@@ -290,8 +291,14 @@ def test_snapshot_summary_fills_list_fields() -> None:
     assert s.description == "欢迎来玩"
     assert s.ping_site == "nrt"
     assert (s.country, s.tick_rate) == ("JP", 60)
-    # 隐私字段不会出现在摘要里
+    # 隐私字段不会出现在摘要里；服主只用于采集归并，不进接口与缓存
     assert "secret" not in s.model_dump_json()
+    assert s.has_owner and "has_owner" not in s.model_dump()
+    # 真官服 owner 为 0
+    official = overview_service._snapshot_summary(_game(8, servertype="OFFICIAL"))
+    assert official.is_official and not official.has_owner
+    game["ATTR"]["owner"] = "0"
+    assert not overview_service._snapshot_summary(game).has_owner
 
 
 async def test_refresh_writes_server_snapshot_and_spawns_counts(

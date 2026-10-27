@@ -1,4 +1,4 @@
-"""全服摘要缓存上的服务器搜索，以及登记服务器人数点的写入、清理与读取。"""
+"""全服摘要缓存上的服务器搜索，以及人数点、服务器实例的写入、清理与按实例归并的读取。"""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from app.api.errors import ValidationError
 from app.models import Server
+from app.models.bf1.game_instance import Bf1GameInstance
 from app.models.bf1.server_player_count import Bf1ServerPlayerCount
 from app.schemas.bf1.server import ServerSummary
 from app.services.bf1 import server_player_count_service, server_service
@@ -126,27 +127,38 @@ async def test_search_by_keyword_uses_ea(monkeypatch: pytest.MonkeyPatch) -> Non
     assert [s.game_id for s in res.items] == [9]
 
 
-async def test_record_player_counts_samples_private_servers(test_session) -> None:
+async def test_record_player_counts_samples_servers_and_instances(test_session) -> None:
     stale = Bf1ServerPlayerCount(
-        game_id=1,
-        name="mine",
-        player_count=1,
-        sampled_at=datetime.now(UTC) - timedelta(days=8),
+        game_id=1, player_count=1, sampled_at=datetime.now(UTC) - timedelta(days=8)
     )
-    test_session.add(stale)
+    gone = Bf1GameInstance(
+        game_id=7,
+        name="gone",
+        first_seen=datetime.now(UTC) - timedelta(days=100),
+        last_seen=datetime.now(UTC) - timedelta(days=91),
+    )
+    test_session.add_all([stale, gone])
     await test_session.commit()
 
     summaries = [
         _s(1, "mine", players=42, map_name="MP_Forest"),
-        _s(2, "official", is_official=True),
-        _s(3, "other", players=7),
+        _s(2, "[DICE] Official - CQ - EU - #1", is_official=True),
+        _s(3, "rented official", is_official=True, has_owner=True),
     ]
-    assert await record_player_counts(test_session, summaries) == 2
+    assert await record_player_counts(test_session, summaries, {1: 11}) == 3
 
     rows = (await test_session.scalars(select(Bf1ServerPlayerCount))).all()
-    assert sorted((r.game_id, r.name, r.map_name, r.player_count) for r in rows) == [
-        (1, "mine", "MP_Forest", 42),
-        (3, "other", "MP_Amiens", 7),
+    assert sorted((r.game_id, r.map_name, r.player_count) for r in rows) == [
+        (1, "MP_Forest", 42),
+        (2, "MP_Amiens", 10),
+        (3, "MP_Amiens", 10),
+    ]
+    instances = (await test_session.scalars(select(Bf1GameInstance))).all()
+    # 过期 90 天的实例被清掉；只有 owner 为 0 的 OFFICIAL 才算真官服
+    assert sorted((i.game_id, i.server_id, i.official, i.name) for i in instances) == [
+        (1, 11, False, "mine"),
+        (2, None, True, "[DICE] Official - CQ - EU - #1"),
+        (3, None, False, "rented official"),
     ]
     # 同一分钟内重复触发不重复采样
     assert await record_player_counts(test_session, summaries) == 0
@@ -154,68 +166,90 @@ async def test_record_player_counts_samples_private_servers(test_session) -> Non
     points = await list_player_counts(test_session, 1)
     assert [p.players for p in points] == [42]
     assert abs(points[0].ts - datetime.now(UTC).timestamp()) < 60
-    assert await list_player_counts(test_session, 2) == []
+    assert await list_player_counts(test_session, 4) == []
 
 
-async def test_list_player_counts_joins_restarts_by_name(test_session) -> None:
-    # 服务器重启换了 gameId：用新 gameId 查也能拿到重启前的点
+async def test_instances_keep_server_id_and_follow_renames(test_session, monkeypatch) -> None:
+    clock = [datetime.now(UTC) - timedelta(minutes=5)]
+
+    class _Clock(datetime):
+        @classmethod
+        def now(cls, tz: object = None) -> datetime:  # type: ignore[override]
+            return clock[0]
+
+    monkeypatch.setattr(server_player_count_service, "datetime", _Clock)
+    await record_player_counts(test_session, [_s(1, "old name")], {1: 11})
+    clock[0] += timedelta(minutes=1)
+    # 解析失败的一轮没带 serverId，不能把已知的冲掉；改名跟着最新的走
+    await record_player_counts(test_session, [_s(1, "new name")], {})
+    inst = await test_session.scalar(select(Bf1GameInstance))
+    assert (inst.server_id, inst.name) == (11, "new name")
+    assert inst.last_seen.replace(tzinfo=UTC) == clock[0]
+    assert inst.first_seen.replace(tzinfo=UTC) == clock[0] - timedelta(minutes=1)
+
+
+def _instance(gid: int, server_id: int | None, name: str = "x") -> Bf1GameInstance:
     now = datetime.now(UTC)
-    test_session.add_all(
-        [
-            Bf1ServerPlayerCount(
-                game_id=1, name="mine", player_count=10, sampled_at=now - timedelta(hours=2)
-            ),
-            Bf1ServerPlayerCount(
-                game_id=9, name="mine", player_count=20, sampled_at=now - timedelta(hours=1)
-            ),
-            Bf1ServerPlayerCount(
-                game_id=5, name="other", player_count=99, sampled_at=now - timedelta(hours=1)
-            ),
-        ]
+    return Bf1GameInstance(
+        game_id=gid, server_id=server_id, name=name, first_seen=now, last_seen=now
     )
-    await test_session.commit()
-    assert [p.players for p in await list_player_counts(test_session, 9)] == [10, 20]
 
 
-async def test_list_player_counts_separates_same_name_servers(test_session) -> None:
-    # 两个同名私服同时在线：各查各的；重启前分不清归属的时刻跳过
+async def test_list_player_counts_joins_restarts_by_server_id(test_session) -> None:
+    # 服务器重启换了 gameId、还改了名：按 serverId 连上重启前的点，别家服不混进来
     now = datetime.now(UTC)
     t0, t1 = now - timedelta(hours=2), now - timedelta(hours=1)
     test_session.add_all(
         [
-            Bf1ServerPlayerCount(game_id=1, name="dup", player_count=10, sampled_at=t0),
-            Bf1ServerPlayerCount(game_id=2, name="dup", player_count=20, sampled_at=t0),
-            Bf1ServerPlayerCount(game_id=3, name="dup", player_count=30, sampled_at=t1),
-            Bf1ServerPlayerCount(game_id=2, name="dup", player_count=40, sampled_at=t1),
-        ]
-    )
-    await test_session.commit()
-    assert [p.players for p in await list_player_counts(test_session, 2)] == [20, 40]
-    assert [p.players for p in await list_player_counts(test_session, 3)] == [30]
-
-
-async def test_list_player_counts_prefers_server_id(test_session) -> None:
-    # 解析到 serverId 后按它归并：改名后仍连得上，同名的别家服不混进来
-    now = datetime.now(UTC)
-    t0, t1 = now - timedelta(hours=2), now - timedelta(hours=1)
-    test_session.add_all(
-        [
-            Bf1ServerPlayerCount(
-                game_id=1, server_id=11, name="old", player_count=10, sampled_at=t0
-            ),
-            Bf1ServerPlayerCount(
-                game_id=2, server_id=22, name="new", player_count=99, sampled_at=t0
-            ),
-            Bf1ServerPlayerCount(
-                game_id=3, server_id=11, name="new", player_count=20, sampled_at=t1
-            ),
+            _instance(1, 11, "old"),
+            _instance(2, 22, "old"),
+            _instance(3, 11, "new"),
+            Bf1ServerPlayerCount(game_id=1, player_count=10, sampled_at=t0),
+            Bf1ServerPlayerCount(game_id=2, player_count=99, sampled_at=t0),
+            Bf1ServerPlayerCount(game_id=3, player_count=20, sampled_at=t1),
         ]
     )
     await test_session.commit()
     assert [p.players for p in await list_player_counts(test_session, 3)] == [10, 20]
+    assert [p.players for p in await list_player_counts(test_session, 1)] == [10, 20]
+    assert [p.players for p in await list_player_counts(test_session, 2)] == [99]
 
 
-async def test_resolve_server_ids_caches_and_backfills(test_session, monkeypatch) -> None:
+async def test_list_player_counts_unresolved_instance_stands_alone(test_session) -> None:
+    # 还没解析到 serverId（或真官服）只看自己这个实例，同名的服不再按名字混在一起
+    now = datetime.now(UTC)
+    t0, t1 = now - timedelta(hours=2), now - timedelta(hours=1)
+    test_session.add_all(
+        [
+            _instance(1, None, "dup"),
+            _instance(2, None, "dup"),
+            Bf1ServerPlayerCount(game_id=1, player_count=10, sampled_at=t0),
+            Bf1ServerPlayerCount(game_id=2, player_count=20, sampled_at=t0),
+            Bf1ServerPlayerCount(game_id=2, player_count=40, sampled_at=t1),
+        ]
+    )
+    await test_session.commit()
+    assert [p.players for p in await list_player_counts(test_session, 2)] == [20, 40]
+    assert [p.players for p in await list_player_counts(test_session, 1)] == [10]
+
+
+async def test_list_player_counts_overlapping_instances_prefer_own(test_session) -> None:
+    # 重启那一分钟新旧两个实例都在快照里：同一时刻只取一个，优先查的那个
+    t0 = datetime.now(UTC) - timedelta(hours=1)
+    test_session.add_all(
+        [
+            _instance(1, 11),
+            _instance(2, 11),
+            Bf1ServerPlayerCount(game_id=1, player_count=10, sampled_at=t0),
+            Bf1ServerPlayerCount(game_id=2, player_count=1, sampled_at=t0),
+        ]
+    )
+    await test_session.commit()
+    assert [p.players for p in await list_player_counts(test_session, 2)] == [1]
+    assert [p.players for p in await list_player_counts(test_session, 1)] == [10]
+
+
+async def test_resolve_server_ids_caches_and_skips_true_official(test_session, monkeypatch) -> None:
     class _Cache:
         def __init__(self) -> None:
             self.data: dict = {"bf1:gid_server_id:3": 33}
@@ -234,32 +268,32 @@ async def test_resolve_server_ids_caches_and_backfills(test_session, monkeypatch
 
     async def fake_identity(self, gid):
         asked.append(gid)
-        return (None, [], {1: 11}.get(gid), "x") if gid != 2 else None
+        return (None, [], {1: 11, 6: 66}.get(gid), "x") if gid != 2 else None
 
     monkeypatch.setattr(server_player_count_service, "get_cache", fake_get_cache)
     monkeypatch.setattr(BF1ServerService, "get_admin_identity", fake_identity)
-    monkeypatch.setattr(server_player_count_service, "RESOLVE_PER_ROUND", 2)
+    monkeypatch.setattr(server_player_count_service, "RESOLVE_PER_ROUND", 3)
     registered = Server(game="bf1", server_id=11, game_id=999, name="mine")
-    test_session.add_all([registered, Bf1ServerPlayerCount(game_id=1, name="mine", player_count=5)])
+    test_session.add(registered)
     await test_session.commit()
 
     summaries = [
         _s(1, "mine"),
         _s(2, "no rsp"),
         _s(3, "cached"),
-        _s(4, "over budget"),
         _s(5, "official", is_official=True),
+        _s(6, "rented official", is_official=True, has_owner=True),
+        _s(4, "over budget"),
     ]
-    assert await resolve_server_ids(test_session, summaries) == {1: 11, 3: 33}
-    # 每轮最多问 2 个；查不到的记 0，下一轮不再占名额
-    assert asked == [1, 2]
+    assert await resolve_server_ids(test_session, summaries) == {1: 11, 3: 33, 6: 66}
+    # 每轮最多问 3 个；真官服不问；查不到的记 0，下一轮不再占名额
+    assert asked == [1, 2, 6]
     assert cache.data["bf1:gid_server_id:2"] == 0
-    row = await test_session.scalar(select(Bf1ServerPlayerCount))
     await test_session.refresh(registered)
-    assert (row.server_id, registered.game_id) == (11, 1)
+    assert registered.game_id == 1
 
-    assert await resolve_server_ids(test_session, summaries) == {1: 11, 3: 33}
-    assert asked == [1, 2, 4]
+    assert await resolve_server_ids(test_session, summaries) == {1: 11, 3: 33, 6: 66}
+    assert asked == [1, 2, 6, 4]
 
 
 async def test_list_map_stats_aggregates_minutes_and_rounds(test_session) -> None:
@@ -269,7 +303,6 @@ async def test_list_map_stats_aggregates_minutes_and_rounds(test_session) -> Non
     def at(minute: int, map_name: str, players: int) -> Bf1ServerPlayerCount:
         return Bf1ServerPlayerCount(
             game_id=1,
-            name="mine",
             map_name=map_name,
             game_mode="Conquest",
             player_count=players,

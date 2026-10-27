@@ -238,6 +238,7 @@ def _snapshot_summary(game: dict[str, Any]) -> ServerSummary:
         is_official=server_type == "OFFICIAL",
         is_ranked=server_type == "RANKED",
         description=description or None,
+        has_owner=_int_or_none(attrs.get("owner")) not in (None, 0),
     )
 
 
@@ -266,7 +267,7 @@ async def fetch_overview(
 ) -> tuple[BF1Overview, list[ServerSummary], str, Rosters | None]:
     """拉取并聚合全服统计：先试 Blaze 快照，失败（含超时）打 warning 后回退 searchServers。
 
-    返回 (统计, 去重后的服务器摘要, 数据源 snapshot/search, 私服名单)。名单只有快照有，
+    返回 (统计, 去重后的服务器摘要, 数据源 snapshot/search, 各服名单)。名单只有快照有，
     回退时为 None。无任何数据时抛出，由调用方决定是否覆盖缓存。
     """
     if not get_settings().blaze_mock_mode:
@@ -368,7 +369,7 @@ async def _record_player_counts(summaries: list[ServerSummary], rosters: Rosters
             try:
                 server_ids = await resolve_server_ids(db, summaries)
             except Exception as e:
-                # 解析失败（Redis / EA 不可用）不影响写点，这一轮的点先按服名归并
+                # 解析失败（Redis / EA 不可用）不影响写点，实例先不带 serverId，之后解析到再补
                 logger.warning("BF1 serverId resolve skipped: {}", e)
                 await db.rollback()
                 server_ids = {}

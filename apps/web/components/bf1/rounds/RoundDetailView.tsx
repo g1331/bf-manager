@@ -31,18 +31,29 @@ export function kitLabel(kit: string | null): string {
   return kit === "elite" ? "精英兵" : classLabel(kit);
 }
 
-const KIT_ICONS = new Set(["assault", "medic", "support", "scout", "tanker", "pilot", "cavalry"]);
+const KIT_ICONS: Record<string, string> = {
+  assault: "/bf1/kits/assault.png",
+  medic: "/bf1/kits/medic.png",
+  support: "/bf1/kits/support.png",
+  scout: "/bf1/kits/scout.png",
+  tanker: "/bf1/kits/tanker.png",
+  pilot: "/bf1/kits/pilot.png",
+  cavalry: "/bf1/kits/cavalry.png",
+  elite: "/bf1/kits/elite.svg",
+};
 
 /**
  * 兵种图标：BF1 游戏内的兵种标志（突击爆炸、医疗十字、支援子弹、侦察瞄准镜、坦克齿轮、
- * 飞行螺旋桨、骑兵马蹄铁），白色单色图放在 public/bf1/kits。精英兵没有对应图标，用文字。
+ * 飞行螺旋桨、骑兵马蹄铁），白色单色图放在 public/bf1/kits。精英兵官方没有通用图标，用自绘的
+ * 重甲头盔（elite.svg）。
  */
 export function KitIcon({ kit, className }: { kit: string | null; className?: string }) {
-  if (kit && KIT_ICONS.has(kit)) {
+  const src = kit ? KIT_ICONS[kit] : undefined;
+  if (src) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
-        src={`/bf1/kits/${kit}.png`}
+        src={src}
         alt={kitLabel(kit)}
         title={kitLabel(kit)}
         className={cn("size-4 shrink-0 object-contain opacity-75", className)}
@@ -53,12 +64,11 @@ export function KitIcon({ kit, className }: { kit: string | null; className?: st
     <span
       title={kitLabel(kit)}
       className={cn(
-        "inline-flex size-4 shrink-0 items-center justify-center text-[9px] leading-none font-bold whitespace-nowrap",
-        kit === "elite" ? "text-amber-300" : "text-white/25",
+        "inline-flex size-4 shrink-0 items-center justify-center text-[9px] leading-none text-white/25",
         className,
       )}
     >
-      {kit === "elite" ? "精英" : "—"}
+      —
     </span>
   );
 }

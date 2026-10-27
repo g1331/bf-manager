@@ -181,6 +181,7 @@ async def _server_names(db: AsyncSession, game_ids: set[int]) -> dict[int, str]:
 
 
 def _summary(r: Bf1Round, server_name: str | None) -> RoundSummary:
+    teams = MapData.MapTeamDict.get(r.map_name or "") or {}
     return RoundSummary(
         id=r.id,
         game_id=r.game_id,
@@ -195,6 +196,8 @@ def _summary(r: Bf1Round, server_name: str | None) -> RoundSummary:
         observed_start=r.observed_start,
         settled=r.settled,
         winner=r.winner if r.winner in (1, 2) else None,  # type: ignore[arg-type]
+        team1_faction=teams.get("Team1"),
+        team2_faction=teams.get("Team2"),
         player_count=r.player_count,
     )
 
@@ -272,12 +275,9 @@ async def get_round(db: AsyncSession, round_id: int) -> RoundDetail:
             if rid == round_id:
                 players.append(_player(pid, team, status, stats, names.get(pid)))
     players.sort(key=lambda p: (p.team, -p.score))
-    teams = MapData.MapTeamDict.get(r.map_name or "") or {}
     server = (await _server_names(db, {r.game_id})).get(r.game_id)
     return RoundDetail(
         **_summary(r, server).model_dump(),
-        team1_faction=teams.get("Team1"),
-        team2_faction=teams.get("Team2"),
         players=players,
     )
 

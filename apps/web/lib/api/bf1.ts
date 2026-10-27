@@ -288,6 +288,8 @@ export interface RoundSummary {
   observed_start: boolean;
   settled: boolean;
   winner: 1 | 2 | null;
+  team1_faction: string | null;
+  team2_faction: string | null;
   player_count: number;
 }
 
@@ -316,8 +318,6 @@ export interface RoundPlayer {
 }
 
 export interface RoundDetail extends RoundSummary {
-  team1_faction: string | null;
-  team2_faction: string | null;
   players: RoundPlayer[];
 }
 

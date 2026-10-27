@@ -31,6 +31,7 @@ from app.schemas.admin import (
     EaMethodCount,
     EaSourceCount,
     EndpointCount,
+    TrackerEventCount,
 )
 
 # 键统一挂在 bfm:metrics 命名空间下，与 Cache 的 bfm 前缀保持一致。
@@ -165,6 +166,7 @@ async def read_metrics() -> AdminMetrics:
         for d in days:
             pipe.hgetall(f"{ea_metrics.PREFIX}:day:{d}")
         pipe.hgetall(f"{ea_metrics.PREFIX}:pids:day:{days[0]}")
+        pipe.hgetall(f"{ea_metrics.PREFIX}:tracker:day:{days[0]}")
         for h in hours:
             pipe.hgetall(f"{ea_metrics.PREFIX}:hour:{h:%Y%m%d%H}")
         res = await pipe.execute()
@@ -183,7 +185,8 @@ async def read_metrics() -> AdminMetrics:
     guests_7d = int(res[4 + 2 * n] or 0)
     ea_days = res[5 + 2 * n : 5 + 3 * n]
     ea_pids = res[5 + 3 * n] or {}
-    ea_hours = res[6 + 3 * n :]
+    tracker_events = res[6 + 3 * n] or {}
+    ea_hours = res[7 + 3 * n :]
     ea_daily = [sum(int(c) for c in (h or {}).values()) for h in ea_days]
 
     daily: list[DailyCount] = [
@@ -236,6 +239,9 @@ async def read_metrics() -> AdminMetrics:
                 count=sum(int(c) for c in (raw or {}).values()),
             )
             for h, raw in zip(hours, ea_hours, strict=True)
+        ],
+        tracker_events=[
+            TrackerEventCount(name=k, count=int(v)) for k, v in sorted(tracker_events.items())
         ],
     )
 

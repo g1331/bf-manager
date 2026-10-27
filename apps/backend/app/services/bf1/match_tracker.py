@@ -9,15 +9,18 @@
 - 进服后过一阵复查一次：刚从别的服过来的人，上一台服的结算可能几分钟后才写入，局数或胜负
   变了就换成新的基线，免得算进这一局。
 
-状态都在内存里：服务重启或快照断档后从头开始，接手时已经开打的局标记为 observed_start=False。
-查询经注入的 fetch 发出，本模块不碰数据库与网络，便于测试。
+状态在内存里，停机时导出、启动时导入（见 round_service），重启间隔不超过 MAX_GAP 就接着跟；
+快照断档太久则从头开始，接手时已经开打的局标记为 observed_start=False。
+查询经注入的 fetch 发出，本模块不碰数据库与网络，便于测试。各环节查了多少人记在 ea_metrics 的
+跟踪器事件里，用来判断哪些查询可以省。
 """
 
 from __future__ import annotations
 
 from collections import Counter
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
+from typing import Any
 
 from loguru import logger
 
@@ -40,7 +43,9 @@ Fetch = Callable[[list[int], dict[str, list[str]]], Awaitable[dict[int, dict[str
 
 # 进服后多久复查基线；实测别的服的结算最晚在进服 8 分钟后才写入
 RECHECK_AFTER = 600
-# 每台服每轮探测几个人，要过半 +1 才算结算，至少 2 人（只剩 1 个可探测的人时 1 人即可）
+# 每台服每轮先探测 2 人，结论不一致时同一轮补到 4 人；要过半 +1 才算结算，至少 2 人
+# （只剩 1 个可探测的人时 1 人即可）
+PROBE_FIRST = 2
 PROBE_SIZE = 4
 # 基线至少要这么旧才拿来探测，刚查到的值还没机会变
 PROBE_MIN_AGE = 50
@@ -49,6 +54,13 @@ MAX_GAP = 420
 # 每轮最多查这么多人的核心生涯（每 64 人、每个类别一个请求，即 30 个请求）。刚启动时几千人都要
 # 查基线，分几轮查完；平时每分钟进出、结算加复查约七百人
 MAX_QUERY_PER_TICK = 960
+# 进服前这么久之内在别的服出现过，算换服过来的（可能带着上一台服迟到的结算）
+HOP_WINDOW = 900
+# 查到的向量留这么久，统计进服时有没有现成的值可当基线
+VECTOR_KEEP = 600
+
+# 本轮要查的人按原因计数时用的名字，下标即 _wanted 里的优先级
+_WANT_REASONS = ("want_settle", "want_leave", "want_recheck", "want_join")
 
 
 @dataclass
@@ -62,6 +74,7 @@ class Seat:
     recheck_at: int | None = None
     left: bool = False
     end: list[int] | None = None  # 离开后查到的终值
+    hop: bool = False  # 进服前 HOP_WINDOW 内在别的服出现过
 
 
 @dataclass
@@ -122,28 +135,14 @@ def _winner(lines: list[RoundLine]) -> int | None:
     return None
 
 
-def _sync_seats(rnd: OpenRound, roster: dict[int, tuple[int, str]], now: int) -> None:
-    for pid, (state, _) in roster.items():
-        seat = rnd.seats.get(pid)
-        if seat is None:
-            seat = rnd.seats[pid] = Seat(since=now, recheck_at=now + RECHECK_AFTER)
-        elif seat.left:
-            # 离开后又回来：沿用原基线，两段的增量合在这一局里；离开时查到的终值作废
-            seat.left, seat.end = False, None
-        # 探测到结算后不再跟队：换图时常重新分队，收尾那一轮的名单已是下一局的队伍
-        if (team := _team(state)) and rnd.settle_seen_at is None:
-            seat.team = team
-    for pid, seat in list(rnd.seats.items()):
-        if pid not in roster and not seat.left:
-            seat.left = True
-        if seat.left and seat.base is None:
-            del rnd.seats[pid]  # 没查到基线就走了，算不出增量
-
-
 class MatchTracker:
     def __init__(self) -> None:
         self.rounds: dict[int, OpenRound] = {}
         self.last_tick: int | None = None
+        # 每个人最近一次出现在哪台服、什么时候（只留 HOP_WINDOW 内的），判断进服是不是换服
+        self.seen: dict[int, tuple[int, int]] = {}
+        # 每个人最近查到的向量和时刻（只留 VECTOR_KEEP 内的）
+        self.recent: dict[int, tuple[list[int], int]] = {}
 
     async def tick(
         self,
@@ -155,7 +154,7 @@ class MatchTracker:
         """处理一轮快照名单，返回这一轮收尾的对局。查询失败时保留状态，下一轮重试。"""
         if self.last_tick is not None and now - self.last_tick > MAX_GAP:
             logger.info("BF1 match tracker gap {}s, dropping open rounds", now - self.last_tick)
-            self.rounds = {}
+            self.rounds, self.seen, self.recent = {}, {}, {}
         self.last_tick = now
         closed: list[ClosedRound] = []
 
@@ -194,6 +193,7 @@ class MatchTracker:
         now: int,
     ) -> None:
         """按本轮名单登记进出与换队；从快照里消失的服，在服的人全部记为离开。"""
+        prev = self.seen
         for gid, roster in rosters.items():
             rnd = self.rounds.get(gid)
             if rnd is None:
@@ -201,18 +201,52 @@ class MatchTracker:
                 rnd = self.rounds[gid] = OpenRound(started_at=now, observed_start=False)
             if rnd.settle_seen_at is None:
                 rnd.maps[maps.get(gid, (None, None))] += 1
-            _sync_seats(rnd, roster, now)
+            self._sync_seats(gid, rnd, roster, prev, now)
         for gid, rnd in self.rounds.items():
             if gid not in rosters:
-                _sync_seats(rnd, {}, now)
+                self._sync_seats(gid, rnd, {}, prev, now)
+        self.seen = {pid: v for pid, v in prev.items() if now - v[1] <= HOP_WINDOW}
+        self.seen.update((pid, (gid, now)) for gid, roster in rosters.items() for pid in roster)
+        self.recent = {pid: v for pid, v in self.recent.items() if now - v[1] <= VECTOR_KEEP}
+
+    def _sync_seats(
+        self,
+        gid: int,
+        rnd: OpenRound,
+        roster: dict[int, tuple[int, str]],
+        prev: dict[int, tuple[int, int]],
+        now: int,
+    ) -> None:
+        for pid, (state, _) in roster.items():
+            seat = rnd.seats.get(pid)
+            if seat is None:
+                last = prev.get(pid)
+                hop = last is not None and last[0] != gid
+                seat = rnd.seats[pid] = Seat(since=now, recheck_at=now + RECHECK_AFTER, hop=hop)
+                ea_metrics.count_event("join_hop" if hop else "join_fresh")
+                if pid in self.recent:
+                    ea_metrics.count_event("join_reusable")
+            elif seat.left:
+                # 离开后又回来：沿用原基线，两段的增量合在这一局里；离开时查到的终值作废
+                seat.left, seat.end = False, None
+            # 探测到结算后不再跟队：换图时常重新分队，收尾那一轮的名单已是下一局的队伍
+            if (team := _team(state)) and rnd.settle_seen_at is None:
+                seat.team = team
+        for pid, seat in list(rnd.seats.items()):
+            if pid not in roster and not seat.left:
+                seat.left = True
+            if seat.left and seat.base is None:
+                del rnd.seats[pid]  # 没查到基线就走了，算不出增量
 
     async def _probe(self, now: int, fetch: Fetch) -> None:
         """每台服挑基线最旧的几个在服玩家，只查完成局数，过半 +1 就记下结算时刻。
 
+        分两段：先查 2 人，两人都 +1 就算结算、都没变就算没结算；只有一人 +1 时同一轮再补查
+        2 人，按 4 人过半判断。正常结算全服局数一起 +1，绝大多数服第一段就有结论。
         刚进服的人可能带着别的服迟到的结算，但那是零星个别人，过半且至少 2 人的门槛挡得住；
         不要求已复查，否则刚启动的 10 分钟里谁都不能探测，这期间的结算会漏掉。
         """
-        picks: dict[int, list[int]] = {}
+        candidates: dict[int, list[int]] = {}
         for gid, rnd in self.rounds.items():
             if rnd.settle_seen_at is not None:
                 continue
@@ -222,26 +256,48 @@ class MatchTracker:
                 if not s.left and s.base is not None and now - s.base_at >= PROBE_MIN_AGE
             )
             if stable:
-                picks[gid] = [pid for _, pid in stable[:PROBE_SIZE]]
-        pids = sorted({p for ps in picks.values() for p in ps})
-        if not pids:
+                candidates[gid] = [pid for _, pid in stable[:PROBE_SIZE]]
+        if not candidates:
             return
+        picks = {gid: ps[:PROBE_FIRST] for gid, ps in candidates.items()}
+        hits = await self._probe_hits(picks, fetch)
+        if hits is None:
+            return
+        more = {
+            gid: ps[PROBE_FIRST:]
+            for gid, ps in candidates.items()
+            if len(ps) > PROBE_FIRST and 0 < hits[gid] < PROBE_FIRST
+        }
+        if more and (extra := await self._probe_hits(more, fetch)) is not None:
+            for gid, ps in more.items():
+                picks[gid] = picks[gid] + ps
+                hits[gid] += extra[gid]
+        for gid, ps in picks.items():
+            h = hits[gid]
+            if h * 2 > len(ps) and (h >= 2 or len(ps) == 1):
+                self.rounds[gid].settle_seen_at = now
+
+    async def _probe_hits(self, picks: dict[int, list[int]], fetch: Fetch) -> dict[int, int] | None:
+        """查这些人的完成局数，返回每台服有几人比基线多；查询失败返回 None。"""
+        pids = sorted({p for ps in picks.values() for p in ps})
         try:
             with ea_metrics.ea_source("tracker_probe"):
                 values = await fetch(pids, PROBE_NAMES)
         except Exception as e:
             logger.warning("BF1 match tracker probe failed: {}", e)
-            return
+            return None
         name = PROBE_NAMES[next(iter(PROBE_NAMES))][0]
+        out: dict[int, int] = {}
         for gid, ps in picks.items():
             rnd = self.rounds[gid]
-            hits = 0
-            for pid in ps:
-                base = rnd.seats[pid].base
-                if pid in values and base is not None and round(values[pid][name]) > base[ROUNDS]:
-                    hits += 1
-            if hits * 2 > len(ps) and (hits >= 2 or len(ps) == 1):
-                rnd.settle_seen_at = now
+            out[gid] = sum(
+                1
+                for pid in ps
+                if pid in values
+                and (base := rnd.seats[pid].base) is not None
+                and round(values[pid][name]) > base[ROUNDS]
+            )
+        return out
 
     def _wanted(self, now: int, settling: set[int]) -> set[int]:
         """本轮要查的人，超过上限时按优先级截断，其余留到下一轮。
@@ -261,10 +317,12 @@ class MatchTracker:
                 elif not s.left and self._recheck_due(rnd, s, now):
                     ranked.append((2, pid))  # 到点复查
         out: set[int] = set()
-        for _, pid in sorted(ranked):
+        for reason, pid in sorted(ranked):
             if len(out) >= MAX_QUERY_PER_TICK:
                 break
-            out.add(pid)
+            if pid not in out:
+                out.add(pid)
+                ea_metrics.count_event(_WANT_REASONS[reason])
         return out
 
     @staticmethod
@@ -273,6 +331,7 @@ class MatchTracker:
         return rnd.settle_seen_at is None and s.recheck_at is not None and s.recheck_at <= now
 
     def _apply(self, vectors: dict[int, list[int]], now: int) -> None:
+        self.recent.update((pid, (vec, now)) for pid, vec in vectors.items())
         for rnd in self.rounds.values():
             for pid, s in rnd.seats.items():
                 vec = vectors.get(pid)
@@ -283,9 +342,13 @@ class MatchTracker:
                 elif s.left and s.end is None:
                     s.end = vec
                 elif self._recheck_due(rnd, s, now):
-                    if any(vec[i] != s.base[i] for i in (ROUNDS, WINS, LOSSES)):
+                    changed = any(vec[i] != s.base[i] for i in (ROUNDS, WINS, LOSSES))
+                    if changed:
                         s.base, s.base_at = vec, now
                     s.recheck_at = None
+                    ea_metrics.count_event(
+                        f"recheck_{'changed' if changed else 'same'}_{'hop' if s.hop else 'fresh'}"
+                    )
 
     def _close(
         self,
@@ -334,6 +397,45 @@ class MatchTracker:
             game_mode=game_mode,
             winner=winner,
             lines=lines,
+        )
+
+    def dump(self) -> dict[str, Any]:
+        """导出全部状态（JSON 可序列化），停机时存起来，重启后用 load 接着跟。"""
+        return {
+            "last_tick": self.last_tick,
+            "rounds": {
+                str(gid): {
+                    "started_at": r.started_at,
+                    "observed_start": r.observed_start,
+                    "settle_seen_at": r.settle_seen_at,
+                    "maps": [[m, mode, n] for (m, mode), n in r.maps.items()],
+                    "seats": {str(pid): asdict(seat) for pid, seat in r.seats.items()},
+                }
+                for gid, r in self.rounds.items()
+            },
+            "seen": {str(pid): list(v) for pid, v in self.seen.items()},
+            "recent": {str(pid): [vec, at] for pid, (vec, at) in self.recent.items()},
+        }
+
+    def load(self, data: dict[str, Any]) -> None:
+        """导入 dump 的结果；先全部解析完再替换，数据不对就抛错、原状态不动。"""
+        rounds = {
+            int(gid): OpenRound(
+                started_at=r["started_at"],
+                observed_start=r["observed_start"],
+                settle_seen_at=r["settle_seen_at"],
+                maps=Counter({(m, mode): n for m, mode, n in r["maps"]}),
+                seats={int(pid): Seat(**seat) for pid, seat in r["seats"].items()},
+            )
+            for gid, r in data["rounds"].items()
+        }
+        seen = {int(pid): (v[0], v[1]) for pid, v in data["seen"].items()}
+        recent = {int(pid): (v[0], v[1]) for pid, v in data["recent"].items()}
+        self.last_tick, self.rounds, self.seen, self.recent = (
+            data["last_tick"],
+            rounds,
+            seen,
+            recent,
         )
 
 

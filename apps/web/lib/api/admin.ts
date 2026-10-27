@@ -40,6 +40,12 @@ export interface EaHourCount {
   count: number;
 }
 
+/** 今天对局跟踪器的一类事件计数，name 如 want_join、join_hop、recheck_changed_fresh */
+export interface TrackerEventCount {
+  name: string;
+  count: number;
+}
+
 export interface AdminMetrics {
   available: boolean;
   total_requests: number;
@@ -58,6 +64,7 @@ export interface AdminMetrics {
   ea_methods: EaMethodCount[];
   /** 最近 24 小时，按小时升序 */
   ea_hourly: EaHourCount[];
+  tracker_events: TrackerEventCount[];
 }
 
 export const adminApi = {

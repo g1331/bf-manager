@@ -29,6 +29,7 @@ from app.services.bf1.auto_switch_service import auto_switch_poller
 from app.services.bf1.blaze_service import close_blaze_pool
 from app.services.bf1.exchange_service import exchange_poller
 from app.services.bf1.overview_service import overview_poller
+from app.services.bf1.round_service import restore_tracker_state, save_tracker_state
 from app.services.ea_login_finalizer import EALoginFinalizer
 from app.services.metrics_service import classify_path, record_request, user_id_from_token
 
@@ -59,6 +60,8 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     # 交换每小时检查一次换期，入库后供历史查询；行动服自动换图每 5 秒检查开启的服
     pollers: list[asyncio.Task[None]] = [asyncio.create_task(ea_metrics_flusher())]
     if "bf1" in settings.games:
+        if settings.bf1_match_tracking:
+            await restore_tracker_state()
         pollers += [
             asyncio.create_task(overview_poller()),
             asyncio.create_task(exchange_poller()),
@@ -72,6 +75,8 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         task.cancel()
         with contextlib.suppress(asyncio.CancelledError):
             await task
+    if "bf1" in settings.games and settings.bf1_match_tracking:
+        await save_tracker_state()
     await close_task_manager()
     await close_blaze_pool()
     await close_redis()

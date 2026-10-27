@@ -49,6 +49,13 @@ class EaHourCount(BaseModel):
     count: int = 0
 
 
+class TrackerEventCount(BaseModel):
+    """今天对局跟踪器的一类事件计数，name 如 want_join、join_hop、recheck_changed_fresh。"""
+
+    name: str
+    count: int = 0
+
+
 class AdminMetrics(BaseModel):
     """平台访问运维快照。available=False 表示缓存层不可用，统计暂不可读。"""
 
@@ -70,3 +77,5 @@ class AdminMetrics(BaseModel):
     ea_methods: list[EaMethodCount] = Field(default_factory=list)
     # 最近 24 小时，按小时升序
     ea_hourly: list[EaHourCount] = Field(default_factory=list)
+    # 今天对局跟踪器各环节的人数，按名字排序
+    tracker_events: list[TrackerEventCount] = Field(default_factory=list)

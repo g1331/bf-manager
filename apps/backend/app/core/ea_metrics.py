@@ -8,6 +8,8 @@
 Redis 键（都挂在 ``bfm:metrics:ea`` 下）：
 - ``day:{YYYYMMDD}`` / ``hour:{YYYYMMDDHH}`` 哈希，字段 ``通道|方法|来源`` → 次数
 - ``pids:day:{YYYYMMDD}`` 哈希，字段为来源 → ``Stats.getStats`` 查询的人次，用来算批次填充率
+- ``tracker:day:{YYYYMMDD}`` 哈希，对局跟踪器的事件计数（按原因查了多少人、进服的人是不是换服来的、
+  复查有没有查出变化），用来判断哪些查询可以省
 
 计数只是运维观察用，写入失败就丢掉这一批，不影响业务。
 """
@@ -34,6 +36,7 @@ FLUSH_SECONDS = 30
 _source: ContextVar[str] = ContextVar("ea_source", default="other")
 _calls: Counter[str] = Counter()
 _pids: Counter[str] = Counter()
+_events: Counter[str] = Counter()
 
 
 def set_source(source: str) -> None:
@@ -58,22 +61,29 @@ def count_pids(n: int) -> None:
     _pids[_source.get()] += n
 
 
-def _take() -> tuple[Counter[str], Counter[str]]:
-    calls, pids = _calls.copy(), _pids.copy()
+def count_event(name: str, n: int = 1) -> None:
+    if n:
+        _events[name] += n
+
+
+def _take() -> tuple[Counter[str], Counter[str], Counter[str]]:
+    calls, pids, events = _calls.copy(), _pids.copy(), _events.copy()
     _calls.clear()
     _pids.clear()
-    return calls, pids
+    _events.clear()
+    return calls, pids, events
 
 
 async def flush(redis: Any, now: datetime | None = None) -> None:
     """把进程内累计的次数写进 Redis。失败时这一批作废，只记 debug 日志。"""
-    calls, pids = _take()
-    if not calls and not pids:
+    calls, pids, events = _take()
+    if not calls and not pids and not events:
         return
     now = now or datetime.now(UTC)
     day_key = f"{PREFIX}:day:{now:%Y%m%d}"
     hour_key = f"{PREFIX}:hour:{now:%Y%m%d%H}"
     pids_key = f"{PREFIX}:pids:day:{now:%Y%m%d}"
+    events_key = f"{PREFIX}:tracker:day:{now:%Y%m%d}"
     try:
         pipe = redis.pipeline()
         for field, n in calls.items():
@@ -81,9 +91,12 @@ async def flush(redis: Any, now: datetime | None = None) -> None:
             pipe.hincrby(hour_key, field, n)
         for field, n in pids.items():
             pipe.hincrby(pids_key, field, n)
+        for field, n in events.items():
+            pipe.hincrby(events_key, field, n)
         pipe.expire(day_key, DAY_TTL_SECONDS)
         pipe.expire(hour_key, HOUR_TTL_SECONDS)
         pipe.expire(pids_key, DAY_TTL_SECONDS)
+        pipe.expire(events_key, DAY_TTL_SECONDS)
         await pipe.execute()
     except Exception as e:
         logger.debug("EA metrics flush skipped: {}", e)

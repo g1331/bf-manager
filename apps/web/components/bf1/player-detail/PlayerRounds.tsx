@@ -183,7 +183,7 @@ function RoundCard({
         <Stat label="SPM" value={p.spm ?? "—"} />
         <Stat
           label="K/D"
-          value={p.kd != null ? p.kd.toFixed(2) : p.kills ? "∞" : "—"}
+          value={p.kd != null ? p.kd.toFixed(2) : "—"}
           className="hidden sm:block"
         />
       </dl>

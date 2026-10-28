@@ -6,7 +6,9 @@ EA 只在两个时刻把战绩写进生涯：回合结算时整服一起写，�
 
 单局增量绝大多数是 0，只存非零项：每项写成两个 varint（与上一项编号的间隔, 增量值），小于 128 的
 数占 1 字节，一局通常十几项、三四十字节。编号即 ROUND_STATS 里的下标，**只能往后追加**，改顺序会
-让已存的数据解错。
+让已存的数据解错。武器载具的增量（见 round_weapons）接在后面，编号是 WEAPON_BASE + 槽位；有没有
+读到武器载具记在队伍状态字节的 WITH_WEAPONS 位上，没有这一位的条目（功能上线前的、读失败的）
+不能当成「没用武器」。
 """
 
 from __future__ import annotations
@@ -43,6 +45,11 @@ ELITE = KIT_BASE + 3 * len(KITS)
 # 一个人在这一局的状态：打完结算了、中途退出、增量里混了别的局（局数 +2 等），不可信
 FINISHED, LEFT_EARLY, SUSPECT = range(3)
 
+# 条目里武器载具槽位的编号起点；核心项只能往后追加到这之前
+WEAPON_BASE = 1024
+# 队伍状态字节里「这一条带武器载具数据」的位
+WITH_WEAPONS = 1 << 4
+
 # 结算探测只看完成局数，一个统计名的请求最轻
 PROBE_NAMES: dict[str, list[str]] = {STAT: ["c___roo_g"]}
 # 进服后复查只看局数和胜负（迟到的结算只改这几项），都在同一个类别里，一个请求就够
@@ -69,14 +76,14 @@ def diff(end: list[int], base: list[int]) -> list[int] | None:
     return None if any(v < 0 for v in out) else out
 
 
-def _put(out: bytearray, v: int) -> None:
+def write_varint(out: bytearray, v: int) -> None:
     while v >= 0x80:
         out.append((v & 0x7F) | 0x80)
         v >>= 7
     out.append(v)
 
 
-def _get(buf: bytes, pos: int) -> tuple[int, int]:
+def read_varint(buf: bytes, pos: int) -> tuple[int, int]:
     v = shift = 0
     while True:
         b = buf[pos]
@@ -87,36 +94,53 @@ def _get(buf: bytes, pos: int) -> tuple[int, int]:
         shift += 7
 
 
-def encode_entry(round_id: int, team: int, status: int, delta: list[int]) -> bytes:
-    """一个人一局：round_id、(队伍 | 状态 << 2)、非零项个数，再跟非零项。条目首尾相接追加存放。"""
+def encode_entry(
+    round_id: int,
+    team: int,
+    status: int,
+    delta: list[int],
+    weapons: dict[int, int] | None = None,
+) -> bytes:
+    """一个人一局：round_id、(队伍 | 状态 << 2 | 武器位)、非零项个数，再跟非零项。条目首尾相接追加存放。
+
+    weapons 是武器载具槽位的非零增量；None 表示没读到（与「读到了、全是 0」的空 dict 区分）。
+    """
     out = bytearray()
-    _put(out, round_id)
-    _put(out, team | status << 2)
+    write_varint(out, round_id)
+    write_varint(out, team | status << 2 | (WITH_WEAPONS if weapons is not None else 0))
     nonzero = [(i, v) for i, v in enumerate(delta) if v]
-    _put(out, len(nonzero))
+    nonzero += [(WEAPON_BASE + slot, v) for slot, v in sorted((weapons or {}).items()) if v]
+    write_varint(out, len(nonzero))
     prev = 0
     for i, v in nonzero:
-        _put(out, i - prev)
-        _put(out, v)
+        write_varint(out, i - prev)
+        write_varint(out, v)
         prev = i
     return bytes(out)
 
 
-def decode_entries(buf: bytes) -> list[tuple[int, int, int, dict[int, int]]]:
-    """→ [(round_id, 队伍, 状态, {统计编号: 增量})]"""
+def decode_entries(
+    buf: bytes,
+) -> list[tuple[int, int, int, dict[int, int], dict[int, int] | None]]:
+    """→ [(round_id, 队伍, 状态, {统计编号: 增量}, {武器载具槽位: 增量} 或 None)]"""
     out = []
     pos = 0
     while pos < len(buf):
-        round_id, pos = _get(buf, pos)
-        packed, pos = _get(buf, pos)
-        n, pos = _get(buf, pos)
+        round_id, pos = read_varint(buf, pos)
+        packed, pos = read_varint(buf, pos)
+        n, pos = read_varint(buf, pos)
         stats: dict[int, int] = {}
+        weapons: dict[int, int] | None = {} if packed & WITH_WEAPONS else None
         idx = 0
         for _ in range(n):
-            gap, pos = _get(buf, pos)
+            gap, pos = read_varint(buf, pos)
             idx += gap
-            stats[idx], pos = _get(buf, pos)
-        out.append((round_id, packed & 0b11, packed >> 2, stats))
+            v, pos = read_varint(buf, pos)
+            if idx >= WEAPON_BASE and weapons is not None:
+                weapons[idx - WEAPON_BASE] = v
+            else:
+                stats[idx] = v
+        out.append((round_id, packed & 0b11, packed >> 2 & 0b11, stats, weapons))
     return out
 
 
@@ -125,7 +149,7 @@ def pack_pids(pids: list[int]) -> bytes:
     out = bytearray()
     prev = 0
     for pid in sorted(set(pids)):
-        _put(out, pid - prev)
+        write_varint(out, pid - prev)
         prev = pid
     return bytes(out)
 
@@ -133,7 +157,23 @@ def pack_pids(pids: list[int]) -> bytes:
 def unpack_pids(buf: bytes) -> list[int]:
     out, pos, prev = [], 0, 0
     while pos < len(buf):
-        d, pos = _get(buf, pos)
+        d, pos = read_varint(buf, pos)
         prev += d
         out.append(prev)
+    return out
+
+
+def pack_vector(vec: list[int]) -> bytes:
+    """整条生涯向量（全是非负整数）逐项 varint，存快照用。"""
+    out = bytearray()
+    for v in vec:
+        write_varint(out, v)
+    return bytes(out)
+
+
+def unpack_vector(buf: bytes) -> list[int]:
+    out, pos = [], 0
+    while pos < len(buf):
+        v, pos = read_varint(buf, pos)
+        out.append(v)
     return out

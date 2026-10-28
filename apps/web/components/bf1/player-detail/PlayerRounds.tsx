@@ -14,6 +14,7 @@ import {
   roundDuration,
   roundHref,
 } from "@/components/bf1/rounds/RoundDetailView";
+import { mainWeapon, WeaponImage } from "@/components/bf1/rounds/RoundPlayerBreakdown";
 import { RowsSkeleton } from "@/components/layout/PageSkeleton";
 import { bf1Api, type PlayerRound } from "@/lib/api/bf1";
 import { cn } from "@/lib/utils";
@@ -116,6 +117,7 @@ function RoundCard({
   const o = OUTCOME[outcomeOf(p)];
   const faction = p.team === 1 ? r.team1_faction : r.team2_faction;
   const mapName = r.map_display_name ?? r.map_name ?? "未知地图";
+  const main = mainWeapon(p);
   return (
     <div
       className={cn(
@@ -201,6 +203,20 @@ function RoundCard({
         <KitIcon kit={p.kit} className="size-6 opacity-85" />
         <span className="text-[10px] text-white/45">{kitLabel(p.kit)}</span>
       </div>
+
+      {/* 这一局用得最多的武器载具 */}
+      {main ? (
+        <div
+          className="pointer-events-none hidden w-24 shrink-0 flex-col items-center gap-1 @[50rem]:flex"
+          title={`${main.name ?? ""} · 击杀 ${main.kills}`}
+        >
+          <WeaponImage weapon={main} className="h-6 w-20" />
+          <span className="max-w-full truncate text-[10px] text-white/45">
+            {main.name ?? "未知"}
+            {main.kills ? ` · ${main.kills} 杀` : ""}
+          </span>
+        </div>
+      ) : null}
 
       <dl className="pointer-events-none order-last grid w-full shrink-0 grid-cols-4 gap-x-3 border-t border-white/[0.07] pt-2 tabular-nums @2xl:order-none @2xl:w-auto @2xl:gap-x-5 @2xl:border-0 @2xl:pt-0 @2xl:text-right">
         <Stat label="击杀 / 死亡" value={`${p.kills} / ${p.deaths}`} />

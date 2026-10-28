@@ -11,6 +11,15 @@
 - 刚从别的服过来、离开那台服之后已经查到过值的人，直接拿这个值当基线，不再重查；
 - EA 没返回某人的数据时（多半是还没有生涯记录的号），隔 MISSING_RETRY 再查，不再每轮重查。
 
+给了快照存储（store）时还记武器载具（见 round_weapons），同一轮分两段查：先查核心（顺带 STAT 里的
+载具和冷门类别的哨兵），再给需要的人读武器类别。依据是 2026-10-28 的一小时实测：核心不变时武器载具
+也不变（755 次武器变化只有 2 次例外，都是离开时分两段写入、核心 40 秒内跟上），所以
+
+- 核心和最近一次的快照一样（不论是 10 分钟内查过、本局基线，还是存储里几天前的），直接沿用；
+- 核心变了才读 player_weapons1–5；冷门的 statcategory3/4 再看哨兵，哨兵没变就沿用上次的值，
+  每 AUDIT_EVERY 个跳过的人抽一个照读，核对哨兵；
+- 读失败、超出每轮上限的人这一局没有武器载具数据（条目上不打 WITH_WEAPONS 位），核心照常记。
+
 状态在内存里，停机时导出、启动时导入（见 round_service），重启间隔不超过 MAX_GAP 就接着跟；
 快照断档太久则从头开始，接手时已经开打的局标记为 observed_start=False。
 查询经注入的 fetch 发出，本模块不碰数据库与网络，便于测试。各环节查了多少人记在 ea_metrics 的
@@ -19,16 +28,22 @@
 
 from __future__ import annotations
 
+import asyncio
+import base64
+import zlib
 from collections import Counter
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Iterable
 from dataclasses import asdict, dataclass, field
-from typing import Any
+from typing import Any, Protocol
 
 from loguru import logger
 
 from app.core import ea_metrics
+from app.domain.games.bf1 import round_weapons as rw
+from app.domain.games.bf1.blaze_stats import STAT
 from app.domain.games.bf1.round_stats import (
     FINISHED,
+    KILLS,
     LEFT_EARLY,
     LOSSES,
     PROBE_NAMES,
@@ -45,6 +60,17 @@ from app.domain.games.bf1.round_stats import (
 from app.services.bf1.server_roster_service import TEAM1, TEAM2, Rosters
 
 Fetch = Callable[[list[int], dict[str, list[str]]], Awaitable[dict[int, dict[str, float]]]]
+# 一个人某一时刻的生涯：核心向量、武器载具快照（round_weapons.pack）、时刻
+Snapshot = tuple[list[int], bytes, int]
+
+
+class SnapshotStore(Protocol):
+    """每人最近一次的完整生涯，跨会话保留；进服时核心没变就沿用里面的武器载具，不用重读。"""
+
+    async def load(self, pids: list[int]) -> dict[int, Snapshot]: ...
+
+    async def save(self, snapshots: dict[int, Snapshot]) -> None: ...
+
 
 # 进服后多久复查基线；实测别的服的结算最晚在进服 8 分钟后才写入
 RECHECK_AFTER = 600
@@ -65,9 +91,11 @@ HOP_WINDOW = 900
 VECTOR_KEEP = 600
 # EA 没返回某人的数据时，隔这么久再查他的基线
 MISSING_RETRY = 600
-# 每人最近一次查到的向量摘要留这么久，统计进服时生涯和上次比有没有变（没变说明期间没上过场，
-# 查过的值可以长期沿用）
-FINGERPRINT_KEEP = 86400
+# 每轮最多给这么多人读武器类别（每 64 人每类一个请求）；超出的人这一局没有武器载具数据，结算、
+# 离开和重查基线的人优先
+MAX_WEAPONS_PER_TICK = 640
+# 冷门类别哨兵没变时跳过不读，每这么多个跳过的人抽一个照读，核对哨兵有没有漏
+AUDIT_EVERY = 16
 
 # 本轮要查的人按原因计数时用的名字，下标即 _wanted 里的优先级
 _WANT_REASONS = ("want_settle", "want_leave", "want_recheck", "want_join")
@@ -87,6 +115,8 @@ class Seat:
     hop: bool = False  # 进服前 HOP_WINDOW 内在别的服出现过
     rebase: bool = False  # 复查发现局数或胜负变了，要重查全量换基线
     retry_at: int | None = None  # EA 没返回数据，到这个时刻才再查基线
+    base_w: bytes | None = None  # 和 base 同一时刻的武器载具快照，None 表示没有
+    end_w: bytes | None = None  # 和 end 同一时刻的武器载具快照
 
 
 @dataclass
@@ -104,6 +134,7 @@ class RoundLine:
     team: int
     status: int
     delta: list[int]
+    weapons: dict[int, int] | None = None  # 武器载具槽位的非零增量；None 表示没有数据
 
 
 @dataclass
@@ -123,7 +154,7 @@ def _team(state: int) -> int:
     return {TEAM1: 1, TEAM2: 2}.get(state, 0)
 
 
-def _line(pid: int, seat: Seat, end: list[int]) -> RoundLine | None:
+def _line(pid: int, seat: Seat, end: list[int], end_w: bytes | None) -> RoundLine | None:
     if seat.base is None or seat.team == 0:
         return None
     delta = diff(end, seat.base)
@@ -131,7 +162,14 @@ def _line(pid: int, seat: Seat, end: list[int]) -> RoundLine | None:
         return None
     rounds = delta[ROUNDS]
     status = FINISHED if rounds == 1 else LEFT_EARLY if rounds == 0 else SUSPECT
-    return RoundLine(pid, seat.team, status, delta)
+    weapons = None
+    if seat.base_w is not None and end_w is not None:
+        weapons = rw.diff(end_w, seat.base_w)
+        if weapons is not None:
+            # 对账：各武器载具击杀之和应等于核心击杀增量（目录不含的击杀方式会让它对不上）
+            same = rw.kills(weapons) == delta[KILLS]
+            ea_metrics.count_event("weapons_kills_match" if same else "weapons_kills_diff")
+    return RoundLine(pid, seat.team, status, delta, weapons)
 
 
 def _winner(lines: list[RoundLine]) -> int | None:
@@ -147,16 +185,91 @@ def _winner(lines: list[RoundLine]) -> int | None:
     return None
 
 
+@dataclass
+class _Plan:
+    """一个人这一轮要读的武器类别；沿用的类别从 prior 里拷，audits 是哨兵没变、抽中照读的类别"""
+
+    cats: set[str]
+    prior: dict[int, int]
+    audits: set[str]
+
+
+def _plan(pid: int, values: dict[str, float], prior: Snapshot | None, now: int) -> _Plan:
+    """核心变了的人：武器 1–5 类都读；冷门类别哨兵变了才读，没变的按 AUDIT_EVERY 抽查。"""
+    cats, audits = set(rw.ALWAYS), set()
+    gates = rw.read_gates(values)
+    prior_gates, prior_values = rw.unpack(prior[1]) if prior is not None else (None, {})
+    for cat, sl in rw.GATE_SLICES.items():
+        if prior_gates is None:
+            cats.add(cat)
+        elif prior_gates[sl] != gates[sl]:
+            cats.add(cat)
+            ea_metrics.count_event(f"weapons_gate_read_{cat[-1]}")
+        elif zlib.crc32(f"{pid}:{now}:{cat}".encode()) % AUDIT_EVERY == 0:
+            cats.add(cat)
+            audits.add(cat)
+        else:
+            ea_metrics.count_event(f"weapons_gate_skip_{cat[-1]}")
+    return _Plan(cats, prior_values, audits)
+
+
+async def _fetch_categories(
+    plans: dict[int, _Plan], fetch: Fetch
+) -> dict[str, dict[int, dict[str, float]] | None]:
+    """每个类别一次 fetch（内部再按 64 人分批），并发发出；失败的类别给 None。"""
+    cats = sorted({c for plan in plans.values() for c in plan.cats})
+    with ea_metrics.ea_source("tracker_weapons"):
+        results = await asyncio.gather(
+            *(
+                fetch(
+                    sorted(p for p, plan in plans.items() if cat in plan.cats),
+                    rw.category_names(cat),
+                )
+                for cat in cats
+            ),
+            return_exceptions=True,
+        )
+    read: dict[str, dict[int, dict[str, float]] | None] = {}
+    for cat, r in zip(cats, results, strict=True):
+        if isinstance(r, BaseException):
+            logger.warning("BF1 match tracker weapons query failed ({}): {}", cat, r)
+            read[cat] = None
+        else:
+            read[cat] = r
+    return read
+
+
+def _merge(
+    pid: int,
+    values: dict[str, float],
+    plan: _Plan,
+    read: dict[str, dict[int, dict[str, float]] | None],
+) -> bytes | None:
+    """拼出快照：STAT 里的条目来自核心查询，读了的类别用新值，没读的沿用 prior；缺一类就放弃。"""
+    merged = rw.read_slots(values, STAT) or {}
+    for cat in (*rw.ALWAYS, *rw.GATES):
+        if cat not in plan.cats:
+            merged |= rw.in_category(plan.prior, cat)
+            continue
+        rows = read.get(cat)
+        got = rw.read_slots(rows.get(pid, {}), cat) if rows is not None else None
+        if got is None:
+            return None
+        if cat in plan.audits:
+            same = got == rw.in_category(plan.prior, cat)
+            ea_metrics.count_event(f"weapons_audit_{'ok' if same else 'miss'}_{cat[-1]}")
+        merged |= got
+    return rw.pack(rw.read_gates(values), merged)
+
+
 class MatchTracker:
     def __init__(self) -> None:
         self.rounds: dict[int, OpenRound] = {}
         self.last_tick: int | None = None
         # 每个人最近一次出现在哪台服、什么时候（只留 HOP_WINDOW 内的），判断进服是不是换服
         self.seen: dict[int, tuple[int, int]] = {}
-        # 每个人最近查到的向量和时刻（只留 VECTOR_KEEP 内的）
-        self.recent: dict[int, tuple[list[int], int]] = {}
-        # 每个人最近查到的向量摘要和时刻（只留 FINGERPRINT_KEEP 内的，断档也不丢）
-        self.fingerprints: dict[int, tuple[int, int]] = {}
+        # 每个人最近查到的向量、时刻和武器载具快照（只留 VECTOR_KEEP 内的）
+        self.recent: dict[int, tuple[list[int], int, bytes | None]] = {}
 
     async def tick(
         self,
@@ -164,8 +277,12 @@ class MatchTracker:
         maps: dict[int, tuple[str | None, str | None]],
         now: int,
         fetch: Fetch,
+        store: SnapshotStore | None = None,
     ) -> list[ClosedRound]:
-        """处理一轮快照名单，返回这一轮收尾的对局。查询失败时保留状态，下一轮重试。"""
+        """处理一轮快照名单，返回这一轮收尾的对局。查询失败时保留状态，下一轮重试。
+
+        给了 store 才记武器载具。
+        """
         if self.last_tick is not None and now - self.last_tick > MAX_GAP:
             logger.info("BF1 match tracker gap {}s, dropping open rounds", now - self.last_tick)
             self.rounds, self.seen, self.recent = {}, {}, {}
@@ -182,23 +299,31 @@ class MatchTracker:
             if rnd.settle_seen_at is not None and rnd.settle_seen_at < now
         }
         vectors: dict[int, list[int]] = {}
+        weapons: dict[int, bytes] = {}
         if wanted := self._wanted(now, settling):
+            names = rw.full_names() if store is not None else round_stat_names()
             try:
-                values = await fetch(sorted(wanted), round_stat_names())
+                values = await fetch(sorted(wanted), names)
             except Exception as e:
                 logger.warning("BF1 match tracker stats query failed, retry next round: {}", e)
                 return closed
             vectors = {pid: to_vector(v) for pid, v in values.items()}
-            self._apply(vectors, now)
+            if store is not None and vectors:
+                try:
+                    weapons = await self._read_weapons(values, vectors, settling, now, fetch, store)
+                except Exception as e:
+                    # 武器载具出任何问题都不能拖住核心战绩：这一轮的人只是没有武器载具数据
+                    logger.warning("BF1 match tracker weapons stage failed: {}", e)
+            self._apply(vectors, weapons, now)
             self._back_off(wanted - vectors.keys(), now)
 
         for gid in list(self.rounds):
             rnd = self.rounds[gid]
             if gid in settling:
-                closed.append(self._close(gid, rnd, vectors, now, settled=True))
+                closed.append(self._close(gid, rnd, vectors, weapons, now, settled=True))
             elif gid not in rosters and all(s.left for s in rnd.seats.values()):
                 # 服务器从快照里消失（关服、清空），没等到结算
-                closed.append(self._close(gid, rnd, vectors, now, settled=False))
+                closed.append(self._close(gid, rnd, vectors, weapons, now, settled=False))
                 del self.rounds[gid]
         return [c for c in closed if c.lines]
 
@@ -224,9 +349,6 @@ class MatchTracker:
         self.seen = {pid: v for pid, v in prev.items() if now - v[1] <= HOP_WINDOW}
         self.seen.update((pid, (gid, now)) for gid, roster in rosters.items() for pid in roster)
         self.recent = {pid: v for pid, v in self.recent.items() if now - v[1] <= VECTOR_KEEP}
-        self.fingerprints = {
-            pid: v for pid, v in self.fingerprints.items() if now - v[1] <= FINGERPRINT_KEEP
-        }
 
     def _sync_seats(
         self,
@@ -247,7 +369,7 @@ class MatchTracker:
                 # 任何服里，生涯不会变，可以直接当基线；迟到的结算照常由复查兜住
                 recent = self.recent.get(pid)
                 if last is not None and recent is not None and recent[1] > last[1]:
-                    seat.base, seat.base_at = list(recent[0]), recent[1]
+                    seat.base, seat.base_at, seat.base_w = list(recent[0]), recent[1], recent[2]
                     ea_metrics.count_event("join_reused")
             elif seat.left:
                 # 离开后又回来：沿用原基线，两段的增量合在这一局里；离开时查到的终值作废
@@ -391,30 +513,114 @@ class MatchTracker:
         # 已探测到结算的服不复查：此时局数变了是这一局自己的结算，换基线就把这局丢了
         return rnd.settle_seen_at is None and s.recheck_at is not None and s.recheck_at <= now
 
-    def _apply(self, vectors: dict[int, list[int]], now: int) -> None:
-        self.recent.update((pid, (vec, now)) for pid, vec in vectors.items())
-        based: set[int] = set()
+    def _apply(self, vectors: dict[int, list[int]], weapons: dict[int, bytes], now: int) -> None:
+        self.recent.update((pid, (vec, now, weapons.get(pid))) for pid, vec in vectors.items())
         for rnd in self.rounds.values():
             for pid, s in rnd.seats.items():
                 vec = vectors.get(pid)
                 if vec is None:
                     continue
                 if s.base is None:
-                    s.base, s.base_at = vec, now
-                    based.add(pid)
+                    s.base, s.base_at, s.base_w = vec, now, weapons.get(pid)
                 elif s.left and s.end is None:
-                    s.end = vec
+                    s.end, s.end_w = vec, weapons.get(pid)
                 elif s.rebase and rnd.settle_seen_at is None:
-                    s.base, s.base_at, s.rebase = vec, now, False
-        # 刚查了基线的人，生涯和上次查到的比：没变说明期间没在任何地方上过场，上次的值本可以直接用
-        for pid in based:
-            last = self.fingerprints.get(pid)
-            if last is None:
+                    s.base, s.base_at, s.base_w, s.rebase = vec, now, weapons.get(pid), False
+
+    def _priors(self, pids: Iterable[int]) -> dict[int, Snapshot]:
+        """内存里每人最近一次带武器载具的快照：10 分钟内查到的值，或在服席位的基线。"""
+        want = set(pids)
+        out: dict[int, Snapshot] = {}
+
+        def offer(pid: int, vec: list[int], blob: bytes | None, at: int) -> None:
+            if blob is not None and (pid not in out or at > out[pid][2]):
+                out[pid] = (vec, blob, at)
+
+        for pid in want:
+            if (r := self.recent.get(pid)) is not None:
+                offer(pid, r[0], r[2], r[1])
+        for rnd in self.rounds.values():
+            for pid, s in rnd.seats.items():
+                if pid in want and s.base is not None:
+                    offer(pid, s.base, s.base_w, s.base_at)
+        return out
+
+    async def _read_weapons(
+        self,
+        values: dict[int, dict[str, float]],
+        vectors: dict[int, list[int]],
+        settling: set[int],
+        now: int,
+        fetch: Fetch,
+        store: SnapshotStore,
+    ) -> dict[int, bytes]:
+        """第二段：给本轮查了核心的人配上武器载具快照。读不到的人不在结果里。"""
+        priors = self._priors(vectors)
+        if unknown := sorted(vectors.keys() - priors.keys()):
+            try:
+                stored = await store.load(unknown)
+            except Exception as e:
+                logger.warning("BF1 match tracker snapshot store load failed: {}", e)
+                stored = {}
+            ea_metrics.count_event("weapons_store_hit", len(stored))
+            priors.update(stored)
+        urgent = self._count_joins(vectors, priors, settling)
+
+        out: dict[int, bytes] = {}
+        plans: dict[int, _Plan] = {}
+        for pid, vec in vectors.items():
+            prior = priors.get(pid)
+            if prior is not None and prior[0] == vec:
+                out[pid] = prior[1]
+                ea_metrics.count_event("weapons_reused")
+            else:
+                plans[pid] = _plan(pid, values[pid], prior, now)
+        if len(plans) > MAX_WEAPONS_PER_TICK:
+            order = sorted(plans, key=lambda p: p not in urgent)
+            for pid in order[MAX_WEAPONS_PER_TICK:]:
+                del plans[pid]
+            ea_metrics.count_event("weapons_skipped", len(order) - MAX_WEAPONS_PER_TICK)
+        if not plans:
+            return out
+
+        read = await _fetch_categories(plans, fetch)
+        ea_metrics.count_event("weapons_read", len(plans))
+        saved: dict[int, Snapshot] = {}
+        for pid, plan in plans.items():
+            if (blob := _merge(pid, values[pid], plan, read)) is None:
+                ea_metrics.count_event("weapons_failed")
+                continue
+            out[pid] = blob
+            saved[pid] = (vectors[pid], blob, now)
+        if saved:
+            try:
+                await store.save(saved)
+            except Exception as e:
+                logger.warning("BF1 match tracker snapshot store save failed: {}", e)
+        return out
+
+    def _count_joins(
+        self, vectors: dict[int, list[int]], priors: dict[int, Snapshot], settling: set[int]
+    ) -> set[int]:
+        """进服基线和最近一次快照比，按没变 / 变了 / 没见过计数；返回要算终值或重查基线的人。"""
+        joining: set[int] = set()
+        urgent: set[int] = set()
+        for gid, rnd in self.rounds.items():
+            for pid, s in rnd.seats.items():
+                if pid not in vectors:
+                    continue
+                if s.base is None:
+                    joining.add(pid)
+                elif (not s.left and gid in settling) or (s.left and s.end is None) or s.rebase:
+                    urgent.add(pid)
+        for pid in joining:
+            prior = priors.get(pid)
+            if prior is None:
                 ea_metrics.count_event("join_core_unseen")
             else:
-                same = last[0] == hash(tuple(vectors[pid]))
+                same = prior[0] == vectors[pid]
                 ea_metrics.count_event("join_core_same" if same else "join_core_changed")
-        self.fingerprints.update((pid, (hash(tuple(vec)), now)) for pid, vec in vectors.items())
+        return urgent
 
     def _back_off(self, missing: set[int], now: int) -> None:
         """EA 没返回这些人的数据：还缺基线的隔 MISSING_RETRY 再查，免得每轮都查一遍。"""
@@ -431,6 +637,7 @@ class MatchTracker:
         gid: int,
         rnd: OpenRound,
         vectors: dict[int, list[int]],
+        weapons: dict[int, bytes],
         now: int,
         *,
         settled: bool,
@@ -446,11 +653,12 @@ class MatchTracker:
                     carry[pid] = s
                 continue
             end = s.end if s.left else vectors.get(pid)
-            if end is not None and (ln := _line(pid, s, end)) is not None:
+            end_w = s.end_w if s.left else weapons.get(pid)
+            if end is not None and (ln := _line(pid, s, end, end_w)) is not None:
                 lines.append(ln)
             if not s.left:
                 carry[pid] = (
-                    Seat(since=boundary, team=s.team, base=end, base_at=now)
+                    Seat(since=boundary, team=s.team, base=end, base_at=now, base_w=end_w)
                     if end is not None
                     else Seat(since=boundary, team=s.team, recheck_at=now + RECHECK_AFTER)
                 )
@@ -485,13 +693,12 @@ class MatchTracker:
                     "observed_start": r.observed_start,
                     "settle_seen_at": r.settle_seen_at,
                     "maps": [[m, mode, n] for (m, mode), n in r.maps.items()],
-                    "seats": {str(pid): asdict(seat) for pid, seat in r.seats.items()},
+                    "seats": {str(pid): _seat_out(seat) for pid, seat in r.seats.items()},
                 }
                 for gid, r in self.rounds.items()
             },
             "seen": {str(pid): list(v) for pid, v in self.seen.items()},
-            "recent": {str(pid): [vec, at] for pid, (vec, at) in self.recent.items()},
-            "fingerprints": {str(pid): list(v) for pid, v in self.fingerprints.items()},
+            "recent": {str(pid): [vec, at, _b64(w)] for pid, (vec, at, w) in self.recent.items()},
         }
 
     def load(self, data: dict[str, Any]) -> None:
@@ -502,21 +709,44 @@ class MatchTracker:
                 observed_start=r["observed_start"],
                 settle_seen_at=r["settle_seen_at"],
                 maps=Counter({(m, mode): n for m, mode, n in r["maps"]}),
-                seats={int(pid): Seat(**seat) for pid, seat in r["seats"].items()},
+                seats={int(pid): _seat_in(seat) for pid, seat in r["seats"].items()},
             )
             for gid, r in data["rounds"].items()
         }
         seen = {int(pid): (v[0], v[1]) for pid, v in data["seen"].items()}
-        recent = {int(pid): (v[0], v[1]) for pid, v in data["recent"].items()}
-        # 旧版本导出的状态没有这一项
-        fingerprints = {int(pid): (v[0], v[1]) for pid, v in data.get("fingerprints", {}).items()}
-        self.last_tick, self.rounds, self.seen, self.recent, self.fingerprints = (
+        # 旧版本导出的 recent 没有武器载具快照
+        recent = {
+            int(pid): (v[0], v[1], _unb64(v[2] if len(v) > 2 else None))
+            for pid, v in data["recent"].items()
+        }
+        self.last_tick, self.rounds, self.seen, self.recent = (
             data["last_tick"],
             rounds,
             seen,
             recent,
-            fingerprints,
         )
+
+
+def _b64(blob: bytes | None) -> str | None:
+    return base64.b64encode(blob).decode() if blob is not None else None
+
+
+def _unb64(text: str | None) -> bytes | None:
+    return base64.b64decode(text) if text is not None else None
+
+
+_SEAT_BLOBS = ("base_w", "end_w")
+
+
+def _seat_out(seat: Seat) -> dict[str, Any]:
+    d = asdict(seat)
+    for k in _SEAT_BLOBS:
+        d[k] = _b64(d[k])
+    return d
+
+
+def _seat_in(d: dict[str, Any]) -> Seat:
+    return Seat(**{k: _unb64(v) if k in _SEAT_BLOBS else v for k, v in d.items()})
 
 
 tracker = MatchTracker()

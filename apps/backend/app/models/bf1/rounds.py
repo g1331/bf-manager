@@ -49,3 +49,19 @@ class Bf1PlayerRoundDay(Base):
     pid: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     day: Mapped[date] = mapped_column(Date, primary_key=True)
     data: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+
+
+class Bf1CareerSnapshot(Base):
+    """每人最近一次读到的完整生涯：核心向量（varint）和武器载具快照（round_weapons.pack）
+
+    跟踪器进服时先查核心，和这里存的一样就沿用武器载具，不用再读 5 个武器类别。保留 14 天。
+    """
+
+    __tablename__ = "bf1_career_snapshots"
+
+    pid: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
+    core: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    weapons: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, index=True
+    )

@@ -297,6 +297,20 @@ export interface RoundSummary {
   player_count: number;
 }
 
+/** 一个人在一局里用过的一件武器或载具（这一局的增量，没用到的指标为 0） */
+export interface RoundWeapon {
+  kind: "weapon" | "vehicle";
+  name: string | null;
+  category: string | null;
+  image: string | null;
+  kills: number;
+  headshots: number;
+  hits: number;
+  shots: number;
+  seconds: number;
+  destroyed: number;
+}
+
 /** 一个人在一局里的战绩：finished 打到结算、left 中途退出（没有胜负）、suspect 混了别的局。
  * seconds 为各兵种在场秒数之和，kd / kpm / spm 都按它算；kit 为在场最久的兵种（含 elite） */
 export interface RoundPlayer {
@@ -319,6 +333,8 @@ export interface RoundPlayer {
   kd: number | null;
   kpm: number | null;
   spm: number | null;
+  /** 按击杀、时长倒序；null 表示这一局没有武器载具数据（功能上线前，或当时没读到） */
+  weapons: RoundWeapon[] | null;
 }
 
 export interface RoundDetail extends RoundSummary {

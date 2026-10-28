@@ -67,6 +67,9 @@ class Settings(BaseSettings):
     # 对局跟踪：每轮快照后批量查进出服玩家的核心生涯，差分出每局战绩。会占用 Blaze 连接
     # （约每分钟几十个请求），EA 侧有异常时可关掉，关掉后已有对局仍可查询
     bf1_match_tracking: bool = True
+    # 对局里同时记武器载具：核心变了的人再读 5 个武器类别（冷门载具类别看哨兵），约每分钟多 20 个
+    # 请求。关掉后回到只记核心战绩，已存的武器载具数据仍可查询
+    bf1_round_weapons: bool = True
 
     # ===== 外部封禁查询 =====
     # BFEAC 案件查询按 EA 昵称发起，需要 API key；BFBAN（gametools）按 persona id

@@ -1,9 +1,12 @@
 "use client";
 
+import { Fragment, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { ChevronDown } from "lucide-react";
 import { bf1Api, type RoundDetail, type RoundPlayer, type RoundSummary } from "@/lib/api/bf1";
 import { classLabel } from "@/components/bf1/player-detail/format";
+import { RoundPlayerBreakdown } from "@/components/bf1/rounds/RoundPlayerBreakdown";
 import { FACTION_SLUG } from "@/lib/bf1/factions";
 import { cn } from "@/lib/utils";
 
@@ -135,7 +138,7 @@ export function RoundDetailView({
       </div>
       <p className="mt-4 text-[11px] leading-relaxed text-white/35">
         {"战绩是进服前与结算（或退出）后的生涯差值，得分含结算奖励。名字前是在场最久的兵种，" +
-          "悬停可看在场时长和 SPM。中途退出的人没有胜负，「存疑」表示增量里可能混进了别的局。"}
+          "点一行可看这一局的武器载具和其他数据。中途退出的人没有胜负，「存疑」表示增量里可能混进了别的局。"}
       </p>
     </section>
   );
@@ -348,7 +351,9 @@ function TeamBoard({
           这一队没有算出战绩的玩家
         </div>
       ) : (
-        <div className="flex-1 overflow-x-auto lg:overflow-x-visible">
+        // 窄屏表格横向滚动：明细行按这个容器的可见宽度排版（@container/board），不跟着被截掉。
+        // 宽屏不设容器，免得容器的尺寸隔离让两队并排时整块被压窄
+        <div className="flex-1 overflow-x-auto max-lg:@container/board lg:overflow-x-visible">
           {/* 只留四列数字并拉开间距，名字列吃满剩余宽度；兵种、在场时长、SPM 放进名字和悬停提示 */}
           <table className="h-full w-full min-w-[24rem] border-collapse text-[13px] tabular-nums lg:min-w-0">
             <colgroup>
@@ -418,6 +423,8 @@ function PlayerRow({
   game: string;
   highlighted: boolean;
 }) {
+  // 从玩家页点开时，这个人的明细默认展开
+  const [open, setOpen] = useState(highlighted);
   const tag = STATUS_TAG[p.status];
   const minutes = Math.round(p.seconds / 60);
   const hint = [
@@ -429,47 +436,78 @@ function PlayerRow({
     .filter(Boolean)
     .join(" · ");
   return (
-    <tr
-      className={cn(
-        "border-b border-white/[0.06] transition-colors last:border-0 hover:bg-white/[0.05]",
-        highlighted && "bg-amber-400/12 hover:bg-amber-400/15",
-      )}
-    >
-      <td
+    <Fragment>
+      <tr
+        onClick={() => setOpen(!open)}
         className={cn(
-          "py-[7px] pr-1 text-right text-[11px]",
-          seq <= 3 ? "font-semibold text-amber-400" : "text-white/35",
+          "cursor-pointer border-b border-white/[0.06] transition-colors last:border-0 hover:bg-white/[0.05]",
+          highlighted && "bg-amber-400/12 hover:bg-amber-400/15",
+          open && "border-white/0",
         )}
       >
-        {seq}
-      </td>
-      <td className="w-full max-w-0 py-[7px] pl-2">
-        <div className="flex min-w-0 items-center gap-2" title={hint}>
-          <KitIcon kit={p.kit} />
-          <Link
-            href={`/${game}/player/${p.persona_id}`}
-            className={cn(
-              "min-w-0 truncate font-medium hover:underline",
-              tag ? "text-white/55" : "text-white/90",
-            )}
-          >
-            {p.name ?? p.persona_id}
-          </Link>
-          {tag ? (
-            <span className="shrink-0 rounded-sm bg-white/10 px-1 text-[10px] leading-[1.5] text-white/50">
-              {tag}
-            </span>
-          ) : null}
-        </div>
-      </td>
-      <td className="py-[7px] pl-4 text-right text-white/90">{p.kills}</td>
-      <td className="py-[7px] pl-4 text-right text-white/60">{p.deaths}</td>
-      <td className="py-[7px] pl-4 text-right text-white/75">
-        {p.kd != null ? p.kd.toFixed(2) : "—"}
-      </td>
-      <td className="py-[7px] pl-4 text-right font-semibold text-white">
-        {p.score.toLocaleString("en-US")}
-      </td>
-    </tr>
+        <td
+          className={cn(
+            "py-[7px] pr-1 text-right text-[11px]",
+            seq <= 3 ? "font-semibold text-amber-400" : "text-white/35",
+          )}
+        >
+          {seq}
+        </td>
+        <td className="w-full max-w-0 py-[7px] pl-2">
+          <div className="flex min-w-0 items-center gap-2" title={hint}>
+            <KitIcon kit={p.kit} />
+            <Link
+              href={`/${game}/player/${p.persona_id}`}
+              onClick={(e) => e.stopPropagation()}
+              className={cn(
+                "min-w-0 truncate font-medium hover:underline",
+                tag ? "text-white/55" : "text-white/90",
+              )}
+            >
+              {p.name ?? p.persona_id}
+            </Link>
+            {tag ? (
+              <span className="shrink-0 rounded-sm bg-white/10 px-1 text-[10px] leading-[1.5] text-white/50">
+                {tag}
+              </span>
+            ) : null}
+            <button
+              type="button"
+              aria-expanded={open}
+              aria-label={`${p.name ?? p.persona_id} 的这一局明细`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpen(!open);
+              }}
+              className="ml-auto shrink-0 text-white/25 hover:text-white"
+            >
+              <ChevronDown className={cn("size-3.5 transition-transform", open && "rotate-180")} />
+            </button>
+          </div>
+        </td>
+        <td className="py-[7px] pl-4 text-right text-white/90">{p.kills}</td>
+        <td className="py-[7px] pl-4 text-right text-white/60">{p.deaths}</td>
+        <td className="py-[7px] pl-4 text-right text-white/75">
+          {p.kd != null ? p.kd.toFixed(2) : "—"}
+        </td>
+        <td className="py-[7px] pl-4 text-right font-semibold text-white">
+          {p.score.toLocaleString("en-US")}
+        </td>
+      </tr>
+      {open ? (
+        <tr
+          className={cn(
+            "border-b border-white/[0.06] bg-black/20",
+            highlighted && "bg-amber-400/[0.06]",
+          )}
+        >
+          <td colSpan={6} className="p-0">
+            <div className="sticky left-0 w-[100cqw] pl-7 lg:static lg:w-auto">
+              <RoundPlayerBreakdown player={p} />
+            </div>
+          </td>
+        </tr>
+      ) : null}
+    </Fragment>
   );
 }

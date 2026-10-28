@@ -9,6 +9,9 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from app.api.errors import NotFoundError
 from app.core import ea_metrics
+from app.domain.games.bf1 import round_weapons as rw
+from app.domain.games.bf1.blaze_catalog import catalog
+from app.domain.games.bf1.blaze_stats import STAT
 from app.domain.games.bf1.round_stats import (
     DEATHS,
     FINISHED,
@@ -34,7 +37,6 @@ from app.models.bf1.game_instance import Bf1GameInstance
 from app.models.bf1.rounds import Bf1PlayerRoundDay
 from app.services.bf1 import round_service
 from app.services.bf1.match_tracker import (
-    MAX_GAP,
     MISSING_RETRY,
     RECHECK_AFTER,
     ClosedRound,
@@ -52,11 +54,19 @@ def test_entry_codec_roundtrip_and_sparse() -> None:
     delta[KILLS], delta[DEATHS], delta[SCORE], delta[N - 1] = 23, 17, 5840, 1620
     blob = encode_entry(123456, 2, SUSPECT, delta) + encode_entry(7, 1, FINISHED, [0] * N)
     assert decode_entries(blob) == [
-        (123456, 2, SUSPECT, {KILLS: 23, DEATHS: 17, SCORE: 5840, N - 1: 1620}),
-        (7, 1, FINISHED, {}),
+        (123456, 2, SUSPECT, {KILLS: 23, DEATHS: 17, SCORE: 5840, N - 1: 1620}, None),
+        (7, 1, FINISHED, {}, None),
     ]
     # 3 字节 id + 1 字节队伍状态 + 1 字节个数 + 4 项（间隔与值共 2–4 字节）
     assert len(encode_entry(123456, 2, SUSPECT, delta)) <= 20
+    # 武器载具接在核心后面；读到了但全是 0 的（空 dict）和没读到的（None）要分得开
+    with_weapons = encode_entry(8, 2, LEFT_EARLY, delta, {0: 3, 1795: 600}) + encode_entry(
+        9, 1, FINISHED, [0] * N, {}
+    )
+    assert decode_entries(with_weapons) == [
+        (8, 2, LEFT_EARLY, {KILLS: 23, DEATHS: 17, SCORE: 5840, N - 1: 1620}, {0: 3, 1795: 600}),
+        (9, 1, FINISHED, {}, {}),
+    ]
 
 
 def test_pids_pack_and_vector_diff() -> None:
@@ -74,8 +84,11 @@ class Career:
 
     def __init__(self) -> None:
         self.vec: dict[int, list[int]] = {}
+        # 核心以外的统计（武器载具、哨兵），没写的按 0
+        self.extra: dict[int, dict[str, float]] = {}
         self.calls: list[tuple[list[int], dict[str, list[str]]]] = []
         self.fail = False
+        self.fail_categories: set[str] = set()
 
     def add(self, pid: int, **kw: int) -> None:
         v = self.vec.setdefault(pid, [100] * N)
@@ -89,16 +102,23 @@ class Career:
         for p in losers:
             self.add(p, k=4, d=9, s=1500, l=1, r=1)
 
+    def use(self, pid: int, **stats: float) -> None:
+        extra = self.extra.setdefault(pid, {})
+        for name, v in stats.items():
+            extra[name] = extra.get(name, 0.0) + v
+
     async def fetch(self, pids: list[int], names: dict[str, list[str]]) -> dict:
-        if self.fail:
+        if self.fail or names.keys() & self.fail_categories:
             raise RuntimeError("blaze down")
         self.calls.append((pids, names))
         wanted = {n for ns in names.values() for n in ns}
+        core = {name: i for i, (_, name) in enumerate(ROUND_STATS)}
         return {
             p: {
-                name: float(self.vec[p][i])
-                for i, (_, name) in enumerate(ROUND_STATS)
-                if name in wanted
+                name: float(self.vec[p][core[name]])
+                if name in core
+                else self.extra.get(p, {}).get(name, 0.0)
+                for name in wanted
             }
             for p in pids
             if p in self.vec
@@ -411,34 +431,6 @@ async def test_tracker_backs_off_when_ea_has_no_data(monkeypatch) -> None:
     assert events["want_join"] == 3 and events["stats_missing"] == 1
 
 
-async def test_tracker_compares_join_base_with_last_seen_vector(monkeypatch) -> None:
-    events: Counter[str] = Counter()
-    monkeypatch.setattr(ea_metrics, "count_event", lambda name, n=1: events.update({name: n}))
-    career, tr = Career(), MatchTracker()
-    for p in (1, 2, 3):
-        career.add(p)
-    t0 = 1_800_000_000
-    await tr.tick(_roster(p1=TEAM1, p2=TEAM2), MAP, t0, career.fetch)
-    assert events["join_core_unseen"] == 2
-    # 两人都走了；断档很久之后回来（断档丢掉对局状态，但摘要还在）：1 期间没打过，2 在别处打过
-    await tr.tick({}, {}, t0 + 60, career.fetch)
-    career.add(2, k=3, s=400)
-    later = t0 + 60 + MAX_GAP + 600
-    await tr.tick(_roster(p1=TEAM1, p2=TEAM2, p3=TEAM2), MAP, later, career.fetch)
-    assert (events["join_core_same"], events["join_core_changed"], events["join_core_unseen"]) == (
-        1,
-        1,
-        3,
-    )
-    # 摘要随状态导出导入；旧版本导出的状态没有这一项也能导入
-    restored = MatchTracker()
-    restored.load(json.loads(json.dumps(tr.dump())))
-    assert restored.fingerprints == tr.fingerprints and len(tr.fingerprints) == 3
-    old = {k: v for k, v in tr.dump().items() if k != "fingerprints"}
-    restored.load(old)
-    assert restored.fingerprints == {} and restored.rounds.keys() == tr.rounds.keys()
-
-
 async def test_tracker_dump_and_load_continue_the_round() -> None:
     career, tr = Career(), MatchTracker()
     for p in (1, 2, 3, 4):
@@ -489,3 +481,227 @@ async def test_save_and_restore_tracker_state(monkeypatch) -> None:
     stale = MatchTracker()
     await round_service.restore_tracker_state(tracker=stale)
     assert stale.rounds == {} and stale.last_tick is None
+
+
+def test_weapon_slots_cover_catalog_and_snapshot_codec() -> None:
+    names = [name for cat, ns in rw.slots_by_category().items() for name in ns.values()]
+    catalog_names = [
+        n
+        for kind in ("weapons", "vehicles")
+        for e in catalog(kind).values()
+        for n in e["stats"].values()
+    ]
+    # 目录里每个统计名都有且只有一个槽位
+    assert sorted(names) == sorted(catalog_names) and len(set(names)) == len(names)
+    assert set(rw.slots_by_category()) == {STAT, *rw.ALWAYS, *rw.GATES}
+    full = rw.full_names()
+    assert all(len(ns) == len(set(ns)) for ns in full.values())
+    assert set(rw.slots_by_category()[STAT].values()) <= set(full[STAT])
+    assert {n for _, n in rw.GATE_NAMES} <= {n for ns in full.values() for n in ns}
+
+    blob = rw.pack([1, 2, 3], {5: 100, 1800: 7})
+    assert rw.unpack(blob) == ([1, 2, 3], {5: 100, 1800: 7})
+    later = rw.pack([1, 2, 4], {5: 130, 9: 2, 1800: 7})
+    assert rw.diff(later, blob) == {5: 30, 9: 2}
+    assert rw.diff(blob, later) is None
+    kills_slot = 2 * len(rw.METRICS) + rw.KILLS_METRIC
+    assert rw.kills({kills_slot: 4, kills_slot + 1: 600, 0: 2}) == 6
+
+
+def _slot(cat: str, metric: str = "kills", nth: int = 0) -> tuple[int, str]:
+    """某类别里第 nth 个有该指标的槽位和统计名"""
+    found = [
+        (slot, name)
+        for slot, name in sorted(rw.slots_by_category()[cat].items())
+        if rw.METRICS[slot % len(rw.METRICS)] == metric
+    ]
+    return found[nth]
+
+
+def rw_entry(slot: int) -> dict:
+    key, _ = rw.slot_item(slot)
+    prefix, code = key.split(":", 1)
+    return catalog("weapons" if prefix == "w" else "vehicles")[code]
+
+
+def _gate(cat: str, i: int = 0) -> str:
+    return rw.GATES[cat][i][1]
+
+
+class MemoryStore:
+    def __init__(self) -> None:
+        self.rows: dict[int, tuple[list[int], bytes, int]] = {}
+
+    async def load(self, pids: list[int]) -> dict[int, tuple[list[int], bytes, int]]:
+        return {p: self.rows[p] for p in pids if p in self.rows}
+
+    async def save(self, snapshots: dict[int, tuple[list[int], bytes, int]]) -> None:
+        self.rows.update(snapshots)
+
+
+def _weapon_reads(career: Career, since: int = 0) -> dict[str, list[int]]:
+    """各武器类别被读过的人"""
+    out: dict[str, list[int]] = {}
+    for pids, names in career.calls[since:]:
+        [(cat, _)] = names.items() if len(names) == 1 else [(None, None)]
+        if cat in (*rw.ALWAYS, *rw.GATES):
+            out.setdefault(cat, []).extend(pids)
+    return out
+
+
+def _events(monkeypatch) -> Counter[str]:
+    events: Counter[str] = Counter()
+    monkeypatch.setattr(ea_metrics, "count_event", lambda name, n=1: events.update({name: n}))
+    return events
+
+
+async def test_tracker_records_weapons_with_two_stage_reads(monkeypatch) -> None:
+    from app.services.bf1 import match_tracker
+
+    monkeypatch.setattr(match_tracker, "AUDIT_EVERY", 10**12)  # 不抽查
+    events = _events(monkeypatch)
+    career, tr, store = Career(), MatchTracker(), MemoryStore()
+    for p in (1, 2, 3, 4):
+        career.add(p)
+    t0 = 1_800_000_000
+    roster = _roster(p1=TEAM1, p2=TEAM1, p3=TEAM2, p4=TEAM2)
+    await tr.tick(roster, MAP, t0, career.fetch, store)
+    # 没有任何旧快照：7 个武器类别都读，读完存起来
+    assert _weapon_reads(career) == {cat: [1, 2, 3, 4] for cat in (*rw.ALWAYS, *rw.GATES)}
+    assert sorted(store.rows) == [1, 2, 3, 4]
+    assert all(s.base_w is not None for s in tr.rounds[1].seats.values())
+
+    mg, mg_name = _slot("player_weapons1")
+    rifle, rifle_name = _slot("player_weapons2")
+    bomber, bomber_name = _slot("player_statcategory4", "seconds")
+    tank, tank_name = _slot(STAT, "seconds")
+    career.use(1, **{mg_name: 10, bomber_name: 100, _gate("player_statcategory4"): 100})
+    career.use(2, **{rifle_name: 10, tank_name: 50})
+    career.use(3, **{mg_name: 3})
+    career.settle(winners=[1, 2], losers=[3, 4])
+    calls = len(career.calls)
+    await tr.tick(roster, MAP, t0 + 60, career.fetch, store)
+    [closed] = await tr.tick(roster, MAP, t0 + 120, career.fetch, store)
+
+    # 核心都变了：武器 1–5 类四人都读；轰炸机哨兵只有 1 变了，第 4 类只读他；第 3 类谁都不读
+    reads = _weapon_reads(career, calls)
+    assert all(sorted(reads[cat]) == [1, 2, 3, 4] for cat in rw.ALWAYS)
+    assert reads["player_statcategory4"] == [1] and "player_statcategory3" not in reads
+    weapons = {ln.pid: ln.weapons for ln in closed.lines}
+    assert weapons == {1: {mg: 10, bomber: 100}, 2: {rifle: 10, tank: 50}, 3: {mg: 3}, 4: {}}
+    # 对账：1、2 的武器击杀等于核心击杀；3、4 的击杀有一部分不在目录里
+    assert (events["weapons_kills_match"], events["weapons_kills_diff"]) == (2, 2)
+    assert (events["weapons_gate_read_4"], events["weapons_gate_skip_4"]) == (1, 3)
+    assert events["weapons_gate_skip_3"] == 4
+    # 下一局的基线带着武器载具快照，导出导入不丢
+    assert all(s.base_w is not None for s in tr.rounds[1].seats.values())
+    restored = MatchTracker()
+    restored.load(json.loads(json.dumps(tr.dump())))
+    assert restored.dump() == tr.dump()
+    assert restored.rounds[1].seats[1].base_w == tr.rounds[1].seats[1].base_w
+
+
+async def test_tracker_reuses_stored_weapons_and_audits_gates(monkeypatch) -> None:
+    from app.services.bf1 import match_tracker
+
+    monkeypatch.setattr(match_tracker, "AUDIT_EVERY", 10**12)
+    events = _events(monkeypatch)
+    career, store = Career(), MemoryStore()
+    for p in (1, 2):
+        career.add(p)
+    t0 = 1_800_000_000
+    await MatchTracker().tick(_roster(p1=TEAM1, p2=TEAM2), MAP, t0, career.fetch, store)
+    # 一小时后换了进程：1 期间没打过，2 在别处打过一局
+    mg, mg_name = _slot("player_weapons1")
+    career.add(2, k=3, s=400)
+    career.use(2, **{mg_name: 3})
+    tr = MatchTracker()
+    calls = len(career.calls)
+    t = t0 + 3600
+    await tr.tick(_roster(p1=TEAM1, p2=TEAM2), MAP, t, career.fetch, store)
+    reads = _weapon_reads(career, calls)
+    assert reads == {cat: [2] for cat in rw.ALWAYS}  # 1 全部沿用；2 的冷门类别哨兵没变也沿用
+    assert (events["join_core_same"], events["join_core_changed"]) == (1, 1)
+    assert (events["weapons_store_hit"], events["weapons_reused"]) == (2, 1)
+    assert tr.rounds[1].seats[1].base_w == store.rows[1][1]
+    assert rw.unpack(tr.rounds[1].seats[2].base_w)[1][mg] == 3
+
+    # 抽查：2 开了飞船但哨兵都没动（哨兵漏了），抽中照读时能发现并用上真实值
+    monkeypatch.setattr(match_tracker, "AUDIT_EVERY", 1)
+    airship, airship_name = _slot("player_statcategory3", "seconds", 1)
+    base_w = tr.rounds[1].seats[2].base_w
+    career.add(2, k=1, s=100)
+    career.use(2, **{mg_name: 1, airship_name: 30})
+    await tr.tick(_roster(p1=TEAM1), MAP, t + 60, career.fetch, store)
+    seat = tr.rounds[1].seats[2]
+    assert seat.left and rw.diff(seat.end_w, base_w) == {mg: 1, airship: 30}
+    assert (events["weapons_audit_miss_3"], events["weapons_audit_ok_4"]) == (1, 1)
+
+
+async def test_tracker_weapons_failures_and_cap(monkeypatch) -> None:
+    from app.services.bf1 import match_tracker
+
+    events = _events(monkeypatch)
+    career, tr, store = Career(), MatchTracker(), MemoryStore()
+    for p in (1, 2, 3):
+        career.add(p)
+    t0 = 1_800_000_000
+    # 一个武器类别读失败：这一轮的人没有武器载具快照，核心照常
+    career.fail_categories = {"player_weapons3"}
+    await tr.tick(_roster(p1=TEAM1, p2=TEAM2), MAP, t0, career.fetch, store)
+    seats = tr.rounds[1].seats
+    assert all(s.base is not None and s.base_w is None for s in seats.values())
+    assert events["weapons_failed"] == 2 and store.rows == {}
+    # 这局的行没有武器载具数据（不是「没用武器」）
+    career.fail_categories = set()
+    career.settle(winners=[1], losers=[2])
+    await tr.tick(_roster(p1=TEAM1, p2=TEAM2), MAP, t0 + 60, career.fetch, store)
+    [closed] = await tr.tick(_roster(p1=TEAM1, p2=TEAM2), MAP, t0 + 120, career.fetch, store)
+    assert [ln.weapons for ln in closed.lines] == [None, None]
+    assert all(s.base_w is not None for s in tr.rounds[1].seats.values())
+
+    # 超出每轮上限：离开的人优先，新进服的这一局没有武器载具数据
+    monkeypatch.setattr(match_tracker, "MAX_WEAPONS_PER_TICK", 1)
+    career.add(1, k=2, s=300)
+    await tr.tick(_roster(p2=TEAM2, p3=TEAM1), MAP, t0 + 180, career.fetch, store)
+    seats = tr.rounds[1].seats
+    assert seats[1].end_w is not None and seats[3].base is not None and seats[3].base_w is None
+    assert events["weapons_skipped"] == 1
+
+
+async def test_snapshot_store_and_weapon_entries(test_session) -> None:
+    store = round_service.SnapshotStore(test_session)
+    now = int(datetime.now(UTC).timestamp())
+    await store.save({1: ([1, 0, 300], b"\x01\x02", now - 60), 2: ([5], b"", now - 60)})
+    await store.save({1: ([2, 0, 300], b"\x03", now)})
+    assert await store.load([1, 2, 3]) == {1: ([2, 0, 300], b"\x03", now), 2: ([5], b"", now - 60)}
+    # 过期清理也清快照
+    await round_service.purge_expired(
+        test_session, datetime.fromtimestamp(now, UTC) + round_service.SNAPSHOT_RETENTION
+    )
+    assert await store.load([1, 2]) == {1: ([2, 0, 300], b"\x03", now)}
+
+    a, b = 1005811915302, 1003517866915
+    mg, _ = _slot("player_weapons1")
+    mg_seconds, _ = _slot("player_weapons1", "seconds")
+    tank = next(
+        slot
+        for slot in sorted(rw.slots_by_category()[STAT])
+        if rw.slot_item(slot)[0].startswith("v:") and rw.slot_item(slot)[1] == "kills"
+    )
+    lines = [
+        RoundLine(a, 1, FINISHED, _delta(3, win=True), {mg: 1, mg_seconds: 300, tank: 2}),
+        RoundLine(b, 2, FINISHED, _delta(1, win=False)),
+    ]
+    await round_service.save_rounds(test_session, [_closed(10, now, lines)])
+    row = await test_session.get(Bf1PlayerRoundDay, (a, datetime.fromtimestamp(now, UTC).date()))
+    [(rid, _, _, stats, weapons)] = decode_entries(row.data)
+    assert stats[KILLS] == 3 and weapons == {mg: 1, mg_seconds: 300, tank: 2}
+    # 接口按条目合并：载具击杀多排在前；没有数据的人是 None
+    detail = await round_service.get_round(test_session, rid)
+    players = {p.persona_id: p for p in detail.players}
+    first, second = players[a].weapons
+    assert (first.kind, first.kills, first.name) == ("vehicle", 2, rw_entry(tank)["name"])
+    assert (second.kind, second.kills, second.seconds) == ("weapon", 1, 300)
+    assert second.image and second.image.startswith("http")
+    assert players[b].weapons is None

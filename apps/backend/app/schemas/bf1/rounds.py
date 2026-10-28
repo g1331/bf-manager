@@ -32,6 +32,21 @@ class RoundSummary(BaseModel):
     player_count: int
 
 
+class RoundWeapon(BaseModel):
+    """一个人在一局里用过的一件武器或载具：这一局的增量，没用到的指标为 0"""
+
+    kind: Literal["weapon", "vehicle"]
+    name: str | None = None
+    category: str | None = None
+    image: str | None = None
+    kills: int = 0
+    headshots: int = 0
+    hits: int = 0
+    shots: int = 0
+    seconds: int = 0
+    destroyed: int = 0
+
+
 class RoundPlayer(BaseModel):
     """一个人在一局里的战绩。秒数是各兵种在场秒数之和，kd / kpm / spm 都按它算"""
 
@@ -55,6 +70,8 @@ class RoundPlayer(BaseModel):
     kd: float | None = None
     kpm: float | None = None
     spm: float | None = None
+    # 按击杀、时长倒序；None 表示这一局没有武器载具数据（功能上线前，或当时没读到）
+    weapons: list[RoundWeapon] | None = None
 
 
 class RoundDetail(RoundSummary):

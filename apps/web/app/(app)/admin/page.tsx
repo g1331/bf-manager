@@ -243,6 +243,7 @@ function TopEndpoints({ endpoints }: { endpoints: { group: string; count: number
 const EA_SOURCE_LABEL: Record<string, string> = {
   tracker: "对局跟踪",
   tracker_probe: "结算探测",
+  tracker_weapons: "对局武器载具",
   snapshot: "全服快照",
   server_id: "serverId 解析",
   auto_switch: "自动换图",
@@ -414,10 +415,43 @@ const TRACKER_GROUPS: { title: string; items: [string, string][] }[] = [
   {
     title: "查到的进服基线和上次比",
     items: [
-      ["join_core_same", "没变（24 小时内查过）"],
+      ["join_core_same", "没变（14 天内查过）"],
       ["join_core_changed", "变了"],
-      ["join_core_unseen", "24 小时内没查过"],
+      ["join_core_unseen", "14 天内没查过"],
       ["stats_missing", "EA 没返回数据，10 分钟后再查"],
+    ],
+  },
+  {
+    title: "武器载具",
+    items: [
+      ["weapons_reused", "核心没变，沿用上次的值"],
+      ["weapons_store_hit", "从存档取到上次的值"],
+      ["weapons_read", "读了武器类别"],
+      ["weapons_failed", "读失败或 EA 缺数据"],
+      ["weapons_skipped", "超出每轮上限没读"],
+    ],
+  },
+  {
+    title: "驱逐舰 / 飞船 / 岸防炮（冷门类别 3）",
+    items: [
+      ["weapons_gate_read_3", "哨兵变了，读"],
+      ["weapons_gate_skip_3", "哨兵没变，跳过"],
+      ["weapons_audit_miss_3", "抽查发现漏判"],
+    ],
+  },
+  {
+    title: "轰炸机（冷门类别 4）",
+    items: [
+      ["weapons_gate_read_4", "哨兵变了，读"],
+      ["weapons_gate_skip_4", "哨兵没变，跳过"],
+      ["weapons_audit_miss_4", "抽查发现漏判"],
+    ],
+  },
+  {
+    title: "武器载具击杀和核心击杀对账（行数）",
+    items: [
+      ["weapons_kills_match", "对得上"],
+      ["weapons_kills_diff", "对不上"],
     ],
   },
 ];

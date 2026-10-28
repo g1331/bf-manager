@@ -4,6 +4,9 @@
 一行（含参与者 pid），bf1_player_round_days 每人每天一行，各局战绩条目按 round_stats 的紧凑
 编码首尾相接追加。服务器的对局列表查前者；单局详情按 pid 列表取后者当天的行，挑出这一局的条目；
 玩家的对局列表只读自己的行。数据保留 90 天。
+
+开了武器载具（bf1_round_weapons）时，跟踪器把每人最近一次读到的完整生涯存进 bf1_career_snapshots
+（保留 14 天），下次进服核心没变就沿用，不用重读武器类别。
 """
 
 from __future__ import annotations
@@ -21,6 +24,8 @@ from app.core import ea_metrics
 from app.core.cache import get_redis
 from app.core.config import get_settings
 from app.db.session import get_sessionmaker
+from app.domain.games.bf1 import round_weapons as rw
+from app.domain.games.bf1.blaze_catalog import catalog
 from app.domain.games.bf1.blaze_stats import KITS
 from app.domain.games.bf1.maps import (
     MapData,
@@ -47,10 +52,12 @@ from app.domain.games.bf1.round_stats import (
     decode_entries,
     encode_entry,
     pack_pids,
+    pack_vector,
     unpack_pids,
+    unpack_vector,
 )
 from app.models.bf1.game_instance import Bf1GameInstance
-from app.models.bf1.rounds import Bf1PlayerRoundDay, Bf1Round
+from app.models.bf1.rounds import Bf1CareerSnapshot, Bf1PlayerRoundDay, Bf1Round
 from app.schemas.bf1.rounds import (
     PlayerRound,
     PlayerRoundPage,
@@ -58,15 +65,17 @@ from app.schemas.bf1.rounds import (
     RoundPage,
     RoundPlayer,
     RoundSummary,
+    RoundWeapon,
 )
 from app.schemas.bf1.server import ServerSummary
 from app.services.bf1.blaze_service import fetch_stats
-from app.services.bf1.match_tracker import MAX_GAP, ClosedRound, MatchTracker
+from app.services.bf1.match_tracker import MAX_GAP, ClosedRound, MatchTracker, Snapshot
 from app.services.bf1.match_tracker import tracker as default_tracker
 from app.services.bf1.server_player_count_service import server_game_ids
 from app.services.bf1.server_roster_service import Rosters, insert_for, read_names
 
 RETENTION = timedelta(days=90)
+SNAPSHOT_RETENTION = timedelta(days=14)
 WRITE_CHUNK = 2000
 
 
@@ -105,7 +114,7 @@ async def save_rounds(db: AsyncSession, closed: list[ClosedRound]) -> int:
         for ln in c.lines:
             key = (ln.pid, day)
             entries[key] = entries.get(key, b"") + encode_entry(
-                row.id, ln.team, ln.status, ln.delta
+                row.id, ln.team, ln.status, ln.delta, ln.weapons
             )
     rows = [{"pid": p, "day": d, "data": data} for (p, d), data in entries.items()]
     for i in range(0, len(rows), WRITE_CHUNK):
@@ -128,7 +137,51 @@ async def purge_expired(db: AsyncSession, now: datetime) -> None:
     cutoff = now - RETENTION
     await db.execute(delete(Bf1Round).where(Bf1Round.ended_at < cutoff))
     await db.execute(delete(Bf1PlayerRoundDay).where(Bf1PlayerRoundDay.day < cutoff.date()))
+    await db.execute(
+        delete(Bf1CareerSnapshot).where(Bf1CareerSnapshot.updated_at < now - SNAPSHOT_RETENTION)
+    )
     await db.commit()
+
+
+class SnapshotStore:
+    """跟踪器的生涯快照存储，落在 bf1_career_snapshots；每次 save 单独提交。"""
+
+    def __init__(self, db: AsyncSession) -> None:
+        self.db = db
+
+    async def load(self, pids: list[int]) -> dict[int, Snapshot]:
+        out: dict[int, Snapshot] = {}
+        for i in range(0, len(pids), WRITE_CHUNK):
+            rows = await self.db.execute(
+                select(
+                    Bf1CareerSnapshot.pid,
+                    Bf1CareerSnapshot.core,
+                    Bf1CareerSnapshot.weapons,
+                    Bf1CareerSnapshot.updated_at,
+                ).where(Bf1CareerSnapshot.pid.in_(pids[i : i + WRITE_CHUNK]))
+            )
+            for pid, core, weapons, at in rows.tuples():
+                out[pid] = (unpack_vector(core), weapons, _ts(at))
+        return out
+
+    async def save(self, snapshots: dict[int, Snapshot]) -> None:
+        rows = [
+            {"pid": pid, "core": pack_vector(vec), "weapons": blob, "updated_at": _dt(at)}
+            for pid, (vec, blob, at) in snapshots.items()
+        ]
+        for i in range(0, len(rows), WRITE_CHUNK):
+            stmt = insert_for(self.db, Bf1CareerSnapshot).values(rows[i : i + WRITE_CHUNK])
+            await self.db.execute(
+                stmt.on_conflict_do_update(
+                    index_elements=["pid"],
+                    set_={
+                        "core": stmt.excluded.core,
+                        "weapons": stmt.excluded.weapons,
+                        "updated_at": stmt.excluded.updated_at,
+                    },
+                )
+            )
+        await self.db.commit()
 
 
 # 一轮查询加落库通常几秒；慢过一轮时跳过新的一轮，不排队，免得名单差分错位
@@ -148,7 +201,8 @@ async def run_match_tick(
     tracker: MatchTracker | None = None,
 ) -> None:
     """全服统计每轮快照成功后调用：跑一轮对局跟踪并落库。异常只记日志。"""
-    if not get_settings().bf1_match_tracking or _tick_lock.locked():
+    settings = get_settings()
+    if not settings.bf1_match_tracking or _tick_lock.locked():
         return
     ea_metrics.set_source("tracker")
     t = tracker or default_tracker
@@ -162,7 +216,8 @@ async def run_match_tick(
             ) -> dict[int, dict[str, float]]:
                 return await fetch_stats(db, pids, names)
 
-            closed = await t.tick(rosters, maps, int(now.timestamp()), fetch)
+            store = SnapshotStore(db) if settings.bf1_round_weapons else None
+            closed = await t.tick(rosters, maps, int(now.timestamp()), fetch, store)
             if closed:
                 await save_rounds(db, closed)
                 logger.info(
@@ -230,8 +285,40 @@ def _summary(r: Bf1Round, servers: dict[int, tuple[str, int]]) -> RoundSummary:
     )
 
 
+def _weapons(slots: dict[int, int] | None) -> list[RoundWeapon] | None:
+    """武器载具槽位增量 → 按条目合并的列表，击杀多的在前、其次时长。"""
+    if slots is None:
+        return None
+    kinds = {"w": ("weapon", catalog("weapons")), "v": ("vehicle", catalog("vehicles"))}
+    by_item: dict[str, dict[str, int]] = {}
+    for slot, v in slots.items():
+        key, metric = rw.slot_item(slot)
+        by_item.setdefault(key, {})[metric] = v
+    out: list[RoundWeapon] = []
+    for key, metrics in by_item.items():
+        prefix, code = key.split(":", 1)
+        kind, entries = kinds[prefix]
+        entry = entries.get(code) or {}
+        out.append(
+            RoundWeapon(
+                kind=kind,  # type: ignore[arg-type]
+                name=entry.get("name"),
+                category=entry.get("category"),
+                image=normalize_map_image_url(entry.get("image")),
+                **metrics,
+            )
+        )
+    out.sort(key=lambda w: (-w.kills, -w.seconds))
+    return out
+
+
 def _player(
-    pid: int, team: int, status: int, stats: dict[int, int], name: str | None
+    pid: int,
+    team: int,
+    status: int,
+    stats: dict[int, int],
+    name: str | None,
+    weapons: dict[int, int] | None = None,
 ) -> RoundPlayer:
     kit_seconds = {kit: stats.get(KIT_BASE + 3 * i + 2, 0) for i, kit in enumerate(KITS)} | {
         "elite": stats.get(ELITE, 0)
@@ -262,6 +349,7 @@ def _player(
         kd=round(kills / max(deaths, 1), 2),  # 没死过时 KD 记为击杀数
         kpm=round(kills / seconds * 60, 2) if seconds else None,
         spm=round(score / seconds * 60) if seconds else None,
+        weapons=_weapons(weapons),
     )
 
 
@@ -299,9 +387,9 @@ async def get_round(db: AsyncSession, round_id: int) -> RoundDetail:
     names = await read_names(db, pids) if pids else {}
     players: list[RoundPlayer] = []
     for pid, data in rows.tuples():
-        for rid, team, status, stats in decode_entries(data):
+        for rid, team, status, stats, weapons in decode_entries(data):
             if rid == round_id:
-                players.append(_player(pid, team, status, stats, names.get(pid)))
+                players.append(_player(pid, team, status, stats, names.get(pid), weapons))
     players.sort(key=lambda p: (p.team, -p.score))
     return RoundDetail(
         **_summary(r, await _servers(db, {r.game_id})).model_dump(),
@@ -332,9 +420,9 @@ async def list_player_rounds(
     items = [
         PlayerRound(
             round=_summary(rounds[rid], servers),
-            player=_player(persona_id, team, status, stats, name),
+            player=_player(persona_id, team, status, stats, name, weapons),
         )
-        for rid, team, status, stats in page
+        for rid, team, status, stats, weapons in page
         if rid in rounds
     ]
     return PlayerRoundPage(items=items, next_before=page[-1][0] if more and page else None)

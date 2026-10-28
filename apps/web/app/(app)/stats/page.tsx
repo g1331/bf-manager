@@ -185,7 +185,7 @@ function HeroBanner({ data }: { data: BF1Overview }) {
       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-black/40" />
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-amber-500/70 via-amber-500/20 to-transparent" />
 
-      <div className="relative grid grid-cols-1 gap-8 p-6 sm:p-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-10">
+      <div className="relative grid grid-cols-1 gap-8 p-4 sm:p-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-10">
         <div className="flex flex-col">
           <div className="flex items-center gap-2 text-xs font-medium tracking-[0.25em] text-amber-400/90 uppercase">
             <Users className="size-3.5" />

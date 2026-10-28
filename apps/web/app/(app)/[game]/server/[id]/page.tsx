@@ -213,7 +213,7 @@ function ServerDetailView({
     <div className="relative min-h-screen w-full text-white">
       <DetailBackground url={summary.map_image_url} />
 
-      <div className="relative z-10 max-w-[1600px] px-6 py-5 sm:px-10 sm:py-8">
+      <div className="relative z-10 max-w-[1600px] px-3 py-4 sm:px-10 sm:py-8">
         <button
           type="button"
           onClick={onBack}
@@ -398,7 +398,7 @@ function SettingValue({ value, kind }: { value: string; kind: "toggle" | "scale"
 
 function Panel({ children }: { children: React.ReactNode }) {
   return (
-    <Bf1Panel cut={20} className="p-5 sm:p-6" style={{ background: "rgba(12,12,15,0.72)" }}>
+    <Bf1Panel cut={20} className="p-3.5 sm:p-6" style={{ background: "rgba(12,12,15,0.72)" }}>
       {children}
     </Bf1Panel>
   );

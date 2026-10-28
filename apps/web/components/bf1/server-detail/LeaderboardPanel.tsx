@@ -47,7 +47,7 @@ export function LeaderboardPanel({ gameId, game }: { gameId: number; game: strin
       variant="transparent"
       cut={20}
       corners={["topLeft", "bottomRight"]}
-      className="bg-black/45 p-5 backdrop-blur-sm sm:p-6"
+      className="bg-black/45 p-3.5 backdrop-blur-sm sm:p-6"
     >
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <SectionHeading className="mb-0">常客排行</SectionHeading>

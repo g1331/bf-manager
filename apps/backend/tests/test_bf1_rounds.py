@@ -228,7 +228,9 @@ async def test_save_and_query_rounds(test_session) -> None:
     t2 = int((now - timedelta(hours=1)).timestamp())
     test_session.add_all(
         [
-            Bf1GameInstance(game_id=10, server_id=99, name="old", first_seen=now, last_seen=now),
+            Bf1GameInstance(
+                game_id=10, server_id=99, name="old", first_seen=now, last_seen=now - timedelta(1)
+            ),
             Bf1GameInstance(game_id=11, server_id=99, name="mine", first_seen=now, last_seen=now),
         ]
     )
@@ -253,9 +255,10 @@ async def test_save_and_query_rounds(test_session) -> None:
     assert len([r for r in rows if r.pid == a]) in (1, 2)  # 两局跨 UTC 零点时会落在两行
 
     page = await round_service.list_server_rounds(test_session, 11)
-    assert [(r.game_id, r.server_name, r.player_count) for r in page.items] == [
-        (11, "mine", 2),
-        (10, "old", 1),
+    # 重启前的局也指向这台服现在的 gameId，前端靠它跳到服务器详情
+    assert [(r.game_id, r.server_game_id, r.server_name, r.player_count) for r in page.items] == [
+        (11, 11, "mine", 2),
+        (10, 11, "old", 1),
     ]
     assert page.next_before is None
     first = await round_service.list_server_rounds(test_session, 10, limit=1)

@@ -74,7 +74,7 @@ export function ServerListSkeleton({ rows = 12 }: { rows?: number }) {
 export function ServerDetailSkeleton() {
   return (
     <div className="relative min-h-screen w-full overflow-hidden text-white">
-      <div className="relative z-10 max-w-[1600px] px-6 py-5 sm:px-10 sm:py-8">
+      <div className="relative z-10 max-w-[1600px] px-3 py-4 sm:px-10 sm:py-8">
         <Skeleton className="mb-4 h-5 w-24" />
         <Skeleton className="h-[22rem] w-full" />
         <div className="mt-6 flex items-center gap-6 border-b border-white/10 pb-3">
@@ -95,7 +95,7 @@ export function ServerDetailSkeleton() {
 export function PlayerDetailSkeleton() {
   return (
     <div className="relative min-h-screen w-full overflow-hidden text-white">
-      <div className="relative z-10 max-w-[1600px] px-6 py-5 sm:px-10 sm:py-8">
+      <div className="relative z-10 max-w-[1600px] px-3 py-4 sm:px-10 sm:py-8">
         <Skeleton className="mb-4 h-5 w-28" />
         <Skeleton className="h-80 w-full" />
         <Skeleton className="mt-6 h-12 w-full" />

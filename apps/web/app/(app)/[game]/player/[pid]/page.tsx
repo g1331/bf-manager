@@ -168,7 +168,7 @@ function PlayerDetailView({
     <div className="relative min-h-screen w-full text-white">
       <DetailBackground url={pickBackgroundUrl(personaId, null)} grayscale={banned} />
 
-      <div className="relative z-10 max-w-[1600px] px-6 py-5 sm:px-10 sm:py-8">
+      <div className="relative z-10 max-w-[1600px] px-3 py-4 sm:px-10 sm:py-8">
         <button
           type="button"
           onClick={back}
@@ -185,6 +185,7 @@ function PlayerDetailView({
           summary={summary}
           online={onlineQ.data?.is_online ?? null}
           onlineServer={onlineQ.data?.server_name ?? null}
+          onlineGameId={onlineQ.data?.game_id ?? null}
           ban={ban}
           platoon={platoonQ.data ?? null}
           game={game}

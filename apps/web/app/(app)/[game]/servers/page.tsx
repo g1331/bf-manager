@@ -288,10 +288,10 @@ function ServerRow({ server, onClick }: { server: ServerSummary; onClick: () => 
       <button
         type="button"
         onClick={onClick}
-        className="group flex w-full items-center gap-4 border-b border-white/[0.06] px-3 py-2.5 text-left transition-colors hover:bg-white/[0.06]"
+        className="group flex w-full items-center gap-3 border-b border-white/[0.06] px-2 py-2.5 text-left transition-colors hover:bg-white/[0.06] sm:gap-4 sm:px-3"
       >
-        {/* 地图缩略图 */}
-        <div className="relative h-14 w-24 shrink-0 overflow-hidden rounded-sm bg-white/[0.04]">
+        {/* 地图缩略图：手机上缩小，把宽度让给服务器名 */}
+        <div className="relative h-11 w-16 shrink-0 overflow-hidden rounded-sm bg-white/[0.04] sm:h-14 sm:w-24">
           {server.map_image_url ? (
             // EA CDN 自带缩放与缓存，不走 next/image
             // eslint-disable-next-line @next/next/no-img-element
@@ -318,7 +318,7 @@ function ServerRow({ server, onClick }: { server: ServerSummary; onClick: () => 
           </div>
           <div className="mt-1 flex items-center gap-1.5 text-xs text-white/45">
             <CountryFlag code={flagCode} className="leading-none" />
-            {modeLabel ? <span>{modeLabel}</span> : null}
+            {modeLabel ? <span className="shrink-0 whitespace-nowrap">{modeLabel}</span> : null}
             {mapLabel ? (
               <>
                 <span className="text-white/25">·</span>
@@ -335,8 +335,8 @@ function ServerRow({ server, onClick }: { server: ServerSummary; onClick: () => 
         </div>
 
         {/* 玩家数：满员叠加排队人数（如 64 / 64 [1]）时内容偏长，固定列宽并禁止折行 */}
-        <div className="flex w-28 shrink-0 items-center justify-end gap-1.5 text-sm whitespace-nowrap tabular-nums">
-          <Users className="size-3.5 text-white/35" />
+        <div className="flex shrink-0 items-center justify-end gap-1.5 text-sm whitespace-nowrap tabular-nums sm:w-28">
+          <Users className="hidden size-3.5 text-white/35 sm:block" />
           <span className={cn(fill >= 100 ? "text-amber-300" : "text-white")}>
             {server.player_count}
           </span>

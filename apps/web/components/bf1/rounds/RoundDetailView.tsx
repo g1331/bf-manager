@@ -26,6 +26,11 @@ export function roundDuration(r: RoundSummary): string {
   return `${r.observed_start ? "" : "≥ "}${min} 分钟`;
 }
 
+/** 服务器详情「对局」分区里选中这一局；用这台服现在的 gameId，重启前的局也能打开 */
+export function roundHref(game: string, r: RoundSummary): string {
+  return `/${game}/server/${r.server_game_id}?round=${r.id}#rounds`;
+}
+
 export function kitLabel(kit: string | null): string {
   if (!kit) return "—";
   return kit === "elite" ? "精英兵" : classLabel(kit);
@@ -170,7 +175,7 @@ function RoundBanner({
           </div>
           {r.server_name ? (
             <Link
-              href={`/${game}/server/${r.game_id}`}
+              href={roundHref(game, r)}
               className="mx-auto mt-1 block max-w-[22rem] truncate text-[11px] text-white/40 hover:text-amber-300"
             >
               {r.server_name}

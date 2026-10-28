@@ -56,7 +56,7 @@ export function Panel({ children, className }: { children: React.ReactNode; clas
       variant="transparent"
       cut={20}
       corners={["topLeft", "bottomRight"]}
-      className={cn("bg-black/45 p-5 backdrop-blur-sm sm:p-6", className)}
+      className={cn("bg-black/45 p-3.5 backdrop-blur-sm sm:p-6", className)}
     >
       {children}
     </Bf1Panel>

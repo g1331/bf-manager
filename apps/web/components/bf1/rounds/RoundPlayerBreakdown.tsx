@@ -66,12 +66,10 @@ export function RoundPlayerBreakdown({ player: p }: { player: RoundPlayer }) {
         <p className="text-[11.5px] text-white/35">这一局没有用到武器载具</p>
       ) : (
         <div>
-          <div className="grid grid-cols-[minmax(0,1fr)_2.5rem_3.5rem] items-center gap-x-2 border-b border-white/10 pb-1 text-[10.5px] text-white/40 @xs:grid-cols-[3rem_minmax(0,1fr)_2.5rem_3.5rem] @sm:grid-cols-[3.5rem_minmax(0,1fr)_2.5rem_2.5rem_3rem_3.5rem]">
-            <span className="hidden @xs:block" />
+          <div className={cn(COLS, "border-b border-white/10 pb-1 text-[10.5px] text-white/40")}>
+            <span className="hidden @[17rem]:block" />
             <span>武器载具</span>
             <span className="text-right">击杀</span>
-            <span className="hidden text-right @sm:block">爆头</span>
-            <span className="hidden text-right @sm:block">命中率</span>
             <span className="text-right">时长</span>
           </div>
           <ul>
@@ -94,29 +92,39 @@ export function RoundPlayerBreakdown({ player: p }: { player: RoundPlayer }) {
   );
 }
 
+/** 图片、名称、击杀、时长四列；很窄时去掉图片 */
+const COLS =
+  "grid grid-cols-[minmax(0,1fr)_2.5rem_3.5rem] items-center gap-x-2 @[17rem]:grid-cols-[3.5rem_minmax(0,1fr)_2.5rem_3.5rem]";
+
 function WeaponRow({ weapon: w }: { weapon: RoundWeapon }) {
-  // 霰弹枪一发多弹丸，命中率可以超过 100%
-  const accuracy =
-    w.kind === "weapon" && w.shots > 0 ? `${Math.round((w.hits / w.shots) * 100)}%` : "—";
+  // 名称下面一行小字：分类，武器加爆头和命中率，载具加摧毁。霰弹枪一发多弹丸，命中率可以超过 100%
+  const detail = [
+    w.category,
+    w.kind === "weapon" && w.headshots ? `爆头 ${w.headshots}` : null,
+    w.kind === "weapon" && w.shots > 0 ? `命中率 ${Math.round((w.hits / w.shots) * 100)}%` : null,
+    w.kind === "vehicle" && w.destroyed ? `摧毁 ${w.destroyed}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
   return (
-    <li className="grid grid-cols-[minmax(0,1fr)_2.5rem_3.5rem] items-center gap-x-2 border-b border-white/[0.05] py-1 text-[12px] tabular-nums last:border-0 @xs:grid-cols-[3rem_minmax(0,1fr)_2.5rem_3.5rem] @sm:grid-cols-[3.5rem_minmax(0,1fr)_2.5rem_2.5rem_3rem_3.5rem]">
-      <WeaponImage weapon={w} className="hidden h-6 w-12 @xs:block @sm:w-14" />
+    <li
+      className={cn(
+        COLS,
+        "border-b border-white/[0.05] py-1 text-[12px] tabular-nums last:border-0",
+      )}
+    >
+      <WeaponImage weapon={w} className="hidden h-6 w-14 @[17rem]:block" />
       <div className="min-w-0">
         <div className="truncate text-white/85">{w.name ?? "未知"}</div>
-        {w.category ? (
-          <div className="truncate text-[10px] leading-tight text-white/35">
-            {w.category}
-            {w.kind === "vehicle" && w.destroyed ? ` · 摧毁 ${w.destroyed}` : ""}
+        {detail ? (
+          <div className="truncate text-[10px] leading-tight text-white/40" title={detail}>
+            {detail}
           </div>
         ) : null}
       </div>
       <span className={cn("text-right", w.kills ? "font-semibold text-white" : "text-white/35")}>
         {w.kills}
       </span>
-      <span className="hidden text-right text-white/60 @sm:block">
-        {w.kind === "weapon" ? w.headshots : "—"}
-      </span>
-      <span className="hidden text-right text-white/60 @sm:block">{accuracy}</span>
       <span className="text-right text-white/60">{fmtRoundSeconds(w.seconds)}</span>
     </li>
   );

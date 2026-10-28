@@ -24,6 +24,8 @@ from app.core import ea_metrics
 from app.core.cache import get_redis
 from app.core.config import get_settings
 from app.db.session import get_sessionmaker
+from app.domain.games.bf1 import round_weapons as rw
+from app.domain.games.bf1.blaze_catalog import catalog
 from app.domain.games.bf1.blaze_stats import KITS
 from app.domain.games.bf1.maps import (
     MapData,
@@ -63,6 +65,7 @@ from app.schemas.bf1.rounds import (
     RoundPage,
     RoundPlayer,
     RoundSummary,
+    RoundWeapon,
 )
 from app.schemas.bf1.server import ServerSummary
 from app.services.bf1.blaze_service import fetch_stats
@@ -282,8 +285,40 @@ def _summary(r: Bf1Round, servers: dict[int, tuple[str, int]]) -> RoundSummary:
     )
 
 
+def _weapons(slots: dict[int, int] | None) -> list[RoundWeapon] | None:
+    """武器载具槽位增量 → 按条目合并的列表，击杀多的在前、其次时长。"""
+    if slots is None:
+        return None
+    kinds = {"w": ("weapon", catalog("weapons")), "v": ("vehicle", catalog("vehicles"))}
+    by_item: dict[str, dict[str, int]] = {}
+    for slot, v in slots.items():
+        key, metric = rw.slot_item(slot)
+        by_item.setdefault(key, {})[metric] = v
+    out: list[RoundWeapon] = []
+    for key, metrics in by_item.items():
+        prefix, code = key.split(":", 1)
+        kind, entries = kinds[prefix]
+        entry = entries.get(code) or {}
+        out.append(
+            RoundWeapon(
+                kind=kind,  # type: ignore[arg-type]
+                name=entry.get("name"),
+                category=entry.get("category"),
+                image=normalize_map_image_url(entry.get("image")),
+                **metrics,
+            )
+        )
+    out.sort(key=lambda w: (-w.kills, -w.seconds))
+    return out
+
+
 def _player(
-    pid: int, team: int, status: int, stats: dict[int, int], name: str | None
+    pid: int,
+    team: int,
+    status: int,
+    stats: dict[int, int],
+    name: str | None,
+    weapons: dict[int, int] | None = None,
 ) -> RoundPlayer:
     kit_seconds = {kit: stats.get(KIT_BASE + 3 * i + 2, 0) for i, kit in enumerate(KITS)} | {
         "elite": stats.get(ELITE, 0)
@@ -314,6 +349,7 @@ def _player(
         kd=round(kills / max(deaths, 1), 2),  # 没死过时 KD 记为击杀数
         kpm=round(kills / seconds * 60, 2) if seconds else None,
         spm=round(score / seconds * 60) if seconds else None,
+        weapons=_weapons(weapons),
     )
 
 
@@ -351,9 +387,9 @@ async def get_round(db: AsyncSession, round_id: int) -> RoundDetail:
     names = await read_names(db, pids) if pids else {}
     players: list[RoundPlayer] = []
     for pid, data in rows.tuples():
-        for rid, team, status, stats, _ in decode_entries(data):
+        for rid, team, status, stats, weapons in decode_entries(data):
             if rid == round_id:
-                players.append(_player(pid, team, status, stats, names.get(pid)))
+                players.append(_player(pid, team, status, stats, names.get(pid), weapons))
     players.sort(key=lambda p: (p.team, -p.score))
     return RoundDetail(
         **_summary(r, await _servers(db, {r.game_id})).model_dump(),
@@ -384,9 +420,9 @@ async def list_player_rounds(
     items = [
         PlayerRound(
             round=_summary(rounds[rid], servers),
-            player=_player(persona_id, team, status, stats, name),
+            player=_player(persona_id, team, status, stats, name, weapons),
         )
-        for rid, team, status, stats, _ in page
+        for rid, team, status, stats, weapons in page
         if rid in rounds
     ]
     return PlayerRoundPage(items=items, next_before=page[-1][0] if more and page else None)

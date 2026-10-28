@@ -518,6 +518,12 @@ def _slot(cat: str, metric: str = "kills", nth: int = 0) -> tuple[int, str]:
     return found[nth]
 
 
+def rw_entry(slot: int) -> dict:
+    key, _ = rw.slot_item(slot)
+    prefix, code = key.split(":", 1)
+    return catalog("weapons" if prefix == "w" else "vehicles")[code]
+
+
 def _gate(cat: str, i: int = 0) -> str:
     return rw.GATES[cat][i][1]
 
@@ -675,9 +681,27 @@ async def test_snapshot_store_and_weapon_entries(test_session) -> None:
     )
     assert await store.load([1, 2]) == {1: ([2, 0, 300], b"\x03", now)}
 
-    a = 1005811915302
-    lines = [RoundLine(a, 1, FINISHED, _delta(3, win=True), {7: 3, 1800: 45})]
+    a, b = 1005811915302, 1003517866915
+    mg, _ = _slot("player_weapons1")
+    mg_seconds, _ = _slot("player_weapons1", "seconds")
+    tank = next(
+        slot
+        for slot in sorted(rw.slots_by_category()[STAT])
+        if rw.slot_item(slot)[0].startswith("v:") and rw.slot_item(slot)[1] == "kills"
+    )
+    lines = [
+        RoundLine(a, 1, FINISHED, _delta(3, win=True), {mg: 1, mg_seconds: 300, tank: 2}),
+        RoundLine(b, 2, FINISHED, _delta(1, win=False)),
+    ]
     await round_service.save_rounds(test_session, [_closed(10, now, lines)])
-    [row] = (await test_session.scalars(select(Bf1PlayerRoundDay))).all()
-    [(_, _, _, stats, weapons)] = decode_entries(row.data)
-    assert stats[KILLS] == 3 and weapons == {7: 3, 1800: 45}
+    row = await test_session.get(Bf1PlayerRoundDay, (a, datetime.fromtimestamp(now, UTC).date()))
+    [(rid, _, _, stats, weapons)] = decode_entries(row.data)
+    assert stats[KILLS] == 3 and weapons == {mg: 1, mg_seconds: 300, tank: 2}
+    # 接口按条目合并：载具击杀多排在前；没有数据的人是 None
+    detail = await round_service.get_round(test_session, rid)
+    players = {p.persona_id: p for p in detail.players}
+    first, second = players[a].weapons
+    assert (first.kind, first.kills, first.name) == ("vehicle", 2, rw_entry(tank)["name"])
+    assert (second.kind, second.kills, second.seconds) == ("weapon", 1, 300)
+    assert second.image and second.image.startswith("http")
+    assert players[b].weapons is None

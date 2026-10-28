@@ -63,7 +63,7 @@ def _parse_online(res: Any, persona_id: int) -> OnlineStatus:
     """从 EA getServersByPersonaIds 返回判定在线状态。
 
     纯函数，便于单测。res.result 是 {str(pid): serverInfo | None} 的字典：该
-    pid 的值为 dict 时在线（顺带取服务器名），值为 null 时离线；result 不是
+    pid 的值为 dict 时在线（顺带取服务器名和 gameId），值为 null 时离线；result 不是
     字典、或该 pid 缺席、或整体返回结构异常时无法判定，is_online 置 None。
     """
     if not isinstance(res, dict):
@@ -74,8 +74,15 @@ def _parse_online(res: Any, persona_id: int) -> OnlineStatus:
     server = result.get(str(persona_id))
     if server is None:
         return OnlineStatus(persona_id=persona_id, is_online=False)
-    server_name = server.get("name") if isinstance(server, dict) else None
-    return OnlineStatus(persona_id=persona_id, is_online=True, server_name=server_name)
+    if not isinstance(server, dict):
+        return OnlineStatus(persona_id=persona_id, is_online=True)
+    try:
+        game_id = int(server["gameId"])
+    except (KeyError, TypeError, ValueError):
+        game_id = None
+    return OnlineStatus(
+        persona_id=persona_id, is_online=True, server_name=server.get("name"), game_id=game_id
+    )
 
 
 def _build_platoon(res: Any) -> PlayerPlatoon | None:

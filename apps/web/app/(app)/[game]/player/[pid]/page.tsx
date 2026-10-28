@@ -185,6 +185,7 @@ function PlayerDetailView({
           summary={summary}
           online={onlineQ.data?.is_online ?? null}
           onlineServer={onlineQ.data?.server_name ?? null}
+          onlineGameId={onlineQ.data?.game_id ?? null}
           ban={ban}
           platoon={platoonQ.data ?? null}
           game={game}

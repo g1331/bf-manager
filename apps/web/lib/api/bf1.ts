@@ -64,6 +64,8 @@ export interface OnlineStatus {
   persona_id: number;
   is_online: boolean | null;
   server_name: string | null;
+  /** 在线时所在服务器的 gameId，用来跳转服务器详情 */
+  game_id: number | null;
 }
 
 /** 玩家当前所属战队（无战队时接口返回 null）。emblem_url 占位符已展开 */
@@ -277,6 +279,8 @@ export interface ServerLeaderboard {
 export interface RoundSummary {
   id: number;
   game_id: number;
+  /** 这台服现在的 gameId：重启后换新，旧 gameId 打不开服务器详情，跳转用这个 */
+  server_game_id: number;
   server_name: string | null;
   map_name: string | null;
   map_display_name: string | null;

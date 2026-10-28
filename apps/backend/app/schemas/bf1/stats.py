@@ -120,6 +120,7 @@ class OnlineStatus(BaseModel):
     persona_id: int
     is_online: bool | None = None
     server_name: str | None = None  # 在线时所在服务器名（若 EA 返回中可得）
+    game_id: int | None = None  # 在线时所在服务器的 gameId，用来跳转服务器详情
 
 
 class PlayerPlatoon(BaseModel):

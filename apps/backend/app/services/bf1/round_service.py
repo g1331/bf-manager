@@ -177,22 +177,42 @@ async def run_match_tick(
         logger.warning("BF1 match tick failed: {}", e)
 
 
-async def _server_names(db: AsyncSession, game_ids: set[int]) -> dict[int, str]:
+async def _servers(db: AsyncSession, game_ids: set[int]) -> dict[int, tuple[str, int]]:
+    """各 gameId 的服名和这台服最近一次出现的 gameId（没解析到 serverId 的就是它自己）。"""
     if not game_ids:
         return {}
-    rows = await db.execute(
-        select(Bf1GameInstance.game_id, Bf1GameInstance.name).where(
-            Bf1GameInstance.game_id.in_(game_ids)
+    rows = (
+        (
+            await db.execute(
+                select(
+                    Bf1GameInstance.game_id, Bf1GameInstance.name, Bf1GameInstance.server_id
+                ).where(Bf1GameInstance.game_id.in_(game_ids))
+            )
         )
+        .tuples()
+        .all()
     )
-    return dict(rows.tuples().all())
+    server_ids = {sid for _, _, sid in rows if sid}
+    latest: dict[int, int] = {}
+    if server_ids:
+        for sid, gid in (
+            await db.execute(
+                select(Bf1GameInstance.server_id, Bf1GameInstance.game_id)
+                .where(Bf1GameInstance.server_id.in_(server_ids))
+                .order_by(Bf1GameInstance.last_seen.desc())
+            )
+        ).tuples():
+            latest.setdefault(sid, gid)
+    return {gid: (name, latest.get(sid, gid) if sid else gid) for gid, name, sid in rows}
 
 
-def _summary(r: Bf1Round, server_name: str | None) -> RoundSummary:
+def _summary(r: Bf1Round, servers: dict[int, tuple[str, int]]) -> RoundSummary:
     teams = MapData.MapTeamDict.get(r.map_name or "") or {}
+    server_name, server_game_id = servers.get(r.game_id, (None, r.game_id))
     return RoundSummary(
         id=r.id,
         game_id=r.game_id,
+        server_game_id=server_game_id,
         server_name=server_name,
         map_name=r.map_name,
         map_display_name=translate_map_name(r.map_name),
@@ -260,8 +280,8 @@ async def list_server_rounds(
     )
     more = len(rows) > limit
     rows = rows[:limit]
-    names = await _server_names(db, {r.game_id for r in rows})
-    items = [_summary(r, names.get(r.game_id)) for r in rows]
+    servers = await _servers(db, {r.game_id for r in rows})
+    items = [_summary(r, servers) for r in rows]
     return RoundPage(items=items, next_before=items[-1].ended_at if more and items else None)
 
 
@@ -283,9 +303,8 @@ async def get_round(db: AsyncSession, round_id: int) -> RoundDetail:
             if rid == round_id:
                 players.append(_player(pid, team, status, stats, names.get(pid)))
     players.sort(key=lambda p: (p.team, -p.score))
-    server = (await _server_names(db, {r.game_id})).get(r.game_id)
     return RoundDetail(
-        **_summary(r, server).model_dump(),
+        **_summary(r, await _servers(db, {r.game_id})).model_dump(),
         players=players,
     )
 
@@ -308,11 +327,11 @@ async def list_player_rounds(
         r.id: r
         for r in await db.scalars(select(Bf1Round).where(Bf1Round.id.in_([e[0] for e in page])))
     }
-    servers = await _server_names(db, {r.game_id for r in rounds.values()})
+    servers = await _servers(db, {r.game_id for r in rounds.values()})
     name = (await read_names(db, [persona_id])).get(persona_id)
     items = [
         PlayerRound(
-            round=_summary(rounds[rid], servers.get(rounds[rid].game_id)),
+            round=_summary(rounds[rid], servers),
             player=_player(persona_id, team, status, stats, name),
         )
         for rid, team, status, stats in page

@@ -3,7 +3,7 @@
 import { Fragment } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Clock4, Copy, ShieldAlert } from "lucide-react";
+import { ChevronRight, Clock4, Copy, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
 import { BanBadge } from "@/components/bf1/visual/BanBadge";
@@ -24,6 +24,7 @@ export function PlayerHeroBanner({
   summary,
   online,
   onlineServer,
+  onlineGameId,
   ban,
   platoon,
   game,
@@ -34,6 +35,7 @@ export function PlayerHeroBanner({
   summary: PlayerStatsSummary;
   online: boolean | null;
   onlineServer: string | null;
+  onlineGameId: number | null;
   ban: BanStatus | undefined;
   platoon: PlayerPlatoon | null;
   game: string;
@@ -85,7 +87,11 @@ export function PlayerHeroBanner({
 
         {/* 状态行 */}
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          <OnlineChip online={online} server={onlineServer} />
+          <OnlineChip
+            online={online}
+            server={onlineServer}
+            href={onlineGameId != null ? `/${game}/server/${onlineGameId}` : null}
+          />
           <BanBadge
             source="bfban"
             state={ban?.bfban ?? "unknown"}
@@ -204,16 +210,42 @@ function RankBadge({ rank }: { rank: number | null }) {
   );
 }
 
-function OnlineChip({ online, server }: { online: boolean | null; server: string | null }) {
+function OnlineChip({
+  online,
+  server,
+  href,
+}: {
+  online: boolean | null;
+  server: string | null;
+  href: string | null;
+}) {
   if (online) {
-    return (
-      <span className="inline-flex max-w-full items-center gap-2 border border-emerald-400/40 bg-emerald-500/10 px-2 py-0.5 text-emerald-300 sm:max-w-[26rem]">
+    const body = (
+      <>
         <span className="relative flex size-2 shrink-0">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/70" />
           <span className="relative inline-flex size-2 rounded-full bg-emerald-400" />
         </span>
         <span className="truncate">{server ? `正在游戏 · ${server}` : "在线"}</span>
-      </span>
+      </>
+    );
+    const chip =
+      "inline-flex max-w-full items-center gap-2 border border-emerald-400/40 bg-emerald-500/10 px-2 py-0.5 text-emerald-300 sm:max-w-[26rem]";
+    // 知道在哪台服时点进服务器详情
+    return href ? (
+      <Link
+        href={href}
+        title="查看这台服务器"
+        className={cn(
+          chip,
+          "transition-colors hover:border-emerald-300/70 hover:bg-emerald-500/20",
+        )}
+      >
+        {body}
+        <ChevronRight className="-mr-1 size-3.5 shrink-0" />
+      </Link>
+    ) : (
+      <span className={chip}>{body}</span>
     );
   }
   // null 表示在线状态查询失败、无法判定，标注「未知」而非误判离线

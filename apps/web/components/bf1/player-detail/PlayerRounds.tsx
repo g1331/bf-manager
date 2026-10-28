@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { ChevronDown, Flag } from "lucide-react";
 import { Panel } from "@/components/bf1/player-detail/CareerOverview";
@@ -11,6 +12,7 @@ import {
   RoundDetailView,
   formatRoundTime,
   roundDuration,
+  roundHref,
 } from "@/components/bf1/rounds/RoundDetailView";
 import { RowsSkeleton } from "@/components/layout/PageSkeleton";
 import { bf1Api, type PlayerRound } from "@/lib/api/bf1";
@@ -46,6 +48,7 @@ export function PlayerRounds({ personaId, game }: { personaId: number; game: str
           <li key={it.round.id}>
             <RoundCard
               item={it}
+              game={game}
               expanded={open === it.round.id}
               onToggle={() => setOpen(open === it.round.id ? null : it.round.id)}
             />
@@ -101,30 +104,38 @@ function outcomeOf(p: PlayerRound["player"]): Outcome {
 
 function RoundCard({
   item: { round: r, player: p },
+  game,
   expanded,
   onToggle,
 }: {
   item: PlayerRound;
+  game: string;
   expanded: boolean;
   onToggle: () => void;
 }) {
   const o = OUTCOME[outcomeOf(p)];
   const faction = p.team === 1 ? r.team1_faction : r.team2_faction;
+  const mapName = r.map_display_name ?? r.map_name ?? "未知地图";
   return (
-    <button
-      type="button"
-      onClick={onToggle}
-      aria-expanded={expanded}
+    <div
       className={cn(
         "group relative flex w-full items-center gap-4 overflow-hidden border border-white/10 bg-gradient-to-r to-transparent to-45% py-2.5 pr-3 pl-4 text-left transition-colors hover:border-white/25",
         o.tint,
         expanded && "border-white/25",
       )}
     >
-      <span className={cn("absolute inset-y-0 left-0 w-1", o.bar)} />
+      {/* 整张卡片是展开按钮，里面的服务器名是单独的链接，不能嵌在 button 里 */}
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={expanded}
+        aria-label={`${mapName} 对局详情`}
+        className="absolute inset-0"
+      />
+      <span className={cn("pointer-events-none absolute inset-y-0 left-0 w-1", o.bar)} />
 
       {/* 阵营旗帜 + 胜负 */}
-      <div className="flex w-[4.5rem] shrink-0 flex-col items-center gap-0.5">
+      <div className="pointer-events-none flex w-[4.5rem] shrink-0 flex-col items-center gap-0.5">
         {faction ? (
           <FactionFlag
             faction={faction}
@@ -147,7 +158,7 @@ function RoundCard({
       </div>
 
       {/* 地图缩略图 */}
-      <div className="relative hidden h-12 w-20 shrink-0 overflow-hidden [clip-path:polygon(0_0,100%_0,100%_calc(100%-8px),calc(100%-8px)_100%,0_100%)] sm:block">
+      <div className="pointer-events-none relative hidden h-12 w-20 shrink-0 overflow-hidden [clip-path:polygon(0_0,100%_0,100%_calc(100%-8px),calc(100%-8px)_100%,0_100%)] sm:block">
         {r.map_image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={r.map_image_url} alt="" loading="lazy" className="h-full w-full object-cover" />
@@ -156,28 +167,41 @@ function RoundCard({
         )}
       </div>
 
-      <div className="min-w-0 flex-1">
+      <div className="pointer-events-none min-w-0 flex-1">
         <div className="truncate text-[15px] font-semibold text-white">
-          {r.map_display_name ?? r.map_name ?? "未知地图"}
+          {mapName}
           {r.mode_display_name ? (
             <span className="ml-2 text-xs font-medium text-amber-300/80">
               {r.mode_display_name}
             </span>
           ) : null}
         </div>
-        <div className="mt-0.5 truncate text-xs text-white/45">
-          {formatRoundTime(r.ended_at)} · {roundDuration(r)}
-          {faction ? ` · ${faction}` : ""}
-          {r.server_name ? ` · ${r.server_name}` : ""}
+        <div className="mt-0.5 flex min-w-0 text-xs text-white/45">
+          <span className="shrink-0 whitespace-nowrap">
+            {formatRoundTime(r.ended_at)} · {roundDuration(r)}
+            {faction ? ` · ${faction}` : ""}
+          </span>
+          {r.server_name ? (
+            <>
+              <span className="shrink-0 px-1">·</span>
+              <Link
+                href={roundHref(game, r)}
+                title="在服务器详情里查看这一局"
+                className="pointer-events-auto relative truncate underline-offset-2 transition-colors hover:text-amber-300 hover:underline"
+              >
+                {r.server_name}
+              </Link>
+            </>
+          ) : null}
         </div>
       </div>
 
-      <div className="hidden w-16 shrink-0 flex-col items-center gap-1 md:flex">
+      <div className="pointer-events-none hidden w-16 shrink-0 flex-col items-center gap-1 md:flex">
         <KitIcon kit={p.kit} className="size-6 opacity-85" />
         <span className="text-[10px] text-white/45">{kitLabel(p.kit)}</span>
       </div>
 
-      <dl className="grid shrink-0 grid-cols-3 gap-x-5 text-right tabular-nums sm:grid-cols-4">
+      <dl className="pointer-events-none grid shrink-0 grid-cols-3 gap-x-5 text-right tabular-nums sm:grid-cols-4">
         <Stat label="击杀 / 死亡" value={`${p.kills} / ${p.deaths}`} />
         <Stat label="得分" value={p.score.toLocaleString("en-US")} />
         <Stat label="SPM" value={p.spm ?? "—"} />
@@ -189,11 +213,11 @@ function RoundCard({
       </dl>
       <ChevronDown
         className={cn(
-          "size-4 shrink-0 text-white/30 transition-transform group-hover:text-white",
+          "pointer-events-none size-4 shrink-0 text-white/30 transition-transform group-hover:text-white",
           expanded && "rotate-180",
         )}
       />
-    </button>
+    </div>
   );
 }
 

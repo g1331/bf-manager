@@ -12,6 +12,8 @@ class RoundSummary(BaseModel):
 
     id: int
     game_id: int
+    # 这台服现在的 gameId：重启后换新，旧 gameId 打不开服务器详情，跳转用这个
+    server_game_id: int
     server_name: str | None = None
     map_name: str | None = None
     map_display_name: str | None = None

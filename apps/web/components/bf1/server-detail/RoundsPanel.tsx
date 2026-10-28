@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
 import { SectionHeading } from "@/components/layout/SectionHeading";
@@ -18,7 +18,12 @@ import { cn } from "@/lib/utils";
  * 合在一起列，保留 90 天。上方一排地图卡片按结束时间从新到旧选局，下方整宽显示计分板。
  */
 export function RoundsPanel({ gameId, game }: { gameId: number; game: string }) {
-  const [selected, setSelected] = useState<number | null>(null);
+  // 从玩家对局等处带着 ?round= 跳进来时直接选中那一局（组件只在客户端挂载，可直接读 window）
+  const [linked] = useState(() => {
+    const v = Number(new URLSearchParams(window.location.search).get("round"));
+    return Number.isSafeInteger(v) && v > 0 ? v : null;
+  });
+  const [selected, setSelected] = useState<number | null>(linked);
   const list = useInfiniteQuery({
     queryKey: ["bf1-server-rounds", gameId],
     queryFn: ({ pageParam }) => bf1Api.getServerRounds(gameId, pageParam),
@@ -27,7 +32,12 @@ export function RoundsPanel({ gameId, game }: { gameId: number; game: string }) 
     refetchInterval: 60_000,
   });
   const items = useMemo(() => list.data?.pages.flatMap((p) => p.items) ?? [], [list.data]);
-  const active = items.find((r) => r.id === selected) ?? items[0] ?? null;
+  // 选中的局可能比已加载的更早，不在卡片里也照样显示计分板
+  const activeId = selected ?? items[0]?.id ?? null;
+  const select = (id: number) => {
+    setSelected(id);
+    window.history.replaceState(null, "", `?round=${id}#rounds`);
+  };
 
   return (
     <Bf1Panel
@@ -56,8 +66,9 @@ export function RoundsPanel({ gameId, game }: { gameId: number; game: string }) 
               <RoundCard
                 key={r.id}
                 round={r}
-                active={r.id === active?.id}
-                onClick={() => setSelected(r.id)}
+                active={r.id === activeId}
+                scrollIntoView={r.id === linked}
+                onClick={() => select(r.id)}
               />
             ))}
             {list.hasNextPage ? (
@@ -73,9 +84,9 @@ export function RoundsPanel({ gameId, game }: { gameId: number; game: string }) 
               </li>
             ) : null}
           </ol>
-          {active ? (
+          {activeId != null ? (
             <div className="mt-4">
-              <RoundDetailView roundId={active.id} game={game} />
+              <RoundDetailView roundId={activeId} game={game} />
             </div>
           ) : null}
         </>
@@ -87,15 +98,22 @@ export function RoundsPanel({ gameId, game }: { gameId: number; game: string }) 
 function RoundCard({
   round: r,
   active,
+  scrollIntoView,
   onClick,
 }: {
   round: RoundSummary;
   active: boolean;
+  scrollIntoView: boolean;
   onClick: () => void;
 }) {
   const winner = r.winner === 1 ? r.team1_faction : r.winner === 2 ? r.team2_faction : null;
+  const ref = useRef<HTMLLIElement>(null);
+  // 跳进来的那一局可能排在横条后面，挂载时滚到它
+  useEffect(() => {
+    if (scrollIntoView) ref.current?.scrollIntoView({ block: "nearest", inline: "center" });
+  }, [scrollIntoView]);
   return (
-    <li className="shrink-0 snap-start">
+    <li ref={ref} className="shrink-0 snap-start">
       <button
         type="button"
         onClick={onClick}

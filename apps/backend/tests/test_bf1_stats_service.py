@@ -128,6 +128,7 @@ def test_parse_online_player_in_server() -> None:
     s = _parse_online(res, 42)
     assert s.is_online is True
     assert s.server_name == "TestServer #1"
+    assert s.game_id == 123
 
 
 def test_parse_online_player_offline_when_value_null() -> None:

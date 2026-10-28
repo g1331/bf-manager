@@ -82,7 +82,7 @@ export function PlayerHeroBanner({
         />
       ) : null}
 
-      <div className="relative p-6 sm:p-8 @4xl:pr-[20rem] @6xl:pr-[26rem]">
+      <div className="relative p-4 sm:p-8 @4xl:pr-[20rem] @6xl:pr-[26rem]">
         {banned ? <BanWarning ban={ban} /> : null}
 
         {/* 状态行 */}

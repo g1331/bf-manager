@@ -119,7 +119,7 @@ function RoundCard({
   return (
     <div
       className={cn(
-        "group relative flex w-full flex-wrap items-center gap-x-4 gap-y-2 overflow-hidden border border-white/10 bg-gradient-to-r to-transparent to-45% py-2.5 pr-3 pl-4 text-left transition-colors hover:border-white/25",
+        "group relative flex w-full flex-wrap items-center gap-x-3 gap-y-2.5 overflow-hidden border border-white/10 bg-gradient-to-r to-transparent to-45% py-2.5 pr-2.5 pl-3.5 text-left transition-colors hover:border-white/25 @2xl:gap-x-4 @2xl:pr-3 @2xl:pl-4",
         // 按列表自身宽度排版（侧栏会占掉宽度，视口断点测不准）：放不下一行时数据挪到第二行
         "@2xl:flex-nowrap",
         o.tint,
@@ -137,21 +137,24 @@ function RoundCard({
       <span className={cn("pointer-events-none absolute inset-y-0 left-0 w-1", o.bar)} />
 
       {/* 阵营旗帜 + 胜负 */}
-      <div className="pointer-events-none flex w-[4.5rem] shrink-0 flex-col items-center gap-0.5">
+      <div className="pointer-events-none flex w-12 shrink-0 flex-col items-center gap-0.5 @2xl:w-[4.5rem]">
         {faction ? (
           <FactionFlag
             faction={faction}
             won={p.status === "left" ? false : p.won}
-            className="size-9"
+            className="size-8 @2xl:size-9"
           />
         ) : (
-          <span className="flex size-9 items-center justify-center text-white/25" title="阵营未知">
+          <span
+            className="flex size-8 items-center justify-center text-white/25 @2xl:size-9"
+            title="阵营未知"
+          >
             <Flag className="size-5" />
           </span>
         )}
         <span
           className={cn(
-            "mt-1 text-xs leading-none font-extrabold tracking-[0.12em] whitespace-nowrap",
+            "mt-1 text-[11px] leading-none font-extrabold tracking-[0.06em] whitespace-nowrap @2xl:text-xs @2xl:tracking-[0.12em]",
             o.text,
           )}
         >
@@ -199,15 +202,11 @@ function RoundCard({
         <span className="text-[10px] text-white/45">{kitLabel(p.kit)}</span>
       </div>
 
-      <dl className="pointer-events-none order-last grid w-full shrink-0 grid-cols-3 gap-x-5 pl-[5.5rem] tabular-nums @md:grid-cols-4 @2xl:order-none @2xl:w-auto @2xl:pl-0 @2xl:text-right">
+      <dl className="pointer-events-none order-last grid w-full shrink-0 grid-cols-4 gap-x-3 border-t border-white/[0.07] pt-2 tabular-nums @2xl:order-none @2xl:w-auto @2xl:gap-x-5 @2xl:border-0 @2xl:pt-0 @2xl:text-right">
         <Stat label="击杀 / 死亡" value={`${p.kills} / ${p.deaths}`} />
         <Stat label="得分" value={p.score.toLocaleString("en-US")} />
         <Stat label="SPM" value={p.spm ?? "—"} />
-        <Stat
-          label="K/D"
-          value={p.kd != null ? p.kd.toFixed(2) : "—"}
-          className="hidden @md:block"
-        />
+        <Stat label="K/D" value={p.kd != null ? p.kd.toFixed(2) : "—"} />
       </dl>
       <ChevronDown
         className={cn(

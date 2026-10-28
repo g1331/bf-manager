@@ -506,6 +506,34 @@ def test_weapon_slots_cover_catalog_and_snapshot_codec() -> None:
     assert rw.diff(blob, later) is None
     kills_slot = 2 * len(rw.METRICS) + rw.KILLS_METRIC
     assert rw.kills({kills_slot: 4, kills_slot + 1: 600, 0: 2}) == 6
+    # 战马的击杀已经记在骑乘时用的武器上，对账不重复加
+    horse = rw.items().index("v:horse") * len(rw.METRICS) + rw.KILLS_METRIC
+    assert rw.kills({kills_slot: 4, horse: 4}) == 4
+    assert set(rw.items()) >= rw.SHARED_KILLS
+
+
+def test_catalog_names_are_simplified() -> None:
+    # EA 只给繁体，目录加载时转简体
+    texts = [
+        e[f]
+        for kind in ("weapons", "vehicles")
+        for e in catalog(kind).values()
+        for f in ("name", "category")
+        if e.get(f)
+    ]
+    assert not [t for t in texts if set(t) & set("槍彈擊戰馬輕衝機車")]
+    assert catalog("vehicles")["horse"]["name"] == "战马"
+
+
+def test_round_weapons_flag_shared_kills() -> None:
+    horse = rw.items().index("v:horse") * len(rw.METRICS)
+    gun, _ = _slot("player_weapons1")
+    weapons = round_service._weapons({horse + rw.KILLS_METRIC: 3, gun: 3})
+    assert weapons is not None
+    assert {(w.name, w.shared_kills) for w in weapons} == {
+        ("战马", True),
+        (rw_entry(gun)["name"], False),
+    }
 
 
 def _slot(cat: str, metric: str = "kills", nth: int = 0) -> tuple[int, str]:

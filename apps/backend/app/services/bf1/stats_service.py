@@ -138,7 +138,8 @@ _VEHICLE_SORT_ORDER_TO_KIT: dict[int, str] = {
     1: "16",  # 轟炸機
     2: "21",  # 重型轟炸機
 }
-_VEHICLE_CATEGORY_TO_KIT: dict[str, str] = {"飛船": "24", "驅逐艦": "23"}
+# 分类名来自目录，加载时已转成简体
+_VEHICLE_CATEGORY_TO_KIT: dict[str, str] = {"飞船": "24", "驱逐舰": "23"}
 
 
 def _slot_sorted_guids(slots: Any) -> list[str]:
@@ -196,7 +197,7 @@ def _extract_kit_skin_candidates(presets_result: Any) -> dict[str, list[str]]:
 
 
 def _kit_number_for_category(sort_order: Any, name: str | None) -> str | None:
-    """载具分类 → presets kit 编号；sortOrder 数值映射优先，飛船/驅逐艦按分类名"""
+    """载具分类 → presets kit 编号；sortOrder 数值映射优先，飞船/驱逐舰按分类名"""
     if isinstance(sort_order, int) and sort_order in _VEHICLE_SORT_ORDER_TO_KIT:
         return _VEHICLE_SORT_ORDER_TO_KIT[sort_order]
     if name is not None and name in _VEHICLE_CATEGORY_TO_KIT:

@@ -3,7 +3,7 @@
 数据文件 data/skins.json 每条只含 name / rarity / image 三字段，键为大写 GUID，
 image 保留 `[BB_PREFIX]` 占位符，查表时经 normalize_map_image_url 展开为完整 CDN URL。
 玩家已装备皮肤的 guid 由 Loadout.getPresetsByPersonaId 给出，preset 槽位中混有
-非皮肤物件的 guid，查不到即非皮肤，调用方按「取第一个命中项」处理。
+非皮肤物件的 guid，查不到即非皮肤，调用方按「取第一个命中项」处理。名称里混有繁体，查表时转成简体。
 """
 
 from __future__ import annotations
@@ -13,6 +13,8 @@ import logging
 from functools import lru_cache
 from pathlib import Path
 from typing import TypedDict
+
+from zhconv import zhconv
 
 from app.domain.games.bf1.maps import normalize_map_image_url
 
@@ -49,7 +51,7 @@ def lookup_skin(guid: str | None) -> SkinInfo | None:
     if entry is None:
         return None
     return SkinInfo(
-        name=entry.get("name"),
+        name=zhconv.convert(entry["name"], "zh-cn") if entry.get("name") else None,
         rarity=entry.get("rarity"),
         image=normalize_map_image_url(entry.get("image")),
     )

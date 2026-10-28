@@ -54,6 +54,9 @@ GATES: dict[str, tuple[tuple[str, str], ...]] = {
         (STAT, "c__plBo_di_g"),
     ),
 }
+# 击杀和武器重复计算的条目：骑在马上用步枪、长枪、手榴弹打死人，这一杀同时记在战马和那件武器上
+# （2026-10-28 生产对账，武器击杀之和比核心多的 1100 行里 1064 行用了战马）
+SHARED_KILLS = frozenset({"v:horse"})
 GATE_NAMES: list[tuple[str, str]] = [g for gs in GATES.values() for g in gs]
 
 
@@ -180,8 +183,12 @@ def diff(end: bytes, base: bytes) -> dict[int, int] | None:
 
 
 def kills(delta: dict[int, int]) -> int:
-    """各武器载具击杀之和，用来和核心击杀对账。"""
-    return sum(v for slot, v in delta.items() if slot % len(METRICS) == KILLS_METRIC)
+    """各武器载具击杀之和，用来和核心击杀对账；SHARED_KILLS 的击杀已算在武器上，不重复加。"""
+    return sum(
+        v
+        for slot, v in delta.items()
+        if slot % len(METRICS) == KILLS_METRIC and slot_item(slot)[0] not in SHARED_KILLS
+    )
 
 
 def full_names() -> dict[str, list[str]]:

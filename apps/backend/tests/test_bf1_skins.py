@@ -8,13 +8,13 @@ from __future__ import annotations
 from app.domain.games.bf1.skins import _load_skins, lookup_skin
 
 # 皮肤静态表中的真实条目
-_KNOWN_GUID = "6E5FDF7A-B920-4728-8019-056A4AEE130E"  # M1917 獎盃 (極稀有)
+_KNOWN_GUID = "6E5FDF7A-B920-4728-8019-056A4AEE130E"  # 表里是 M1917 獎盃 (極稀有)，查出来转成简体
 
 
 def test_lookup_skin_hit_expands_image_url() -> None:
     skin = lookup_skin(_KNOWN_GUID)
     assert skin is not None
-    assert skin["name"] == "M1917 獎盃 (極稀有)"
+    assert skin["name"] == "M1917 奖杯 (极稀有)"
     assert skin["rarity"] == "Superior"
     # image 占位符已展开为完整 CDN URL
     assert skin["image"] is not None

@@ -10,9 +10,13 @@ function fmtRoundSeconds(s: number): string {
   return s < 60 ? `${s} 秒` : `${Math.round(s / 60)} 分钟`;
 }
 
-/** 这一局用得最多的武器载具：击杀最多，没有击杀时取用得最久的（列表已按这个顺序排好） */
+/**
+ * 这一局用得最多的武器载具：击杀最多，没有击杀时取用得最久的（列表已按这个顺序排好）。
+ * 战马的击杀其实是骑在马上用的武器打的，有别的武器拿到击杀时让给它。
+ */
 export function mainWeapon(p: RoundPlayer): RoundWeapon | null {
-  return p.weapons?.find((w) => w.kills > 0 || w.seconds > 0) ?? null;
+  const used = p.weapons?.filter((w) => w.kills > 0 || w.seconds > 0) ?? [];
+  return used.find((w) => w.kills > 0 && !w.shared_kills) ?? used[0] ?? null;
 }
 
 export function WeaponImage({ weapon, className }: { weapon: RoundWeapon; className?: string }) {
@@ -97,9 +101,11 @@ const COLS =
   "grid grid-cols-[minmax(0,1fr)_2.5rem_3.5rem] items-center gap-x-2 @[17rem]:grid-cols-[3.5rem_minmax(0,1fr)_2.5rem_3.5rem]";
 
 function WeaponRow({ weapon: w }: { weapon: RoundWeapon }) {
-  // 名称下面一行小字：分类，武器加爆头和命中率，载具加摧毁。霰弹枪一发多弹丸，命中率可以超过 100%
+  // 名称下面一行小字：分类，武器加爆头和命中率，载具加摧毁。霰弹枪一发多弹丸，命中率可以超过 100%。
+  // 战马的击杀和骑马时用的武器重复，分类换成这句说明，窄屏也要完整显示
+  const note = w.shared_kills && w.kills > 0;
   const detail = [
-    w.category,
+    note ? "击杀含骑马时用武器打的" : w.category,
     w.kind === "weapon" && w.headshots ? `爆头 ${w.headshots}` : null,
     w.kind === "weapon" && w.shots > 0 ? `命中率 ${Math.round((w.hits / w.shots) * 100)}%` : null,
     w.kind === "vehicle" && w.destroyed ? `摧毁 ${w.destroyed}` : null,
@@ -117,7 +123,10 @@ function WeaponRow({ weapon: w }: { weapon: RoundWeapon }) {
       <div className="min-w-0">
         <div className="truncate text-white/85">{w.name ?? "未知"}</div>
         {detail ? (
-          <div className="truncate text-[10px] leading-tight text-white/40" title={detail}>
+          <div
+            className={cn("text-[10px] leading-tight text-white/40", !note && "truncate")}
+            title={detail}
+          >
             {detail}
           </div>
         ) : null}

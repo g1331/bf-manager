@@ -239,7 +239,7 @@ def _player(
         vehicle_kills=stats.get(VEHICLE_KILLS, 0),
         seconds=seconds,
         kit=kit,
-        kd=round(kills / deaths, 2) if deaths else None,
+        kd=round(kills / max(deaths, 1), 2),  # 没死过时 KD 记为击杀数
         kpm=round(kills / seconds * 60, 2) if seconds else None,
         spm=round(score / seconds * 60) if seconds else None,
     )

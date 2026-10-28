@@ -273,6 +273,9 @@ async def test_save_and_query_rounds(test_session) -> None:
         6.0,
     )
     assert (pb.persona_id, pb.status, pb.won, pb.seconds, pb.spm) == (b, "left", None, 0, None)
+    # 没死过时 KD 就是击杀数，不再是 None（前端曾显示成 ∞）
+    assert round_service._player(1, 1, FINISHED, {KILLS: 9}, None).kd == 9
+    assert round_service._player(1, 1, FINISHED, {}, None).kd == 0
 
     mine = await round_service.list_player_rounds(test_session, a, limit=1)
     assert [i.player.kills for i in mine.items] == [30]

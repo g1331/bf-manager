@@ -386,7 +386,7 @@ function TeamBoard({
                 <td className="pt-2.5 pl-4 text-right">{t.kills}</td>
                 <td className="pt-2.5 pl-4 text-right">{t.deaths}</td>
                 <td className="pt-2.5 pl-4 text-right">
-                  {t.deaths ? (t.kills / t.deaths).toFixed(2) : "—"}
+                  {(t.kills / Math.max(t.deaths, 1)).toFixed(2)}
                 </td>
                 <td className="pt-2.5 pl-4 text-right">{t.score.toLocaleString("en-US")}</td>
               </tr>
@@ -460,7 +460,7 @@ function PlayerRow({
       <td className="py-[7px] pl-4 text-right text-white/90">{p.kills}</td>
       <td className="py-[7px] pl-4 text-right text-white/60">{p.deaths}</td>
       <td className="py-[7px] pl-4 text-right text-white/75">
-        {p.kd != null ? p.kd.toFixed(2) : p.kills ? "∞" : "—"}
+        {p.kd != null ? p.kd.toFixed(2) : "—"}
       </td>
       <td className="py-[7px] pl-4 text-right font-semibold text-white">
         {p.score.toLocaleString("en-US")}

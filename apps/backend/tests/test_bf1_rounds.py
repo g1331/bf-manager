@@ -33,7 +33,14 @@ from app.domain.games.bf1.round_stats import (
 from app.models.bf1.game_instance import Bf1GameInstance
 from app.models.bf1.rounds import Bf1PlayerRoundDay
 from app.services.bf1 import round_service
-from app.services.bf1.match_tracker import RECHECK_AFTER, ClosedRound, MatchTracker, RoundLine
+from app.services.bf1.match_tracker import (
+    MAX_GAP,
+    MISSING_RETRY,
+    RECHECK_AFTER,
+    ClosedRound,
+    MatchTracker,
+    RoundLine,
+)
 from app.services.bf1.server_roster_service import QUEUE, TEAM1, TEAM2
 from sqlalchemy import select
 
@@ -381,6 +388,55 @@ async def test_tracker_does_not_reuse_vector_from_before_leaving() -> None:
     rosters = {1: {2: (TEAM2, "p2")}, 2: {1: (TEAM1, "p1")}}
     await tr.tick(rosters, maps, t0 + 60, career.fetch)
     assert tr.rounds[2].seats[1].base == career.vec[1]
+
+
+async def test_tracker_backs_off_when_ea_has_no_data(monkeypatch) -> None:
+    events: Counter[str] = Counter()
+    monkeypatch.setattr(ea_metrics, "count_event", lambda name, n=1: events.update({name: n}))
+    career, tr = Career(), MatchTracker()
+    career.add(1)  # 3 在 EA 那边没有数据
+    t0 = 1_800_000_000
+    roster = _roster(p1=TEAM1, p3=TEAM2)
+    await tr.tick(roster, MAP, t0, career.fetch)
+    assert events["stats_missing"] == 1 and tr.rounds[1].seats[3].retry_at == t0 + MISSING_RETRY
+    # 退避期间不再查他
+    for t in range(t0 + 60, t0 + MISSING_RETRY, 60):
+        await tr.tick(roster, MAP, t, career.fetch)
+    assert all(3 not in pids for pids, _ in career.calls[1:])
+    assert events["want_join"] == 2
+    # 到点再查，这回有了
+    career.add(3)
+    await tr.tick(roster, MAP, t0 + MISSING_RETRY, career.fetch)
+    assert tr.rounds[1].seats[3].base == career.vec[3]
+    assert events["want_join"] == 3 and events["stats_missing"] == 1
+
+
+async def test_tracker_compares_join_base_with_last_seen_vector(monkeypatch) -> None:
+    events: Counter[str] = Counter()
+    monkeypatch.setattr(ea_metrics, "count_event", lambda name, n=1: events.update({name: n}))
+    career, tr = Career(), MatchTracker()
+    for p in (1, 2, 3):
+        career.add(p)
+    t0 = 1_800_000_000
+    await tr.tick(_roster(p1=TEAM1, p2=TEAM2), MAP, t0, career.fetch)
+    assert events["join_core_unseen"] == 2
+    # 两人都走了；断档很久之后回来（断档丢掉对局状态，但摘要还在）：1 期间没打过，2 在别处打过
+    await tr.tick({}, {}, t0 + 60, career.fetch)
+    career.add(2, k=3, s=400)
+    later = t0 + 60 + MAX_GAP + 600
+    await tr.tick(_roster(p1=TEAM1, p2=TEAM2, p3=TEAM2), MAP, later, career.fetch)
+    assert (events["join_core_same"], events["join_core_changed"], events["join_core_unseen"]) == (
+        1,
+        1,
+        3,
+    )
+    # 摘要随状态导出导入；旧版本导出的状态没有这一项也能导入
+    restored = MatchTracker()
+    restored.load(json.loads(json.dumps(tr.dump())))
+    assert restored.fingerprints == tr.fingerprints and len(tr.fingerprints) == 3
+    old = {k: v for k, v in tr.dump().items() if k != "fingerprints"}
+    restored.load(old)
+    assert restored.fingerprints == {} and restored.rounds.keys() == tr.rounds.keys()
 
 
 async def test_tracker_dump_and_load_continue_the_round() -> None:

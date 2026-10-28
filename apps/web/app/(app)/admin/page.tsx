@@ -411,6 +411,15 @@ const TRACKER_GROUPS: { title: string; items: [string, string][] }[] = [
       ["recheck_same_fresh", "没变化 · 离线进服的"],
     ],
   },
+  {
+    title: "查到的进服基线和上次比",
+    items: [
+      ["join_core_same", "没变（24 小时内查过）"],
+      ["join_core_changed", "变了"],
+      ["join_core_unseen", "24 小时内没查过"],
+      ["stats_missing", "EA 没返回数据，10 分钟后再查"],
+    ],
+  },
 ];
 
 function TrackerEvents({ events }: { events: TrackerEventCount[] }) {

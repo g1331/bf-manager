@@ -8,7 +8,8 @@
   等下一轮（约一分钟，让整服写完）再把在服的人全查一遍，作为这一局的终值、下一局的基线；
 - 进服后过一阵复查一次局数和胜负：之前打过的局的结算可能在进服后几分钟才写入（实测从离线
   直接进服的人也有 3–4%），变了就重查全量换成新的基线，免得算进这一局；
-- 刚从别的服过来、离开那台服之后已经查到过值的人，直接拿这个值当基线，不再重查。
+- 刚从别的服过来、离开那台服之后已经查到过值的人，直接拿这个值当基线，不再重查；
+- EA 没返回某人的数据时（多半是还没有生涯记录的号），隔 MISSING_RETRY 再查，不再每轮重查。
 
 状态在内存里，停机时导出、启动时导入（见 round_service），重启间隔不超过 MAX_GAP 就接着跟；
 快照断档太久则从头开始，接手时已经开打的局标记为 observed_start=False。
@@ -62,6 +63,11 @@ MAX_QUERY_PER_TICK = 960
 HOP_WINDOW = 900
 # 查到的向量留这么久，统计进服时有没有现成的值可当基线
 VECTOR_KEEP = 600
+# EA 没返回某人的数据时，隔这么久再查他的基线
+MISSING_RETRY = 600
+# 每人最近一次查到的向量摘要留这么久，统计进服时生涯和上次比有没有变（没变说明期间没上过场，
+# 查过的值可以长期沿用）
+FINGERPRINT_KEEP = 86400
 
 # 本轮要查的人按原因计数时用的名字，下标即 _wanted 里的优先级
 _WANT_REASONS = ("want_settle", "want_leave", "want_recheck", "want_join")
@@ -80,6 +86,7 @@ class Seat:
     end: list[int] | None = None  # 离开后查到的终值
     hop: bool = False  # 进服前 HOP_WINDOW 内在别的服出现过
     rebase: bool = False  # 复查发现局数或胜负变了，要重查全量换基线
+    retry_at: int | None = None  # EA 没返回数据，到这个时刻才再查基线
 
 
 @dataclass
@@ -148,6 +155,8 @@ class MatchTracker:
         self.seen: dict[int, tuple[int, int]] = {}
         # 每个人最近查到的向量和时刻（只留 VECTOR_KEEP 内的）
         self.recent: dict[int, tuple[list[int], int]] = {}
+        # 每个人最近查到的向量摘要和时刻（只留 FINGERPRINT_KEEP 内的，断档也不丢）
+        self.fingerprints: dict[int, tuple[int, int]] = {}
 
     async def tick(
         self,
@@ -181,6 +190,7 @@ class MatchTracker:
                 return closed
             vectors = {pid: to_vector(v) for pid, v in values.items()}
             self._apply(vectors, now)
+            self._back_off(wanted - vectors.keys(), now)
 
         for gid in list(self.rounds):
             rnd = self.rounds[gid]
@@ -214,6 +224,9 @@ class MatchTracker:
         self.seen = {pid: v for pid, v in prev.items() if now - v[1] <= HOP_WINDOW}
         self.seen.update((pid, (gid, now)) for gid, roster in rosters.items() for pid in roster)
         self.recent = {pid: v for pid, v in self.recent.items() if now - v[1] <= VECTOR_KEEP}
+        self.fingerprints = {
+            pid: v for pid, v in self.fingerprints.items() if now - v[1] <= FINGERPRINT_KEEP
+        }
 
     def _sync_seats(
         self,
@@ -358,7 +371,8 @@ class MatchTracker:
                 if not s.left and gid in settling:
                     ranked.append((0, pid))  # 结算收尾
                 elif s.base is None:
-                    ranked.append((3, pid))  # 新进服
+                    if s.retry_at is None or s.retry_at <= now:
+                        ranked.append((3, pid))  # 新进服
                 elif s.left and s.end is None:
                     ranked.append((1, pid))  # 刚离开
                 elif not s.left and s.rebase and rnd.settle_seen_at is None:
@@ -379,6 +393,7 @@ class MatchTracker:
 
     def _apply(self, vectors: dict[int, list[int]], now: int) -> None:
         self.recent.update((pid, (vec, now)) for pid, vec in vectors.items())
+        based: set[int] = set()
         for rnd in self.rounds.values():
             for pid, s in rnd.seats.items():
                 vec = vectors.get(pid)
@@ -386,10 +401,30 @@ class MatchTracker:
                     continue
                 if s.base is None:
                     s.base, s.base_at = vec, now
+                    based.add(pid)
                 elif s.left and s.end is None:
                     s.end = vec
                 elif s.rebase and rnd.settle_seen_at is None:
                     s.base, s.base_at, s.rebase = vec, now, False
+        # 刚查了基线的人，生涯和上次查到的比：没变说明期间没在任何地方上过场，上次的值本可以直接用
+        for pid in based:
+            last = self.fingerprints.get(pid)
+            if last is None:
+                ea_metrics.count_event("join_core_unseen")
+            else:
+                same = last[0] == hash(tuple(vectors[pid]))
+                ea_metrics.count_event("join_core_same" if same else "join_core_changed")
+        self.fingerprints.update((pid, (hash(tuple(vec)), now)) for pid, vec in vectors.items())
+
+    def _back_off(self, missing: set[int], now: int) -> None:
+        """EA 没返回这些人的数据：还缺基线的隔 MISSING_RETRY 再查，免得每轮都查一遍。"""
+        if not missing:
+            return
+        ea_metrics.count_event("stats_missing", len(missing))
+        for rnd in self.rounds.values():
+            for pid, s in rnd.seats.items():
+                if pid in missing and s.base is None:
+                    s.retry_at = now + MISSING_RETRY
 
     def _close(
         self,
@@ -456,6 +491,7 @@ class MatchTracker:
             },
             "seen": {str(pid): list(v) for pid, v in self.seen.items()},
             "recent": {str(pid): [vec, at] for pid, (vec, at) in self.recent.items()},
+            "fingerprints": {str(pid): list(v) for pid, v in self.fingerprints.items()},
         }
 
     def load(self, data: dict[str, Any]) -> None:
@@ -472,11 +508,14 @@ class MatchTracker:
         }
         seen = {int(pid): (v[0], v[1]) for pid, v in data["seen"].items()}
         recent = {int(pid): (v[0], v[1]) for pid, v in data["recent"].items()}
-        self.last_tick, self.rounds, self.seen, self.recent = (
+        # 旧版本导出的状态没有这一项
+        fingerprints = {int(pid): (v[0], v[1]) for pid, v in data.get("fingerprints", {}).items()}
+        self.last_tick, self.rounds, self.seen, self.recent, self.fingerprints = (
             data["last_tick"],
             rounds,
             seen,
             recent,
+            fingerprints,
         )
 
 

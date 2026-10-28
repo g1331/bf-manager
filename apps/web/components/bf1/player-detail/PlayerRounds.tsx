@@ -43,7 +43,7 @@ export function PlayerRounds({ personaId, game }: { personaId: number; game: str
     );
   return (
     <Panel>
-      <ol className="space-y-2">
+      <ol className="@container space-y-2">
         {items.map((it) => (
           <li key={it.round.id}>
             <RoundCard
@@ -119,7 +119,9 @@ function RoundCard({
   return (
     <div
       className={cn(
-        "group relative flex w-full items-center gap-4 overflow-hidden border border-white/10 bg-gradient-to-r to-transparent to-45% py-2.5 pr-3 pl-4 text-left transition-colors hover:border-white/25",
+        "group relative flex w-full flex-wrap items-center gap-x-4 gap-y-2 overflow-hidden border border-white/10 bg-gradient-to-r to-transparent to-45% py-2.5 pr-3 pl-4 text-left transition-colors hover:border-white/25",
+        // 按列表自身宽度排版（侧栏会占掉宽度，视口断点测不准）：放不下一行时数据挪到第二行
+        "@2xl:flex-nowrap",
         o.tint,
         expanded && "border-white/25",
       )}
@@ -158,7 +160,7 @@ function RoundCard({
       </div>
 
       {/* 地图缩略图 */}
-      <div className="pointer-events-none relative hidden h-12 w-20 shrink-0 overflow-hidden [clip-path:polygon(0_0,100%_0,100%_calc(100%-8px),calc(100%-8px)_100%,0_100%)] sm:block">
+      <div className="pointer-events-none relative hidden h-12 w-20 shrink-0 overflow-hidden [clip-path:polygon(0_0,100%_0,100%_calc(100%-8px),calc(100%-8px)_100%,0_100%)] @3xl:block">
         {r.map_image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={r.map_image_url} alt="" loading="lazy" className="h-full w-full object-cover" />
@@ -176,39 +178,35 @@ function RoundCard({
             </span>
           ) : null}
         </div>
-        <div className="mt-0.5 flex min-w-0 text-xs text-white/45">
-          <span className="shrink-0 whitespace-nowrap">
-            {formatRoundTime(r.ended_at)} · {roundDuration(r)}
-            {faction ? ` · ${faction}` : ""}
-          </span>
-          {r.server_name ? (
-            <>
-              <span className="shrink-0 px-1">·</span>
-              <Link
-                href={roundHref(game, r)}
-                title="在服务器详情里查看这一局"
-                className="pointer-events-auto relative truncate underline-offset-2 transition-colors hover:text-amber-300 hover:underline"
-              >
-                {r.server_name}
-              </Link>
-            </>
-          ) : null}
+        {/* 服务器名单独一行，点它跳到服务器详情里的这一局 */}
+        <div className="mt-0.5 truncate text-xs text-white/45">
+          {formatRoundTime(r.ended_at)} · {roundDuration(r)}
+          {faction ? ` · ${faction}` : ""}
         </div>
+        {r.server_name ? (
+          <Link
+            href={roundHref(game, r)}
+            title="在服务器详情里查看这一局"
+            className="pointer-events-auto relative inline-block max-w-full truncate align-top text-xs text-white/45 underline-offset-2 transition-colors hover:text-amber-300 hover:underline"
+          >
+            {r.server_name}
+          </Link>
+        ) : null}
       </div>
 
-      <div className="pointer-events-none hidden w-16 shrink-0 flex-col items-center gap-1 md:flex">
+      <div className="pointer-events-none hidden w-16 shrink-0 flex-col items-center gap-1 @[50rem]:flex">
         <KitIcon kit={p.kit} className="size-6 opacity-85" />
         <span className="text-[10px] text-white/45">{kitLabel(p.kit)}</span>
       </div>
 
-      <dl className="pointer-events-none grid shrink-0 grid-cols-3 gap-x-5 text-right tabular-nums sm:grid-cols-4">
+      <dl className="pointer-events-none order-last grid w-full shrink-0 grid-cols-3 gap-x-5 pl-[5.5rem] tabular-nums @md:grid-cols-4 @2xl:order-none @2xl:w-auto @2xl:pl-0 @2xl:text-right">
         <Stat label="击杀 / 死亡" value={`${p.kills} / ${p.deaths}`} />
         <Stat label="得分" value={p.score.toLocaleString("en-US")} />
         <Stat label="SPM" value={p.spm ?? "—"} />
         <Stat
           label="K/D"
           value={p.kd != null ? p.kd.toFixed(2) : "—"}
-          className="hidden sm:block"
+          className="hidden @md:block"
         />
       </dl>
       <ChevronDown

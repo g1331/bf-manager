@@ -6,8 +6,9 @@
 - 有人离开，下一次查询拿到的就是他离开时写进去的值，即他这一局的终值；
 - 每轮从每台服挑几个基线稳定的人只查「完成局数」，有一半以上 +1 就说明这台服结算了；
   等下一轮（约一分钟，让整服写完）再把在服的人全查一遍，作为这一局的终值、下一局的基线；
-- 进服后过一阵复查一次：刚从别的服过来的人，上一台服的结算可能几分钟后才写入，局数或胜负
-  变了就换成新的基线，免得算进这一局。
+- 进服后过一阵复查一次局数和胜负：之前打过的局的结算可能在进服后几分钟才写入（实测从离线
+  直接进服的人也有 3–4%），变了就重查全量换成新的基线，免得算进这一局；
+- 刚从别的服过来、离开那台服之后已经查到过值的人，直接拿这个值当基线，不再重查。
 
 状态在内存里，停机时导出、启动时导入（见 round_service），重启间隔不超过 MAX_GAP 就接着跟；
 快照断档太久则从头开始，接手时已经开打的局标记为 observed_start=False。
@@ -30,6 +31,9 @@ from app.domain.games.bf1.round_stats import (
     LEFT_EARLY,
     LOSSES,
     PROBE_NAMES,
+    RECHECK_FIELDS,
+    RECHECK_NAMES,
+    ROUND_STATS,
     ROUNDS,
     SUSPECT,
     WINS,
@@ -75,6 +79,7 @@ class Seat:
     left: bool = False
     end: list[int] | None = None  # 离开后查到的终值
     hop: bool = False  # 进服前 HOP_WINDOW 内在别的服出现过
+    rebase: bool = False  # 复查发现局数或胜负变了，要重查全量换基线
 
 
 @dataclass
@@ -160,6 +165,7 @@ class MatchTracker:
 
         self._sync(rosters, maps, now)
         await self._probe(now, fetch)
+        await self._recheck(now, fetch)
 
         settling = {
             gid
@@ -224,8 +230,12 @@ class MatchTracker:
                 hop = last is not None and last[0] != gid
                 seat = rnd.seats[pid] = Seat(since=now, recheck_at=now + RECHECK_AFTER, hop=hop)
                 ea_metrics.count_event("join_hop" if hop else "join_fresh")
-                if pid in self.recent:
-                    ea_metrics.count_event("join_reusable")
+                # 上次出现在服里之后才查到的值：那时人已经离开（离开时的写入已含在内），之后不在
+                # 任何服里，生涯不会变，可以直接当基线；迟到的结算照常由复查兜住
+                recent = self.recent.get(pid)
+                if last is not None and recent is not None and recent[1] > last[1]:
+                    seat.base, seat.base_at = list(recent[0]), recent[1]
+                    ea_metrics.count_event("join_reused")
             elif seat.left:
                 # 离开后又回来：沿用原基线，两段的增量合在这一局里；离开时查到的终值作废
                 seat.left, seat.end = False, None
@@ -299,6 +309,43 @@ class MatchTracker:
             )
         return out
 
+    async def _recheck(self, now: int, fetch: Fetch) -> None:
+        """到点复查：只查局数和胜负，变了的标记 rebase，本轮的全量查询里重查基线。"""
+        due = sorted(
+            {
+                pid
+                for rnd in self.rounds.values()
+                for pid, s in rnd.seats.items()
+                if not s.left and s.base is not None and self._recheck_due(rnd, s, now)
+            }
+        )[:MAX_QUERY_PER_TICK]
+        if not due:
+            return
+        try:
+            values = await fetch(due, RECHECK_NAMES)
+        except Exception as e:
+            logger.warning("BF1 match tracker recheck failed, retry next round: {}", e)
+            return
+        ea_metrics.count_event("recheck_light", len(due))
+        wanted = set(due)
+        for rnd in self.rounds.values():
+            for pid, s in rnd.seats.items():
+                if (
+                    pid not in wanted
+                    or s.left
+                    or s.base is None
+                    or not self._recheck_due(rnd, s, now)
+                ):
+                    continue
+                v = values.get(pid)
+                changed = v is not None and any(
+                    round(v[ROUND_STATS[i][1]]) != s.base[i] for i in RECHECK_FIELDS
+                )
+                s.recheck_at, s.rebase = None, changed
+                ea_metrics.count_event(
+                    f"recheck_{'changed' if changed else 'same'}_{'hop' if s.hop else 'fresh'}"
+                )
+
     def _wanted(self, now: int, settling: set[int]) -> set[int]:
         """本轮要查的人，超过上限时按优先级截断，其余留到下一轮。
 
@@ -314,8 +361,8 @@ class MatchTracker:
                     ranked.append((3, pid))  # 新进服
                 elif s.left and s.end is None:
                     ranked.append((1, pid))  # 刚离开
-                elif not s.left and self._recheck_due(rnd, s, now):
-                    ranked.append((2, pid))  # 到点复查
+                elif not s.left and s.rebase and rnd.settle_seen_at is None:
+                    ranked.append((2, pid))  # 复查发现变了，重查基线
         out: set[int] = set()
         for reason, pid in sorted(ranked):
             if len(out) >= MAX_QUERY_PER_TICK:
@@ -341,14 +388,8 @@ class MatchTracker:
                     s.base, s.base_at = vec, now
                 elif s.left and s.end is None:
                     s.end = vec
-                elif self._recheck_due(rnd, s, now):
-                    changed = any(vec[i] != s.base[i] for i in (ROUNDS, WINS, LOSSES))
-                    if changed:
-                        s.base, s.base_at = vec, now
-                    s.recheck_at = None
-                    ea_metrics.count_event(
-                        f"recheck_{'changed' if changed else 'same'}_{'hop' if s.hop else 'fresh'}"
-                    )
+                elif s.rebase and rnd.settle_seen_at is None:
+                    s.base, s.base_at, s.rebase = vec, now, False
 
     def _close(
         self,

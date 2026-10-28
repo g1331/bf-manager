@@ -49,8 +49,10 @@ from app.schemas.bf1.server import (
 from app.services.bf1.server_service import operation_map_list
 from app.services.ea_account_service import EAAccountService
 
-# Blaze 单条连接的最大存活时间（秒）。超龄主动重建，规避 EA 端静默断开后我方仍误判可用。
-CONNECTION_MAX_AGE_SECONDS = 300
+# Blaze 单条连接的最大存活时间（秒）。连接平时每分钟都有快照和跟踪器在用，EA 端断开、登出或
+# 查询超时都会让连接失效并在下次使用时重建，所以不必频繁主动重登；只留一个长上限兜底未知的
+# 会话过期。原先 300 秒，每天要重登近 600 次。探测时单条连接实测活过 1.5 小时。
+CONNECTION_MAX_AGE_SECONDS = 6 * 3600
 # 单次 Blaze 查询（含大体量 roster 解码）的超时。
 BLAZE_QUERY_TIMEOUT = 20
 # Blaze Stats.getStats 单个请求最多带多少个 personaId（实测 64 可用）。
@@ -101,6 +103,14 @@ class _BlazeConnectionPool:
             ):
                 return socket
 
+            if socket is not None:
+                age = time.monotonic() - self._created_at
+                reason = (
+                    "到达寿命上限"
+                    if socket.connect and getattr(socket, "authenticated", False)
+                    else "连接已断开"
+                )
+                logger.info("Blaze 连接重建（{}），旧连接存活 {:.0f} 分钟", reason, age / 60)
             await self._close_locked()
 
             if self._creds is None:
@@ -163,6 +173,9 @@ class _BlazeConnectionPool:
     async def invalidate(self) -> None:
         """标记当前连接失效（查询期间网络异常时调用），下次查询触发重建。"""
         async with self._lock:
+            if self._socket is not None:
+                age = time.monotonic() - self._created_at
+                logger.info("Blaze 连接因查询失败作废，存活 {:.0f} 分钟", age / 60)
             await self._close_locked()
 
 

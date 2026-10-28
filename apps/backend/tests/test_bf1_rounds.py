@@ -17,6 +17,7 @@ from app.domain.games.bf1.round_stats import (
     LEFT_EARLY,
     LOSSES,
     PROBE_NAMES,
+    RECHECK_NAMES,
     ROUND_STATS,
     ROUNDS,
     SCORE,
@@ -330,7 +331,7 @@ async def test_tracker_probe_two_stages() -> None:
     assert tr.rounds[1].settle_seen_at == t0 + 180
 
 
-async def test_tracker_counts_hops_and_rechecks(monkeypatch) -> None:
+async def test_tracker_reuses_vector_after_hop_and_rechecks_lightly(monkeypatch) -> None:
     events: Counter[str] = Counter()
     monkeypatch.setattr(ea_metrics, "count_event", lambda name, n=1: events.update({name: n}))
     career, tr = Career(), MatchTracker()
@@ -339,19 +340,41 @@ async def test_tracker_counts_hops_and_rechecks(monkeypatch) -> None:
     t0 = 1_800_000_000
     maps = {1: MAP[1], 2: MAP[1]}
     await tr.tick({1: {1: (TEAM1, "p1"), 2: (TEAM2, "p2")}}, maps, t0, career.fetch)
-    # 1 从 1 号服换到 2 号服（离开时的终值已查到，可当基线），3 从离线直接进 2 号服
+    # 1 中途退出（立刻写入），下一轮查到终值；再下一轮出现在 2 号服，3 从离线直接进 2 号服
+    career.add(1, k=2, s=300)
     await tr.tick({1: {2: (TEAM2, "p2")}}, maps, t0 + 60, career.fetch)
     rosters = {1: {2: (TEAM2, "p2")}, 2: {1: (TEAM1, "p1"), 3: (TEAM2, "p3")}}
     await tr.tick(rosters, maps, t0 + 120, career.fetch)
-    assert (tr.rounds[2].seats[1].hop, tr.rounds[2].seats[3].hop) == (True, False)
-    assert (events["join_hop"], events["join_fresh"], events["join_reusable"]) == (1, 3, 1)
-    # 1 带着上一台服迟到的胜负；到点复查时查出变化，2、3 没变化
+    seat = tr.rounds[2].seats[1]
+    assert (seat.hop, tr.rounds[2].seats[3].hop) == (True, False)
+    assert (seat.base, seat.base_at) == (career.vec[1], t0 + 60)
+    assert (events["join_hop"], events["join_fresh"], events["join_reused"]) == (1, 3, 1)
+    # 1 进 2 号服没有再查基线
+    assert events["want_join"] == 3
+    # 1 带着之前那局迟到的胜负；复查只查局数胜负，变了的才在同一轮重查全量
     career.add(1, w=1, r=1)
+    calls = len(career.calls)
     for t in range(t0 + 180, t0 + 121 + RECHECK_AFTER, 60):
         await tr.tick(rosters, maps, t, career.fetch)
+    light = [pids for pids, names in career.calls[calls:] if names == RECHECK_NAMES]
+    assert sorted(p for pids in light for p in pids) == [1, 2, 3]
     assert (events["recheck_changed_hop"], events["recheck_same_fresh"]) == (1, 2)
-    # 1 进 2 号服时虽然有现成的终值，现在仍重查一次基线（join_reusable 记的就是这种）
-    assert (events["want_leave"], events["want_recheck"], events["want_join"]) == (1, 3, 4)
+    assert events["want_recheck"] == 1 and events["recheck_light"] == 3
+    assert tr.rounds[2].seats[1].base == career.vec[1]
+
+
+async def test_tracker_does_not_reuse_vector_from_before_leaving() -> None:
+    career, tr = Career(), MatchTracker()
+    for p in (1, 2):
+        career.add(p)
+    t0 = 1_800_000_000
+    maps = {1: MAP[1], 2: MAP[1]}
+    await tr.tick({1: {1: (TEAM1, "p1"), 2: (TEAM2, "p2")}}, maps, t0, career.fetch)
+    # 1 退出时写入，同一轮就出现在 2 号服：手上只有离开前的基线，不能拿来用
+    career.add(1, k=5, s=900)
+    rosters = {1: {2: (TEAM2, "p2")}, 2: {1: (TEAM1, "p1")}}
+    await tr.tick(rosters, maps, t0 + 60, career.fetch)
+    assert tr.rounds[2].seats[1].base == career.vec[1]
 
 
 async def test_tracker_dump_and_load_continue_the_round() -> None:

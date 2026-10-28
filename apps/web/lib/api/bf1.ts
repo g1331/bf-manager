@@ -309,6 +309,8 @@ export interface RoundWeapon {
   shots: number;
   seconds: number;
   destroyed: number;
+  /** 击杀里含骑乘时用别的武器打的（战马），和武器重复，不能和其他条目相加 */
+  shared_kills: boolean;
 }
 
 /** 一个人在一局里的战绩：finished 打到结算、left 中途退出（没有胜负）、suspect 混了别的局。

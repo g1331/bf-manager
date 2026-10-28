@@ -448,7 +448,7 @@ const TRACKER_GROUPS: { title: string; items: [string, string][] }[] = [
     ],
   },
   {
-    title: "武器载具击杀和核心击杀对账（行数）",
+    title: "武器载具击杀和核心击杀对账（行数，不含战马）",
     items: [
       ["weapons_kills_match", "对得上"],
       ["weapons_kills_diff", "对不上"],

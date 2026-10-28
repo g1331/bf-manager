@@ -45,6 +45,8 @@ class RoundWeapon(BaseModel):
     shots: int = 0
     seconds: int = 0
     destroyed: int = 0
+    # 击杀里含骑乘时用别的武器打的（战马），和武器重复，不能和其他条目相加
+    shared_kills: bool = False
 
 
 class RoundPlayer(BaseModel):

@@ -305,6 +305,7 @@ def _weapons(slots: dict[int, int] | None) -> list[RoundWeapon] | None:
                 name=entry.get("name"),
                 category=entry.get("category"),
                 image=normalize_map_image_url(entry.get("image")),
+                shared_kills=key in rw.SHARED_KILLS,
                 **metrics,
             )
         )

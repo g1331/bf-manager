@@ -2,8 +2,9 @@
 
 数据文件 data/blaze_catalog.json 由 tools/export_bf1_blaze_catalog.py 生成：拿一批玩家，把每个
 Blaze 代号的数值与 Gateway 武器 / 载具条目逐一对上，名称、分类、图片、GUID 沿用 Gateway；
-Gateway 没有的条目（维和者、防毒面具等）在工具里手工补名；维和者、伯顿的图标是游戏原图，放在前端
-public/bf1/weapons，``image`` 为站内相对路径。每项的 ``cat`` / ``stats``
+Gateway 没有的条目（维和者、防毒面具等）在工具里手工补名。EA 只给繁体，数据文件保持原文，
+名称和分类在加载时用 zhconv 转成简体（和交换页同一种转法；OpenCC 会把防毒面具转成「杀毒面具」）。
+维和者、伯顿的图标是游戏原图，放在前端 public/bf1/weapons，``image`` 为站内相对路径。每项的 ``cat`` / ``stats``
 是取数用的 Blaze 类别与统计名，``order`` 是 Gateway 里的展示顺序。绷带包、弹药包等配备 Blaze 没有
 单项统计，``stats`` 为空，照样列出。
 """
@@ -15,6 +16,8 @@ import logging
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
+
+from zhconv import zhconv
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +31,11 @@ def _load() -> dict[str, dict[str, dict[str, Any]]]:
             data = json.load(f)
         if not isinstance(data, dict):
             raise ValueError(f"目录根节点应为 dict，实际 {type(data).__name__}")
+        for entries in data.values():
+            for entry in entries.values():
+                for field in ("name", "category"):
+                    if entry.get(field):
+                        entry[field] = zhconv.convert(entry[field], "zh-cn")
         return data
     except (OSError, ValueError) as exc:
         logger.warning("BF1 Blaze 武器目录加载失败，武器 / 载具列表为空: %s", exc)

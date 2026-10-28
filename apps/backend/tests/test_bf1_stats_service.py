@@ -242,9 +242,9 @@ def test_extract_kit_skin_candidates_degrades_on_malformed() -> None:
         (9, "突擊裝甲車", "22"),
         (1, "轟炸機", "16"),
         (2, "重型轟炸機", "21"),
-        # 飛船 / 驅逐艦 的 sortOrder 同为 14，靠分类名区分
-        (14, "飛船", "24"),
-        (14, "驅逐艦", "23"),
+        # 飞船 / 驱逐舰 的 sortOrder 同为 14，靠分类名区分
+        (14, "飞船", "24"),
+        (14, "驱逐舰", "23"),
         # 无已知 kit 编号的分类不展示皮肤
         (0, "攻擊機", None),
         (3, "戰鬥機", None),
@@ -261,7 +261,7 @@ def test_pick_skin_returns_first_table_hit() -> None:
     # 槽位中混有非皮肤物件 guid，应跳过未命中项取第一个命中的
     skin = _pick_skin([_FAKE_GUID, _WEAPON_SKIN_GUID])
     assert skin is not None
-    assert skin["name"] == "普魯士人"
+    assert skin["name"] == "普鲁士人"
     assert skin["rarity"] == "Superior"
     assert skin["image"].startswith("https://eaassets-a.akamaihd.net/battlelog/battlebinary/")
 
@@ -346,16 +346,16 @@ _VEHICLES = {
         },
     },
     "ShDeLa": {
-        "name": "L 級驅逐艦",
-        "category": "驅逐艦",
+        "name": "L 级驱逐舰",
+        "category": "驱逐舰",
         "sort_order": 14,
         "order": 1,
         "cat": "player_statcategory3",
         "stats": {"kills": "c_ShDeLa__ki_g", "seconds": "c_ShDeLa__si_g"},
     },
     "plAtHal": {
-        "name": "哈爾伯施塔特 CL.II 攻擊機",
-        "category": "攻擊機",
+        "name": "哈尔伯施塔特 CL.II 攻击机",
+        "category": "攻击机",
         "sort_order": 0,
         "order": 2,
         "cat": "player_statcategory",
@@ -413,7 +413,7 @@ def test_stat_names_skips_entries_without_stats(monkeypatch) -> None:
 
 def test_build_weapons_fills_skin_fields_by_guid(fake_catalog) -> None:
     weapons = _build_weapons(_WEAPON_VALUES, {"AB-12": [_FAKE_GUID, _WEAPON_SKIN_GUID]})
-    assert weapons[0].skin_name == "普魯士人"
+    assert weapons[0].skin_name == "普鲁士人"
     assert weapons[0].skin_rarity == "Superior"
     assert weapons[0].skin_image is not None
     assert weapons[0].skin_image.startswith("https://eaassets-a.akamaihd.net/")
@@ -424,7 +424,7 @@ def test_build_weapons_fills_skin_fields_by_guid(fake_catalog) -> None:
 
 def test_build_vehicles_maps_catalog_fields(fake_catalog) -> None:
     vehicles = _build_vehicles(_VEHICLE_VALUES, {})
-    assert [v.name for v in vehicles] == ["A7V 重型坦克", "L 級驅逐艦", "哈爾伯施塔特 CL.II 攻擊機"]
+    assert [v.name for v in vehicles] == ["A7V 重型坦克", "L 级驱逐舰", "哈尔伯施塔特 CL.II 攻击机"]
     a7v = vehicles[0]
     assert a7v.category == "重型坦克"
     assert a7v.kills == 800
@@ -442,10 +442,10 @@ def test_build_vehicles_fills_skin_by_kit_number(fake_catalog) -> None:
         {"17": [_VEHICLE_SKIN_GUID], "23": [_FAKE_GUID, _VEHICLE_SKIN_GUID]},
     )
     # 重型坦克：sortOrder 5 -> kit 17
-    assert vehicles[0].skin_name == "M1917 獎盃 (極稀有)"
+    assert vehicles[0].skin_name == "M1917 奖杯 (极稀有)"
     assert vehicles[0].skin_rarity == "Superior"
-    # 驅逐艦：sortOrder 14 撞号，按分类名 -> kit 23
-    assert vehicles[1].skin_name == "M1917 獎盃 (極稀有)"
+    # 驱逐舰：sortOrder 14 撞号，按分类名 -> kit 23
+    assert vehicles[1].skin_name == "M1917 奖杯 (极稀有)"
     # 攻擊機：无 kit 映射，不展示皮肤
     assert vehicles[2].skin_name is None
     assert vehicles[2].skin_rarity is None

@@ -45,6 +45,9 @@ FINISHED, LEFT_EARLY, SUSPECT = range(3)
 
 # 结算探测只看完成局数，一个统计名的请求最轻
 PROBE_NAMES: dict[str, list[str]] = {STAT: ["c___roo_g"]}
+# 进服后复查只看局数和胜负（迟到的结算只改这几项），都在同一个类别里，一个请求就够
+RECHECK_FIELDS = (ROUNDS, WINS, LOSSES)
+RECHECK_NAMES: dict[str, list[str]] = {STAT: [ROUND_STATS[i][1] for i in RECHECK_FIELDS]}
 
 
 def round_stat_names() -> dict[str, list[str]]:

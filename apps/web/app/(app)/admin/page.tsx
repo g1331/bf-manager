@@ -389,7 +389,8 @@ const TRACKER_GROUPS: { title: string; items: [string, string][] }[] = [
     items: [
       ["want_settle", "结算收尾"],
       ["want_leave", "离开"],
-      ["want_recheck", "进服后复查"],
+      ["recheck_light", "进服后复查（只查局数胜负）"],
+      ["want_recheck", "复查有变化后重查基线"],
       ["want_join", "进服基线"],
     ],
   },
@@ -398,7 +399,7 @@ const TRACKER_GROUPS: { title: string; items: [string, string][] }[] = [
     items: [
       ["join_fresh", "从离线进服"],
       ["join_hop", "15 分钟内从别的服换来"],
-      ["join_reusable", "进服时已有 10 分钟内的值"],
+      ["join_reused", "沿用离开上一台服后查到的值"],
     ],
   },
   {

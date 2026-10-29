@@ -13,7 +13,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { PageHeaderSkeleton, RowsSkeleton } from "@/components/layout/PageSkeleton";
 import { SectionHeading } from "@/components/layout/SectionHeading";
 import { ResponsiveTable, type Column } from "@/components/common/ResponsiveTable";
-import { EaLoginFlow } from "@/components/common/EaLoginFlow";
+import { EaLoginDialog } from "@/components/common/EaLoginFlow";
 import { type BindingListItem, listMyBindings, unbindEa } from "@/lib/auth";
 import { auditApi, type AuditLogItem } from "@/lib/api/audit";
 import { ENABLED_GAMES } from "@/lib/game-registry";
@@ -326,7 +326,7 @@ export default function MePage() {
         ) : null}
       </section>
 
-      <EaLoginFlow
+      <EaLoginDialog
         actor="user"
         open={loginFlowOpen}
         onOpenChange={setLoginFlowOpen}

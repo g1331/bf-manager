@@ -11,10 +11,13 @@
  *                          \-> failed / cancelled
  *
  * 长轮询通过 ``eaLoginTasksApi.get(actor, taskId, sinceVersion)`` 驱动，每次拿到
- * 新版本立即重渲染。组件卸载或用户关闭时调用 ``cancel`` 释放后端任务资源。
+ * 新版本立即重渲染。组件卸载时调用 ``cancel`` 释放后端任务资源。
+ *
+ * - ``EaLoginPanel``：表单与进度本体，可直接嵌进页面（账号池「新增账号」卡片）。
+ * - ``EaLoginDialog``：居中弹窗包装，用于重新登录与个人页绑定；关闭即卸载面板。
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -24,7 +27,6 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -32,13 +34,12 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ApiException } from "@/lib/api-client";
 import {
   eaLoginTasksApi,
@@ -96,14 +97,14 @@ export interface EaLoginTarget {
   label: string;
 }
 
-interface Props {
+interface PanelProps {
   actor: EALoginTaskActor;
   /** 仅 admin：提供时为「重新登录该账号」，persona 不一致会被后端拒绝。 */
   target?: EaLoginTarget | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
   /** 登录成功时回调，外层用来 invalidate 列表查询。 */
   onSucceeded?: (task: EALoginTaskResponse) => void;
+  /** 弹窗里提供，成功后显示「完成」关闭；嵌入页面时缺省，成功后显示「再添加一个」。 */
+  onDone?: () => void;
 }
 
 function describeError(err: unknown, fallback: string): string {
@@ -179,7 +180,7 @@ function resolveFailureView(task: EALoginTaskResponse): FailureView {
   }
 }
 
-export function EaLoginFlow({ actor, target, open, onOpenChange, onSucceeded }: Props) {
+export function EaLoginPanel({ actor, target, onSucceeded, onDone }: PanelProps) {
   const [task, setTask] = useState<EALoginTaskResponse | null>(null);
   const [submitting, setSubmitting] = useState(false);
   // useRef 引用最新 task 供轮询循环读取，避免 useEffect 依赖 task 触发频繁重启。
@@ -206,21 +207,17 @@ export function EaLoginFlow({ actor, target, open, onOpenChange, onSucceeded }: 
     defaultValues: { code: "" },
   });
 
-  // 关闭时重置整个流程，避免下次打开仍显示上次的成功页。
-  // loginForm / codeForm 只作为方法调用对象，依赖语义为空，从 deps 中剔除以
-  // 避免父组件 rerender 反复触发本 effect。
-  useEffect(() => {
-    if (!open) {
-      // 关闭对话框时重置状态属于「响应 prop 变化做清理」，是合理 effect。
-      // react-compiler 的 set-state-in-effect 规则对此误报，按行豁免。
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setTask(null);
-      setSubmitting(false);
-      loginForm.reset({ email: "", password: "" });
-      codeForm.reset({ code: "" });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  // 卸载（关闭弹窗、切走标签页、离开页面）时任务仍未终态，通知后端取消，
+  // 尽快释放内存里的明文凭据，也节约 EA 风控配额。后端 404 / 已终态都无所谓。
+  useEffect(
+    () => () => {
+      const current = taskRef.current;
+      if (current && !isTerminalStatus(current.status)) {
+        eaLoginTasksApi.cancel(actor, current.task_id).catch(() => {});
+      }
+    },
+    [actor],
+  );
 
   // 长轮询：任务未终态时持续 long-poll；瞬时错误退避重试，确定性错误立即报错。
   // 设计要点（与 PR 评审记录一致）：
@@ -230,8 +227,6 @@ export function EaLoginFlow({ actor, target, open, onOpenChange, onSucceeded }: 
   // - 预算耗尽时 fire-and-forget cancel 后端任务，释放内存里的明文凭据
   // - 仅对 GET status 重试；submitMethod / submitCode / cancel 这类 POST 永不重试
   useEffect(() => {
-    if (!open) return;
-
     let cancelled = false;
     let inflightController: AbortController | null = null;
     let sleepController = new AbortController();
@@ -315,6 +310,9 @@ export function EaLoginFlow({ actor, target, open, onOpenChange, onSucceeded }: 
         }
         retryAttempt = 0;
 
+        // 同步写 ref：setTask 要等下一次渲染才更新 taskRef，循环若先回到顶部，会拿旧
+        // version 再查一次、立刻拿到同一个新版本，成功提示和回调各触发两遍
+        taskRef.current = next;
         setTask(next);
         if (next.status === "succeeded") {
           onSucceededRef.current?.(next);
@@ -339,22 +337,7 @@ export function EaLoginFlow({ actor, target, open, onOpenChange, onSucceeded }: 
       document.removeEventListener("visibilitychange", onVisibilityChange);
       toast.dismiss(RETRY_TOAST_ID);
     };
-  }, [open, actor, task?.task_id]);
-
-  // 用户主动关闭时尽量通知后端取消，节约 EA 风控配额
-  const closeAndMaybeCancel = useCallback(
-    async (nextOpen: boolean) => {
-      if (!nextOpen && task && !isTerminalStatus(task.status)) {
-        try {
-          await eaLoginTasksApi.cancel(actor, task.task_id);
-        } catch {
-          // 后端 404 / 任务已终态都无所谓
-        }
-      }
-      onOpenChange(nextOpen);
-    },
-    [task, actor, onOpenChange],
-  );
+  }, [actor, task?.task_id]);
 
   const onSubmitCredentials = loginForm.handleSubmit(async (values) => {
     setSubmitting(true);
@@ -397,84 +380,107 @@ export function EaLoginFlow({ actor, target, open, onOpenChange, onSucceeded }: 
     }
   });
 
+  const restart = (keepEmail: boolean) => {
+    // 回到登录表单重新发起；失败重试保留已填邮箱，成功后再添加一个则清空
+    loginForm.reset({ email: keepEmail ? loginForm.getValues("email") : "", password: "" });
+    codeForm.reset({ code: "" });
+    setTask(null);
+  };
+
+  // @container：嵌在宽卡片里时邮箱密码并排，弹窗里自动单列
   return (
-    <Sheet open={open} onOpenChange={(v) => void closeAndMaybeCancel(v)}>
-      <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
-        <SheetHeader>
-          <SheetTitle>
+    <div className="@container">
+      {task === null ? (
+        <Form {...loginForm}>
+          <form onSubmit={onSubmitCredentials} className="grid grid-cols-1 gap-4 @xl:grid-cols-2">
+            <FormField
+              control={loginForm.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>EA 账号邮箱</FormLabel>
+                  <FormControl>
+                    <Input type="email" autoComplete="email" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={loginForm.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>EA 账号密码</FormLabel>
+                  <FormControl>
+                    <Input type="password" autoComplete="current-password" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <p className="text-muted-foreground text-xs @xl:col-span-2">
+              邮箱、密码和验证码只在本次登录中使用，不会保存；登录成功后凭据以 AES-256-GCM
+              加密入库。有二次验证时，EA 发来的验证码会在下一步填写。
+            </p>
+            <div className="@xl:col-span-2">
+              <Button type="submit" disabled={submitting} size="lg" className="w-full @xl:w-auto">
+                {submitting ? "提交中…" : "开始登录"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      ) : (
+        <TaskProgress
+          task={task}
+          submitting={submitting}
+          onSelectMethod={onSelectMethod}
+          codeForm={codeForm}
+          onSubmitCode={onSubmitCode}
+          onRestart={() => restart(true)}
+          onAddAnother={onDone ? undefined : () => restart(false)}
+          onDone={onDone}
+        />
+      )}
+    </div>
+  );
+}
+
+interface DialogProps extends Omit<PanelProps, "onDone"> {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+/**
+ * 居中弹窗版登录。关闭即卸载面板（未完成的任务随之取消），下次打开从空表单开始。
+ * 点遮罩不关闭：等 EA 验证码时切去邮箱再回来，误点外面会让整个登录作废。
+ */
+export function EaLoginDialog({ open, onOpenChange, ...panelProps }: DialogProps) {
+  const { actor, target } = panelProps;
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        // 弹窗 portal 到 body，在 SidebarLayout 的 .dark 之外，需自带 dark 才是深色
+        className="dark text-foreground max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto rounded-lg"
+        onInteractOutside={(e) => e.preventDefault()}
+      >
+        <DialogHeader>
+          <DialogTitle>
             {target
               ? `重新登录 ${target.label}`
               : actor === "user"
                 ? "邮箱密码绑定 EA 账号"
                 : "邮箱密码新增 EA 账号"}
-          </SheetTitle>
-          <SheetDescription>
+          </DialogTitle>
+          <DialogDescription>
             {target
               ? `用该账号（persona ${target.personaId}）的 EA 邮箱密码登录以刷新凭据；登录到其它 persona 时不会写入任何账号。`
-              : null}
-            登录链路完全在 bf-manager 内执行，明文邮箱、密码、验证码均不落盘；登录成功后凭据以
-            AES-256-GCM 加密后入库。
-          </SheetDescription>
-        </SheetHeader>
-
-        <div className="space-y-4 p-4">
-          {task === null ? (
-            <Form {...loginForm}>
-              <form onSubmit={onSubmitCredentials} className="space-y-4">
-                <FormField
-                  control={loginForm.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>EA 账号邮箱</FormLabel>
-                      <FormControl>
-                        <Input type="email" autoComplete="email" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={loginForm.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>EA 账号密码</FormLabel>
-                      <FormControl>
-                        <Input type="password" autoComplete="current-password" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        密码仅用于完成本次 EA 登录链路，不会保存或上传任何明文。
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <SheetFooter>
-                  <Button type="submit" disabled={submitting}>
-                    {submitting ? "提交中…" : "开始登录"}
-                  </Button>
-                </SheetFooter>
-              </form>
-            </Form>
-          ) : (
-            <TaskProgress
-              task={task}
-              submitting={submitting}
-              onSelectMethod={onSelectMethod}
-              codeForm={codeForm}
-              onSubmitCode={onSubmitCode}
-              onRestart={() => {
-                // 保留已填邮箱，清掉密码与验证码，回到登录表单重新发起
-                loginForm.reset({ email: loginForm.getValues("email"), password: "" });
-                codeForm.reset({ code: "" });
-                setTask(null);
-              }}
-            />
-          )}
-        </div>
-      </SheetContent>
-    </Sheet>
+              : "用 EA 账号的邮箱和密码登录，成功后自动完成绑定。"}
+          </DialogDescription>
+        </DialogHeader>
+        <EaLoginPanel {...panelProps} onDone={() => onOpenChange(false)} />
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -485,6 +491,8 @@ function TaskProgress({
   codeForm,
   onSubmitCode,
   onRestart,
+  onAddAnother,
+  onDone,
 }: {
   task: EALoginTaskResponse;
   submitting: boolean;
@@ -492,6 +500,8 @@ function TaskProgress({
   codeForm: ReturnType<typeof useForm<CodeValues>>;
   onSubmitCode: () => void;
   onRestart: () => void;
+  onAddAnother?: () => void;
+  onDone?: () => void;
 }) {
   switch (task.status) {
     case "pending":
@@ -501,7 +511,9 @@ function TaskProgress({
           <p>
             正在与 EA 通信…（状态：<code>{task.status}</code>）
           </p>
-          <p className="text-xs">如果长时间无反应，可关闭本面板再重试；后端任务将被自动取消。</p>
+          <p className="text-xs">
+            一般几秒内完成；长时间无反应可刷新页面重试，后端任务会自动取消。
+          </p>
         </div>
       );
     case "awaiting_2fa_method":
@@ -553,11 +565,9 @@ function TaskProgress({
                 </FormItem>
               )}
             />
-            <SheetFooter>
-              <Button type="submit" disabled={submitting}>
-                {submitting ? "提交中…" : "提交验证码"}
-              </Button>
-            </SheetFooter>
+            <Button type="submit" disabled={submitting}>
+              {submitting ? "提交中…" : "提交验证码"}
+            </Button>
           </form>
         </Form>
       );
@@ -571,9 +581,16 @@ function TaskProgress({
               {task.result.display_name ? ` · ${task.result.display_name}` : ""}
             </p>
           ) : null}
-          <p className="text-muted-foreground text-xs">
-            可关闭本面板。凭据已加密保存到对应账号体系。
-          </p>
+          <p className="text-muted-foreground text-xs">凭据已加密保存。</p>
+          {onDone ? (
+            <Button size="sm" onClick={onDone}>
+              完成
+            </Button>
+          ) : onAddAnother ? (
+            <Button variant="outline" size="sm" onClick={onAddAnother}>
+              再添加一个
+            </Button>
+          ) : null}
         </div>
       );
     case "failed": {

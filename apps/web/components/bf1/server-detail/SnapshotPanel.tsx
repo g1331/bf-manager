@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
 import { SectionHeading } from "@/components/layout/SectionHeading";
@@ -76,6 +76,17 @@ export function SnapshotPanel({
   const [jumpTo, setJumpTo] = useState<number | null>(null);
   const [changedOnly, setChangedOnly] = useState(true);
   const [selected, setSelected] = useState<number | null>(null);
+  const rosterRef = useRef<HTMLDivElement>(null);
+
+  // 手机端名单排在时刻列表下面，点了时刻要把名单滚进视野，不然看不出有变化
+  const pick = (ts: number) => {
+    setSelected(ts);
+    if (!window.matchMedia("(min-width: 1024px)").matches) {
+      requestAnimationFrame(() =>
+        rosterRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      );
+    }
+  };
 
   const list = useInfiniteQuery({
     queryKey: ["bf1-server-snapshots", gameId, jumpTo],
@@ -93,7 +104,7 @@ export function SnapshotPanel({
       variant="transparent"
       cut={20}
       corners={["topLeft", "bottomRight"]}
-      className="bg-black/45 p-3.5 backdrop-blur-sm sm:p-6"
+      className="bg-black/45 p-4 backdrop-blur-sm sm:p-6"
     >
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <SectionHeading className="mb-0">服务器快照</SectionHeading>
@@ -112,7 +123,7 @@ export function SnapshotPanel({
                 setJumpTo(Number.isNaN(t) ? null : Math.floor(t / 1000) + 60);
                 setSelected(null);
               }}
-              className="h-8 min-w-0 flex-1 rounded-sm border border-white/15 bg-white/5 px-2 text-white/85 [color-scheme:dark]"
+              className="h-11 min-w-0 flex-1 rounded-sm border border-white/15 bg-white/5 px-2 text-white/85 [color-scheme:dark] lg:h-8"
             />
             <button
               type="button"
@@ -120,12 +131,12 @@ export function SnapshotPanel({
                 setJumpTo(null);
                 setSelected(null);
               }}
-              className="h-8 rounded-sm border border-white/15 px-2.5 text-white/70 hover:bg-white/10"
+              className="compact-action h-11 rounded-sm border border-white/15 px-3 text-[13px] text-white/70 hover:bg-white/10 lg:h-8 lg:px-2.5 lg:text-xs"
             >
               最新
             </button>
           </div>
-          <label className="mt-2 flex items-center gap-2 text-xs text-white/60">
+          <label className="mt-2 flex min-h-11 items-center gap-2 text-[13px] text-white/60 lg:min-h-0 lg:text-xs">
             <input
               type="checkbox"
               checked={changedOnly}
@@ -135,14 +146,14 @@ export function SnapshotPanel({
             只看有人进出的时刻
           </label>
 
-          <ol className="mt-3 max-h-[640px] space-y-1.5 overflow-y-auto pr-1">
+          <ol className="mt-3 max-h-[45dvh] space-y-1.5 overflow-y-auto pr-1 lg:max-h-[640px]">
             {shown.map((p) => (
               <SnapshotItem
                 key={p.ts}
                 point={p}
                 mapInfo={mapInfo}
                 active={p.ts === active?.ts}
-                onClick={() => setSelected(p.ts)}
+                onClick={() => pick(p.ts)}
               />
             ))}
             {!list.isLoading && shown.length === 0 ? (
@@ -156,7 +167,7 @@ export function SnapshotPanel({
               type="button"
               disabled={list.isFetchingNextPage}
               onClick={() => list.fetchNextPage()}
-              className="mt-2 h-8 rounded-sm border border-white/15 text-xs text-white/70 hover:bg-white/10 disabled:opacity-50"
+              className="compact-action mt-2 h-11 rounded-sm border border-white/15 text-[13px] text-white/70 hover:bg-white/10 disabled:opacity-50 lg:h-8 lg:text-xs"
             >
               {list.isFetchingNextPage ? "加载中…" : "加载更早的"}
             </button>
@@ -164,7 +175,9 @@ export function SnapshotPanel({
         </aside>
 
         {active ? (
-          <SnapshotRoster gameId={gameId} game={game} point={active} mapInfo={mapInfo} />
+          <div ref={rosterRef} className="scroll-mt-28 lg:scroll-mt-0">
+            <SnapshotRoster gameId={gameId} game={game} point={active} mapInfo={mapInfo} />
+          </div>
         ) : (
           <div className="flex min-h-[240px] items-center justify-center text-sm text-white/40">
             {list.isLoading ? "正在加载快照…" : "选择左侧的一个时刻查看名单"}
@@ -237,6 +250,8 @@ function SnapshotRoster({
     queryFn: () => bf1Api.getServerSnapshot(gameId, point.ts),
     // 已经过去的时刻，名单不会再变
     staleTime: Infinity,
+    // 换时刻时先留着上一份名单，不让区块塌成一行「加载中」（手机端滚到名单时会被这次塌陷截停）
+    placeholderData: keepPreviousData,
   });
   const info = point.map_name ? mapInfo(point.map_name, point.game_mode) : null;
 
@@ -291,13 +306,13 @@ function SnapshotRoster({
           </span>
           <span className={cn("rounded-sm px-2 py-0.5", CHANGE_STYLE.left)}>退出 {point.left}</span>
         </div>
-        <label className="flex h-8 items-center gap-1.5 rounded-sm border border-white/15 bg-white/5 px-2 text-white/70">
+        <label className="flex h-11 w-full items-center gap-1.5 rounded-sm border border-white/15 bg-white/5 px-3 text-white/70 sm:h-8 sm:w-auto sm:px-2">
           <Search className="size-3.5 text-white/40" />
           <input
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             placeholder="筛选名字 / PID"
-            className="w-36 bg-transparent outline-none placeholder:text-white/35"
+            className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-white/35 sm:w-36 sm:flex-none"
           />
         </label>
       </div>
@@ -308,7 +323,12 @@ function SnapshotRoster({
         <div className="py-10 text-center text-sm text-white/45">这个时刻的名单暂时取不到</div>
       ) : (
         <>
-          <div className="mt-4 grid grid-cols-1 gap-x-8 gap-y-6 lg:grid-cols-2">
+          <div
+            className={cn(
+              "mt-4 grid grid-cols-1 gap-x-8 gap-y-6 transition-opacity lg:grid-cols-2",
+              snap.isPlaceholderData && "opacity-50",
+            )}
+          >
             <RosterTable
               title={snap.data?.team1_faction ?? "队伍 1"}
               faction={snap.data?.team1_faction}

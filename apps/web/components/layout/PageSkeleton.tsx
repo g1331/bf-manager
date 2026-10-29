@@ -82,7 +82,7 @@ export function ServerDetailSkeleton() {
             <Skeleton key={i} className="h-5 w-14" />
           ))}
         </div>
-        <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
           <Skeleton className="h-96 w-full" />
           <Skeleton className="h-96 w-full" />
         </div>
@@ -99,7 +99,7 @@ export function PlayerDetailSkeleton() {
         <Skeleton className="mb-4 h-5 w-28" />
         <Skeleton className="h-80 w-full" />
         <Skeleton className="mt-6 h-12 w-full" />
-        <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
           <Skeleton className="h-72 w-full" />
           <Skeleton className="h-72 w-full" />
         </div>

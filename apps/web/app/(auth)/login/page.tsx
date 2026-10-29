@@ -59,7 +59,7 @@ export default function LoginPage() {
       </div>
 
       {/* relative z-10：压在上面绝对定位的背景层之上，否则链接被盖住、点不到 */}
-      <header className="relative z-10 flex items-center justify-between px-6 py-6 sm:px-10">
+      <header className="relative z-10 flex items-center justify-between px-4 py-2 sm:px-10 sm:py-6">
         <Link
           href="/"
           className="font-display text-base font-semibold tracking-[0.2em] text-white uppercase"
@@ -137,15 +137,16 @@ function LoginForm() {
   };
 
   return (
-    <main className="flex flex-1 items-center justify-center px-4 py-8 sm:py-12">
-      <Card className="bg-card/80 w-full max-w-md border-white/10 shadow-2xl backdrop-blur-md">
-        <CardHeader>
+    <main className="flex flex-1 items-start justify-center px-4 pt-6 pb-8 sm:items-center sm:py-12">
+      {/* 手机端不套卡片，表单直接铺在页面上，像 App 的登录页 */}
+      <Card className="sm:bg-card/80 w-full max-w-md border-0 bg-transparent shadow-none sm:border sm:border-white/10 sm:shadow-2xl sm:backdrop-blur-md">
+        <CardHeader className="px-0 pt-0 sm:p-6">
           <div className="font-display mb-1 flex items-center gap-2 text-xs font-medium tracking-[0.2em] text-amber-500 uppercase">
             <span className="h-[2px] w-6 bg-amber-500" />
             Sign In
           </div>
-          <CardTitle>登录 BF-Manager</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-2xl sm:text-lg">登录 BF-Manager</CardTitle>
+          <CardDescription className="pt-1 leading-relaxed sm:pt-0">
             使用 EA 账号的 Cookie 登录。一般只需要填 <strong>remid</strong>，sid 留空即可—— EA
             会在登录过程里自动签发新的 sid。两个 Cookie 都能在浏览器中访问{" "}
             <a
@@ -159,7 +160,7 @@ function LoginForm() {
             后从开发者工具的 Cookies 面板获取。
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-0 sm:px-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
               <FormField

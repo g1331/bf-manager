@@ -144,13 +144,13 @@ export function AutoSwitchPanel({
   const current = v.plan.items[v.cursor];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* 状态与开关 */}
       <Bf1Panel
         variant="transparent"
         cut={20}
         corners={["topLeft", "bottomRight"]}
-        className="bg-black/45 p-3.5 backdrop-blur-sm sm:p-6"
+        className="bg-black/45 p-4 backdrop-blur-sm sm:p-6"
       >
         <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
           <SectionHeading className="mb-0">自动换图</SectionHeading>
@@ -214,7 +214,7 @@ export function AutoSwitchPanel({
       </Bf1Panel>
 
       {/* 编排 */}
-      <Bf1Panel cut={20} className="p-3.5 sm:p-6" style={{ background: "rgba(12,12,15,0.72)" }}>
+      <Bf1Panel cut={20} className="p-4 sm:p-6" style={{ background: "rgba(12,12,15,0.72)" }}>
         <div className="flex flex-wrap items-center gap-3">
           <SectionHeading className="mb-0">轮换编排</SectionHeading>
           <span className="text-xs text-white/40">
@@ -403,7 +403,7 @@ export function AutoSwitchPanel({
       </Bf1Panel>
 
       {/* 执行记录 */}
-      <Bf1Panel cut={20} className="p-3.5 sm:p-6" style={{ background: "rgba(12,12,15,0.72)" }}>
+      <Bf1Panel cut={20} className="p-4 sm:p-6" style={{ background: "rgba(12,12,15,0.72)" }}>
         <SectionHeading className="mb-0">执行记录</SectionHeading>
         {v.events.length === 0 ? (
           <div className="py-6 text-center text-sm text-white/40">还没有记录</div>

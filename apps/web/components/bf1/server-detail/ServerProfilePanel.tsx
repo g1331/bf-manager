@@ -42,7 +42,7 @@ export function ServerProfilePanel({
       variant="transparent"
       cut={20}
       corners={["topLeft", "bottomRight"]}
-      className="h-full bg-black/45 p-3.5 backdrop-blur-sm sm:p-6"
+      className="h-full bg-black/45 p-4 backdrop-blur-sm sm:p-6"
     >
       <SectionHeading>服务器档案</SectionHeading>
 
@@ -56,7 +56,7 @@ export function ServerProfilePanel({
           {ownerId ? (
             <Link
               href={`/${game}/player/${ownerId}`}
-              className="truncate text-white hover:text-amber-300"
+              className="inline-action truncate text-white hover:text-amber-300"
             >
               {owner.display_name}
             </Link>
@@ -123,7 +123,7 @@ export function ServerProfilePanel({
               {platoon.guid ? (
                 <Link
                   href={`/${game}/platoon/${platoon.guid}`}
-                  className="font-medium text-white hover:text-amber-300"
+                  className="inline-action font-medium text-white hover:text-amber-300"
                 >
                   [{platoon.tag ?? "—"}] {platoon.name}
                 </Link>

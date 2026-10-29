@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Menu } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { usePathname } from "next/navigation";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { AppRail } from "./AppRail";
 import { FriendsRail } from "./FriendsRail";
 import { InstallPrompt } from "./InstallPrompt";
+import { MobileAppBar, getDetailRoute } from "./MobileAppBar";
 import { MobileNav } from "./MobileNav";
 import { MobileTabBar } from "./MobileTabBar";
 import { TopTabs } from "./TopTabs";
@@ -15,6 +15,7 @@ import { UserMenu } from "./UserMenu";
 import { PageTransition } from "./PageTransition";
 import { AmbientBackground } from "./AmbientBackground";
 import { useTrackNavigation } from "@/hooks/useNavigation";
+import { getNavContext, isTabActive } from "@/lib/nav";
 
 /**
  * 应用外壳，复刻经典战地大厅的两级导航布局：
@@ -31,6 +32,11 @@ import { useTrackNavigation } from "@/hooks/useNavigation";
  */
 export function SidebarLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = usePathname();
+  const detailRoute = getDetailRoute(pathname);
+  // 手机端二级 tab 只在当前页属于其中一项时显示；「我的服务器」「我的」这类底部标签栏入口不挂一排没选中的 tab
+  const showMobileTabs =
+    !detailRoute && getNavContext(pathname).tabs.some((tab) => isTabActive(pathname, tab));
   useTrackNavigation();
 
   return (
@@ -64,29 +70,24 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
 
         {/* 主内容列：桌面端固定满高、自身不滚，滚动交给内部页面区，使顶栏与子标签常驻 */}
         <div className="flex min-w-0 flex-1 flex-col lg:min-h-0 lg:overflow-hidden">
-          {/* 顶部 Header：纯浮层，无边框、无实色块；桌面端左侧嵌二级 tab，右侧厂牌与账户 */}
-          <header className="relative z-40 flex h-20 items-end px-4 pb-3 sm:px-10">
-            {/* 移动端汉堡 */}
-            <div className="flex items-center pb-1 lg:hidden">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="-ml-2"
-                onClick={() => setMobileOpen(true)}
-                aria-label="打开导航菜单"
-              >
-                <Menu className="size-5" />
-              </Button>
+          {/* 手机端：吸顶导航栏 + 二级 tab 行（详情页不显示 tab，顶栏换成返回键） */}
+          <MobileAppBar onMenu={() => setMobileOpen(true)} />
+          {showMobileTabs ? (
+            <div className="px-4 lg:hidden">
+              <TopTabs />
             </div>
+          ) : null}
 
-            {/* 桌面端二级 tab（带滑动发光指示） */}
-            <TopTabs className="hidden lg:flex" animated />
+          {/* 桌面端 Header：纯浮层，无边框、无实色块；左侧嵌二级 tab，右侧厂牌与账户 */}
+          <header className="relative z-40 hidden h-20 items-end px-10 pb-3 lg:flex">
+            {/* 二级 tab（带滑动发光指示） */}
+            <TopTabs animated />
 
             {/* 右侧：厂牌 logo + 账户 */}
             <div className="ml-auto flex items-end gap-7 pb-1">
               <Link
                 href="/stats"
-                className="hidden items-center gap-2.5 sm:flex"
+                className="flex items-center gap-2.5"
                 aria-label="BF-Manager 首页"
               >
                 <span className="h-7 w-[3px] bg-amber-500" />
@@ -103,18 +104,13 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
             </div>
           </header>
 
-          {/* 移动端二级 tab：单独成行常驻，可横向滚动；当前路由无 tab 时整行隐藏 */}
-          <div className="px-4 empty:hidden lg:hidden">
-            <TopTabs />
-          </div>
-
           {/*
            * 页面内容容器：覆盖各页面 main 自带的 `mx-auto`，让内容紧贴 tab 起点向右铺开，
            * 实现「整组元素集中统一」的视觉。错误页（max-w-md）需要保留居中，特判跳过。
            * max-w 由页面各自决定，这里只改对齐方式不改宽度。
            * 移动端底部留出标签栏的 h-14；底部安全区已由 body 的 padding 留过。
            */}
-          <div className="pb-14 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:pb-0 [&_main:not(.max-w-md)]:!mr-auto [&_main:not(.max-w-md)]:!ml-0 [&_main:not(.max-w-md)]:!px-3 sm:[&_main:not(.max-w-md)]:!px-10">
+          <div className="pb-14 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:pb-0 [&_main:not(.max-w-md)]:!mr-auto [&_main:not(.max-w-md)]:!ml-0 [&_main:not(.max-w-md)]:!px-4 sm:[&_main:not(.max-w-md)]:!px-10">
             <PageTransition>{children}</PageTransition>
           </div>
         </div>

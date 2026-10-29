@@ -107,7 +107,7 @@ export function PlayerHeroBanner({
         </div>
 
         {/* 身份 */}
-        <div className={cn("mt-5 flex items-center gap-4 sm:gap-6", banned && "grayscale")}>
+        <div className={cn("mt-4 flex items-center gap-4 sm:mt-5 sm:gap-6", banned && "grayscale")}>
           <PlayerAvatar
             avatarUrl={avatarUrl}
             displayName={displayName}
@@ -139,7 +139,7 @@ export function PlayerHeroBanner({
                 {platoon.verified ? <span className="text-amber-300/90">已认证</span> : null}
               </div>
             ) : null}
-            <h1 className="font-display flex flex-wrap items-baseline gap-x-3 text-3xl leading-tight font-bold tracking-wide break-all sm:text-4xl @6xl:text-5xl">
+            <h1 className="font-display flex flex-wrap items-baseline gap-x-2 text-2xl leading-tight font-bold tracking-wide break-all sm:gap-x-3 sm:text-4xl @6xl:text-5xl">
               {platoon?.tag ? <span className="text-white/45">[{platoon.tag}]</span> : null}
               <span>{displayName}</span>
             </h1>
@@ -163,14 +163,14 @@ export function PlayerHeroBanner({
         </div>
 
         {/* 核心数字 */}
-        <div className="mt-8 flex flex-wrap items-end gap-x-10 gap-y-5">
+        <div className="mt-6 flex flex-wrap items-end gap-x-8 gap-y-5 sm:mt-8 sm:gap-x-10">
           <div>
             <div className="text-[11px] tracking-[0.25em] text-amber-400/90 uppercase">K / D</div>
-            <div className="font-display mt-1 text-7xl leading-none font-bold text-amber-400 tabular-nums drop-shadow-[0_0_28px_rgba(245,158,11,0.35)] sm:text-8xl">
+            <div className="font-display mt-1 text-6xl leading-none font-bold text-amber-400 tabular-nums drop-shadow-[0_0_28px_rgba(245,158,11,0.35)] sm:text-8xl">
               {fmtFixed(summary.kd)}
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-x-8 gap-y-4 pb-1 sm:grid-cols-4">
+          <div className="grid grid-cols-4 gap-x-5 gap-y-4 pb-1 sm:gap-x-8">
             <Kpi label="KPM" value={fmtFixed(summary.kpm)} />
             <Kpi label="SPM" value={summary.sps != null ? fmtFull(summary.sps * 60) : "—"} />
             <Kpi label="胜率" value={fmtPct(rate)} />
@@ -261,7 +261,9 @@ function Kpi({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <div className="text-[11px] tracking-wider text-white/50">{label}</div>
-      <div className="font-display mt-1 text-3xl font-bold text-white tabular-nums">{value}</div>
+      <div className="font-display mt-1 text-xl font-bold text-white tabular-nums sm:text-3xl">
+        {value}
+      </div>
     </div>
   );
 }

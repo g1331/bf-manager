@@ -40,7 +40,7 @@ export default function CampaignPage() {
       ) : (
         <>
           <p className="max-w-3xl text-sm leading-relaxed text-white/70">{c.description}</p>
-          <dl className="grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-2">
+          <dl className="grid max-w-3xl grid-cols-2 gap-3">
             <Stat
               label="行动结束"
               value={new Date(c.ends_at).toLocaleString("zh-CN", {
@@ -55,7 +55,7 @@ export default function CampaignPage() {
               hint={`还有 ${remaining(c.daily_reset_at)}`}
             />
           </dl>
-          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid grid-cols-2 gap-3 lg:grid-cols-3">
             {c.operations.map((op) => (
               <li
                 key={op.name}
@@ -65,7 +65,9 @@ export default function CampaignPage() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={op.image_url} alt="" className="aspect-[16/9] w-full object-cover" />
                 ) : null}
-                <div className="px-4 py-3 text-base font-medium">{op.name}</div>
+                <div className="px-3 py-2.5 text-sm font-medium sm:px-4 sm:py-3 sm:text-base">
+                  {op.name}
+                </div>
               </li>
             ))}
           </ul>
@@ -77,9 +79,9 @@ export default function CampaignPage() {
 
 function Stat({ label, value, hint }: { label: string; value: string; hint: string }) {
   return (
-    <div className="rounded-sm border border-white/10 bg-black/30 px-4 py-3">
+    <div className="rounded-sm border border-white/10 bg-black/30 px-3 py-3 sm:px-4">
       <dt className="text-xs text-white/45">{label}</dt>
-      <dd className="mt-1 text-lg font-medium tabular-nums">{value}</dd>
+      <dd className="mt-1 text-[15px] font-medium tabular-nums sm:text-lg">{value}</dd>
       <dd className="text-xs text-white/45">{hint}</dd>
     </div>
   );

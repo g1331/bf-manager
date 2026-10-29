@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
  * - 默认顶部左 + 底部右切角（最常见的 stat / weapon 模板形态）
  * - 半透明灰色 + 背景模糊
  * - 通过 corners 任意组合四角切法，支持其他子模板形态
+ * - 手机端切角上限 14px（--bf1-cut-max），桌面比例的 32px 大切角放在窄屏上会吃掉内容
  */
 
 export type Bf1PanelVariant = "default" | "dark" | "transparent";
@@ -33,13 +34,14 @@ function buildClipPath(cut: number, corners: Bf1PanelCorner[]): string {
   const br = corners.includes("bottomRight");
   const bl = corners.includes("bottomLeft");
   const pts: string[] = [];
-  if (tl) pts.push(`0 ${cut}px`, `${cut}px 0`);
+  const c = `min(${cut}px, var(--bf1-cut-max, ${cut}px))`;
+  if (tl) pts.push(`0 ${c}`, `${c} 0`);
   else pts.push("0 0");
-  if (tr) pts.push(`calc(100% - ${cut}px) 0`, `100% ${cut}px`);
+  if (tr) pts.push(`calc(100% - ${c}) 0`, `100% ${c}`);
   else pts.push("100% 0");
-  if (br) pts.push(`100% calc(100% - ${cut}px)`, `calc(100% - ${cut}px) 100%`);
+  if (br) pts.push(`100% calc(100% - ${c})`, `calc(100% - ${c}) 100%`);
   else pts.push("100% 100%");
-  if (bl) pts.push(`${cut}px 100%`, `0 calc(100% - ${cut}px)`);
+  if (bl) pts.push(`${c} 100%`, `0 calc(100% - ${c})`);
   else pts.push("0 100%");
   return `polygon(${pts.join(", ")})`;
 }
@@ -55,7 +57,15 @@ export function Bf1Panel({
 }: Bf1PanelProps) {
   const clipPath = buildClipPath(cut, corners);
   return (
-    <div {...rest} className={cn(VARIANT_CLASS[variant], className)} style={{ clipPath, ...style }}>
+    <div
+      {...rest}
+      className={cn(
+        "[--bf1-cut-max:14px] lg:[--bf1-cut-max:9999px]",
+        VARIANT_CLASS[variant],
+        className,
+      )}
+      style={{ clipPath, ...style }}
+    >
       {children}
     </div>
   );

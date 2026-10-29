@@ -181,11 +181,11 @@ function PlayerDetailView({
     <div className="relative min-h-screen w-full text-white">
       <DetailBackground url={pickBackgroundUrl(personaId, null)} grayscale={banned} />
 
-      <div className="relative z-10 max-w-[1600px] px-3 py-4 sm:px-10 sm:py-8">
+      <div className="relative z-10 max-w-[1600px] px-4 pt-4 pb-6 sm:px-10 sm:py-8">
         <button
           type="button"
           onClick={back}
-          className="mb-4 inline-flex items-center gap-1.5 text-sm text-white/55 transition-colors hover:text-white"
+          className="mb-4 hidden items-center gap-1.5 text-sm text-white/55 transition-colors hover:text-white lg:inline-flex"
         >
           <ArrowLeft className="size-4" />
           返回
@@ -211,7 +211,7 @@ function PlayerDetailView({
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, ease: "easeOut" }}
-          className="mt-6"
+          className="mt-4 sm:mt-6"
         >
           {tab === "overview" && (
             <CareerOverview

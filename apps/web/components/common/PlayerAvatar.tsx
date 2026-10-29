@@ -5,7 +5,7 @@ type AvatarSize = "sm" | "md" | "lg";
 const SIZE_CLASS: Record<AvatarSize, string> = {
   sm: "size-9 text-sm",
   md: "size-11 text-base",
-  lg: "size-20 text-2xl sm:size-24",
+  lg: "size-16 text-xl sm:size-24 sm:text-2xl",
 };
 
 /**

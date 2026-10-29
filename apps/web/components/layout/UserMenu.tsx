@@ -16,19 +16,36 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useSession } from "@/hooks/useSession";
 import { logout } from "@/lib/auth";
+import { cn } from "@/lib/utils";
 
-export function UserMenu() {
+/** compact：手机端顶栏用，未登录时是纯文字「登录」，头像缩到 32px。 */
+export function UserMenu({ compact = false }: { compact?: boolean }) {
   const session = useSession();
   const router = useRouter();
   const qc = useQueryClient();
 
   if (session.isLoading) {
-    return <div className="bg-muted size-9 animate-pulse rounded-full" aria-hidden />;
+    return (
+      <div
+        className={cn("bg-muted animate-pulse rounded-full", compact ? "size-8" : "size-9")}
+        aria-hidden
+      />
+    );
   }
 
   const user = session.data;
 
   if (!user) {
+    if (compact) {
+      return (
+        <Link
+          href="/login"
+          className="flex h-11 items-center px-2 text-[15px] font-medium text-amber-400 active:text-amber-300"
+        >
+          登录
+        </Link>
+      );
+    }
     return (
       <Button variant="outline" size="sm" asChild>
         <Link href="/login">
@@ -62,7 +79,10 @@ export function UserMenu() {
         <button
           type="button"
           aria-label="用户菜单"
-          className="border-border focus-visible:ring-ring bg-muted relative inline-flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full border text-sm font-semibold transition focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+          className={cn(
+            "border-border focus-visible:ring-ring bg-muted relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full border text-sm font-semibold transition focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+            compact ? "size-8" : "size-9",
+          )}
         >
           {primary?.avatar_url ? (
             // eslint-disable-next-line @next/next/no-img-element

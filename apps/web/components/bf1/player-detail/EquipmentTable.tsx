@@ -115,7 +115,7 @@ export function EquipmentTable<T extends GearItem>({
         placeholder={placeholder}
       />
 
-      <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
+      <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] sm:text-xs">
         <div className="flex flex-wrap items-center gap-1">
           <span className="mr-1 text-white/45">排序</span>
           {columns.map((c) => {
@@ -126,7 +126,7 @@ export function EquipmentTable<T extends GearItem>({
                 type="button"
                 onClick={() => onSort(c.key)}
                 className={cn(
-                  "flex items-center gap-0.5 px-2 py-1 transition-colors",
+                  "compact-action flex h-9 items-center gap-0.5 px-2 transition-colors sm:h-auto sm:py-1",
                   active ? "bg-amber-400/15 text-amber-300" : "text-white/55 hover:text-white",
                 )}
               >

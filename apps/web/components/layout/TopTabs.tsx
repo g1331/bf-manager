@@ -12,7 +12,8 @@ import { getNavContext, isTabActive } from "@/lib/nav";
  *   下方有一条贯穿全宽的细底线作为「轨道」，激活段以与文字等宽的发光白线叠加其上；
  *   切换 tab 时激活段滑动跟随（animated 模式）。
  * tab 集由当前路径所属的一级模块决定（见 getNavContext）；无 tab 时不渲染。
- * 桌面端嵌在 header 内（animated），移动端单独成行可横向滚动，两端共用本组件。
+ * 桌面端嵌在 header 内（animated），22px 大字复刻大厅；移动端在顶栏下单独成行，
+ * 收到 15px、间距 20px，六个入口在 390 宽度下一行放得下，更窄时横向滚动。
  */
 export function TopTabs({
   className,
@@ -36,7 +37,7 @@ export function TopTabs({
     >
       <nav
         className={cn(
-          "relative z-10 flex items-end gap-14 overflow-x-auto",
+          "relative z-10 flex items-end gap-5 overflow-x-auto lg:gap-14",
           // 隐藏横向滚动条，保留可滚动能力（移动端）
           "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
         )}
@@ -48,11 +49,13 @@ export function TopTabs({
               key={tab.href}
               href={tab.href}
               className={cn(
-                "group relative flex shrink-0 items-center py-2 transition-colors",
+                "group relative flex h-11 min-w-0 shrink-0 items-center transition-colors lg:h-auto lg:py-2",
                 active ? "text-white" : "text-white/65 hover:text-white",
               )}
             >
-              <span className="text-[22px] font-normal whitespace-nowrap">{tab.label}</span>
+              <span className="text-[15px] font-medium whitespace-nowrap lg:text-[22px] lg:font-normal">
+                {tab.label}
+              </span>
               {/* 激活段：与文字等宽的发光白线，叠在贯穿底线之上 */}
               {active ? (
                 animated ? (

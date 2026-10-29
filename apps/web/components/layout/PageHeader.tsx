@@ -21,7 +21,7 @@ export function PageHeader({
   return (
     <header className={cn("space-y-2", className)}>
       {kicker ? (
-        <div className="font-display flex items-center gap-2 text-xs font-medium tracking-[0.2em] text-amber-500 uppercase">
+        <div className="font-display flex items-center gap-2 text-[11px] font-medium tracking-[0.2em] text-amber-500 uppercase sm:text-xs">
           <span className="h-[2px] w-6 bg-amber-500" />
           {kicker}
         </div>
@@ -30,7 +30,11 @@ export function PageHeader({
         <h1 className="text-2xl font-bold sm:text-3xl">{title}</h1>
         {action ? <div className="shrink-0">{action}</div> : null}
       </div>
-      {description ? <p className="text-muted-foreground text-sm">{description}</p> : null}
+      {description ? (
+        <p className="text-muted-foreground text-[13px] leading-relaxed sm:text-sm">
+          {description}
+        </p>
+      ) : null}
     </header>
   );
 }

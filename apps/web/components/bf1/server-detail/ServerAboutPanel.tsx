@@ -98,7 +98,7 @@ export function ServerAboutPanel({
       variant="transparent"
       cut={20}
       corners={["topLeft", "bottomRight"]}
-      className="h-full bg-black/45 p-3.5 backdrop-blur-sm sm:p-6"
+      className="h-full bg-black/45 p-4 backdrop-blur-sm sm:p-6"
     >
       <SectionHeading>服务器介绍</SectionHeading>
       {description ? (

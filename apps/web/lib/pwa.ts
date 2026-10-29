@@ -74,6 +74,8 @@ function detectMethod(hasPrompt: boolean): InstallMethod {
 
 function isStandalone(): boolean {
   return (
+    // 安卓壳 App（apps/android）在 UA 末尾带 BFManagerApp
+    /BFManagerApp\//.test(navigator.userAgent) ||
     window.matchMedia("(display-mode: standalone)").matches ||
     (navigator as Navigator & { standalone?: boolean }).standalone === true
   );

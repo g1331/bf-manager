@@ -20,6 +20,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Sheet,
   SheetContent,
@@ -32,7 +33,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { AdminPageSkeleton } from "@/components/layout/PageSkeleton";
 import { SectionHeading } from "@/components/layout/SectionHeading";
 import { ConfirmSheet } from "@/components/common/ConfirmSheet";
-import { EaLoginFlow, type EaLoginTarget } from "@/components/common/EaLoginFlow";
+import { EaLoginDialog, EaLoginPanel, type EaLoginTarget } from "@/components/common/EaLoginFlow";
 import { ResponsiveTable, type Column } from "@/components/common/ResponsiveTable";
 
 import { useSession } from "@/hooks/useSession";
@@ -310,19 +311,17 @@ export default function EAAccountsAdminPage() {
   const [pendingDelete, setPendingDelete] = useState<EAAccountItem | null>(null);
   const [editing, setEditing] = useState<EAAccountItem | null>(null);
   const [renaming, setRenaming] = useState<EAAccountItem | null>(null);
-  const [loginFlowOpen, setLoginFlowOpen] = useState(false);
-  // 关闭面板时保留 target，避免关闭动画期间标题跳回「新增」
+  const [reloginOpen, setReloginOpen] = useState(false);
+  // 关闭弹窗时保留 target，避免关闭动画期间标题跳回「新增」
   const [reloginTarget, setReloginTarget] = useState<EaLoginTarget | null>(null);
 
-  const openLoginFlow = (account: EAAccountItem | null) => {
-    setReloginTarget(
-      account && {
-        accountId: account.id,
-        personaId: account.persona_id,
-        label: account.display_name ?? `Persona ${account.persona_id}`,
-      },
-    );
-    setLoginFlowOpen(true);
+  const openRelogin = (account: EAAccountItem) => {
+    setReloginTarget({
+      accountId: account.id,
+      personaId: account.persona_id,
+      label: account.display_name ?? `Persona ${account.persona_id}`,
+    });
+    setReloginOpen(true);
   };
 
   const isAdmin = session.data?.role === "admin";
@@ -498,7 +497,7 @@ export default function EAAccountsAdminPage() {
             variant={!a.enabled || a.failure_count > 0 ? "outline" : "ghost"}
             size="sm"
             className="compact-action"
-            onClick={() => openLoginFlow(a)}
+            onClick={() => openRelogin(a)}
           >
             <LogIn className="size-3.5" />
             重新登录
@@ -533,11 +532,6 @@ export default function EAAccountsAdminPage() {
           kicker="Admin"
           title="EA 服管账号管理"
           description="维护平台代查询用的 EA 账号池。凭据写入后即加密存储，列表只展示健康状态，任何明文都不会回显。同一个 persona_id 只能存在一条记录。"
-          action={
-            <Button onClick={() => openLoginFlow(null)} size="sm">
-              邮箱密码登录添加
-            </Button>
-          }
         />
 
         <Card>
@@ -545,104 +539,119 @@ export default function EAAccountsAdminPage() {
             <CardTitle className="text-base">新增账号</CardTitle>
           </CardHeader>
           <CardContent>
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit((v) => create.mutate(v))}
-                className="grid grid-cols-1 gap-4 sm:grid-cols-2"
-              >
-                <FormField
-                  control={form.control}
-                  name="persona_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>persona_id</FormLabel>
-                      <FormControl>
-                        <Input inputMode="numeric" {...field} />
-                      </FormControl>
-                      <FormDescription>EA 账号的 persona_id</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+            <Tabs defaultValue="login" className="space-y-4">
+              <TabsList className="grid w-full grid-cols-2 sm:inline-flex sm:w-auto">
+                <TabsTrigger value="login">邮箱密码登录</TabsTrigger>
+                <TabsTrigger value="cookie">手动填写凭据</TabsTrigger>
+              </TabsList>
+              {/* forceMount：切到另一页时保留登录进度，等验证码期间看一眼另一页不会让任务作废 */}
+              <TabsContent value="login" forceMount className="data-[state=inactive]:hidden">
+                <EaLoginPanel
+                  actor="admin"
+                  onSucceeded={() => qc.invalidateQueries({ queryKey: ["ea-accounts"] })}
                 />
-                <FormField
-                  control={form.control}
-                  name="display_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>备注名（可选）</FormLabel>
-                      <FormControl>
-                        <Input placeholder="便于辨识" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="remid"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>remid</FormLabel>
-                      <FormControl>
-                        <Input autoComplete="off" {...field} />
-                      </FormControl>
-                      <FormDescription>EA 官网登录后 cookie 里的 remid</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="sid"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>sid</FormLabel>
-                      <FormControl>
-                        <Input autoComplete="off" {...field} />
-                      </FormControl>
-                      <FormDescription>EA 官网登录后 cookie 里的 sid</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="session"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>session（可选）</FormLabel>
-                      <FormControl>
-                        <Input autoComplete="off" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="access_token"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>access_token（可选）</FormLabel>
-                      <FormControl>
-                        <Input autoComplete="off" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="sm:col-span-2">
-                  <Button
-                    type="submit"
-                    disabled={create.isPending}
-                    size="lg"
-                    className="w-full sm:w-auto"
+              </TabsContent>
+              <TabsContent value="cookie">
+                <Form {...form}>
+                  <form
+                    onSubmit={form.handleSubmit((v) => create.mutate(v))}
+                    className="grid grid-cols-1 gap-4 sm:grid-cols-2"
                   >
-                    {create.isPending ? "提交中…" : "新增账号"}
-                  </Button>
-                </div>
-              </form>
-            </Form>
+                    <FormField
+                      control={form.control}
+                      name="persona_id"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>persona_id</FormLabel>
+                          <FormControl>
+                            <Input inputMode="numeric" {...field} />
+                          </FormControl>
+                          <FormDescription>EA 账号的 persona_id</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="display_name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>备注名（可选）</FormLabel>
+                          <FormControl>
+                            <Input placeholder="便于辨识" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="remid"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>remid</FormLabel>
+                          <FormControl>
+                            <Input autoComplete="off" {...field} />
+                          </FormControl>
+                          <FormDescription>EA 官网登录后 cookie 里的 remid</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="sid"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>sid</FormLabel>
+                          <FormControl>
+                            <Input autoComplete="off" {...field} />
+                          </FormControl>
+                          <FormDescription>EA 官网登录后 cookie 里的 sid</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="session"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>session（可选）</FormLabel>
+                          <FormControl>
+                            <Input autoComplete="off" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="access_token"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>access_token（可选）</FormLabel>
+                          <FormControl>
+                            <Input autoComplete="off" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="sm:col-span-2">
+                      <Button
+                        type="submit"
+                        disabled={create.isPending}
+                        size="lg"
+                        className="w-full sm:w-auto"
+                      >
+                        {create.isPending ? "提交中…" : "新增账号"}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
 
@@ -682,11 +691,11 @@ export default function EAAccountsAdminPage() {
           }}
         />
 
-        <EaLoginFlow
+        <EaLoginDialog
           actor="admin"
           target={reloginTarget}
-          open={loginFlowOpen}
-          onOpenChange={setLoginFlowOpen}
+          open={reloginOpen}
+          onOpenChange={setReloginOpen}
           onSucceeded={() => qc.invalidateQueries({ queryKey: ["ea-accounts"] })}
         />
       </main>

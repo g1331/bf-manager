@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { QueryErrorState } from "@/components/common/ErrorState";
 import { FALLBACK_GRADIENT } from "@/lib/bf1/background";
 import { cn } from "@/lib/utils";
 
@@ -66,6 +67,33 @@ export function DetailNote({ text }: { text: string }) {
       <DetailBackground url={null} />
       <div className="relative z-10 flex min-h-screen items-center justify-center px-4">
         <span className="text-sm text-white/60">{text}</span>
+      </div>
+    </div>
+  );
+}
+
+/** 详情页主数据加载失败：按错误类别给文案，可重试的给重试按钮，本站内部错误附编号与反馈入口 */
+export function DetailError({
+  error,
+  notFoundText,
+  onRetry,
+  retrying,
+}: {
+  error: unknown;
+  notFoundText: string;
+  onRetry: () => void;
+  retrying: boolean;
+}) {
+  return (
+    <div className="relative min-h-screen w-full overflow-hidden text-white">
+      <DetailBackground url={null} />
+      <div className="relative z-10 flex min-h-screen items-center justify-center">
+        <QueryErrorState
+          error={error}
+          notFoundText={notFoundText}
+          onRetry={onRetry}
+          retrying={retrying}
+        />
       </div>
     </div>
   );

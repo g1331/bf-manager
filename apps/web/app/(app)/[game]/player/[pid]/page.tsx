@@ -15,7 +15,11 @@ import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { SectionNav, useTabHash } from "@/components/bf1/SectionNav";
-import { DetailBackground, DetailNote } from "@/components/bf1/visual/DetailBackground";
+import {
+  DetailBackground,
+  DetailError,
+  DetailNote,
+} from "@/components/bf1/visual/DetailBackground";
 import { CareerOverview, Panel } from "@/components/bf1/player-detail/CareerOverview";
 import {
   EquipmentTable,
@@ -86,7 +90,16 @@ export default function Bf1PlayerPage() {
 
   if (!enabled) return <DetailNote text="无效的玩家 ID" />;
   if (statsQ.isLoading) return <PlayerDetailSkeleton />;
-  if (!statsQ.data) return <DetailNote text="加载玩家战绩失败，请稍后重试" />;
+  if (!statsQ.data) {
+    return (
+      <DetailError
+        error={statsQ.error}
+        notFoundText="没有找到这个玩家"
+        onRetry={() => void statsQ.refetch()}
+        retrying={statsQ.isFetching}
+      />
+    );
+  }
   return <PlayerDetailView game={game} personaId={personaId} stats={statsQ.data} />;
 }
 

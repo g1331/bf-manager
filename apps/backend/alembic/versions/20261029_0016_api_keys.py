@@ -1,7 +1,7 @@
 """api_keys：开放 API Key
 
-Revision ID: 20261029_0015
-Revises: 20261029_0014
+Revision ID: 20261029_0016
+Revises: 20261029_0015
 Create Date: 2026-10-29 22:00:00.000000
 
 只存 key 的 sha256 和开头几位，明文创建时返回一次。
@@ -14,8 +14,8 @@ from collections.abc import Sequence
 import sqlalchemy as sa
 from alembic import op
 
-revision: str = "20261029_0015"
-down_revision: str | None = "20261029_0014"
+revision: str = "20261029_0016"
+down_revision: str | None = "20261029_0015"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

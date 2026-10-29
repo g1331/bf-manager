@@ -69,6 +69,23 @@ class TooManyRequestsError(AppError):
         )
 
 
+class EABusyError(AppError):
+    """公共查询的 EA 预算本分钟已用完。
+
+    沿用 503（见 EAApiError 关于 Cloudflare 的说明），同时带 Retry-After，前端据此提示等待。
+    """
+
+    def __init__(self, retry_after: int) -> None:
+        retry_after = max(int(retry_after), 1)
+        super().__init__(
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            "EA_BUSY",
+            f"当前查询人数较多，本站查询账号有限，请 {retry_after} 秒后再试",
+            details={"retry_after": retry_after},
+            headers={"Retry-After": str(retry_after)},
+        )
+
+
 class ValidationError(AppError):
     def __init__(self, message: str, details: dict[str, Any] | None = None) -> None:
         super().__init__(status.HTTP_400_BAD_REQUEST, "VALIDATION_ERROR", message, details)

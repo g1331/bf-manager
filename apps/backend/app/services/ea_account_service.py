@@ -5,6 +5,7 @@ from __future__ import annotations
 import contextlib
 from datetime import UTC, datetime
 
+from loguru import logger
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -37,6 +38,12 @@ def _to_item(account: EAAccount) -> EAAccountItem:
         created_at=account.created_at,
         updated_at=account.updated_at,
     )
+
+
+# 连续失败到这个次数时触发验证，验证不通过才停用
+FAILURE_DISABLE_THRESHOLD = 10
+# 正在做阈值验证的账号 id：并发请求同时撞上阈值时只验证一次
+_verifying: set[int] = set()
 
 
 class EAAccountService:
@@ -91,14 +98,41 @@ class EAAccountService:
         )
         await self.db.commit()
 
-    async def mark_failure(self, persona_id: int) -> None:
+    async def mark_failure(self, persona_id: int, *, verify_before_disable: bool = True) -> None:
+        """失败计数加一；累计到阈值时先用 verify 确认登录确实失效，才禁用账号。
+
+        查询请求里的失败未必是账号的问题（EA 抖动、上游返回奇怪的数据），只看计数禁用，
+        匿名用户刷几次就能让号池停摆。verify 通过会把计数清零；verify 自身判失败时
+        以 ``verify_before_disable=False`` 回调这里，直接按阈值禁用，不再递归验证。
+        """
         account = await self.db.scalar(select(EAAccount).where(EAAccount.persona_id == persona_id))
         if account is None:
             return
+        account_id = account.id
         account.failure_count += 1
-        if account.failure_count >= 10:
+        reached = account.failure_count >= FAILURE_DISABLE_THRESHOLD
+        if reached and not verify_before_disable:
             account.enabled = False
+            logger.warning(
+                "EA 账号池账号 {} 连续失败 {} 次且验证未通过，已停用",
+                persona_id,
+                account.failure_count,
+            )
         await self.db.commit()
+        if not reached or not verify_before_disable or account_id in _verifying:
+            return
+
+        _verifying.add(account_id)
+        try:
+            result = await self.verify(account_id)
+        except Exception as e:
+            # 验证本身出错（网络等）不能当作账号失效，留着计数等下一次失败再验
+            logger.warning("EA 账号池账号 {} 失败达阈值，验证出错，暂不停用: {!r}", persona_id, e)
+            return
+        finally:
+            _verifying.discard(account_id)
+        if result.success:
+            logger.info("EA 账号池账号 {} 失败达阈值，但验证通过，计数清零", persona_id)
 
     async def update_session(
         self,
@@ -391,7 +425,7 @@ class EAAccountService:
         try:
             servers_res = await client.getServersByPersonaIds([persona_id])
             if not isinstance(servers_res, dict):
-                await self.mark_failure(persona_id)
+                await self.mark_failure(persona_id, verify_before_disable=False)
                 return EAAccountVerifyResult(
                     success=False,
                     persona_id=persona_id,
@@ -400,7 +434,7 @@ class EAAccountService:
 
             access_token = await client._ensure_desktop_token()
             if not access_token:
-                await self.mark_failure(persona_id)
+                await self.mark_failure(persona_id, verify_before_disable=False)
                 return EAAccountVerifyResult(
                     success=False,
                     persona_id=persona_id,

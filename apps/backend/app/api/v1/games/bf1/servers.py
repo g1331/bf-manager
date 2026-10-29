@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Query
 
 from app.api.deps import DbDep
+from app.api.rate_limit import rate_limit
 from app.schemas.bf1.rounds import RoundPage
 from app.schemas.bf1.server import (
     ServerDetail,
@@ -29,8 +30,11 @@ from app.services.bf1.server_service import BF1ServerService
 
 router = APIRouter()
 
+# 这些接口会用到 EA 账号池或 Blaze 连接，按 IP / 账号限流并计入公共 EA 预算
+_lookup = rate_limit("lookup")
 
-@router.get("", response_model=ServerListResponse)
+
+@router.get("", dependencies=[_lookup], response_model=ServerListResponse)
 async def list_servers(
     db: DbDep,
     name: str | None = Query(
@@ -58,12 +62,12 @@ async def list_servers(
     )
 
 
-@router.get("/{game_id}", response_model=ServerDetail)
+@router.get("/{game_id}", dependencies=[_lookup], response_model=ServerDetail)
 async def get_server(game_id: int, db: DbDep) -> ServerDetail:
     return await BF1ServerService(db).get_detail(game_id)
 
 
-@router.get("/{game_id}/players", response_model=ServerPlayersResponse)
+@router.get("/{game_id}/players", dependencies=[_lookup], response_model=ServerPlayersResponse)
 async def get_server_players_route(
     game_id: int,
     db: DbDep,

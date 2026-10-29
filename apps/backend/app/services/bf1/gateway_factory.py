@@ -10,6 +10,8 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.errors import AppError
+from app.core import ea_budget
 from app.core.security import get_cipher
 from app.domain.games.bf1.gateway import BF1GatewayClient
 from app.models import EaBinding
@@ -62,6 +64,8 @@ async def get_bf1_client(db: AsyncSession) -> AsyncIterator[BF1GatewayClient]:
     按发起者 binding 凭据构造 client 请用 :func:`get_bf1_client_for_binding`，
     其回调回写 EaBindingService，两条链路的凭据持久化目标不可混用。
     """
+    # 公共查询先过全站 EA 预算，超了直接 503，不再去占池子里的账号
+    await ea_budget.acquire()
     account_service = EAAccountService(db)
     creds = await account_service.pick_available()
 
@@ -85,6 +89,14 @@ async def get_bf1_client(db: AsyncSession) -> AsyncIterator[BF1GatewayClient]:
             await client.login(creds.remid, creds.sid)
         yield client
         await account_service.mark_used(creds.persona_id)
+    except AppError as exc:
+        # 玩家不存在、参数不对这类 4xx 是查询本身的结果，说明账号工作正常；
+        # 记成失败的话，匿名用户连查几个不存在的 id 就能让账号被停用
+        if exc.status_code < 500:
+            await account_service.mark_used(creds.persona_id)
+        else:
+            await account_service.mark_failure(creds.persona_id)
+        raise
     except Exception:
         await account_service.mark_failure(creds.persona_id)
         raise

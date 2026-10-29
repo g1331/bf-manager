@@ -19,7 +19,7 @@ export function formatRoundTime(ts: number): string {
   });
 }
 
-function formatClock(ts: number): string {
+export function formatClock(ts: number): string {
   return new Date(ts * 1000).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
 }
 

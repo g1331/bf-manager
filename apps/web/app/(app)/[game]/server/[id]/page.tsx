@@ -74,6 +74,8 @@ const ACTION_LABEL: Record<string, string> = {
   choose_level: "换图",
   add_vip: "添加 VIP",
   remove_vip: "移除 VIP",
+  vip_apply: "VIP 立即生效",
+  vip_expire: "VIP 到期移除",
   add_admin: "添加管理员",
   remove_admin: "移除管理员",
   auto_switch_enable: "开启自动换图",
@@ -329,7 +331,7 @@ function ServerDetailView({
             )}
             {tab === "members" && (
               <Panel>
-                <MembersPanel game={game} extras={extras} />
+                <MembersPanel game={game} gameId={gameId} extras={extras} />
               </Panel>
             )}
             {tab === "audit" && isLoggedIn && (

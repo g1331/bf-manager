@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { bf1Api, type MyServerRole } from "@/lib/api/bf1";
+import { bf1Api, type MyServerRole, type VipGrantOptions } from "@/lib/api/bf1";
 import { ApiException } from "@/lib/api-client";
 
 /**
@@ -15,7 +15,7 @@ export type AdminActionRequest =
   | { action: "move"; personaId: number; teamId: number; label: string }
   | { action: "ban"; personaId: number; label: string }
   | { action: "unban"; personaId: number; label: string }
-  | { action: "addVip"; personaId: number; label: string }
+  | { action: "addVip"; personaId: number; label: string; vip?: VipGrantOptions }
   | { action: "removeVip"; personaId: number; label: string }
   | { action: "addAdmin"; personaId: number; label: string }
   | { action: "removeAdmin"; personaId: number; label: string }
@@ -34,8 +34,8 @@ function describeError(err: unknown): string {
  * 内联服管操作的共享执行器。集中处理：
  * - 按 action 分发到对应的 bf1Api 方法；
  * - 成功 / 失败的 toast 提示；
- * - 双键缓存失效（服务器详情 ["bf1-server"] 与实时名单 ["bf1-server-players"]），
- *   两者都可能因踢人 / 封禁 / 改名单而变化，缺一会导致 UI 与服务器实际状态不一致。
+ * - 缓存失效（服务器详情 ["bf1-server"]、实时名单 ["bf1-server-players"] 与计时 VIP
+ *   ["bf1-timed-vips"]），都可能因踢人 / 封禁 / 改名单而变化，缺一会导致 UI 与服务器实际状态不一致。
  */
 export function useServerAdminActions(gameId: number) {
   const qc = useQueryClient();
@@ -44,6 +44,7 @@ export function useServerAdminActions(gameId: number) {
   const invalidate = useCallback(() => {
     qc.invalidateQueries({ queryKey: ["bf1-server", gameId] });
     qc.invalidateQueries({ queryKey: ["bf1-server-players", gameId] });
+    qc.invalidateQueries({ queryKey: ["bf1-timed-vips", gameId] });
   }, [qc, gameId]);
 
   const callApi = useCallback(
@@ -58,7 +59,7 @@ export function useServerAdminActions(gameId: number) {
         case "unban":
           return bf1Api.adminUnban(gameId, req.personaId);
         case "addVip":
-          return bf1Api.adminAddVip(gameId, req.personaId);
+          return bf1Api.adminAddVip(gameId, req.personaId, req.vip);
         case "removeVip":
           return bf1Api.adminRemoveVip(gameId, req.personaId);
         case "addAdmin":

@@ -56,8 +56,15 @@ class PooledBF1ClientProvider:
             yield client
 
 
+class BindingUnavailableError(Exception):
+    """pool_fallback=False 时发起者的 binding 凭据不可用（未绑定 / 登录失败 / 不是本服 RSP 管理员）"""
+
+
 class BindingFirstBF1ClientProvider:
     """优先用发起者 primary binding 凭据，不可用时降级到后台账号池。
+
+    pool_fallback=False 时不降级，改为在 acquire 进入阶段抛 BindingUnavailableError：
+    号池账号不是私服管理员，后台代人执行名单操作时去试只会白白失败。
 
     降级条件（任一命中即静默走池，仅记日志，用户无感知）：
 
@@ -74,10 +81,13 @@ class BindingFirstBF1ClientProvider:
     非幂等，超时类错误无法区分是否已生效，二次执行有双重处置风险。
     """
 
-    def __init__(self, db: AsyncSession, *, user: User, game_id: int) -> None:
+    def __init__(
+        self, db: AsyncSession, *, user: User, game_id: int, pool_fallback: bool = True
+    ) -> None:
         self.db = db
         self.user = user
         self.game_id = game_id
+        self.pool_fallback = pool_fallback
         self.credential_source: str | None = None
 
     @asynccontextmanager
@@ -94,6 +104,10 @@ class BindingFirstBF1ClientProvider:
             else:
                 await cm.__aexit__(None, None, None)
             return
+        if not self.pool_fallback:
+            raise BindingUnavailableError(
+                f"user_id={self.user.id} 的绑定凭据不可用或不是服务器 {self.game_id} 的管理员"
+            )
         self.credential_source = "pool"
         async with get_bf1_client(self.db) as client:
             yield client

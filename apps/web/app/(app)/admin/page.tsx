@@ -72,7 +72,7 @@ export default function AdminOverviewPage() {
   const m = metrics.data;
 
   return (
-    <main className="mx-auto max-w-5xl space-y-8 px-4 py-8 sm:px-6">
+    <main className="mx-auto max-w-5xl space-y-6 px-4 py-4 sm:space-y-8 sm:px-6 sm:py-8">
       <PageHeader
         kicker="Admin"
         title="运维概览"
@@ -103,7 +103,7 @@ export default function AdminOverviewPage() {
             并产生访问后即可在此查看请求量、活跃用户与接口调用分布。
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
               <MiniStat label="累计请求" value={m.total_requests} />
               <MiniStat label="近 7 日请求" value={m.requests_7d} />
@@ -113,7 +113,7 @@ export default function AdminOverviewPage() {
               <MiniStat label="近 7 日游客" value={m.guests_7d} suffix="人" />
             </div>
 
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
               <DailyTrend daily={m.daily} />
               <TopEndpoints endpoints={m.top_endpoints} />
             </div>
@@ -266,7 +266,7 @@ function EaCalls({ m }: { m: AdminMetrics }) {
   return (
     <section>
       <SectionHeading>EA 请求</SectionHeading>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <MiniStat label="今日（UTC）" value={m.ea_calls_today} suffix="次" />
           <MiniStat label="近 7 日" value={m.ea_calls_7d} suffix="次" />
@@ -274,7 +274,7 @@ function EaCalls({ m }: { m: AdminMetrics }) {
           <MiniStat label="上一小时平均" value={Math.round(prevHour / 60)} suffix="次/分" />
         </div>
         <EaHourly hours={m.ea_hourly} />
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
           <EaSources sources={m.ea_sources} />
           <EaMethods methods={m.ea_methods} />
         </div>
@@ -463,7 +463,7 @@ function TrackerEvents({ events }: { events: TrackerEventCount[] }) {
       <div className="text-muted-foreground mb-4 text-xs font-medium tracking-[0.15em] uppercase">
         对局跟踪（今日人数）
       </div>
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-6">
         {TRACKER_GROUPS.map((g) => (
           <div key={g.title}>
             <div className="text-muted-foreground mb-2 text-xs">{g.title}</div>

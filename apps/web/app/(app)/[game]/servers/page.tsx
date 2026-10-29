@@ -4,10 +4,26 @@ import { useEffect, useMemo, useState } from "react";
 import { usePageState } from "@/hooks/useNavigation";
 import { useParams, useRouter } from "next/navigation";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { Check, ChevronDown, Lock, MapPin, RotateCw, Users } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  Lock,
+  MapPin,
+  RotateCw,
+  Search,
+  SlidersHorizontal,
+  Users,
+} from "lucide-react";
 import { DarkInput } from "@/components/common/DarkInput";
 import { CountryFlag } from "@/components/common/CountryFlag";
 import { Button } from "@/components/ui/button";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { cn } from "@/lib/utils";
 import { ServerListSkeleton } from "@/components/layout/PageSkeleton";
 import { ServerSubTabs } from "@/components/bf1/ServerSubTabs";
@@ -154,6 +170,16 @@ export default function ServerListPage() {
     filters.includeEmpty ||
     filters.nameFilter.trim().length > 0;
 
+  // 手机端「筛选」按钮上的角标：名称以外生效的条件数（名称有单独的搜索框）
+  const optionCount =
+    filters.modes.length +
+    filters.maps.length +
+    filters.regions.length +
+    filters.emptySlots.length +
+    filters.sizes.length +
+    (filters.includeEmpty ? 1 : 0);
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+
   const resetFilters = () => {
     setFilters(DEFAULT_FILTERS);
     setVisibleCount(PAGE_SIZE);
@@ -207,15 +233,65 @@ export default function ServerListPage() {
       {/* 子标签：游戏（本页）/ 您的服务器（可点）；我的最爱 / 最近游玩 暂未接入置灰 */}
       <ServerSubTabs game={params.game} active="browse" />
 
+      {/* 手机端工具栏：搜索框 + 筛选按钮（筛选面板改成底部抽屉，不再排在整张列表后面） */}
+      <div className="flex gap-2 lg:hidden">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-white/40" />
+          <DarkInput
+            value={filters.nameFilter}
+            onChange={(e) => patch({ nameFilter: e.target.value })}
+            placeholder="搜索服务器名称"
+            className="h-11 pl-9"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => setFilterSheetOpen(true)}
+          className={cn(
+            "flex h-11 shrink-0 items-center gap-1.5 rounded-md border px-3.5 text-sm font-medium transition-colors",
+            optionCount > 0
+              ? "border-amber-400/60 text-amber-300"
+              : "border-white/15 text-white/80 active:bg-white/5",
+          )}
+        >
+          <SlidersHorizontal className="size-4" />
+          筛选
+          {optionCount > 0 ? <span className="tabular-nums">{optionCount}</span> : null}
+        </button>
+      </div>
+      <Drawer open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
+        <DrawerContent className="dark max-h-[85dvh] border-white/10 bg-zinc-950 text-white">
+          <DrawerHeader className="pb-2 text-left">
+            <DrawerTitle className="text-base">筛选服务器</DrawerTitle>
+          </DrawerHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto px-4">
+            <FilterSheetBody filters={filters} patch={patch} />
+          </div>
+          <DrawerFooter className="flex-row border-t border-white/10">
+            <Button
+              variant="outline"
+              className="flex-1 border-white/15 bg-transparent text-white"
+              disabled={!filtersActive}
+              onClick={resetFilters}
+            >
+              重设
+            </Button>
+            <Button className="flex-1" onClick={() => setFilterSheetOpen(false)}>
+              查看 {sorted.length} 个服务器
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+
       {/* 主体：左密集表格 + 右筛选面板。桌面端整块填满剩余高度，仅列表内部滚动 */}
-      <div className="grid grid-cols-1 gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_300px]">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_300px]">
         <section className="flex min-w-0 flex-col lg:min-h-0">
           {servers.isLoading ? (
             <ServerListSkeleton />
           ) : sorted.length > 0 ? (
             <>
               {/* 表头常驻，不随列表滚动 */}
-              <div className="flex items-center gap-4 border-b border-white/10 px-3 pb-2 text-[11px] font-semibold tracking-[0.16em] text-white/40 uppercase lg:shrink-0">
+              <div className="hidden items-center gap-4 border-b border-white/10 px-3 pb-2 text-[11px] font-semibold tracking-[0.16em] text-white/40 uppercase sm:flex lg:shrink-0">
                 <span className="flex-1">名称</span>
                 <span className="w-28 text-right">玩家</span>
                 <span className="hidden w-24 text-right sm:block">节点</span>
@@ -259,7 +335,8 @@ export default function ServerListPage() {
           )}
         </section>
 
-        {/* 筛选面板常驻，复刻游戏右侧固定筛选栏；自身满高，条目过多时仅面板内部滚动 */}
+        {/* 筛选面板常驻，复刻游戏右侧固定筛选栏；自身满高，条目过多时仅面板内部滚动。
+            手机端改由工具栏的「筛选」按钮打开底部抽屉 */}
         <FilterPanel
           filters={filters}
           patch={patch}
@@ -373,7 +450,7 @@ function FilterPanel({
   summaryChips: string[];
 }) {
   return (
-    <aside className="space-y-5 lg:min-h-0 lg:self-stretch lg:overflow-y-auto lg:pr-1">
+    <aside className="hidden space-y-5 lg:block lg:min-h-0 lg:self-stretch lg:overflow-y-auto lg:pr-1">
       {/* 您的筛选条件：当前生效条件的标签集 */}
       <section>
         <PanelTitle>您的筛选条件</PanelTitle>
@@ -475,6 +552,121 @@ function FilterPanel({
         重设筛选条件
       </button>
     </aside>
+  );
+}
+
+/* ----------------------------- 手机端筛选抽屉 ----------------------------- */
+
+/** 手机端底部抽屉里的筛选：各分组平铺、选项做成可点选的标签块，只有抽屉本身一层滚动 */
+function FilterSheetBody({
+  filters,
+  patch,
+}: {
+  filters: FilterState;
+  patch: (p: Partial<FilterState>) => void;
+}) {
+  return (
+    <div className="space-y-5 pb-4">
+      <ChipGroup title="游戏模式">
+        {BF1_MODES.map((m) => (
+          <Chip
+            key={m.code}
+            selected={filters.modes.includes(m.code)}
+            onClick={() => patch({ modes: toggle(filters.modes, m.code) })}
+          >
+            {m.label}
+          </Chip>
+        ))}
+      </ChipGroup>
+      <ChipGroup title="区域">
+        {BF1_REGIONS.map((r) => (
+          <Chip
+            key={r.code}
+            selected={filters.regions.includes(r.code)}
+            onClick={() => patch({ regions: toggle(filters.regions, r.code) })}
+          >
+            {r.label}
+          </Chip>
+        ))}
+      </ChipGroup>
+      <ChipGroup title="空位">
+        {EMPTY_SLOT_OPTIONS.map((o) => (
+          <Chip
+            key={o.id}
+            selected={filters.emptySlots.includes(o.id)}
+            onClick={() => patch({ emptySlots: toggle(filters.emptySlots, o.id) })}
+          >
+            {o.label}
+          </Chip>
+        ))}
+      </ChipGroup>
+      <ChipGroup title="服务器规模">
+        {SIZE_OPTIONS.map((n) => (
+          <Chip
+            key={n}
+            selected={filters.sizes.includes(n)}
+            onClick={() => patch({ sizes: toggle(filters.sizes, n) })}
+          >
+            {n} 人
+          </Chip>
+        ))}
+      </ChipGroup>
+      <ChipGroup title="地图">
+        {BF1_MAPS.map((m) => (
+          <Chip
+            key={m.code}
+            selected={filters.maps.includes(m.code)}
+            onClick={() => patch({ maps: toggle(filters.maps, m.code) })}
+          >
+            {m.label}
+          </Chip>
+        ))}
+      </ChipGroup>
+      <ChipGroup title="空服">
+        <Chip
+          selected={filters.includeEmpty}
+          onClick={() => patch({ includeEmpty: !filters.includeEmpty })}
+        >
+          包含 0 人服务器
+        </Chip>
+        <p className="w-full text-xs text-white/40">EA 抽样返回，结果不全</p>
+      </ChipGroup>
+    </div>
+  );
+}
+
+function ChipGroup({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section>
+      <h3 className="mb-2.5 text-[13px] font-medium text-white/55">{title}</h3>
+      <div className="flex flex-wrap gap-2">{children}</div>
+    </section>
+  );
+}
+
+function Chip({
+  selected,
+  onClick,
+  children,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={selected}
+      className={cn(
+        "compact-action h-9 rounded-sm border px-3 text-sm transition-colors",
+        selected
+          ? "border-amber-400/70 bg-amber-400/15 text-amber-200"
+          : "border-white/12 bg-white/[0.03] text-white/75 active:bg-white/10",
+      )}
+    >
+      {children}
+    </button>
   );
 }
 

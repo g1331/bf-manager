@@ -227,11 +227,11 @@ function ServerDetailView({
     <div className="relative min-h-screen w-full text-white">
       <DetailBackground url={summary.map_image_url} />
 
-      <div className="relative z-10 max-w-[1600px] px-3 py-4 sm:px-10 sm:py-8">
+      <div className="relative z-10 max-w-[1600px] px-4 pt-4 pb-6 sm:px-10 sm:py-8">
         <button
           type="button"
           onClick={onBack}
-          className="mb-4 inline-flex items-center gap-1.5 text-sm text-white/55 transition-colors hover:text-white"
+          className="mb-4 hidden items-center gap-1.5 text-sm text-white/55 transition-colors hover:text-white lg:inline-flex"
         >
           <ArrowLeft className="size-4" />
           返回
@@ -254,19 +254,19 @@ function ServerDetailView({
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="mt-6"
+            className="mt-4 sm:mt-6"
           >
             {tab === "overview" && (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {points.length > 1 ? (
-                  <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+                  <div className="grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
                     <ServerHistoryPanel points={points} colors={colors} mapInfo={mapInfo} />
                     {stats.length > 0 ? (
                       <MapStatsPanel stats={stats} colors={colors} currentMap={summary.map_name} />
                     ) : null}
                   </div>
                 ) : null}
-                <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+                <div className="grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
                   <ServerAboutPanel
                     description={summary.description}
                     settings={detail.settings}
@@ -412,7 +412,7 @@ function SettingValue({ value, kind }: { value: string; kind: "toggle" | "scale"
 
 function Panel({ children }: { children: React.ReactNode }) {
   return (
-    <Bf1Panel cut={20} className="p-3.5 sm:p-6" style={{ background: "rgba(12,12,15,0.72)" }}>
+    <Bf1Panel cut={20} className="p-4 sm:p-6" style={{ background: "rgba(12,12,15,0.72)" }}>
       {children}
     </Bf1Panel>
   );
@@ -503,7 +503,7 @@ export function ServerPlayersView({ data, game }: { data: ServerPlayersResponse;
         playerCount={data.player_count}
         maxPlayers={data.max_players}
         statsIncluded={data.stats_included}
-        className="mt-6"
+        className="mt-4 sm:mt-6"
       />
     </div>
   );
@@ -666,9 +666,9 @@ function PlayerRow({ player, seq, game }: { player: BlazePlayer; seq: number; ga
       <td className="py-[5px] text-center">
         <RankBadge rank={player.rank} />
       </td>
-      {/* 名字列：移动端(<lg)不设宽度上限、整名 nowrap 完整展示（超出由外层 overflow-x-auto 横滑），
-          桌面(lg)恢复 max-w-0 + truncate，让名字吃满剩余宽度并对超长名省略，维持双列整齐。 */}
-      <td className="w-full py-[5px] pr-2 pl-2 lg:max-w-0">
+      {/* 名字列：移动端(<lg)限宽 9rem 截断，让胜率 / K/D / KPM 在一屏内露出来，其余列由外层
+          overflow-x-auto 横滑查看；桌面(lg)恢复 max-w-0 + truncate，让名字吃满剩余宽度。 */}
+      <td className="w-full max-w-[9rem] py-[5px] pr-2 pl-2 lg:max-w-0">
         <Link
           href={`/${game}/player/${player.persona_id}`}
           target="_blank"
@@ -677,12 +677,7 @@ function PlayerRow({ player, seq, game }: { player: BlazePlayer; seq: number; ga
           title={`${player.display_name}（在新标签查看战绩）`}
         >
           {dot ? <span className={cn("size-1.5 shrink-0 rounded-full", dot)} /> : null}
-          <span
-            className={cn(
-              "font-medium whitespace-nowrap lg:min-w-0 lg:truncate",
-              nameColor(player),
-            )}
-          >
+          <span className={cn("min-w-0 truncate font-medium whitespace-nowrap", nameColor(player))}>
             {player.display_name}
           </span>
         </Link>
@@ -1098,8 +1093,10 @@ function RotationGrid({
               </span>
             ) : null}
             <div className="absolute inset-x-0 bottom-0 px-3 pb-2">
-              <div className="truncate text-base font-bold text-white">{mapLabel}</div>
-              <div className="flex items-center gap-2 text-xs">
+              <div className="truncate text-[15px] font-bold text-white sm:text-base">
+                {mapLabel}
+              </div>
+              <div className="flex items-center gap-2 overflow-hidden text-xs whitespace-nowrap">
                 {modeLabel ? <span className="text-amber-300/90">{modeLabel}</span> : null}
                 {m.operation && m.operation.length > 1 ? (
                   <span className={step === 0 ? "text-sky-300" : "text-white/50"}>
@@ -1110,8 +1107,8 @@ function RotationGrid({
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-3 px-3 py-2.5">
-            <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2.5 sm:flex-nowrap">
+            <div className="min-w-0 flex-1 basis-full sm:basis-auto">
               {stat ? (
                 <>
                   <div className="h-1 bg-white/[0.08]">
@@ -1123,7 +1120,7 @@ function RotationGrid({
                       }}
                     />
                   </div>
-                  <div className="mt-1.5 flex gap-3 text-[11px] text-white/50 tabular-nums">
+                  <div className="mt-1.5 flex flex-wrap gap-x-3 text-[11px] text-white/50 tabular-nums">
                     <span>{formatDuration(stat.minutes)}</span>
                     <span>平均 {stat.avg_players.toFixed(0)} 人</span>
                   </div>
@@ -1144,7 +1141,7 @@ function RotationGrid({
                     : "服务器尚未初始化，暂不可换图"
                 }
                 onClick={switchToMap}
-                className="compact-action inline-flex h-8 shrink-0 items-center gap-1.5 bg-white/[0.08] px-3 text-xs font-medium text-white/85 ring-1 ring-white/15 transition-colors group-hover:bg-white/15 hover:!bg-white hover:text-black disabled:bg-transparent disabled:text-white/35"
+                className="compact-action inline-flex h-9 w-full shrink-0 items-center justify-center gap-1.5 bg-white/[0.08] px-3 text-xs font-medium text-white/85 ring-1 ring-white/15 transition-colors group-hover:bg-white/15 hover:!bg-white hover:text-black disabled:bg-transparent disabled:text-white/35 sm:h-8 sm:w-auto"
               >
                 <ArrowRightLeft className="size-3.5" />
                 {m.is_current ? "重开" : "换图"}
@@ -1155,7 +1152,8 @@ function RotationGrid({
       </li>
     );
   };
-  const gridCls = "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4";
+  // 手机上也排两列：一列一张图时 29 张图要划很久
+  const gridCls = "grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 2xl:grid-cols-4";
 
   return (
     <div>
@@ -1201,7 +1199,7 @@ function RotationGrid({
         </div>
       ) : null}
       {grouped ? (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {groups.map((g) => (
             <section key={g.key}>
               <h3 className="mb-2 text-sm font-semibold text-white/80">{g.title}</h3>

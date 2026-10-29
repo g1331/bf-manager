@@ -8,6 +8,7 @@
  * gameId 为空（尚未在线时识别）时不可点。与全量「服务器浏览器」分列两个子标签，避免在大列表里找自己的服。
  */
 
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, MapPin, RotateCw, Server } from "lucide-react";
@@ -45,7 +46,7 @@ export default function MyServersPage() {
   const items = q.data?.items ?? [];
 
   return (
-    <main className="flex flex-col gap-4 py-6 text-white lg:h-full lg:min-h-0">
+    <main className="flex flex-col gap-4 py-4 text-white sm:py-6 lg:h-full lg:min-h-0">
       <header className="flex flex-wrap items-end justify-between gap-3 lg:shrink-0">
         <div>
           <div className="font-display flex items-center gap-2 text-xs font-medium tracking-[0.2em] text-amber-500 uppercase">
@@ -72,7 +73,14 @@ export default function MyServersPage() {
       {session.isLoading ? (
         <div className="py-16 text-center text-sm text-white/45">加载中…</div>
       ) : !isLoggedIn ? (
-        <EmptyNote text="请先登录后查看你管理的服务器。" />
+        <EmptyNote text="登录后查看你管理的服务器。">
+          <Link
+            href={`/login?next=${encodeURIComponent(`/${params.game}/my-servers`)}`}
+            className="mt-4 inline-flex h-11 items-center bg-amber-500 px-6 text-[15px] font-semibold text-black transition-colors hover:bg-amber-400"
+          >
+            登录
+          </Link>
+        </EmptyNote>
       ) : q.isLoading ? (
         <div className="py-16 text-center text-sm text-white/45">加载中…</div>
       ) : q.isError ? (
@@ -114,7 +122,7 @@ function MyServerCard({ item, onOpen }: { item: MyServerItem; onOpen: () => void
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span
-              className="truncate text-sm font-medium text-white"
+              className="truncate text-[15px] font-medium text-white sm:text-sm"
               title={item.name ?? undefined}
             >
               {item.name ?? `服务器 #${item.server_id}`}
@@ -146,10 +154,11 @@ function MyServerCard({ item, onOpen }: { item: MyServerItem; onOpen: () => void
   );
 }
 
-function EmptyNote({ text }: { text: string }) {
+function EmptyNote({ text, children }: { text: string; children?: React.ReactNode }) {
   return (
-    <div className="rounded-sm border border-dashed border-white/15 py-16 text-center text-sm text-white/45">
-      {text}
+    <div className="rounded-sm border border-dashed border-white/15 px-6 py-16 text-center text-sm text-white/45">
+      <p>{text}</p>
+      {children}
     </div>
   );
 }

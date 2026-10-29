@@ -82,7 +82,7 @@ export function ServerHeroBanner({
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-black/40" />
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-amber-500/70 via-amber-500/20 to-transparent" />
 
-      <div className="relative grid grid-cols-1 gap-8 p-4 sm:p-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-10">
+      <div className="relative grid grid-cols-1 gap-4 p-4 sm:gap-8 sm:p-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-10">
         <div className="flex min-w-0 flex-col">
           {/* 标签行 */}
           <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -112,7 +112,7 @@ export function ServerHeroBanner({
             ) : null}
           </div>
 
-          <h1 className="font-display mt-4 line-clamp-3 text-2xl leading-tight font-bold tracking-wide break-all text-white sm:text-3xl xl:text-4xl">
+          <h1 className="font-display mt-3 line-clamp-3 text-xl leading-snug font-bold tracking-wide break-all text-white sm:mt-4 sm:text-3xl xl:text-4xl">
             {summary.name}
           </h1>
 
@@ -141,17 +141,17 @@ export function ServerHeroBanner({
           </div>
 
           {/* 在线人数 */}
-          <div className="mt-auto pt-8">
-            <div className="flex flex-wrap items-end gap-x-10 gap-y-4">
+          <div className="mt-auto pt-6 sm:pt-8">
+            <div className="flex flex-wrap items-end gap-x-8 gap-y-4 sm:gap-x-10">
               <div>
                 <div className="text-[11px] tracking-[0.25em] text-amber-400/90 uppercase">
                   在线玩家
                 </div>
                 <div className="font-display mt-1 flex items-baseline leading-none tabular-nums">
-                  <span className="text-7xl font-bold text-amber-400 drop-shadow-[0_0_28px_rgba(245,158,11,0.35)] sm:text-8xl">
+                  <span className="text-6xl font-bold text-amber-400 drop-shadow-[0_0_28px_rgba(245,158,11,0.35)] sm:text-8xl">
                     <CountUp value={summary.player_count} />
                   </span>
-                  <span className="ml-2 text-3xl font-semibold text-white/40">
+                  <span className="ml-2 text-2xl font-semibold text-white/40 sm:text-3xl">
                     /{summary.max_player_count}
                   </span>
                 </div>
@@ -180,7 +180,7 @@ export function ServerHeroBanner({
         {/* 正在进行 */}
         <div className="flex flex-col justify-end lg:items-end lg:text-right">
           <div className="text-[11px] tracking-[0.25em] text-white/50 uppercase">正在进行</div>
-          <div className="font-display mt-1 text-4xl leading-tight font-bold text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)] sm:text-5xl">
+          <div className="font-display mt-1 text-3xl leading-tight font-bold text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)] sm:text-5xl">
             {mapLabel ?? "未知地图"}
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-white/70 lg:justify-end">
@@ -248,7 +248,7 @@ function Kpi({
         <Icon className="size-3" />
         {label}
       </div>
-      <div className="font-display mt-1 text-3xl font-bold text-white tabular-nums sm:text-4xl">
+      <div className="font-display mt-1 text-2xl font-bold text-white tabular-nums sm:text-4xl">
         <CountUp value={value} />
       </div>
     </div>

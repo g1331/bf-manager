@@ -28,7 +28,7 @@ export default function ServersLoading() {
       </div>
 
       {/* 左列表 + 右筛选面板 */}
-      <div className="grid grid-cols-1 gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_300px]">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_300px]">
         <ServerListSkeleton />
         <Skeleton className="hidden h-full min-h-64 lg:block" />
       </div>

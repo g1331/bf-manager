@@ -11,7 +11,7 @@ export function SectionHeading({
   return (
     <div className={cn("flex items-center gap-2.5", className ?? "mb-3")}>
       <span className="bg-foreground h-4 w-[3px] shrink-0" />
-      <h2 className="text-lg font-semibold">{children}</h2>
+      <h2 className="text-base font-semibold sm:text-lg">{children}</h2>
     </div>
   );
 }

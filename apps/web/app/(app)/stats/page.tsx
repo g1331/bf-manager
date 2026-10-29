@@ -42,7 +42,7 @@ export default function StatsPage() {
   const ready = !!data?.available;
 
   return (
-    <main className="w-full max-w-[110rem] space-y-6 px-4 py-8 sm:px-6">
+    <main className="w-full max-w-[110rem] space-y-4 px-4 py-4 sm:space-y-6 sm:px-6 sm:py-8">
       <PageHeader
         kicker="Overview"
         title="全服概况"
@@ -191,7 +191,7 @@ function HeroBanner({ data }: { data: BF1Overview }) {
             <Users className="size-3.5" />
             全服在线玩家
           </div>
-          <div className="font-display mt-2 text-7xl leading-none font-bold whitespace-nowrap text-amber-400 tabular-nums drop-shadow-[0_0_28px_rgba(245,158,11,0.35)] sm:text-8xl">
+          <div className="font-display mt-2 text-6xl leading-none font-bold whitespace-nowrap text-amber-400 tabular-nums drop-shadow-[0_0_28px_rgba(245,158,11,0.35)] sm:text-8xl">
             <CountUp value={data.players.total} />
           </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -10,7 +10,10 @@ export interface SectionTab<K extends string> {
   count?: number;
 }
 
-/** 详情页的吸顶分区导航：琥珀下划线随切换滑动，翻长列表时也能随时切分区 */
+/**
+ * 详情页的吸顶分区导航：琥珀下划线随切换滑动，翻长列表时也能随时切分区。
+ * 手机端吸在 48px 顶栏下方（top-12）；分区多时横向滑动，选中项自动滑到中间，不会半截露在屏幕外。
+ */
 export function SectionNav<K extends string>({
   tabs,
   tab,
@@ -20,16 +23,31 @@ export function SectionNav<K extends string>({
   tab: K;
   onTab: (t: K) => void;
 }) {
+  const scroller = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const box = scroller.current;
+    const el = box?.querySelector<HTMLElement>('[aria-current="true"]');
+    if (!box || !el || box.scrollWidth <= box.clientWidth) return;
+    box.scrollTo({
+      left: el.offsetLeft - (box.clientWidth - el.offsetWidth) / 2,
+      behavior: "smooth",
+    });
+  }, [tab]);
+
   return (
-    <nav className="sticky top-0 z-20 mt-6 border-b border-white/10 bg-black/70 backdrop-blur-md">
-      <div className="flex gap-1 overflow-x-auto">
+    <nav className="sticky top-12 z-20 mt-4 border-b border-white/10 bg-black/70 backdrop-blur-md sm:mt-6 lg:top-0">
+      <div
+        ref={scroller}
+        className="relative flex [scrollbar-width:none] gap-1 overflow-x-auto [&::-webkit-scrollbar]:hidden"
+      >
         {tabs.map((t) => (
           <button
             key={t.key}
             type="button"
+            aria-current={tab === t.key}
             onClick={() => onTab(t.key)}
             className={cn(
-              "relative flex shrink-0 items-baseline gap-1.5 px-4 py-3.5 text-[15px] font-semibold tracking-[0.15em] transition-colors",
+              "relative flex shrink-0 items-baseline gap-1.5 px-3 py-3 text-[15px] font-semibold tracking-[0.06em] transition-colors lg:px-4 lg:py-3.5 lg:tracking-[0.15em]",
               tab === t.key ? "text-white" : "text-white/45 hover:text-white/80",
             )}
           >

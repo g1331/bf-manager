@@ -192,7 +192,7 @@ function RoundCard({
           <Link
             href={roundHref(game, r)}
             title="在服务器详情里查看这一局"
-            className="pointer-events-auto relative inline-block max-w-full truncate align-top text-xs text-white/45 underline-offset-2 transition-colors hover:text-amber-300 hover:underline"
+            className="inline-action pointer-events-auto relative inline-block max-w-full truncate align-top text-xs text-white/45 underline-offset-2 transition-colors hover:text-amber-300 hover:underline"
           >
             {r.server_name}
           </Link>

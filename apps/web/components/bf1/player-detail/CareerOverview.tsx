@@ -37,12 +37,12 @@ export function CareerOverview({
   onShowAll: (tab: "weapons" | "vehicles") => void;
 }) {
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <CombatPanel s={summary} />
         <TeamworkPanel s={summary} />
       </div>
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <ClassPanel soldiers={soldiers} best={summary.best_class} />
         <TopGearPanel weapons={weapons} vehicles={vehicles} onShowAll={onShowAll} />
       </div>
@@ -56,7 +56,7 @@ export function Panel({ children, className }: { children: React.ReactNode; clas
       variant="transparent"
       cut={20}
       corners={["topLeft", "bottomRight"]}
-      className={cn("bg-black/45 p-3.5 backdrop-blur-sm sm:p-6", className)}
+      className={cn("bg-black/45 p-4 backdrop-blur-sm sm:p-6", className)}
     >
       {children}
     </Bf1Panel>

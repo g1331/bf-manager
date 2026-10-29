@@ -35,18 +35,18 @@ export default function PlatoonDetailPage() {
   });
 
   return (
-    <main className="mx-auto max-w-6xl space-y-6 px-4 py-6 text-white sm:px-6 sm:py-10">
+    <main className="mx-auto max-w-6xl space-y-4 px-4 py-4 text-white sm:space-y-6 sm:px-6 sm:py-10">
       <button
         type="button"
         onClick={back}
-        className="inline-flex items-center gap-1.5 text-sm text-white/55 transition-colors hover:text-white"
+        className="hidden items-center gap-1.5 text-sm text-white/55 transition-colors hover:text-white lg:inline-flex"
       >
         <ArrowLeft className="size-4" />
         返回
       </button>
 
       {detail.isLoading ? (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           <div className="h-40 animate-pulse bg-white/[0.06]" />
           <div className="h-64 animate-pulse bg-white/[0.06]" />
         </div>
@@ -87,22 +87,22 @@ function PlatoonView({ game, platoon }: { game: string; platoon: PlatoonDetail }
         variant="transparent"
         cut={24}
         corners={["topLeft", "bottomRight"]}
-        className="bg-black/55 p-6 backdrop-blur-sm sm:p-8"
+        className="bg-black/55 p-4 backdrop-blur-sm sm:p-8"
       >
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
+        <div className="flex items-center gap-4 sm:gap-6">
           {platoon.emblem_url ? (
             // EA 徽章域不在 next/image remotePatterns 内，用原生 img
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={platoon.emblem_url}
               alt={platoon.name ?? "战队徽章"}
-              className="size-28 shrink-0 object-contain"
+              className="size-16 shrink-0 object-contain sm:size-28"
             />
           ) : (
-            <ShieldCheck className="size-28 shrink-0 p-6 text-white/20" />
+            <ShieldCheck className="size-16 shrink-0 p-3 text-white/20 sm:size-28 sm:p-6" />
           )}
           <div className="min-w-0">
-            <h1 className="font-display flex flex-wrap items-baseline gap-x-3 text-3xl font-bold tracking-wide break-all sm:text-4xl">
+            <h1 className="font-display flex flex-wrap items-baseline gap-x-2 text-2xl font-bold tracking-wide break-all sm:gap-x-3 sm:text-4xl">
               {platoon.tag ? <span className="text-white/45">[{platoon.tag}]</span> : null}
               <span>{platoon.name}</span>
             </h1>

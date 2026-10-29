@@ -47,7 +47,7 @@ export function LeaderboardPanel({ gameId, game }: { gameId: number; game: strin
       variant="transparent"
       cut={20}
       corners={["topLeft", "bottomRight"]}
-      className="bg-black/45 p-3.5 backdrop-blur-sm sm:p-6"
+      className="bg-black/45 p-4 backdrop-blur-sm sm:p-6"
     >
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <SectionHeading className="mb-0">常客排行</SectionHeading>
@@ -64,7 +64,7 @@ export function LeaderboardPanel({ gameId, game }: { gameId: number; game: strin
                 type="button"
                 onClick={() => setDays(w.days)}
                 className={cn(
-                  "h-7 px-2.5 transition-colors",
+                  "compact-action h-9 px-3 transition-colors sm:h-7 sm:px-2.5",
                   days === w.days ? "bg-amber-400 text-black" : "text-white/65 hover:bg-white/10",
                 )}
               >
@@ -76,15 +76,16 @@ export function LeaderboardPanel({ gameId, game }: { gameId: number; game: strin
       </div>
 
       <div className="mt-4 overflow-x-auto">
-        <table className="w-full min-w-[560px] text-sm">
+        <table className="w-full text-sm sm:min-w-[560px]">
           <thead>
             <tr className="border-b border-white/10 text-left text-[11px] text-white/45">
               <th className="w-10 py-2 font-normal">#</th>
               <th className="py-2 font-normal">玩家</th>
               <th className="py-2 text-right font-normal">在队时长</th>
-              <th className="py-2 text-right font-normal">活跃天数</th>
-              <th className="py-2 text-right font-normal">进服次数</th>
-              <th className="py-2 text-right font-normal">最近在服</th>
+              {/* 手机上这三列并进玩家名下面一行，表格不再横向滚动 */}
+              <th className="hidden py-2 text-right font-normal sm:table-cell">活跃天数</th>
+              <th className="hidden py-2 text-right font-normal sm:table-cell">进服次数</th>
+              <th className="hidden py-2 text-right font-normal sm:table-cell">最近在服</th>
             </tr>
           </thead>
           <tbody>
@@ -98,20 +99,32 @@ export function LeaderboardPanel({ gameId, game }: { gameId: number; game: strin
                 >
                   {i + 1}
                 </td>
-                <td className="max-w-[16rem] py-2">
+                <td className="w-full max-w-0 py-2.5 sm:w-auto sm:max-w-[16rem] sm:py-2">
                   <Link
                     href={`/${game}/player/${p.persona_id}`}
-                    className="truncate text-white hover:text-amber-300"
+                    className="block truncate text-[15px] text-white hover:text-amber-300 sm:inline sm:text-sm"
                   >
                     {p.name ?? p.persona_id}
                   </Link>
+                  <div className="mt-0.5 truncate text-xs text-white/45 tabular-nums sm:hidden">
+                    活跃 {p.days} 天 · 进服 {p.joins} 次 ·{" "}
+                    {p.online ? (
+                      <span className="text-emerald-300">在服</span>
+                    ) : (
+                      fmtAgo(p.last_seen, now)
+                    )}
+                  </div>
                 </td>
-                <td className="py-2 text-right text-white tabular-nums">
+                <td className="py-2 pl-3 text-right whitespace-nowrap text-white tabular-nums">
                   {fmtDuration(p.seconds)}
                 </td>
-                <td className="py-2 text-right text-white/70 tabular-nums">{p.days}</td>
-                <td className="py-2 text-right text-white/70 tabular-nums">{p.joins}</td>
-                <td className="py-2 text-right text-xs tabular-nums">
+                <td className="hidden py-2 text-right text-white/70 tabular-nums sm:table-cell">
+                  {p.days}
+                </td>
+                <td className="hidden py-2 text-right text-white/70 tabular-nums sm:table-cell">
+                  {p.joins}
+                </td>
+                <td className="hidden py-2 text-right text-xs tabular-nums sm:table-cell">
                   {p.online ? (
                     <span className="text-emerald-300">在服</span>
                   ) : (

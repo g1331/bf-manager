@@ -165,7 +165,7 @@ function RoundBanner({
         />
       ) : null}
       <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/85" />
-      <div className="relative grid grid-cols-2 items-center gap-x-4 gap-y-4 px-5 py-5 sm:px-7 lg:grid-cols-[1fr_auto_1fr]">
+      <div className="relative grid grid-cols-2 items-start gap-x-4 gap-y-5 px-4 py-5 sm:items-center sm:gap-y-4 sm:px-7 lg:grid-cols-[1fr_auto_1fr]">
         <div className="col-span-2 text-center lg:order-2 lg:col-span-1">
           <div className="font-display text-2xl leading-tight font-bold tracking-wide text-white sm:text-3xl">
             {r.map_display_name ?? r.map_name ?? "未知地图"}
@@ -292,14 +292,20 @@ function TeamSide({
   return (
     <div
       className={cn(
-        "flex min-w-0 items-center gap-3",
-        alignEnd && "flex-row-reverse text-right",
+        // 手机上两队各占半宽，旗帜、队名、数据竖着叠，居中对齐
+        "flex min-w-0 flex-col items-center gap-2 text-center sm:flex-row sm:gap-3 sm:text-left",
+        alignEnd && "sm:flex-row-reverse sm:text-right",
         className,
       )}
     >
       <FactionFlag faction={faction} won={won} className="size-12 sm:size-14" />
       <div className="min-w-0">
-        <div className={cn("flex items-center gap-2", alignEnd && "flex-row-reverse")}>
+        <div
+          className={cn(
+            "flex items-center justify-center gap-2 sm:justify-start",
+            alignEnd && "sm:flex-row-reverse",
+          )}
+        >
           <span
             className={cn(
               "truncate text-base font-bold sm:text-lg",
@@ -311,7 +317,11 @@ function TeamSide({
           <ResultTag won={won} />
         </div>
         <div className="mt-0.5 text-xs text-white/55 tabular-nums">
-          {players.length} 人 · 击杀 {t.kills} · 得分 {t.score.toLocaleString("en-US")}
+          <span className="block sm:inline">
+            {players.length} 人 · 击杀 {t.kills}
+          </span>
+          <span className="hidden sm:inline"> · </span>
+          <span className="block sm:inline">得分 {t.score.toLocaleString("en-US")}</span>
         </div>
       </div>
     </div>

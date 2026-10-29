@@ -74,13 +74,15 @@ function PlatoonSearch() {
   const items = search.data ?? [];
 
   return (
-    <main className="mx-auto max-w-5xl space-y-8 px-4 py-6 text-white sm:px-6 sm:py-10">
+    <main className="mx-auto max-w-5xl space-y-6 px-4 py-6 text-white sm:space-y-8 sm:px-6 sm:py-10">
       <header>
         <div className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.3em] text-amber-400 uppercase">
           <span className="h-px w-6 bg-amber-400" />
           Platoons
         </div>
-        <h1 className="font-display mt-3 text-4xl font-bold tracking-wide sm:text-5xl">战队</h1>
+        <h1 className="font-display mt-2 text-3xl font-bold tracking-wide sm:mt-3 sm:text-5xl">
+          战队
+        </h1>
         <p className="mt-2 text-sm text-white/55">
           按战队名搜索（不支持简称），查看成员和他们正在玩的服务器
         </p>
@@ -90,11 +92,11 @@ function PlatoonSearch() {
         variant="transparent"
         cut={20}
         corners={["topLeft", "bottomRight"]}
-        className="bg-black/50 p-3 backdrop-blur-sm sm:p-4"
+        className="bg-black/50 p-2 backdrop-blur-sm sm:p-4"
       >
         <form onSubmit={submit} className="flex gap-2 sm:gap-3">
           <div className="relative flex-1">
-            <Search className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-white/40" />
+            <Search className="pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2 text-white/40 sm:left-4" />
             <DarkInput
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -104,7 +106,7 @@ function PlatoonSearch() {
               autoCapitalize="off"
               spellCheck={false}
               autoFocus
-              className="h-14 pr-11 pl-12 text-lg"
+              className="h-12 pr-11 pl-11 sm:h-14 sm:pl-12 sm:text-lg"
             />
             {input ? (
               <button
@@ -120,7 +122,7 @@ function PlatoonSearch() {
           <button
             type="submit"
             disabled={search.isFetching}
-            className="font-display flex h-14 shrink-0 items-center gap-2 bg-amber-500 px-6 text-base font-bold tracking-[0.2em] text-black transition-colors [clip-path:polygon(0_0,100%_0,100%_calc(100%-12px),calc(100%-12px)_100%,0_100%)] hover:bg-amber-400 disabled:opacity-60 sm:px-8"
+            className="font-display flex h-12 shrink-0 items-center gap-2 bg-amber-500 px-5 text-[15px] font-bold tracking-[0.12em] text-black transition-colors [clip-path:polygon(0_0,100%_0,100%_calc(100%-12px),calc(100%-12px)_100%,0_100%)] hover:bg-amber-400 disabled:opacity-60 sm:h-14 sm:px-8 sm:text-base sm:tracking-[0.2em]"
           >
             {search.isFetching ? <Loader2 className="size-5 animate-spin" /> : null}
             搜索

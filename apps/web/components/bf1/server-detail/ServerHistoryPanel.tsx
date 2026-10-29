@@ -143,7 +143,7 @@ export function ServerHistoryPanel({
       variant="transparent"
       cut={20}
       corners={["topLeft", "bottomRight"]}
-      className="h-full bg-black/45 p-3.5 backdrop-blur-sm sm:p-6"
+      className="h-full bg-black/45 p-4 backdrop-blur-sm sm:p-6"
     >
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
         <div>

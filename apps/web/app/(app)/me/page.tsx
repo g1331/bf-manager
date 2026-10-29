@@ -69,7 +69,7 @@ export default function MePage() {
 
   if (session.isLoading || !session.data) {
     return (
-      <main className="mx-auto max-w-3xl space-y-8 px-4 py-8 sm:px-6">
+      <main className="mx-auto max-w-3xl space-y-6 px-4 py-4 sm:space-y-8 sm:px-6 sm:py-8">
         <PageHeaderSkeleton />
         <RowsSkeleton rows={5} />
       </main>
@@ -135,7 +135,7 @@ export default function MePage() {
     logs.data && logs.data.page_size > 0 ? Math.ceil(logs.data.total / logs.data.page_size) : 0;
 
   return (
-    <main className="mx-auto max-w-3xl space-y-8 px-4 py-8 sm:px-6">
+    <main className="mx-auto max-w-3xl space-y-6 px-4 py-4 sm:space-y-8 sm:px-6 sm:py-8">
       <PageHeader
         kicker="Profile"
         title="我的主页"

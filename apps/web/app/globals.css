@@ -152,6 +152,14 @@
     min-height: 44px;
     min-width: 44px;
   }
+  /* iOS Safari 聚焦字号小于 16px 的输入框会自动放大页面，手机端统一不低于 16px */
+  @media (max-width: 1023.98px) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+    select,
+    textarea {
+      font-size: max(16px, 1em);
+    }
+  }
   .inline-action,
   .compact-action,
   table button,

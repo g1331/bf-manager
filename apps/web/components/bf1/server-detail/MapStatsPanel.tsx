@@ -32,7 +32,7 @@ export function MapStatsPanel({
       variant="transparent"
       cut={20}
       corners={["topLeft", "bottomRight"]}
-      className="flex h-full flex-col bg-black/45 p-3.5 backdrop-blur-sm sm:p-6"
+      className="flex h-full flex-col bg-black/45 p-4 backdrop-blur-sm sm:p-6"
     >
       <div className="flex items-baseline justify-between gap-3">
         <SectionHeading className="mb-0">热门地图</SectionHeading>

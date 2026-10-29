@@ -1,6 +1,6 @@
 """BF1 Blaze 生涯统计：统计名映射与数据模型
 
-Blaze ``Stats.getStats`` 按「类别 + 统计名」批量取数，一次最多 64 人，返回的全是数字串。这里
+Blaze ``Stats.getStats`` 按「类别 + 统计名」批量取数，一次可带几百人（分批大小见 blaze_service），返回的全是数字串。这里
 把 Gateway ``detailedStatsByPersonaId`` 用到的生涯字段映射到 Blaze 统计名（2026-10 用 40 名玩家
 两边逐字段对照，数值一致），整理成 ``BlazeCareer``。
 

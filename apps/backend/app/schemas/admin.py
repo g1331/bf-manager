@@ -23,7 +23,7 @@ class DailyCount(BaseModel):
 
 
 class EaSourceCount(BaseModel):
-    """今天某个来源发给 EA 的请求数；pids 是其中 Stats.getStats 查询的人次（每批最多 64 人）。
+    """今天某个来源发给 EA 的请求数；pids 是其中 Stats.getStats 查询的人次（每批最多 STATS_BATCH_SIZE 人）。
 
     来源形如 ``tracker``、``tracker_probe``、``snapshot``、``api:bf1/stats``。
     """

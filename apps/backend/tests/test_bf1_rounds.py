@@ -494,6 +494,10 @@ def test_weapon_slots_cover_catalog_and_snapshot_codec() -> None:
     # 目录里每个统计名都有且只有一个槽位
     assert sorted(names) == sorted(catalog_names) and len(set(names)) == len(names)
     assert set(rw.slots_by_category()) == {STAT, *rw.ALWAYS, *rw.GATES}
+    # 每个有哨兵的类别都配了抽查间隔，加了新类别忘记配会在跟踪器里 KeyError
+    from app.services.bf1 import match_tracker
+
+    assert set(match_tracker.AUDIT_EVERY) == set(rw.GATES)
     full = rw.full_names()
     assert all(len(ns) == len(set(ns)) for ns in full.values())
     assert set(rw.slots_by_category()[STAT].values()) <= set(full[STAT])
@@ -586,7 +590,7 @@ def _events(monkeypatch) -> Counter[str]:
 async def test_tracker_records_weapons_with_two_stage_reads(monkeypatch) -> None:
     from app.services.bf1 import match_tracker
 
-    monkeypatch.setattr(match_tracker, "AUDIT_EVERY", 10**12)  # 不抽查
+    monkeypatch.setattr(match_tracker, "AUDIT_EVERY", dict.fromkeys(rw.GATES, 10**12))  # 不抽查
     events = _events(monkeypatch)
     career, tr, store = Career(), MatchTracker(), MemoryStore()
     for p in (1, 2, 3, 4):
@@ -632,7 +636,7 @@ async def test_tracker_records_weapons_with_two_stage_reads(monkeypatch) -> None
 async def test_tracker_reuses_stored_weapons_and_audits_gates(monkeypatch) -> None:
     from app.services.bf1 import match_tracker
 
-    monkeypatch.setattr(match_tracker, "AUDIT_EVERY", 10**12)
+    monkeypatch.setattr(match_tracker, "AUDIT_EVERY", dict.fromkeys(rw.GATES, 10**12))
     events = _events(monkeypatch)
     career, store = Career(), MemoryStore()
     for p in (1, 2):
@@ -655,7 +659,7 @@ async def test_tracker_reuses_stored_weapons_and_audits_gates(monkeypatch) -> No
     assert rw.unpack(tr.rounds[1].seats[2].base_w)[1][mg] == 3
 
     # 抽查：2 开了飞船但哨兵都没动（哨兵漏了），抽中照读时能发现并用上真实值
-    monkeypatch.setattr(match_tracker, "AUDIT_EVERY", 1)
+    monkeypatch.setattr(match_tracker, "AUDIT_EVERY", dict.fromkeys(rw.GATES, 1))
     airship, airship_name = _slot("player_statcategory3", "seconds", 1)
     base_w = tr.rounds[1].seats[2].base_w
     career.add(2, k=1, s=100)

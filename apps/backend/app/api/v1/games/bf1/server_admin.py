@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Request
 
+from app.api.client_ip import client_ip
 from app.api.deps import CurrentUser, DbDep
 from app.domain.games.bf1.client_provider import BindingFirstBF1ClientProvider
 from app.schemas.bf1.admin import (
@@ -40,9 +41,8 @@ async def my_servers(
 
 
 def _request_meta(request: Request) -> dict[str, str | None]:
-    client = request.client
     return {
-        "ip": client.host if client else None,
+        "ip": client_ip(request),
         "user_agent": request.headers.get("user-agent"),
     }
 

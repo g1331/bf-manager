@@ -67,6 +67,6 @@ async def get_platoon(persona_id: int, db: DbDep) -> PlayerPlatoon | None:
 @router.get("/{persona_id}/ban", response_model=BanStatus)
 async def get_ban(
     persona_id: int,
-    name: str | None = Query(None, description="EA 昵称，BFEAC 按昵称查询时需要"),
+    name: str | None = Query(None, max_length=32, description="EA 昵称，BFEAC 按昵称查询时需要"),
 ) -> BanStatus:
     return await BF1BanService().get_ban_status(persona_id, name)

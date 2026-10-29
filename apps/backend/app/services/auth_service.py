@@ -65,11 +65,9 @@ class AuthService:
         except AppError:
             raise
         except Exception as e:
-            raise EAApiError(
-                code="EA_LOGIN_FAILED",
-                message="EA 登录失败，请稍后重试",
-                details={"reason": str(e)[:200]},
-            ) from e
+            # 原始异常只进日志，不随响应返回给客户端
+            logger.warning("EA cookie 登录失败: {!r}", e)
+            raise EAApiError(code="EA_LOGIN_FAILED", message="EA 登录失败，请稍后重试") from e
         finally:
             with contextlib.suppress(Exception):
                 http_session = getattr(client, "http_session", None)

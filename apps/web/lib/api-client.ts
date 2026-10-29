@@ -8,12 +8,15 @@ export interface ApiError {
   code: string;
   message: string;
   details?: Record<string, unknown>;
+  /** 后端为每个请求生成的编号，用户反馈问题时据此在日志里定位 */
+  request_id?: string;
 }
 
 export class ApiException extends Error {
   readonly code: string;
   readonly status: number;
   readonly details?: Record<string, unknown>;
+  readonly requestId?: string;
 
   constructor(status: number, error: ApiError) {
     super(error.message);
@@ -21,6 +24,7 @@ export class ApiException extends Error {
     this.code = error.code;
     this.status = status;
     this.details = error.details;
+    this.requestId = error.request_id;
   }
 }
 
@@ -50,12 +54,14 @@ async function parseApiError(res: Response): Promise<ApiError> {
   let code = `HTTP_${res.status}`;
   let message = "";
   let details: Record<string, unknown> | undefined;
+  let requestId: string | undefined;
   try {
     const payload = (await res.json()) as { error?: Partial<ApiError>; detail?: unknown };
     if (payload.error) {
       code = payload.error.code ?? code;
       message = payload.error.message ?? "";
       details = payload.error.details;
+      requestId = payload.error.request_id;
     } else if (typeof payload.detail === "string") {
       message = payload.detail;
     } else if (Array.isArray(payload.detail) && payload.detail.length > 0) {
@@ -71,7 +77,11 @@ async function parseApiError(res: Response): Promise<ApiError> {
     // 非 JSON 响应，走下方兜底文案
   }
   if (!message) message = `请求失败（HTTP ${res.status}）`;
-  return { code, message, details };
+  // 服务端内部错误附上编号，用户截图或反馈时带上即可定位；4xx 是预期内的结果，不打扰
+  if (res.status >= 500 && res.status !== 503 && requestId) {
+    message = `${message}（错误编号 ${requestId}）`;
+  }
+  return { code, message, details, request_id: requestId };
 }
 
 async function fetchApi<T>(path: string, options: FetchOptions = {}): Promise<T> {

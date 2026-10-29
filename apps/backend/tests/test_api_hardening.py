@@ -70,3 +70,22 @@ def test_every_anonymous_route_is_rate_limited() -> None:
             continue
         missing.append(f"{sorted(route.methods)} {route.path}")
     assert missing == []
+
+
+async def test_public_openapi_only_lists_open_queries(monkeypatch) -> None:
+    """生产也提供精简文档，只含 BF1 只读查询，不带管理接口和它们的 schema。"""
+    monkeypatch.setattr(get_settings(), "environment", "production")
+    transport = ASGITransport(app=create_app())
+    async with AsyncClient(transport=transport, base_url="http://test") as c:
+        resp = await c.get("/api/v1/openapi.public.json")
+    assert resp.status_code == 200
+    doc = resp.json()
+    paths = doc["paths"]
+    assert "/api/v1/bf1/stats/{persona_id}" in paths
+    assert all(p.startswith("/api/v1/bf1/") for p in paths)
+    assert not any("server-admin" in p or "/card" in p for p in paths)
+    assert all(list(ops) == ["get"] for ops in paths.values())
+    schemas = doc["components"]["schemas"]
+    assert "PlayerStatsDetail" in schemas
+    assert not any("EAAccount" in s or "Membership" in s for s in schemas)
+    assert doc["components"]["securitySchemes"]["ApiKey"]["name"] == "X-API-Key"

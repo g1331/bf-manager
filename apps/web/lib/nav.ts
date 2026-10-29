@@ -126,7 +126,10 @@ export const MODULES: RailModule[] = [
     match: ["/me"],
     authOnly: true,
     icon: CircleUser,
-    tabs: [{ label: "我的主页", code: "Profile", href: "/me", exact: true }],
+    tabs: [
+      { label: "我的主页", code: "Profile", href: "/me", exact: true },
+      { label: "开放 API", code: "API", href: "/me/api" },
+    ],
   },
   {
     key: "admin",
@@ -141,6 +144,7 @@ export const MODULES: RailModule[] = [
       { label: "运维概览", code: "Ops", href: "/admin", exact: true },
       { label: "EA 账号池", code: "Accounts", href: "/admin/ea-accounts" },
       { label: "服管权限", code: "Roles", href: "/admin/memberships" },
+      { label: "API Key", code: "Keys", href: "/admin/api-keys" },
       { label: "审计日志", code: "Audit", href: "/admin/audit" },
     ],
   },

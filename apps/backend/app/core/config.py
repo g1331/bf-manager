@@ -93,6 +93,10 @@ class Settings(BaseSettings):
     rate_limit_card_check_per_hour: int = 30
     rate_limit_card_start_per_hour: int = 3
     rate_limit_user_multiplier: int = 2
+    # 开放 API Key：默认额度倍数和登录用户一样，管理员可以给单个 key 调高；每人最多几个有效 key。
+    # 号池小，全站 EA 预算对 key 同样生效，倍数调得再高也挤不爆号池
+    rate_limit_api_key_multiplier: int = 2
+    api_key_max_per_user: int = 5
     # 全站公共查询每分钟最多占用多少次 EA 账号池 / Blaze 连接；管服操作和后台任务不计入。
     # 0 表示不限
     ea_public_budget_per_minute: int = 120

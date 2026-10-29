@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, KeyRound, ScrollText, ShieldCheck } from "lucide-react";
+import { ChevronRight, Code, KeyRound, ScrollText, ShieldCheck } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AdminPageSkeleton } from "@/components/layout/PageSkeleton";
 import { SectionHeading } from "@/components/layout/SectionHeading";
@@ -125,9 +125,10 @@ export default function AdminOverviewPage() {
 
       <section>
         <SectionHeading>运维入口</SectionHeading>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <NavCard href="/admin/ea-accounts" icon={KeyRound} label="EA 账号池" />
           <NavCard href="/admin/memberships" icon={ShieldCheck} label="服管权限" />
+          <NavCard href="/admin/api-keys" icon={Code} label="API Key" />
           <NavCard href="/admin/audit" icon={ScrollText} label="审计日志" />
         </div>
       </section>

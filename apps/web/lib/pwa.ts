@@ -2,8 +2,8 @@
  * 装到桌面（PWA）相关的浏览器状态。
  *
  * - 判断当前环境该用哪种方式安装：Chromium 系能弹系统安装框；iOS 只能走「分享 → 添加到主屏幕」；
- *   微信 / QQ 内置浏览器装不了，得先跳到浏览器；UA 带 OpenHarmony 的浏览器不走 PWA 安装，
- *   引导到华为浏览器的「添加至桌面」；其余浏览器（UC、夸克等）去菜单里找。
+ *   微信 / QQ 内置浏览器装不了，得先跳到浏览器；UA 带 OpenHarmony 的浏览器装不了 PWA，
+ *   改为下载安卓壳 App（apps/android）；其余浏览器（UC、夸克等）去菜单里找，找不到也可以下载 App。
  * - 截住 Chromium 的 beforeinstallprompt，留给安装提示条在用户点「安装」时再弹。
  * - 记录提示条的关闭时间，关掉后 30 天内不再自动出现。
  * - 生产环境注册 service worker（public/sw.js），只负责断网时给出提示页。
@@ -13,7 +13,10 @@
 
 import { useSyncExternalStore } from "react";
 
-export type InstallMethod = "prompt" | "ios" | "in-app" | "harmony" | "harmony-other" | "menu";
+export type InstallMethod = "prompt" | "ios" | "in-app" | "app" | "menu";
+
+/** 安卓壳 App 的安装包，由 tools/build-android.sh 生成 */
+export const APP_DOWNLOAD_URL = "/download/bf-manager.apk";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -63,8 +66,8 @@ function subscribe(listener: () => void) {
 function detectMethod(hasPrompt: boolean): InstallMethod {
   const ua = navigator.userAgent;
   if (/MicroMessenger|\bQQ\//i.test(ua)) return "in-app";
-  // 鸿蒙原生（HarmonyOS NEXT）浏览器的 UA 带 OpenHarmony，不支持 PWA 安装
-  if (/OpenHarmony/i.test(ua)) return /HuaweiBrowser/i.test(ua) ? "harmony" : "harmony-other";
+  // UA 带 OpenHarmony 的浏览器不支持 PWA 安装，只能加打开浏览器的快捷方式
+  if (/OpenHarmony/i.test(ua)) return "app";
   if (hasPrompt) return "prompt";
   // iPadOS 默认伪装成 Mac Safari，靠触控点数区分
   const isIOS =

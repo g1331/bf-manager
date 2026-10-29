@@ -30,6 +30,7 @@ from app.schemas.bf1.auto_switch import AutoSwitchEvent, AutoSwitchPlan, AutoSwi
 from app.services.audit_service import AuditService
 from app.services.bf1 import auto_switch_engine as engine
 from app.services.bf1.blaze_service import get_operation_states
+from app.services.bf1.card_service import active_game_ids
 from app.services.bf1.server_admin_service import resolve_ea_ids
 from app.services.bf1.server_service import BF1ServerService
 
@@ -224,6 +225,9 @@ async def _choose(db: AsyncSession, row: Bf1AutoSwitch, choose: engine.Choose) -
 
 async def _tick(db: AsyncSession) -> None:
     rows = list(await db.scalars(select(Bf1AutoSwitch).where(Bf1AutoSwitch.enabled.is_(True))))
+    # 卡行动期间服务器的图池和轮换都在变，暂停这些服的自动换图
+    carding = active_game_ids()
+    rows = [r for r in rows if r.game_id not in carding]
     if not rows:
         return
     states = await get_operation_states(db, [r.game_id for r in rows])

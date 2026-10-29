@@ -85,6 +85,9 @@ class Settings(BaseSettings):
     rate_limit_lookup_per_day: int = 2000
     rate_limit_avatar_per_minute: int = 20
     rate_limit_ea_login_per_10min: int = 10
+    # 一键卡行动：预检每小时、开始每小时（每次开始会占用服务器几分钟到半小时）
+    rate_limit_card_check_per_hour: int = 30
+    rate_limit_card_start_per_hour: int = 3
     rate_limit_user_multiplier: int = 2
     # 全站公共查询每分钟最多占用多少次 EA 账号池 / Blaze 连接；管服操作和后台任务不计入。
     # 0 表示不限

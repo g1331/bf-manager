@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from app.api.v1.games.bf1 import (
+    card,
     exchange,
     overview,
     platoons,
@@ -24,3 +25,4 @@ router.include_router(platoons.router, prefix="/platoons")
 router.include_router(server_admin.router, prefix="/server-admin")
 router.include_router(overview.router, prefix="/overview")
 router.include_router(exchange.router)
+router.include_router(card.router, prefix="/card")

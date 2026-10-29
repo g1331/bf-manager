@@ -4,6 +4,7 @@ from app.models.audit_log import AuditLog
 from app.models.base import Base
 from app.models.bf1 import (
     Bf1AutoSwitch,
+    Bf1CardJob,
     Bf1ExchangeSnapshot,
     Bf1GameInstance,
     Bf1Match,
@@ -28,6 +29,7 @@ __all__ = [
     "AuditLog",
     "Base",
     "Bf1AutoSwitch",
+    "Bf1CardJob",
     "Bf1ExchangeSnapshot",
     "Bf1GameInstance",
     "Bf1Match",

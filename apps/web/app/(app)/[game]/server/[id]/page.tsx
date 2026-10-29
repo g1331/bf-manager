@@ -78,6 +78,11 @@ const ACTION_LABEL: Record<string, string> = {
   remove_admin: "移除管理员",
   auto_switch_enable: "开启自动换图",
   auto_switch_disable: "关闭自动换图",
+  card_start: "开始卡行动",
+  card_anchor: "手动锚定",
+  card_success: "卡行动完成",
+  card_fail: "卡行动失败",
+  card_restore: "恢复卡行动前设置",
 };
 
 const TAB_KEYS = [
@@ -286,12 +291,26 @@ function ServerDetailView({
             {tab === "rounds" && <RoundsPanel gameId={gameId} game={game} />}
             {tab === "leaderboard" && <LeaderboardPanel gameId={gameId} game={game} />}
             {tab === "maps" && (
-              <RotationGrid
-                items={map_rotation}
-                stats={stats}
-                colors={colors}
-                serverInitialized={summary.persisted_game_id != null}
-              />
+              <>
+                {!summary.is_official ? (
+                  <p className="mb-3 text-xs text-white/55">
+                    服主可以用{" "}
+                    <Link
+                      href={`/bf1/card?gameId=${gameId}`}
+                      className="inline-action text-amber-400 hover:underline"
+                    >
+                      一键卡行动
+                    </Link>{" "}
+                    把这台服卡成 24 图行动，已经是行动服的也可以用它补锚定。
+                  </p>
+                ) : null}
+                <RotationGrid
+                  items={map_rotation}
+                  stats={stats}
+                  colors={colors}
+                  serverInitialized={summary.persisted_game_id != null}
+                />
+              </>
             )}
             {tab === "autoswitch" && canAutoSwitch && (
               <AutoSwitchPanel

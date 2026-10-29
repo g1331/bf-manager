@@ -84,14 +84,15 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
             <TopTabs animated />
 
             {/* 右侧：厂牌 logo + 账户 */}
-            <div className="ml-auto flex items-end gap-7 pb-1">
+            <div className="ml-auto flex shrink-0 items-end gap-7 pb-1 pl-5">
               <Link
                 href="/stats"
                 className="flex items-center gap-2.5"
                 aria-label="BF-Manager 首页"
               >
                 <span className="h-7 w-[3px] bg-amber-500" />
-                <span className="flex flex-col leading-none">
+                {/* 窄桌面只留橙色竖条，把宽度让给 tab */}
+                <span className="hidden flex-col leading-none min-[1360px]:flex">
                   <span className="font-display text-lg font-semibold tracking-[0.22em] text-white uppercase">
                     BF-Manager
                   </span>

@@ -146,6 +146,23 @@ async def test_private_and_loopback_are_not_limited(fake_redis, small_limits) ->
         assert (await c.get("/test/probe")).json() == {"public": False}
 
 
+async def test_read_bucket_counts_separately(fake_redis, small_limits, monkeypatch) -> None:
+    monkeypatch.setattr(get_settings(), "rate_limit_read_per_minute", 2)
+    app = _app_with_probe()
+    router = APIRouter()
+
+    @router.get("/read", dependencies=[rate_limit_module.rate_limit("read")])
+    async def _read() -> dict[str, bool]:
+        return {"ok": True}
+
+    app.include_router(router, prefix="/test")
+    transport = ASGITransport(app=app, client=("8.8.8.8", 1))
+    async with AsyncClient(transport=transport, base_url="http://test") as c:
+        assert [(await c.get("/test/read")).status_code for _ in range(3)] == [200, 200, 429]
+        # 只读额度用完不影响查询额度
+        assert (await c.get("/test/probe")).status_code == 200
+
+
 async def test_redis_failure_lets_requests_through(monkeypatch, small_limits) -> None:
     async def _broken() -> Any:
         raise ConnectionError("redis down")

@@ -84,6 +84,10 @@ class Settings(BaseSettings):
     rate_limit_lookup_per_minute: int = 60
     rate_limit_lookup_per_day: int = 2000
     rate_limit_avatar_per_minute: int = 20
+    # 只读库或缓存的公开接口（人数曲线、对局、交换等）不占 EA 号，额度放宽，只防整站爬取。
+    # 开着服务器页一整天约 4000 次
+    rate_limit_read_per_minute: int = 120
+    rate_limit_read_per_day: int = 20000
     rate_limit_ea_login_per_10min: int = 10
     # 一键卡行动：预检每小时、开始每小时（每次开始会占用服务器几分钟到半小时）
     rate_limit_card_check_per_hour: int = 30

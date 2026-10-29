@@ -17,7 +17,7 @@
         }
     }
 
-    # 后端 OpenAPI / docs（生产环境如不需要可注释掉）
+    # 后端 OpenAPI / docs：仅开发环境可用，ENVIRONMENT=production 时后端直接返回 404
     handle /docs {
         reverse_proxy backend:8000
     }

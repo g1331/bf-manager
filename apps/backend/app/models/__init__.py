@@ -1,5 +1,6 @@
 """SQLAlchemy 模型聚合导出"""
 
+from app.models.api_key import ApiKey
 from app.models.audit_log import AuditLog
 from app.models.base import Base
 from app.models.bf1 import (
@@ -26,6 +27,7 @@ from app.models.server import Server, ServerMembership
 from app.models.user import User
 
 __all__ = [
+    "ApiKey",
     "AuditLog",
     "Base",
     "Bf1AutoSwitch",

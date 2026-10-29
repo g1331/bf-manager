@@ -77,6 +77,19 @@ class Settings(BaseSettings):
     # BFBAN 查询与主战绩展示。
     bfeac_api_key: str = ""
 
+    # ===== 公共查询限流与 EA 预算 =====
+    # 按 IP（IPv6 按 /64）计数，登录用户按账号计数并乘以倍数。限流只防脚本和爬虫，
+    # 数值定得让正常查询碰不到：打开一个玩家页约 9 个请求。
+    rate_limit_enabled: bool = True
+    rate_limit_lookup_per_minute: int = 60
+    rate_limit_lookup_per_day: int = 2000
+    rate_limit_avatar_per_minute: int = 20
+    rate_limit_ea_login_per_10min: int = 10
+    rate_limit_user_multiplier: int = 2
+    # 全站公共查询每分钟最多占用多少次 EA 账号池 / Blaze 连接；管服操作和后台任务不计入。
+    # 0 表示不限
+    ea_public_budget_per_minute: int = 120
+
     # ===== EA 邮箱密码登录链路 =====
     # 任务整体生命周期上限：从创建到终态的最长时间，超过则自动作废，避免内存中残留 aiohttp
     # session 与未消费 asyncio.Queue。默认 600 秒（10 分钟），覆盖一次正常的人工 2FA。

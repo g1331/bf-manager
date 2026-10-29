@@ -11,6 +11,7 @@ from sqlalchemy.orm import selectinload
 from app.api.client_ip import client_ip
 from app.api.deps import CurrentUser, CurrentUserOptional, DbDep
 from app.api.errors import UnauthorizedError
+from app.api.rate_limit import rate_limit
 from app.core.config import get_settings
 from app.core.security import create_access_token
 from app.models import EaBinding, User
@@ -82,7 +83,7 @@ async def _load_user_with_bindings(db: DbDep, user_id: int) -> User | None:
     return result
 
 
-@router.post("/login", response_model=LoginResponse)
+@router.post("/login", dependencies=[rate_limit("ea_login")], response_model=LoginResponse)
 async def login(
     payload: LoginRequest,
     db: DbDep,

@@ -6,13 +6,18 @@ from fastapi import APIRouter, Query
 
 from app.api.deps import DbDep
 from app.api.errors import ValidationError
+from app.api.rate_limit import rate_limit
 from app.schemas.bf1.player import PersonaBrief, PersonaSearchResult
 from app.services.bf1.player_service import BF1PlayerService, get_avatars
 
 router = APIRouter()
 
+# 这些接口会用到 EA 账号池或 Blaze 连接，按 IP / 账号限流并计入公共 EA 预算
+_lookup = rate_limit("lookup")
+_avatar = rate_limit("avatar")
 
-@router.get("/search", response_model=PersonaSearchResult)
+
+@router.get("/search", dependencies=[_lookup], response_model=PersonaSearchResult)
 async def search_players(
     db: DbDep,
     name: str = Query(..., min_length=2, max_length=64, description="EA 昵称（区分大小写）"),
@@ -22,7 +27,7 @@ async def search_players(
     return await BF1PlayerService(db).search_by_name(name.strip())
 
 
-@router.get("/avatars", response_model=dict[int, str | None])
+@router.get("/avatars", dependencies=[_avatar], response_model=dict[int, str | None])
 async def get_player_avatars(
     ids: list[int] = Query(..., description="persona ID，可重复传参"),
 ) -> dict[int, str | None]:
@@ -32,6 +37,6 @@ async def get_player_avatars(
     return await get_avatars(list(dict.fromkeys(ids)))
 
 
-@router.get("/{persona_id}", response_model=PersonaBrief)
+@router.get("/{persona_id}", dependencies=[_lookup], response_model=PersonaBrief)
 async def get_player(persona_id: int, db: DbDep) -> PersonaBrief:
     return await BF1PlayerService(db).get_by_id(persona_id)

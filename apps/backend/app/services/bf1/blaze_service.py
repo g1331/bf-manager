@@ -29,7 +29,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.errors import EAApiError, NotFoundError
-from app.core import ea_metrics
+from app.core import ea_budget, ea_metrics
 from app.core.cache import Cache, get_cache
 from app.core.config import get_settings
 from app.domain.ea.account_pool import EACredentials
@@ -229,6 +229,7 @@ async def fetch_stats(
     names 为 {类别: 统计名列表}；每类每 64 人一个请求，全部并发发在同一条连接上。没有生涯数据
     的 pid 不在结果里。统计名写错会让整个请求报错，所以名单只来自已验证的映射与武器目录。
     """
+    await ea_budget.acquire()
     socket = await _pool.get_socket(db)
     batches = [
         (cat, stat_names, pids[i : i + STATS_BATCH_SIZE])
@@ -510,6 +511,7 @@ async def get_server_players(
     if get_settings().blaze_mock_mode:
         return _load_mock(game_id)
 
+    await ea_budget.acquire()
     # 1. Blaze roster（长连接，纯网络，不触碰数据库）。
     socket = await _pool.get_socket(db)
     packet = {

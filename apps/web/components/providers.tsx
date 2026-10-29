@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   MutationCache,
   QueryCache,
@@ -11,6 +11,7 @@ import {
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { toast } from "sonner";
 import { ApiException } from "@/lib/api-client";
+import { initPwa } from "@/lib/pwa";
 
 /**
  * 登录态中途失效（token 过期、被冻结）时任意请求会回 401：把 session 置空，
@@ -52,6 +53,11 @@ export function Providers({ children }: { children: ReactNode }) {
     });
     return client;
   });
+
+  // 装到桌面的状态和离线页 service worker，全站挂一次，落地页上也能截住安装事件
+  useEffect(() => {
+    initPwa();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#1a1208" />
+    <title>网络已断开 · BF-Manager</title>
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        padding: 24px;
+        box-sizing: border-box;
+        background: #1a1208;
+        color: #fff7ed;
+        font-family:
+          system-ui,
+          -apple-system,
+          "PingFang SC",
+          "Microsoft YaHei",
+          sans-serif;
+        text-align: center;
+      }
+      h1 {
+        margin: 8px 0 0;
+        font-size: 18px;
+        font-weight: 600;
+      }
+      p {
+        margin: 0;
+        font-size: 14px;
+        color: rgba(255, 247, 237, 0.6);
+      }
+      button {
+        margin-top: 8px;
+        padding: 10px 24px;
+        border: 1px solid rgba(255, 247, 237, 0.25);
+        border-radius: 6px;
+        background: transparent;
+        color: inherit;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 图标内嵌：断网时拿不到其他文件 -->
+    <svg viewBox="0 0 512 512" width="72" height="72" aria-hidden="true">
+      <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#7a3a12" />
+          <stop offset="100%" stop-color="#3d1d09" />
+        </linearGradient>
+      </defs>
+      <rect width="512" height="512" rx="96" fill="url(#bg)" />
+      <text
+        x="256"
+        y="316"
+        font-family="system-ui, sans-serif"
+        font-size="220"
+        font-weight="800"
+        fill="#fff7ed"
+        text-anchor="middle"
+        letter-spacing="-8"
+      >
+        BF
+      </text>
+      <text
+        x="256"
+        y="408"
+        font-family="system-ui, sans-serif"
+        font-size="56"
+        font-weight="600"
+        fill="#fff7ed"
+        opacity="0.75"
+        text-anchor="middle"
+        letter-spacing="4"
+      >
+        MANAGER
+      </text>
+    </svg>
+    <h1>网络已断开</h1>
+    <p>恢复连接后会自动重新加载</p>
+    <button type="button" onclick="location.reload()">重试</button>
+    <script>
+      window.addEventListener("online", () => location.reload());
+    </script>
+  </body>
+</html>

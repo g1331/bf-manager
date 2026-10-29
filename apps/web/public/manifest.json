@@ -1,20 +1,36 @@
 {
+  "id": "/",
   "name": "BF-Manager",
   "short_name": "BF-Manager",
   "description": "Battlefield 系列战绩查询与服务器管理平台",
-  "start_url": "/",
+  "start_url": "/stats",
   "display": "standalone",
-  "background_color": "#1d0e05",
-  "theme_color": "#7a3a12",
+  "background_color": "#1a1208",
+  "theme_color": "#1a1208",
   "orientation": "any",
   "scope": "/",
   "lang": "zh-CN",
   "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     {
-      "src": "/icons/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "src": "/icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    {
+      "name": "服务器",
+      "url": "/bf1/servers",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "战绩查询",
+      "url": "/bf1/players",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }

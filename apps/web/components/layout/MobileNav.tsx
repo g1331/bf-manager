@@ -2,22 +2,25 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Globe } from "lucide-react";
+import { Globe, Smartphone } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
 import { MODULES, isModuleActive, type RailModule } from "@/lib/nav";
+import { openInstallBanner, usePwa } from "@/lib/pwa";
 
 /**
  * 移动端一级导航列表，置于左侧抽屉（Sheet）中。
  * 与桌面 rail 共用 MODULES 数据，但以「图标 + 文字」宽列表呈现，便于触摸切换模块；
  * 完成模块切换后由 onNavClick 关闭抽屉。二级 tab 在抽屉之外的顶部横条始终可见。
- * 抽屉中不强制居中，按 games → player 两组顺序排列，底部固定门户首页。
+ * 抽屉中不强制居中，按 games → player 两组顺序排列，底部固定门户首页；
+ * 还没装到桌面时，门户首页上方多一个「安装到桌面」，重新打开安装提示条。
  */
 export function MobileNav({ onNavClick }: { onNavClick?: () => void }) {
   const pathname = usePathname();
   const session = useSession();
   const isLoggedIn = !!session.data;
   const isAdmin = session.data?.role === "admin";
+  const pwa = usePwa();
 
   const visible = MODULES.filter((m) => {
     if (m.adminOnly) return isAdmin;
@@ -65,14 +68,29 @@ export function MobileNav({ onNavClick }: { onNavClick?: () => void }) {
         </>
       ) : null}
 
-      <Link
-        href="/"
-        onClick={onNavClick}
-        className="mt-auto flex items-center gap-3 px-2 py-2.5 text-sm text-white/55 transition-colors hover:text-white"
-      >
-        <Globe className="size-5 shrink-0" />
-        门户首页
-      </Link>
+      <div className="mt-auto flex flex-col">
+        {pwa.ready && !pwa.installed ? (
+          <button
+            type="button"
+            onClick={() => {
+              openInstallBanner();
+              onNavClick?.();
+            }}
+            className="flex items-center gap-3 px-2 py-2.5 text-sm text-white/55 transition-colors hover:text-white"
+          >
+            <Smartphone className="size-5 shrink-0" />
+            安装到桌面
+          </button>
+        ) : null}
+        <Link
+          href="/"
+          onClick={onNavClick}
+          className="flex items-center gap-3 px-2 py-2.5 text-sm text-white/55 transition-colors hover:text-white"
+        >
+          <Globe className="size-5 shrink-0" />
+          门户首页
+        </Link>
+      </div>
     </nav>
   );
 }

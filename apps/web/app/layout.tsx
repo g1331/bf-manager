@@ -27,15 +27,19 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    // 不透明黑色状态栏：网页从状态栏下方开始排版，顶栏、吸顶导航都不会被时间和刘海压住。
+    // black-translucent 会把网页铺到状态栏底下，每个贴顶元素都得自己补 safe-area-inset-top；
+    // default 是白底状态栏，放在深色站上很突兀。
+    statusBarStyle: "black",
     title: "BF-Manager",
-    // iOS Safari 不支持 SVG 作为 apple-touch-icon，但平台主流 (Android / Chrome / Edge)
-    // 都识别 manifest 里的 SVG，所以 SVG 单图就够覆盖 MVP；iOS PWA 安装后会 fallback
-    // 到首字母圆形图。后续 UI 出图时把 PNG 192/512 补上即可。
   },
   icons: {
-    icon: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
-    apple: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
+    icon: [
+      { url: "/icons/icon.svg", type: "image/svg+xml" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    // iOS 不认 SVG 的 apple-touch-icon；这张不透明、无圆角，圆角由系统加
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
 };
 

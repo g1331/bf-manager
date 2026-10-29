@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 站点的 App 界面固定深色，状态栏、导航栏和启动底色都跟着用黑 -->
+    <color name="bfm_bar">#000000</color>
+
+    <style name="Theme.Bfm" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/bfm_bar</item>
+        <item name="android:statusBarColor">@color/bfm_bar</item>
+        <item name="android:navigationBarColor">@color/bfm_bar</item>
+    </style>
+</resources>

@@ -34,6 +34,8 @@ _BUCKETS: dict[str, list[tuple[int, str]]] = {
     "lookup": [(60, "rate_limit_lookup_per_minute"), (86400, "rate_limit_lookup_per_day")],
     "avatar": [(60, "rate_limit_avatar_per_minute")],
     "ea_login": [(600, "rate_limit_ea_login_per_10min")],
+    "card_check": [(3600, "rate_limit_card_check_per_hour")],
+    "card_start": [(3600, "rate_limit_card_start_per_hour")],
 }
 
 # 被拦次数按天累计，留 8 天，上线后据此调整额度

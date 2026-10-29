@@ -29,6 +29,7 @@ from app.domain.ea.login.task_manager import close_task_manager, init_task_manag
 from app.domain.games import GameRegistry  # noqa: F401
 from app.services.bf1.auto_switch_service import auto_switch_poller
 from app.services.bf1.blaze_service import close_blaze_pool
+from app.services.bf1.card_service import mark_interrupted_jobs, shutdown_card_jobs
 from app.services.bf1.exchange_service import exchange_poller
 from app.services.bf1.overview_service import overview_poller
 from app.services.bf1.round_service import restore_tracker_state, save_tracker_state
@@ -64,6 +65,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     if "bf1" in settings.games:
         if settings.bf1_match_tracking:
             await restore_tracker_state()
+        await mark_interrupted_jobs()
         pollers += [
             asyncio.create_task(overview_poller()),
             asyncio.create_task(exchange_poller()),
@@ -73,6 +75,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     yield
 
     logger.info("Shutting down")
+    await shutdown_card_jobs()
     for task in pollers:
         task.cancel()
         with contextlib.suppress(asyncio.CancelledError):

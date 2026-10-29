@@ -91,6 +91,7 @@ function gameModule(g: GameMeta): RailModule {
         { label: "战队", code: "Platoons", href: "/bf1/platoons", match: ["/bf1/platoon"] },
         { label: "交换", code: "Exchange", href: "/bf1/exchange" },
         { label: "行动", code: "Operations", href: "/bf1/campaign" },
+        { label: "卡行动", code: "Card", href: "/bf1/card" },
       ],
     };
   }

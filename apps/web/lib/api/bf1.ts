@@ -807,3 +807,80 @@ export interface AutoSwitchView {
   enabled_at: number | null;
   events: { ts: number; kind: string; message: string }[];
 }
+
+/** 一键卡行动：服主凭据。匿名填 remid + sid，登录用户可改用主绑定账号 */
+export interface CardCredentials {
+  remid: string;
+  sid: string;
+  use_binding: boolean;
+}
+
+export interface CardPrecheck {
+  game_id: number;
+  server_id: number;
+  server_name: string;
+  persona_id: number;
+  owner_id: number;
+  owner_name: string;
+  is_owner: boolean;
+  /** 士兵 + 观战 + 排队 */
+  occupied: number;
+  soldier_max: number;
+  mode: string;
+  map_name: string;
+  map_count: number;
+  /** 已经是 24 图行动 */
+  is_operation: boolean;
+  auto_switch_enabled: boolean;
+  running_job_id: number | null;
+}
+
+export type CardJobStatus = "running" | "succeeded" | "failed" | "cancelled" | "interrupted";
+
+export interface CardJob {
+  id: number;
+  kind: "card" | "anchor";
+  game_id: number;
+  server_name: string;
+  persona_id: number;
+  persona_name: string;
+  status: CardJobStatus;
+  attempts: number;
+  max_attempts: number;
+  message: string;
+  result_maps: string[] | null;
+  can_restore: boolean;
+  restored_at: number | null;
+  started_at: number;
+  finished_at: number | null;
+  events: { ts: number; kind: string; message: string }[];
+}
+
+const cardHeaders = (token: string | null) => (token ? { "X-Card-Token": token } : undefined);
+
+export const cardApi = {
+  precheck: (gameId: number, creds: CardCredentials) =>
+    api.post<CardPrecheck>(
+      "/bf1/card/precheck",
+      { ...creds, game_id: gameId },
+      { timeoutMs: 45_000 },
+    ),
+  start: (gameId: number, kind: "card" | "anchor", creds: CardCredentials) =>
+    api.post<{ job: CardJob; token: string }>(
+      "/bf1/card/jobs",
+      { ...creds, game_id: gameId, kind },
+      { timeoutMs: 45_000 },
+    ),
+  get: (id: number, token: string | null) =>
+    api.get<CardJob>(`/bf1/card/jobs/${id}`, { headers: cardHeaders(token) }),
+  cancel: (id: number, token: string | null) =>
+    api.post<CardJob>(`/bf1/card/jobs/${id}/cancel`, undefined, {
+      headers: cardHeaders(token),
+      timeoutMs: 30_000,
+    }),
+  restore: (id: number, token: string | null, creds: CardCredentials) =>
+    api.post<CardJob>(`/bf1/card/jobs/${id}/restore`, creds, {
+      headers: cardHeaders(token),
+      timeoutMs: 45_000,
+    }),
+};

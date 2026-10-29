@@ -1820,140 +1820,35 @@ class RSP(_BF1GatewayBase):
             }
         )
 
-    async def updateServer(self, serverId: int | str, config: dict = None) -> dict:
+    async def updateServer(self, params: dict) -> dict | str:
         """
-        修改配置
-        :param config:
-        :param serverId:
+        覆盖服务器设置与地图轮换（EA 只允许服主调用）。
+        :param params: 完整请求参数，由 services/bf1/card_engine.update_params 构造：
+            {
+                "game": "tunguska",
+                "serverId": "12552064",
+                "deviceIdMap": {"machash": "1"},
+                "bannerSettings": {"bannerUrl": "", "clearBanner": True},
+                "mapRotation": {"maps": [{"gameMode": "AA0", "mapName": "MP_Verdun"}, ...],
+                                "rotationType": "", "mod": "32", "name": "0",
+                                "description": "", "id": "100"},
+                "serverSettings": {"name": ..., "description": ..., "message": ...,
+                                   "password": ..., "bannerUrl": "", "mapRotationId": "100",
+                                   "customGameSettings": "<原样回传的 JSON 字符串>"}
+            }
         :return:
+            {"jsonrpc": "2.0", "id": "...", "result": "success"}
+            bannerSettings 已废弃，EA 常附带回 ERR_AUTHORIZATION_REQUIRED（updateServerBanner），
+            设置本身照常生效，调用方按噪音处理。
+        """
+        return await self.api_call(
             {
                 "jsonrpc": "2.0",
-                "id": "437a88b0-b011-4f61-8cdf-5df0313f037b",
-                "result": {
-                    "env": {
-                        "rootEnv": "prod_default",
-                        "blazeEnv": "prod_default",
-                        "game": "tunguska",
-                        "platform": "pc"
-                    }
-                }
+                "method": "RSP.updateServer",
+                "params": params,
+                "id": await get_a_uuid(),
             }
-        """
-        if not config:
-            config = {  # 除了注释的都是不能动的
-                "deviceIdMap": {
-                    "machash": "31f1a313-2a0c-474b-9d2d-ec2954823ea4"  # 随便写
-                },
-                "game": "tunguska",
-                "serverId": serverId,  # 服务器ServerId
-                "bannerSettings": {"bannerUrl": "", "clearBanner": True},
-                "mapRotation": {
-                    "maps": [  # 地图池
-                        {"gameMode": "TOW0", "mapName": "MP_MountainFort"},
-                        {"gameMode": "TOW0", "mapName": "MP_Amiens"},
-                        {"gameMode": "TOW0", "mapName": "MP_Chateau"},
-                        {"gameMode": "TOW0", "mapName": "MP_ShovelTown"},
-                        {"gameMode": "TOW0", "mapName": "MP_Graveyard"},
-                        {"gameMode": "TOW0", "mapName": "MP_Desert"},
-                        {"gameMode": "TOW0", "mapName": "MP_Scar"},
-                        {"gameMode": "TOW0", "mapName": "MP_Suez"},
-                        {"gameMode": "TOW0", "mapName": "MP_Trench"},
-                        {"gameMode": "TOW0", "mapName": "MP_Forest"},
-                        {"gameMode": "TOW0", "mapName": "MP_Underworld"},
-                        {"gameMode": "TOW0", "mapName": "MP_Fields"},
-                        {"gameMode": "TOW0", "mapName": "MP_Verdun"},
-                    ],
-                    "rotationType": "",
-                    "mod": "32",
-                    "name": "0",
-                    "description": "",
-                    "id": "100",
-                },
-                "serverSettings": {
-                    "name": "Frontline Test Server",  # 服务器名 需低于64字节
-                    "description": "",  # 简介 需低于256字符且低于512字节
-                    "message": "",
-                    "password": "",  # 密码
-                    "bannerUrl": "",
-                    "mapRotationId": "100",
-                    "customGameSettings": json.dumps(
-                        {
-                            "version": 10,
-                            "kits": {
-                                "8": "off",
-                                "4": "on",
-                                "9": "off",
-                                "5": "off",
-                                "6": "off",
-                                "HERO": "on",
-                                "1": "on",
-                                "2": "on",
-                                "7": "off",
-                                "3": "on",
-                            },
-                            "vehicles": {"L": "on", "A": "on"},
-                            "weaponClasses": {
-                                "E": "on",
-                                "SIR": "off",
-                                "SAR": "on",
-                                "KG": "on",
-                                "M": "on",
-                                "LMG": "on",
-                                "SMG": "on",
-                                "H": "on",
-                                "S": "on",
-                                "SR": "on",
-                            },
-                            "serverType": {"SERVER_TYPE_RANKED": "on"},
-                            "misc": {
-                                "RWM": "off",
-                                "UM": "off",
-                                "LL": "off",
-                                "AAS": "off",
-                                "LNL": "off",
-                                "3S": "off",
-                                "KC": "off",
-                                "MV": "off",
-                                "BH": "on",
-                                "F": "off",
-                                "MM": "on",
-                                "DTB": "on",
-                                "FF": "off",
-                                "RH": "on",
-                                "3VC": "on",
-                                "SLSO": "off",
-                                "DSD": "on",
-                                "AAR": "off",
-                                "NT": "on",
-                                "BPL": "off",
-                                "MS": "on",
-                            },
-                            "scales": {
-                                "RT3": "off",
-                                "BD3": "off",
-                                "VR3": "off",
-                                "BD4": "off",
-                                "BD2": "on",
-                                "TC1": "off",
-                                "SR1": "off",
-                                "SR2": "on",
-                                "VR2": "off",
-                                "RT1": "on",
-                                "BD1": "off",
-                                "RT5": "off",
-                                "RT2": "off",
-                                "TC2": "on",
-                                "TC3": "off",
-                                "SR3": "off",
-                                "RT4": "off",
-                                "VR1": "on",
-                            },
-                        }
-                    ),
-                    # 自定义设置, GameData那有
-                },
-            }
-        return await self.api_call(config)
+        )
 
     async def movePlayer(self, gameId: int | str, personaId: int | str, teamId: int) -> dict:
         """

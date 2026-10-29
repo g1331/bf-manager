@@ -33,6 +33,11 @@ const ACTION_LABEL: Record<string, string> = {
   remove_vip: "移除 VIP",
   add_admin: "添加管理员",
   remove_admin: "移除管理员",
+  card_start: "开始卡行动",
+  card_anchor: "手动锚定",
+  card_success: "卡行动完成",
+  card_fail: "卡行动失败",
+  card_restore: "恢复卡行动前设置",
 };
 
 export default function AdminAuditPage() {

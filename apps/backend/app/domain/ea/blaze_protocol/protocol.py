@@ -53,6 +53,8 @@ TYPE = {
     "10": "Float",
 }
 TYPE2INT = {v: int(k) for k, v in TYPE.items()}
+# 键名类型码只有一个字符，Float（10）在键名里写作十六进制的 "a"，如 "LOSS a"
+TYPE["a"] = "Float"
 Tags = {}
 keepalive = bytearray(16)
 keepalive[13] = 128
@@ -500,17 +502,26 @@ class Blaze:
     @staticmethod
     def write_object_type(values):
         hex_str = ""
-        hex_str += Blaze.write_integer(Components2Int[values[0]])
-        hex_str += Blaze.write_integer(TYPE2INT[values[1]])
+        hex_str += Blaze.write_integer(Blaze._component_int(values[0]))
+        hex_str += Blaze.write_integer(Blaze._type_int(values[1]))
         return hex_str
 
     @staticmethod
     def write_object_id(values):
         hex_str = ""
-        hex_str += Blaze.write_integer(Components2Int[values[0]])
-        hex_str += Blaze.write_integer(TYPE2INT[values[1]])
+        hex_str += Blaze.write_integer(Blaze._component_int(values[0]))
+        hex_str += Blaze.write_integer(Blaze._type_int(values[1]))
         hex_str += Blaze.write_integer(values[2])
         return hex_str
+
+    # ObjectType / ObjectId 既接受解码出来的名字，也接受原始数字（如 [30722, 2, cgid]）
+    @staticmethod
+    def _component_int(value) -> int:
+        return value if isinstance(value, int) else Components2Int[value]
+
+    @staticmethod
+    def _type_int(value) -> int:
+        return value if isinstance(value, int) else TYPE2INT[value]
 
     @staticmethod
     def write_tripple(values):

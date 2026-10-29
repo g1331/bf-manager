@@ -58,7 +58,8 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent" />
       </div>
 
-      <header className="flex items-center justify-between px-6 py-6 sm:px-10">
+      {/* relative z-10：压在上面绝对定位的背景层之上，否则链接被盖住、点不到 */}
+      <header className="relative z-10 flex items-center justify-between px-6 py-6 sm:px-10">
         <Link
           href="/"
           className="font-display text-base font-semibold tracking-[0.2em] text-white uppercase"

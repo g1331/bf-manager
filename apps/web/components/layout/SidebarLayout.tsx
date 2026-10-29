@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { AppRail } from "./AppRail";
 import { FriendsRail } from "./FriendsRail";
+import { InstallPrompt } from "./InstallPrompt";
 import { MobileNav } from "./MobileNav";
+import { MobileTabBar } from "./MobileTabBar";
 import { TopTabs } from "./TopTabs";
 import { UserMenu } from "./UserMenu";
 import { PageTransition } from "./PageTransition";
@@ -24,7 +26,8 @@ import { useTrackNavigation } from "@/hooks/useNavigation";
  *   随舞台水平居中而非紧贴视口左缘；战场氛围背景仍铺满视口最底层。
  *   左侧 rail（AppRail）切「游戏 / 模块」，与内容之间靠局部竖线分隔；
  *   顶部横向 tab（TopTabs）切模块内子页，激活刻线与文字等宽且发光、切换时滑动跟随。
- *   移动端将一级导航收进左侧抽屉（MobileNav），二级 tab 单独成行常驻。
+ *   移动端将一级导航收进左侧抽屉（MobileNav），二级 tab 单独成行常驻；
+ *   最常用的五个入口另放在底部标签栏（MobileTabBar），装到桌面的提示条浮在它上方。
  */
 export function SidebarLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -109,8 +112,9 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
            * 页面内容容器：覆盖各页面 main 自带的 `mx-auto`，让内容紧贴 tab 起点向右铺开，
            * 实现「整组元素集中统一」的视觉。错误页（max-w-md）需要保留居中，特判跳过。
            * max-w 由页面各自决定，这里只改对齐方式不改宽度。
+           * 移动端底部留出标签栏的 h-14；底部安全区已由 body 的 padding 留过。
            */}
-          <div className="lg:flex lg:min-h-0 lg:flex-1 lg:flex-col [&_main:not(.max-w-md)]:!mr-auto [&_main:not(.max-w-md)]:!ml-0 [&_main:not(.max-w-md)]:!px-3 sm:[&_main:not(.max-w-md)]:!px-10">
+          <div className="pb-14 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:pb-0 [&_main:not(.max-w-md)]:!mr-auto [&_main:not(.max-w-md)]:!ml-0 [&_main:not(.max-w-md)]:!px-3 sm:[&_main:not(.max-w-md)]:!px-10">
             <PageTransition>{children}</PageTransition>
           </div>
         </div>
@@ -120,6 +124,9 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
             社交数据待桌面端客户端接口接入。 */}
         <FriendsRail />
       </div>
+
+      <MobileTabBar />
+      <InstallPrompt />
     </div>
   );
 }

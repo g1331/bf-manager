@@ -24,6 +24,15 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // service worker 脚本不能被 Cloudflare 或浏览器缓存，否则发版后用户迟迟拿不到新版
+  async headers() {
+    return [
+      {
+        source: "/sw.js",
+        headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }],
+      },
+    ];
+  },
   // 图片域白名单（如需加载 EA CDN 头像）
   images: {
     remotePatterns: [

@@ -2,7 +2,10 @@
  * 装到桌面（PWA）相关的浏览器状态。
  *
  * - 判断当前环境该用哪种方式安装：Chromium 系能弹系统安装框；iOS 只能走「分享 → 添加到主屏幕」；
- *   微信 / QQ 内置浏览器装不了，得先跳到浏览器；其余浏览器（UC、夸克、华为等）去菜单里找。
+ *   微信 / QQ 内置浏览器装不了，得先跳到浏览器；鸿蒙原生系统引导到华为浏览器的「添加至桌面」；
+ *   其余浏览器（UC、夸克等）去菜单里找。
+ *   鸿蒙上经卓易通运行的安卓浏览器（Edge、Chrome）装不了：卓易通是个没有桌面的安卓容器，
+ *   浏览器建不了桌面图标，菜单项是灰的；从 UA 上没法可靠区分，只能在「menu」的提示里顺带说。
  * - 截住 Chromium 的 beforeinstallprompt，留给安装提示条在用户点「安装」时再弹。
  * - 记录提示条的关闭时间，关掉后 30 天内不再自动出现。
  * - 生产环境注册 service worker（public/sw.js），只负责断网时给出提示页。
@@ -12,7 +15,7 @@
 
 import { useSyncExternalStore } from "react";
 
-export type InstallMethod = "prompt" | "ios" | "in-app" | "menu";
+export type InstallMethod = "prompt" | "ios" | "in-app" | "harmony" | "harmony-other" | "menu";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -62,6 +65,8 @@ function subscribe(listener: () => void) {
 function detectMethod(hasPrompt: boolean): InstallMethod {
   const ua = navigator.userAgent;
   if (/MicroMessenger|\bQQ\//i.test(ua)) return "in-app";
+  // 鸿蒙原生（HarmonyOS NEXT）浏览器的 UA 带 OpenHarmony，不支持 PWA 安装
+  if (/OpenHarmony/i.test(ua)) return /HuaweiBrowser/i.test(ua) ? "harmony" : "harmony-other";
   if (hasPrompt) return "prompt";
   // iPadOS 默认伪装成 Mac Safari，靠触控点数区分
   const isIOS =

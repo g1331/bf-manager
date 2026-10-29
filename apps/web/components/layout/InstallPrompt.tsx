@@ -2,12 +2,18 @@
 
 import { Ellipsis, Share, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { dismissInstallBanner, promptInstall, usePwa, type InstallMethod } from "@/lib/pwa";
+import {
+  APP_DOWNLOAD_URL,
+  dismissInstallBanner,
+  promptInstall,
+  usePwa,
+  type InstallMethod,
+} from "@/lib/pwa";
 
 /**
  * 手机端「装到桌面」提示条，浮在底部标签栏上方。
  * 按环境给出能走通的那一种装法（见 lib/pwa），关掉后 30 天内不再自动出现；
- * 侧边抽屉里的「安装到桌面」可随时重新打开。已经从桌面图标打开时不显示。
+ * 侧边抽屉里的「安装到桌面」可随时重新打开。已经从桌面图标或 App 里打开时不显示。
  */
 export function InstallPrompt() {
   const { bannerVisible, method } = usePwa();
@@ -30,6 +36,13 @@ export function InstallPrompt() {
       {method === "prompt" ? (
         <Button size="sm" className="shrink-0" onClick={() => void promptInstall()}>
           安装
+        </Button>
+      ) : null}
+      {method === "app" ? (
+        <Button size="sm" className="shrink-0" asChild>
+          <a href={APP_DOWNLOAD_URL} download>
+            下载
+          </a>
         </Button>
       ) : null}
       <Button
@@ -62,11 +75,16 @@ function Hint({ method }: { method: InstallMethod }) {
       );
     case "in-app":
       return <>这里装不了。点右上角 ··· 选「在浏览器打开」，再从浏览器装</>;
-    case "harmony":
-      return <>点右下角 ∷ 选「添加至桌面」</>;
-    case "harmony-other":
-      return <>用自带的华为浏览器打开本页，点右下角 ∷ 选「添加至桌面」</>;
+    case "app":
+      return <>下载后点开安装包，装好就能从桌面打开</>;
     case "menu":
-      return <>在浏览器菜单里找「添加到主屏幕」或「安装应用」</>;
+      return (
+        <>
+          在浏览器菜单里找「添加到主屏幕」或「安装应用」。找不到或点不了，可以
+          <a href={APP_DOWNLOAD_URL} download className="inline-action text-primary underline">
+            下载 App
+          </a>
+        </>
+      );
   }
 }

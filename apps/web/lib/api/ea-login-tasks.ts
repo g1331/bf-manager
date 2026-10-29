@@ -63,9 +63,13 @@ function basePath(actor: EALoginTaskActor): string {
   return actor === "user" ? "/me/ea-bindings/login-tasks" : "/ea-accounts/login-tasks";
 }
 
+// 登录任务的长轮询会被服务端 hold 住最多 25 秒，各步骤也可能等 EA 较久，
+// 超时由调用方的 AbortController 与任务自身 TTL 控制，不套默认请求超时
+const NO_TIMEOUT = { timeoutMs: null } as const;
+
 export const eaLoginTasksApi = {
   create: (actor: EALoginTaskActor, payload: EALoginTaskCreateRequest) =>
-    api.post<EALoginTaskResponse>(basePath(actor), payload),
+    api.post<EALoginTaskResponse>(basePath(actor), payload, NO_TIMEOUT),
 
   /**
    * 状态查询。提供 ``sinceVersion`` 时启用长轮询：服务端 hold 住直到 ``current >
@@ -82,15 +86,22 @@ export const eaLoginTasksApi = {
     options?: { signal?: AbortSignal },
   ) => {
     const qs = sinceVersion !== undefined ? `?since_version=${sinceVersion}` : "";
-    return api.get<EALoginTaskResponse>(`${basePath(actor)}/${taskId}${qs}`, options);
+    return api.get<EALoginTaskResponse>(`${basePath(actor)}/${taskId}${qs}`, {
+      ...options,
+      ...NO_TIMEOUT,
+    });
   },
 
   submitMethod: (actor: EALoginTaskActor, taskId: string, method: string) =>
-    api.post<EALoginTaskResponse>(`${basePath(actor)}/${taskId}/2fa-method`, { method }),
+    api.post<EALoginTaskResponse>(
+      `${basePath(actor)}/${taskId}/2fa-method`,
+      { method },
+      NO_TIMEOUT,
+    ),
 
   submitCode: (actor: EALoginTaskActor, taskId: string, code: string) =>
-    api.post<EALoginTaskResponse>(`${basePath(actor)}/${taskId}/2fa-code`, { code }),
+    api.post<EALoginTaskResponse>(`${basePath(actor)}/${taskId}/2fa-code`, { code }, NO_TIMEOUT),
 
   cancel: (actor: EALoginTaskActor, taskId: string) =>
-    api.post<EALoginTaskResponse>(`${basePath(actor)}/${taskId}/cancel`),
+    api.post<EALoginTaskResponse>(`${basePath(actor)}/${taskId}/cancel`, undefined, NO_TIMEOUT),
 };

@@ -16,7 +16,11 @@ import { useBack } from "@/hooks/useNavigation";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRightLeft } from "lucide-react";
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
-import { DetailBackground, DetailNote } from "@/components/bf1/visual/DetailBackground";
+import {
+  DetailBackground,
+  DetailError,
+  DetailNote,
+} from "@/components/bf1/visual/DetailBackground";
 import { ServerDetailSkeleton } from "@/components/layout/PageSkeleton";
 import { ResponsiveTable, type Column } from "@/components/common/ResponsiveTable";
 import {
@@ -102,11 +106,21 @@ export default function ServerDetailPage() {
     enabled: Number.isFinite(gameId),
   });
 
+  if (!Number.isFinite(gameId)) {
+    return <DetailNote text="无效的服务器 ID" />;
+  }
   if (detail.isLoading) {
     return <ServerDetailSkeleton />;
   }
   if (!detail.data) {
-    return <DetailNote text="未找到该服务器，请返回列表重试" />;
+    return (
+      <DetailError
+        error={detail.error}
+        notFoundText="没有找到这台服务器"
+        onRetry={() => void detail.refetch()}
+        retrying={detail.isFetching}
+      />
+    );
   }
 
   return <ServerDetailView gameId={gameId} game={game} detail={detail.data} onBack={back} />;

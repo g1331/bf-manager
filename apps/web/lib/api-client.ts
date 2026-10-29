@@ -40,6 +40,25 @@ function getBaseUrl(): string {
 interface FetchOptions extends RequestInit {
   /** 是否携带 session cookie（默认 true） */
   withCredentials?: boolean;
+  /** 超时毫秒数，默认 DEFAULT_TIMEOUT_MS；传 null 不设超时（长轮询等自带超时的调用） */
+  timeoutMs?: number | null;
+}
+
+/** Blaze 重连后首个请求要 4–7 秒，带全队战绩的服务器名单更慢，30 秒留足余量 */
+const DEFAULT_TIMEOUT_MS = 30_000;
+
+/** 合并调用方的取消信号与超时信号；老浏览器缺少 AbortSignal.any / timeout 时退化为只用其中一个 */
+function withTimeout(
+  signal: AbortSignal | null | undefined,
+  timeoutMs: number | null,
+): { signal: AbortSignal | undefined; timeout: AbortSignal | undefined } {
+  const timeout =
+    timeoutMs && typeof AbortSignal.timeout === "function"
+      ? AbortSignal.timeout(timeoutMs)
+      : undefined;
+  if (!signal) return { signal: timeout, timeout };
+  if (!timeout || typeof AbortSignal.any !== "function") return { signal, timeout: undefined };
+  return { signal: AbortSignal.any([signal, timeout]), timeout };
 }
 
 /**
@@ -85,19 +104,37 @@ async function parseApiError(res: Response): Promise<ApiError> {
 }
 
 async function fetchApi<T>(path: string, options: FetchOptions = {}): Promise<T> {
-  const { withCredentials = true, ...init } = options;
+  const { withCredentials = true, timeoutMs = DEFAULT_TIMEOUT_MS, ...init } = options;
 
   const url = `${getBaseUrl()}/api/v1${path.startsWith("/") ? path : `/${path}`}`;
+  const { signal, timeout } = withTimeout(init.signal, timeoutMs);
 
-  const res = await fetch(url, {
-    ...init,
-    credentials: withCredentials ? "include" : "omit",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      ...init.headers,
-    },
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      ...init,
+      signal,
+      credentials: withCredentials ? "include" : "omit",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        ...init.headers,
+      },
+    });
+  } catch (err) {
+    // 调用方主动取消（组件卸载等）原样抛出，交给调用方按取消处理
+    if (init.signal?.aborted) throw err;
+    if (timeout?.aborted) {
+      throw new ApiException(0, {
+        code: "TIMEOUT",
+        message: "请求超时，EA 或本站响应太慢，请稍后重试",
+      });
+    }
+    throw new ApiException(0, {
+      code: "NETWORK_ERROR",
+      message: "网络连接失败，请检查网络后重试",
+    });
+  }
 
   if (!res.ok) {
     throw new ApiException(res.status, await parseApiError(res));
@@ -137,3 +174,38 @@ export const api = {
   delete: <T>(path: string, options?: FetchOptions) =>
     fetchApi<T>(path, { ...options, method: "DELETE" }),
 };
+
+export type ApiErrorKind = "not_found" | "busy" | "timeout" | "network" | "server";
+
+export interface ApiErrorView {
+  kind: ApiErrorKind;
+  /** 面向用户的说明；not_found 由页面给出更贴切的文案 */
+  message: string;
+  /** 本站内部错误的编号，用于反馈 */
+  requestId?: string;
+  /** 是否值得给「重试」按钮 */
+  retryable: boolean;
+}
+
+/** 把查询错误归成几类，页面据此决定文案、要不要重试按钮、要不要附反馈入口 */
+export function describeApiError(error: unknown): ApiErrorView {
+  if (!(error instanceof ApiException)) {
+    return { kind: "server", message: "加载失败，请稍后重试", retryable: true };
+  }
+  if (error.status === 404) {
+    return { kind: "not_found", message: error.message, retryable: false };
+  }
+  if (error.status === 429 || error.code === "EA_BUSY") {
+    return { kind: "busy", message: error.message, retryable: true };
+  }
+  if (error.code === "TIMEOUT") return { kind: "timeout", message: error.message, retryable: true };
+  if (error.code === "NETWORK_ERROR") {
+    return { kind: "network", message: error.message, retryable: true };
+  }
+  return {
+    kind: "server",
+    message: error.message,
+    requestId: error.status >= 500 && error.status !== 503 ? error.requestId : undefined,
+    retryable: true,
+  };
+}

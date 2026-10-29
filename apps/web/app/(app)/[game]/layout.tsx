@@ -1,5 +1,14 @@
 import { notFound } from "next/navigation";
-import { isValidGame, getGame } from "@/lib/game-registry";
+import { ENABLED_GAMES, isValidGame, getGame } from "@/lib/game-registry";
+
+// 只有已启用的游戏才是合法的 [game] 段；其余路径（/robots.txt、拼错的地址等）在渲染前
+// 直接返回 404。仅靠下面的 notFound() 不够：上层 loading.tsx 已经开始流式输出，
+// 那时状态码固定为 200，只能给出「看起来像 404 的 200」
+export const dynamicParams = false;
+
+export function generateStaticParams() {
+  return ENABLED_GAMES.map((g) => ({ game: g.id }));
+}
 
 interface GameLayoutProps {
   children: React.ReactNode;

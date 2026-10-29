@@ -17,6 +17,7 @@ import {
   ArrowLeftRight,
   Ban,
   Check,
+  Clock,
   Minus,
   MoreHorizontal,
   ShieldCheck,
@@ -44,8 +45,17 @@ import {
   type AdminActionRequest,
 } from "@/hooks/useServerAdminActions";
 import { canDo, hasAnyServerAdmin, type ServerAdminAction } from "@/lib/bf1/server-admin-authz";
-import { bf1Api, type BlazePlayer, type MyServerRole } from "@/lib/api/bf1";
+import { bf1Api, type BlazePlayer, type MyServerRole, type VipGrantOptions } from "@/lib/api/bf1";
 import { cn } from "@/lib/utils";
+import {
+  VipDurationPicker,
+  formatExpiry,
+  formatSpan,
+  isPermanentVip,
+  isValidDays,
+  vipStatusOf,
+  type VipStatus,
+} from "@/components/bf1/server-admin/vip";
 
 /**
  * 玩家的最小寻址信息：persona_id 为后端实际依据，名字用于展示与确认文案。
@@ -57,8 +67,8 @@ type PlayerRef = Pick<BlazePlayer, "persona_id" | "display_name"> & { team?: num
 /** 单人操作种类（与菜单项 / 名单管理项对应） */
 type SingleKind =
   "kick" | "move" | "ban" | "unban" | "addVip" | "removeVip" | "addAdmin" | "removeAdmin";
-/** 批量操作种类（仅高频的踢 / 换边 / 封支持批量） */
-type BatchKind = "kick" | "move" | "ban";
+/** 批量操作种类（高频的踢 / 换边 / 封，以及给服内玩家批量加 N 天 V） */
+type BatchKind = "kick" | "move" | "ban" | "addVip";
 
 interface ServerAdminContextValue {
   /** 是否拥有任意服管权限，决定是否渲染服管入口（选择列 / ⋯ 菜单 / 批量栏） */
@@ -114,7 +124,12 @@ type Pending =
 
 const DEFAULT_REASON = "violation of rules";
 
-function buildRequest(kind: SingleKind, player: PlayerRef, reason: string): AdminActionRequest {
+function buildRequest(
+  kind: SingleKind,
+  player: PlayerRef,
+  reason: string,
+  vip?: VipGrantOptions,
+): AdminActionRequest {
   const label = player.display_name;
   switch (kind) {
     case "kick":
@@ -128,7 +143,7 @@ function buildRequest(kind: SingleKind, player: PlayerRef, reason: string): Admi
     case "unban":
       return { action: "unban", personaId: player.persona_id, label };
     case "addVip":
-      return { action: "addVip", personaId: player.persona_id, label };
+      return { action: "addVip", personaId: player.persona_id, label, vip };
     case "removeVip":
       return { action: "removeVip", personaId: player.persona_id, label };
     case "addAdmin":
@@ -136,6 +151,69 @@ function buildRequest(kind: SingleKind, player: PlayerRef, reason: string): Admi
     case "removeAdmin":
       return { action: "removeAdmin", personaId: player.persona_id, label };
   }
+}
+
+/**
+ * 加 V 时长的默认值：新加的默认永久（与 v3 不带天数的 -vip 一致），已有期限的默认再加 7 天，
+ * 批量加 V 默认 7 天（对应 v3「谁在玩」回复 v 天数）。
+ */
+function defaultVipDays(status: VipStatus, batch: boolean): number | null {
+  if (batch) return 7;
+  if (isPermanentVip(status)) return null;
+  return status.kind === "timed" || status.kind === "pending" ? 7 : null;
+}
+
+/** 单人加 V / 改期确认框的标题动词 */
+function vipVerb(status: VipStatus): string {
+  return status.kind === "none" ? "添加 VIP" : "调整 VIP";
+}
+
+/** 加 V / 下 V 确认框的说明，按服务器类型和玩家当前的 VIP 状态给出实际效果 */
+function vipDescription(
+  kind: "addVip" | "removeVip",
+  status: VipStatus,
+  days: number | null,
+  operation: boolean,
+): string {
+  if (kind === "removeVip") {
+    if (status.kind === "pending") return "从待生效队列撤掉，不会动 EA 名单";
+    return operation
+      ? "行动服：先标记为到期，下次在 VIP 名单里点「立即生效」时才会真正下掉（空服上下 V 会掉回普通服）"
+      : "立即从 EA 名单移除";
+  }
+  if (status.kind === "timed" && status.item.expired) {
+    return days === null
+      ? "已到期还没下掉，改为永久 VIP"
+      : `已到期还没下掉，从现在起算 ${days} 天；只改记录，不动 EA 名单`;
+  }
+  if (status.kind === "timed") {
+    const exp = status.item.expires_at ? `，目前 ${formatExpiry(status.item.expires_at)} 到期` : "";
+    return days === null
+      ? `改为永久 VIP${exp}`
+      : `在现有期限上${days > 0 ? "增加" : "减少"} ${Math.abs(days)} 天${exp}；只改记录，不动 EA 名单`;
+  }
+  if (status.kind === "pending") {
+    const left =
+      status.item.remaining_seconds === null
+        ? "永久"
+        : `剩 ${formatSpan(status.item.remaining_seconds)}`;
+    const where = `该玩家在待生效队列里（${left}，第 ${status.item.queue_position ?? "?"} 位）`;
+    if (status.item.remaining_seconds === null && days !== null) {
+      return `${where}，确认后改为排队 ${days} 天的限时 VIP`;
+    }
+    return `${where}，只调整排队时长，不动 EA 名单`;
+  }
+  if (status.kind === "permanent") {
+    return days === null
+      ? "该玩家已经是永久 VIP"
+      : `该玩家目前是永久 VIP，确认后会改为 ${days} 天的限时 VIP，${
+          operation ? "到期后下次「立即生效」时下掉" : "到期自动下掉"
+        }`;
+  }
+  if (operation) {
+    return "行动服：先加入待生效队列，排队期间不扣天数；在 VIP 名单里点「立即生效」后才会真正加上";
+  }
+  return days === null ? "永久 VIP，不会自动下掉" : `立即加上，${days} 天后自动下掉`;
 }
 
 const SINGLE_VERB: Record<SingleKind, string> = {
@@ -159,6 +237,8 @@ export function ServerAdminProvider({ gameId, children }: { gameId: number; chil
   const [selected, setSelected] = useState<Set<number>>(() => new Set());
   const [pending, setPending] = useState<Pending>(null);
   const [reason, setReason] = useState(DEFAULT_REASON);
+  // undefined 表示还没手动选过，取 defaultVipDays；NaN 表示自定义输入不合法
+  const [vipDays, setVipDays] = useState<number | null | undefined>(undefined);
 
   const canManage = hasAnyServerAdmin(role);
   const can = useCallback((action: ServerAdminAction) => canDo(action, role), [role]);
@@ -186,11 +266,13 @@ export function ServerAdminProvider({ gameId, children }: { gameId: number; chil
 
   const act = useCallback((kind: SingleKind, player: PlayerRef) => {
     setReason(DEFAULT_REASON);
+    setVipDays(undefined);
     setPending({ mode: "single", kind, player });
   }, []);
   const actBatch = useCallback((kind: BatchKind, players: PlayerRef[]) => {
     if (players.length === 0) return;
     setReason(DEFAULT_REASON);
+    setVipDays(undefined);
     setPending({ mode: "batch", kind, players });
   }, []);
   const chooseLevel = useCallback(
@@ -202,10 +284,50 @@ export function ServerAdminProvider({ gameId, children }: { gameId: number; chil
 
   const close = useCallback(() => setPending(null), []);
 
+  // VIP 操作要知道服务器类型和玩家现有的 VIP 状态（永久 / 限时 / 排队）
+  const vipKind =
+    pending &&
+    pending.mode !== "level" &&
+    (pending.kind === "addVip" || pending.kind === "removeVip")
+      ? pending.kind
+      : null;
+  const timedVips = useQuery({
+    queryKey: ["bf1-timed-vips", gameId],
+    queryFn: () => bf1Api.getTimedVips(gameId),
+    enabled: vipKind !== null && canManage,
+    staleTime: 15_000,
+  });
+  const vipView = timedVips.data;
+  const singleVipStatus = useMemo<VipStatus>(
+    () =>
+      pending?.mode === "single"
+        ? vipStatusOf(vipView, pending.player.persona_id)
+        : { kind: "none" },
+    [pending, vipView],
+  );
+  // 有剩余期限的才能填负数缩短；已到期的改期从现在起算
+  const canShortenVip =
+    (singleVipStatus.kind === "pending" && !isPermanentVip(singleVipStatus)) ||
+    (singleVipStatus.kind === "timed" && !singleVipStatus.item.expired);
+  const effectiveVipDays =
+    vipDays === undefined ? defaultVipDays(singleVipStatus, pending?.mode === "batch") : vipDays;
+  const vipDaysValid = isValidDays(effectiveVipDays, canShortenVip);
+
+  const vipOptions = useCallback(
+    (status: VipStatus, player: PlayerRef): VipGrantOptions => ({
+      days: effectiveVipDays,
+      displayName: player.display_name,
+      allowPermanentToTimed: isPermanentVip(status) && effectiveVipDays !== null,
+    }),
+    [effectiveVipDays],
+  );
+
   const execute = useCallback(async () => {
     if (!pending) return;
     if (pending.mode === "single") {
-      const ok = await runSingle(buildRequest(pending.kind, pending.player, reason));
+      const vip =
+        pending.kind === "addVip" ? vipOptions(singleVipStatus, pending.player) : undefined;
+      const ok = await runSingle(buildRequest(pending.kind, pending.player, reason, vip));
       if (ok) close();
       return;
     }
@@ -218,11 +340,23 @@ export function ServerAdminProvider({ gameId, children }: { gameId: number; chil
       if (ok) close();
       return;
     }
-    const reqs = pending.players.map((p) => buildRequest(pending.kind, p, reason));
+    // 批量加 V 跳过永久 VIP（与 v3 一致），其余在现有期限上加
+    const players =
+      pending.kind === "addVip"
+        ? pending.players.filter((p) => !isPermanentVip(vipStatusOf(vipView, p.persona_id)))
+        : pending.players;
+    const reqs = players.map((p) =>
+      buildRequest(
+        pending.kind,
+        p,
+        reason,
+        pending.kind === "addVip" ? vipOptions({ kind: "none" }, p) : undefined,
+      ),
+    );
     await runBatch(reqs);
     clear();
     close();
-  }, [pending, reason, runSingle, runBatch, clear, close]);
+  }, [pending, reason, runSingle, runBatch, clear, close, vipOptions, singleVipStatus, vipView]);
 
   const value = useMemo<ServerAdminContextValue>(
     () => ({
@@ -272,14 +406,17 @@ export function ServerAdminProvider({ gameId, children }: { gameId: number; chil
         : "切换地图会立即结束当前对局，所有玩家会被移到新地图";
 
   const isKick = pending?.mode !== "level" && pending?.kind === "kick";
+  const isAddVip = vipKind === "addVip";
   const isMove = pending?.mode !== "level" && pending?.kind === "move";
   const isBan = pending?.mode !== "level" && pending?.kind === "ban";
   const confirmTitle = !pending
     ? ""
     : pending.mode === "single"
-      ? `${SINGLE_VERB[pending.kind]} ${pending.player.display_name}？`
+      ? `${pending.kind === "addVip" ? vipVerb(singleVipStatus) : SINGLE_VERB[pending.kind]} ${pending.player.display_name}？`
       : pending.mode === "batch"
-        ? `${SINGLE_VERB[pending.kind]}选中的 ${pending.players.length} 名玩家？`
+        ? pending.kind === "addVip"
+          ? `给选中的 ${pending.players.length} 名玩家加 V？`
+          : `${SINGLE_VERB[pending.kind]}选中的 ${pending.players.length} 名玩家？`
         : `${pending.restart ? "重开" : "切换到"} ${pending.mapName}？`;
   // isMove / batch 分支须先于 isBan 判断：批量时对应 kind 的标志同样为真，若不前置会错误回退到
   // 单人 / 通用文案。换边无论单人或批量都要提示 forceKill 会强制阵亡一次。
@@ -287,17 +424,23 @@ export function ServerAdminProvider({ gameId, children }: { gameId: number; chil
     ? undefined
     : pending.mode === "level"
       ? [pending.warning, levelDescription].filter(Boolean).join("。")
-      : isMove
-        ? pending.mode === "batch"
-          ? "换边会强制玩家阵亡一次后移到对方阵营；将对所有选中玩家依次执行，部分失败不会中断其余项"
-          : "换边会强制玩家阵亡一次后移到对方阵营"
-        : pending.mode === "batch"
-          ? "将对所有选中玩家依次执行，部分失败不会中断其余项"
-          : isBan
-            ? "封禁后该玩家无法再次加入服务器，可在管理后台或 EA 平台解除"
-            : pending.kind === "addAdmin"
-              ? "管理员可对本服执行踢人、封禁等操作，请确认对方身份"
-              : undefined;
+      : vipKind && pending.mode === "batch"
+        ? vipView?.operation
+          ? "行动服：没在名单里的先加入待生效队列，已有期限的在原期限上加；永久 VIP 跳过"
+          : "没在名单里的立即加上，已有期限的在原期限上加；永久 VIP 跳过"
+        : vipKind && pending.mode === "single"
+          ? vipDescription(vipKind, singleVipStatus, effectiveVipDays, !!vipView?.operation)
+          : isMove
+            ? pending.mode === "batch"
+              ? "换边会强制玩家阵亡一次后移到对方阵营；将对所有选中玩家依次执行，部分失败不会中断其余项"
+              : "换边会强制玩家阵亡一次后移到对方阵营"
+            : pending.mode === "batch"
+              ? "将对所有选中玩家依次执行，部分失败不会中断其余项"
+              : isBan
+                ? "封禁后该玩家无法再次加入服务器，可在管理后台或 EA 平台解除"
+                : pending.kind === "addAdmin"
+                  ? "管理员可对本服执行踢人、封禁等操作，请确认对方身份"
+                  : undefined;
 
   return (
     <ServerAdminContext.Provider value={value}>
@@ -313,8 +456,19 @@ export function ServerAdminProvider({ gameId, children }: { gameId: number; chil
           isBan || (pending?.mode === "level" && pending.warning) ? "destructive" : "default"
         }
         loading={loading}
+        // VIP 操作要先拿到服务器类型和玩家现有状态（永久 / 限时 / 排队），否则文案和参数都可能不对
+        confirmDisabled={(isAddVip && !vipDaysValid) || (vipKind !== null && timedVips.isPending)}
         onConfirm={execute}
       >
+        {isAddVip && pending?.mode !== "level" ? (
+          <VipDurationPicker
+            key={pending?.mode === "single" ? pending.player.persona_id : "batch"}
+            value={effectiveVipDays}
+            onChange={setVipDays}
+            allowNegative={canShortenVip}
+            label={canShortenVip ? "在现有期限上增加（自定义可填负数缩短）" : "VIP 时长"}
+          />
+        ) : null}
         {isKick ? (
           <div className="space-y-2 py-2">
             <Label htmlFor="inline-kick-reason">踢出理由</Label>
@@ -450,6 +604,14 @@ export function PlayerActionMenu({ player }: { player: BlazePlayer }) {
   }
 
   const vipItems: ReactNode[] = [];
+  if (player.is_vip && can("addVip")) {
+    vipItems.push(
+      <DropdownMenuItem key="adjustVip" className={itemCls} onSelect={() => act("addVip", ref)}>
+        <Clock className="size-3.5" />
+        调整 VIP
+      </DropdownMenuItem>,
+    );
+  }
   if (player.is_vip && can("removeVip")) {
     vipItems.push(
       <DropdownMenuItem key="removeVip" className={itemCls} onSelect={() => act("removeVip", ref)}>
@@ -523,7 +685,7 @@ export function PlayerRowActions({ player }: { player: BlazePlayer }) {
   );
 }
 
-/** 多选批量操作栏：选中玩家后浮现，支持批量踢 / 封 */
+/** 多选批量操作栏：选中玩家后浮现，支持批量踢 / 换边 / 封 / 加 V */
 export function BatchActionBar({ players }: { players: BlazePlayer[] }) {
   const { canManage, can, selectedCount, clear, actBatch, isSelected } = useServerAdmin();
   if (!canManage || selectedCount === 0) return null;
@@ -532,7 +694,7 @@ export function BatchActionBar({ players }: { players: BlazePlayer[] }) {
   return (
     <div className="mb-4 flex flex-wrap items-center gap-2 rounded-sm border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-sm">
       <span className="font-medium text-amber-100">已选 {selectedCount} 名玩家</span>
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex flex-wrap items-center gap-2">
         {can("kick") ? (
           <Button
             variant="outline"
@@ -553,6 +715,17 @@ export function BatchActionBar({ players }: { players: BlazePlayer[] }) {
           >
             <ArrowLeftRight className="size-3.5" />
             批量换边
+          </Button>
+        ) : null}
+        {can("addVip") ? (
+          <Button
+            variant="outline"
+            size="sm"
+            className="compact-action"
+            onClick={() => actBatch("addVip", selectedPlayers)}
+          >
+            <Star className="size-3.5" />
+            批量加 V
           </Button>
         ) : null}
         {can("ban") ? (

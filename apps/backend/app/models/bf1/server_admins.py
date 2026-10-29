@@ -4,14 +4,21 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import BigInteger, DateTime, ForeignKey, String, Text, UniqueConstraint
+from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base, TimestampMixin
 
 
 class Bf1ServerVip(Base, TimestampMixin):
-    """服务器 VIP 列表（EA 侧）"""
+    """平台托管的计时 VIP。
+
+    只登记经平台加的限时 VIP 和行动服待生效队列；EA 名单里没有记录的 VIP 视为永久、
+    由别处管理，平台不会去动。
+    - active：已在 EA 名单里，到 expires_at 下掉；
+    - pending：行动服排队中，还没加进 EA 名单，remaining_seconds 是冻结的剩余时长
+      （为空表示永久），checkvip 补进空位时才开始计时。
+    """
 
     __tablename__ = "bf1_server_vips"
 
@@ -22,7 +29,20 @@ class Bf1ServerVip(Base, TimestampMixin):
     persona_id: Mapped[int] = mapped_column(BigInteger, index=True, nullable=False)
     display_name: Mapped[str | None] = mapped_column(String(64))
 
-    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    status: Mapped[str] = mapped_column(String(16), nullable=False, server_default="active")
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    remaining_seconds: Mapped[int | None] = mapped_column(BigInteger)
+    # 排队顺序；续期不改它
+    queued_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # 最后一次授予或改期的人；到期自动下 V 时优先用他的绑定凭据
+    granted_by_user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL")
+    )
+
+    # 到期没能自动下掉时的退避与报错
+    attempts: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+    last_error: Mapped[str | None] = mapped_column(Text)
+    last_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     __table_args__ = (
         UniqueConstraint("server_pk", "persona_id", name="uq_bf1_vips_server_persona"),

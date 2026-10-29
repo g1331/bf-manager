@@ -17,6 +17,7 @@ export type ServerAdminAction =
   | "unban"
   | "addVip"
   | "removeVip"
+  | "applyVip"
   | "addAdmin"
   | "removeAdmin"
   | "chooseLevel";
@@ -36,6 +37,7 @@ export const SERVER_ADMIN_ACTION_MIN_ROLE: Record<ServerAdminAction, MembershipR
   unban: "admin",
   addVip: "admin",
   removeVip: "admin",
+  applyVip: "admin",
   addAdmin: "owner",
   removeAdmin: "owner",
   chooseLevel: "admin",

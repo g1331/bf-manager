@@ -753,9 +753,13 @@ export const bf1Api = {
       level_index: levelIndex,
     }),
 
-  adminAddVip: (gameId: number, personaId: number) =>
+  /** 加 V / 改期：days 为空是永久，可为负（缩短）；行动服只进待生效队列 */
+  adminAddVip: (gameId: number, personaId: number, opts: VipGrantOptions = {}) =>
     api.post<{ success: boolean; message: string | null }>(`/bf1/server-admin/${gameId}/vip`, {
       persona_id: personaId,
+      days: opts.days ?? null,
+      display_name: opts.displayName ?? null,
+      allow_permanent_to_timed: opts.allowPermanentToTimed ?? false,
     }),
 
   adminRemoveVip: (gameId: number, personaId: number) =>
@@ -773,6 +777,11 @@ export const bf1Api = {
       `/bf1/server-admin/${gameId}/admin/${personaId}`,
     ),
 
+  getTimedVips: (gameId: number) => api.get<TimedVipView>(`/bf1/server-admin/${gameId}/vip/timed`),
+  /** checkvip：先下掉过期的再按顺序补空位；restart 为真时有变动就重开当前地图 */
+  applyVips: (gameId: number, restart: boolean) =>
+    api.post<VipApplyResult>(`/bf1/server-admin/${gameId}/vip/apply`, { restart }),
+
   getAutoSwitch: (gameId: number) =>
     api.get<AutoSwitchView>(`/bf1/server-admin/${gameId}/auto-switch`),
   saveAutoSwitchPlan: (gameId: number, plan: AutoSwitchPlan) =>
@@ -782,6 +791,53 @@ export const bf1Api = {
   disableAutoSwitch: (gameId: number) =>
     api.post<AutoSwitchView>(`/bf1/server-admin/${gameId}/auto-switch/disable`),
 };
+
+export interface VipGrantOptions {
+  days?: number | null;
+  displayName?: string;
+  allowPermanentToTimed?: boolean;
+}
+
+/** 平台托管的一条计时 VIP。active 已在 EA 名单里；pending 是行动服待生效队列 */
+export interface TimedVipItem {
+  persona_id: number;
+  display_name: string | null;
+  status: "active" | "pending";
+  expires_at: string | null;
+  /** 剩余秒数：active 是查询时距到期，pending 是冻结的剩余时长；为空表示永久 */
+  remaining_seconds: number | null;
+  /** 已到期还没下掉：行动服等「立即生效」，普通服是自动下 V 失败 */
+  expired: boolean;
+  queue_position: number | null;
+  last_error: string | null;
+}
+
+export interface TimedVipView {
+  operation: boolean;
+  map_name: string | null;
+  /** 当前图是战役第一张，重开不丢战役进度 */
+  campaign_start: boolean;
+  players: number;
+  /** EA 名单里的全部 persona；在名单里但没有托管记录的就是永久 VIP */
+  vip_ids: number[];
+  capacity: number;
+  queue_limit: number;
+  items: TimedVipItem[];
+}
+
+export interface VipApplyResult {
+  message: string;
+  removed: number;
+  added: number;
+  waiting: number;
+  restarted: boolean;
+  failures: {
+    persona_id: number;
+    display_name: string | null;
+    action: "add" | "remove" | "restart";
+    message: string;
+  }[];
+}
 
 /** 自动换图编排的一项：operation 从这张图打完整个战役算一次，map 打完这一张算一次 */
 export interface AutoSwitchItem {

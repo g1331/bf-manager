@@ -11,6 +11,7 @@ class ApiError(BaseModel):
     code: str
     message: str
     details: dict[str, Any] | None = None
+    request_id: str | None = None
 
 
 class ErrorEnvelope(BaseModel):

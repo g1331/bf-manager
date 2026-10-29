@@ -143,17 +143,13 @@ class _BlazeConnectionPool:
         except Exception as exc:
             with contextlib.suppress(Exception):
                 await socket.close()
-            raise EAApiError(
-                code="BLAZE_LOGIN_FAILED",
-                message=f"Blaze 登录失败: {exc}",
-            ) from exc
+            logger.warning("Blaze 登录请求失败: {!r}", exc)
+            raise EAApiError(code="BLAZE_LOGIN_FAILED", message="Blaze 登录失败") from exc
         if not isinstance(response, dict) or response.get("type") == "Error":
             with contextlib.suppress(Exception):
                 await socket.close()
-            raise EAApiError(
-                code="BLAZE_LOGIN_FAILED",
-                message=f"Blaze 登录返回异常: {response}",
-            )
+            logger.warning("Blaze 登录返回异常: {}", str(response)[:500])
+            raise EAApiError(code="BLAZE_LOGIN_FAILED", message="Blaze 登录返回异常")
         socket.authenticated = True
         name = ((response.get("data", {}).get("SESS") or {}).get("PDTL") or {}).get("DSNM")
         logger.success(f"Blaze 登录成功，账号 {creds.persona_id}（{name}）")
@@ -252,9 +248,8 @@ async def fetch_stats(
             response = await socket.send(packet, timeout=BLAZE_QUERY_TIMEOUT)
         except (TimeoutError, ConnectionError, OSError) as exc:
             await _pool.invalidate()
-            raise EAApiError(
-                code="BLAZE_QUERY_FAILED", message=f"Blaze 查询超时或连接中断: {exc}"
-            ) from exc
+            logger.warning("Blaze 查询超时或连接中断: {!r}", exc)
+            raise EAApiError(code="BLAZE_QUERY_FAILED", message="Blaze 查询超时或连接中断") from exc
         if not isinstance(response, dict) or response.get("type") != "Result":
             raise EAApiError(
                 code="BLAZE_STATS_FAILED",
@@ -484,9 +479,8 @@ async def get_operation_states(db: AsyncSession, game_ids: list[int]) -> dict[in
         response = await socket.send(packet, timeout=BLAZE_QUERY_TIMEOUT)
     except (TimeoutError, ConnectionError, OSError) as exc:
         await _pool.invalidate()
-        raise EAApiError(
-            code="BLAZE_QUERY_FAILED", message=f"Blaze 查询超时或连接中断: {exc}"
-        ) from exc
+        logger.warning("Blaze 查询超时或连接中断: {!r}", exc)
+        raise EAApiError(code="BLAZE_QUERY_FAILED", message="Blaze 查询超时或连接中断") from exc
     parsed = BlazeData.player_list_handle(response)
     if isinstance(parsed, str):
         raise EAApiError(code="BLAZE_QUERY_FAILED", message=parsed)
@@ -530,13 +524,12 @@ async def get_server_players(
         roster_response = await socket.send(packet, timeout=BLAZE_QUERY_TIMEOUT)
     except (TimeoutError, ConnectionError, OSError) as exc:
         await _pool.invalidate()
-        raise EAApiError(
-            code="BLAZE_QUERY_FAILED",
-            message=f"Blaze 查询超时或连接中断: {exc}",
-        ) from exc
+        logger.warning("Blaze 查询超时或连接中断: {!r}", exc)
+        raise EAApiError(code="BLAZE_QUERY_FAILED", message="Blaze 查询超时或连接中断") from exc
     except ValueError as exc:
         # 单帧解码失败：连接本身仍可用，不必重建
-        raise EAApiError(code="BLAZE_QUERY_FAILED", message=str(exc)) from exc
+        logger.warning("Blaze 名单解码失败: {!r}", exc)
+        raise EAApiError(code="BLAZE_QUERY_FAILED", message="Blaze 返回数据解析失败") from exc
 
     parsed = BlazeData.player_list_handle(roster_response)
     if isinstance(parsed, str):

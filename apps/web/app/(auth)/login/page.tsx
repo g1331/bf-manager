@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { localLogin, login } from "@/lib/auth";
 import { ApiException } from "@/lib/api-client";
+import { safeNextPath } from "@/lib/utils";
 
 const loginSchema = z.object({
   remid: z.string().min(10, "remid 看上去不是合法 cookie 值"),
@@ -88,7 +89,7 @@ export default function LoginPage() {
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") ?? "/stats";
+  const next = safeNextPath(searchParams.get("next"), "/stats");
   const [submitting, setSubmitting] = useState(false);
   const [showLocal, setShowLocal] = useState(false);
 
@@ -239,12 +240,7 @@ function LoginForm() {
                         <FormControl>
                           <Input type="password" autoComplete="current-password" {...field} />
                         </FormControl>
-                        <FormDescription>
-                          本地账号由部署者通过 CLI 创建：
-                          <code className="bg-muted ml-1 rounded px-1 py-0.5 text-xs">
-                            python -m app.cli create-admin
-                          </code>
-                        </FormDescription>
+                        <FormDescription>本地账号仅供平台管理员使用。</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}

@@ -13,7 +13,9 @@ from fastapi.responses import JSONResponse
 from loguru import logger
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.api.client_ip import client_ip
 from app.api.errors import AppError
+from app.api.request_id import RequestIdMiddleware, get_request_id
 from app.api.v1.router import api_router
 from app.core import ea_metrics
 from app.core.cache import close_redis, get_redis
@@ -116,13 +118,17 @@ def create_app() -> FastAPI:
         # （含未授权探测）污染访问量与活跃用户统计。
         if request.method != "OPTIONS" and response.status_code < 400:
             user_id = user_id_from_token(request.cookies.get("bfm_access_token"))
-            client_ip = request.client.host if request.client else None
-            await record_request(path=request.url.path, user_id=user_id, client_ip=client_ip)
+            await record_request(
+                path=request.url.path, user_id=user_id, client_ip=client_ip(request)
+            )
         return response
 
-    # 统一错误响应
+    # 最后注册即最外层：编号在 CORS 与埋点之前生成，整条请求链路的日志都带上它
+    app.add_middleware(RequestIdMiddleware)
+
+    # 统一错误响应：错误体都带 request_id，用户反馈时报这个编号即可在日志里定位
     @app.exception_handler(AppError)
-    async def _app_error_handler(_request: Request, exc: AppError) -> JSONResponse:
+    async def _app_error_handler(request: Request, exc: AppError) -> JSONResponse:
         return JSONResponse(
             status_code=exc.status_code,
             content={
@@ -130,15 +136,20 @@ def create_app() -> FastAPI:
                     "code": exc.code,
                     "message": exc.message,
                     "details": exc.details,
+                    "request_id": get_request_id(request),
                 }
             },
+            headers=exc.headers,
         )
 
     @app.exception_handler(StarletteHTTPException)
-    async def _http_error_handler(_request: Request, exc: StarletteHTTPException) -> JSONResponse:
+    async def _http_error_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
         # 已是结构化 detail 直接透传
         if isinstance(exc.detail, dict) and "code" in exc.detail:
-            return JSONResponse(status_code=exc.status_code, content={"error": exc.detail})
+            return JSONResponse(
+                status_code=exc.status_code,
+                content={"error": {**exc.detail, "request_id": get_request_id(request)}},
+            )
         return JSONResponse(
             status_code=exc.status_code,
             content={
@@ -146,6 +157,26 @@ def create_app() -> FastAPI:
                     "code": f"HTTP_{exc.status_code}",
                     "message": str(exc.detail),
                     "details": None,
+                    "request_id": get_request_id(request),
+                }
+            },
+        )
+
+    # 未处理异常：堆栈只进日志，响应体给固定文案，不把内部异常文本带给客户端
+    @app.exception_handler(Exception)
+    async def _unhandled_error_handler(request: Request, exc: Exception) -> JSONResponse:
+        request_id = get_request_id(request)
+        logger.opt(exception=exc).bind(request_id=request_id).error(
+            "Unhandled error on {} {}", request.method, request.url.path
+        )
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "服务器内部错误，请稍后重试",
+                    "details": None,
+                    "request_id": request_id,
                 }
             },
         )

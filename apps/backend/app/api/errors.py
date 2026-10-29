@@ -16,9 +16,12 @@ class AppError(HTTPException):
         code: str,
         message: str,
         details: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
     ) -> None:
         super().__init__(
-            status_code=status_code, detail={"code": code, "message": message, "details": details}
+            status_code=status_code,
+            detail={"code": code, "message": message, "details": details},
+            headers=headers,
         )
         self.code = code
         self.message = message
@@ -50,6 +53,20 @@ class EAApiError(AppError):
 
     def __init__(self, code: str, message: str, details: dict[str, Any] | None = None) -> None:
         super().__init__(status.HTTP_503_SERVICE_UNAVAILABLE, code, message, details)
+
+
+class TooManyRequestsError(AppError):
+    """请求过于频繁；retry_after 秒后可重试，同时写进 Retry-After 响应头。"""
+
+    def __init__(self, message: str, retry_after: int) -> None:
+        retry_after = max(int(retry_after), 1)
+        super().__init__(
+            status.HTTP_429_TOO_MANY_REQUESTS,
+            "TOO_MANY_REQUESTS",
+            message,
+            details={"retry_after": retry_after},
+            headers={"Retry-After": str(retry_after)},
+        )
 
 
 class ValidationError(AppError):

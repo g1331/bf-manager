@@ -112,7 +112,8 @@ class BF1BanService:
         try:
             async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
                 resp = await client.get(
-                    _BFEAC_URL.format(name=quote(name)),
+                    # safe="" 连 / 也转义：昵称只能落在路径最后一段，不能借 ../ 改写到别的接口
+                    _BFEAC_URL.format(name=quote(name, safe="")),
                     headers={"apikey": api_key},
                 )
                 resp.raise_for_status()

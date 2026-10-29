@@ -29,7 +29,7 @@ async def get_current_user(
     try:
         payload = decode_access_token(access_token)
     except JWTError as e:
-        raise UnauthorizedError(f"无效的会话: {e}") from e
+        raise UnauthorizedError("会话无效，请重新登录") from e
 
     sub = payload.get("sub")
     if not sub:

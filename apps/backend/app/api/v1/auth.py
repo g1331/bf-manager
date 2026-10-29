@@ -8,6 +8,7 @@ from fastapi import APIRouter, Request, Response
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
+from app.api.client_ip import client_ip
 from app.api.deps import CurrentUser, CurrentUserOptional, DbDep
 from app.api.errors import UnauthorizedError
 from app.core.config import get_settings
@@ -21,6 +22,7 @@ from app.schemas.auth import (
     SessionResponse,
     SessionUser,
 )
+from app.services import login_throttle
 from app.services.auth_service import AuthService
 
 router = APIRouter()
@@ -110,16 +112,25 @@ async def login(
 async def local_login(
     payload: LocalLoginRequest,
     db: DbDep,
+    request: Request,
     response: Response,
 ) -> LoginResponse:
     """本地账号 username + password 登录（CLI 创建的本地 admin 专用）。
 
     与 EA cookie 登录颁发同名 `bfm_access_token` cookie，下游鉴权中间件不区分入口来源。
     校验失败统一返回 401，不区分「用户不存在」与「密码错误」。
+    同一用户名或 IP 失败过多时先返回 429，见 login_throttle。
     """
     settings = get_settings()
     service = AuthService(db)
-    user = await service.login_with_local_password(payload.username, payload.password)
+    ip = client_ip(request)
+    await login_throttle.ensure_not_locked(payload.username, ip)
+    try:
+        user = await service.login_with_local_password(payload.username, payload.password)
+    except UnauthorizedError:
+        await login_throttle.record_failure(payload.username, ip)
+        raise
+    await login_throttle.clear(payload.username)
 
     token = create_access_token(subject=user.id, extra_claims={"role": user.role})
     _set_session_cookie(

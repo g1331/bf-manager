@@ -55,8 +55,10 @@ from app.services.ea_account_service import EAAccountService
 CONNECTION_MAX_AGE_SECONDS = 6 * 3600
 # 单次 Blaze 查询（含大体量 roster 解码）的超时。
 BLAZE_QUERY_TIMEOUT = 20
-# Blaze Stats.getStats 单个请求最多带多少个 personaId（实测 64 可用）。
-STATS_BATCH_SIZE = 64
+# Blaze Stats.getStats 单个请求带多少个 personaId。2026-10-29 实测核心 1024 人、武器类别 512 人都能
+# 一次返回，值与 64 人一批逐人一致；EA 每个请求有固定开销（武器 64 人约 1s、256 人不到 2s），
+# 批越大总耗时越省。取 256，离测过的上限留一倍余量。
+STATS_BATCH_SIZE = 256
 # 生涯战绩按 personaId 缓存的时长（秒）。生涯数据只在回合结束时更新，刷新同一服务器时
 # 大部分玩家直接命中缓存。
 STATS_CACHE_TTL_SECONDS = 600
@@ -226,7 +228,7 @@ async def fetch_stats(
 ) -> dict[int, dict[str, float]]:
     """Blaze ``Stats.getStats`` 批量取生涯统计，返回 {pid: {统计名: 数值}}。
 
-    names 为 {类别: 统计名列表}；每类每 64 人一个请求，全部并发发在同一条连接上。没有生涯数据
+    names 为 {类别: 统计名列表}；每类每 STATS_BATCH_SIZE 人一个请求，全部并发发在同一条连接上。没有生涯数据
     的 pid 不在结果里。统计名写错会让整个请求报错，所以名单只来自已验证的映射与武器目录。
     """
     await ea_budget.acquire()

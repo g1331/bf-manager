@@ -17,7 +17,7 @@
 
 - 核心和最近一次的快照一样（不论是 10 分钟内查过、本局基线，还是存储里几天前的），直接沿用；
 - 核心变了才读 player_weapons1–5；冷门的 statcategory3/4 再看哨兵，哨兵没变就沿用上次的值，
-  每 AUDIT_EVERY 个跳过的人抽一个照读，核对哨兵；
+  按 AUDIT_EVERY 抽一部分跳过的人照读，核对哨兵；
 - 读失败、超出每轮上限的人这一局没有武器载具数据（条目上不打 WITH_WEAPONS 位），核心照常记。
 
 状态在内存里，停机时导出、启动时导入（见 round_service），重启间隔不超过 MAX_GAP 就接着跟；
@@ -82,20 +82,21 @@ PROBE_SIZE = 4
 PROBE_MIN_AGE = 50
 # 两轮间隔超过它（重启、快照失败）就丢掉全部状态，与名单时间线的断档阈值一致
 MAX_GAP = 420
-# 每轮最多查这么多人的核心生涯（每 64 人、每个类别一个请求，即 30 个请求）。刚启动时几千人都要
+# 每轮最多查这么多人的核心生涯（每 256 人、每个类别一个请求，即 8 个请求）。刚启动时几千人都要
 # 查基线，分几轮查完；平时每分钟进出、结算加复查约七百人
-MAX_QUERY_PER_TICK = 960
+MAX_QUERY_PER_TICK = 1024
 # 进服前这么久之内在别的服出现过，算换服过来的（可能带着上一台服迟到的结算）
 HOP_WINDOW = 900
 # 查到的向量留这么久，统计进服时有没有现成的值可当基线
 VECTOR_KEEP = 600
 # EA 没返回某人的数据时，隔这么久再查他的基线
 MISSING_RETRY = 600
-# 每轮最多给这么多人读武器类别（每 64 人每类一个请求）；超出的人这一局没有武器载具数据，结算、
+# 每轮最多给这么多人读武器类别（每 256 人每类一个请求）；超出的人这一局没有武器载具数据，结算、
 # 离开和重查基线的人优先
-MAX_WEAPONS_PER_TICK = 640
-# 冷门类别哨兵没变时跳过不读，每这么多个跳过的人抽一个照读，核对哨兵有没有漏
-AUDIT_EVERY = 16
+MAX_WEAPONS_PER_TICK = 768
+# 冷门类别哨兵没变时跳过不读，每这么多个跳过的人抽一个照读，核对哨兵有没有漏。轰炸机的哨兵
+# 是现成的分类合计，2026-10-28/29 抽查 2.7 万次零遗漏，抽得稀一些
+AUDIT_EVERY: dict[str, int] = {"player_statcategory3": 16, "player_statcategory4": 64}
 
 # 本轮要查的人按原因计数时用的名字，下标即 _wanted 里的优先级
 _WANT_REASONS = ("want_settle", "want_leave", "want_recheck", "want_join")
@@ -205,7 +206,7 @@ def _plan(pid: int, values: dict[str, float], prior: Snapshot | None, now: int) 
         elif prior_gates[sl] != gates[sl]:
             cats.add(cat)
             ea_metrics.count_event(f"weapons_gate_read_{cat[-1]}")
-        elif zlib.crc32(f"{pid}:{now}:{cat}".encode()) % AUDIT_EVERY == 0:
+        elif zlib.crc32(f"{pid}:{now}:{cat}".encode()) % AUDIT_EVERY[cat] == 0:
             cats.add(cat)
             audits.add(cat)
         else:
@@ -216,7 +217,7 @@ def _plan(pid: int, values: dict[str, float], prior: Snapshot | None, now: int) 
 async def _fetch_categories(
     plans: dict[int, _Plan], fetch: Fetch
 ) -> dict[str, dict[int, dict[str, float]] | None]:
-    """每个类别一次 fetch（内部再按 64 人分批），并发发出；失败的类别给 None。"""
+    """每个类别一次 fetch（内部再按 STATS_BATCH_SIZE 人分批），并发发出；失败的类别给 None。"""
     cats = sorted({c for plan in plans.values() for c in plan.cats})
     with ea_metrics.ea_source("tracker_weapons"):
         results = await asyncio.gather(

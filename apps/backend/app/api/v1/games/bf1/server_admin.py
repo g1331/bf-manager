@@ -16,11 +16,16 @@ from app.schemas.bf1.admin import (
     MyServerRoleResult,
     MyServersResponse,
     ServerMemberRequest,
+    TimedVipView,
+    VipApplyRequest,
+    VipApplyResult,
+    VipGrantRequest,
 )
 from app.schemas.bf1.auto_switch import AutoSwitchPlan, AutoSwitchView
 from app.services.authz_service import ServerAuthzService
 from app.services.bf1.auto_switch_service import AutoSwitchService
 from app.services.bf1.server_admin_service import BF1ServerAdminService
+from app.services.bf1.timed_vip_service import TimedVipService
 from app.services.membership_service import MembershipService
 
 router = APIRouter()
@@ -59,6 +64,21 @@ def _admin_service(
         game_id=game_id,
         request_meta=_request_meta(request),
         # 发起者 binding 凭据优先（EA 侧操作者即 admin 本人），不可用时降级账号池
+        client_provider=BindingFirstBF1ClientProvider(db, user=user, game_id=game_id),
+    )
+
+
+def _vip_service(
+    db: DbDep,
+    request: Request,
+    user: CurrentUser,
+    game_id: int,
+) -> TimedVipService:
+    return TimedVipService(
+        db,
+        user=user,
+        game_id=game_id,
+        request_meta=_request_meta(request),
         client_provider=BindingFirstBF1ClientProvider(db, user=user, game_id=game_id),
     )
 
@@ -144,16 +164,21 @@ async def remove_ban(
 @router.post("/{game_id}/vip", response_model=AdminActionResult)
 async def add_vip(
     game_id: int,
-    payload: ServerMemberRequest,
+    payload: VipGrantRequest,
     db: DbDep,
     user: CurrentUser,
     request: Request,
 ) -> AdminActionResult:
+    """加 V / 改期。普通服立即生效；行动服只进待生效队列，等 checkvip。"""
     authz = ServerAuthzService(db)
     await authz.require_role(user=user, game="bf1", server_id=game_id, min_role="admin")
-    service = _admin_service(db, request, user, game_id)
-    await service.add_vip(payload.persona_id)
-    return AdminActionResult(success=True, message=f"已添加 VIP {payload.persona_id}")
+    message = await _vip_service(db, request, user, game_id).grant(
+        payload.persona_id,
+        payload.days,
+        display_name=payload.display_name,
+        allow_permanent_to_timed=payload.allow_permanent_to_timed,
+    )
+    return AdminActionResult(success=True, message=message)
 
 
 @router.delete("/{game_id}/vip/{persona_id}", response_model=AdminActionResult)
@@ -164,11 +189,39 @@ async def remove_vip(
     user: CurrentUser,
     request: Request,
 ) -> AdminActionResult:
+    """下 V。普通服立即下掉；行动服排队中的直接撤掉，已生效的标记为到期，等 checkvip。"""
     authz = ServerAuthzService(db)
     await authz.require_role(user=user, game="bf1", server_id=game_id, min_role="admin")
-    service = _admin_service(db, request, user, game_id)
-    await service.remove_vip(persona_id)
-    return AdminActionResult(success=True, message=f"已移除 VIP {persona_id}")
+    message = await _vip_service(db, request, user, game_id).revoke(persona_id)
+    return AdminActionResult(success=True, message=message)
+
+
+@router.get("/{game_id}/vip/timed", response_model=TimedVipView)
+async def get_timed_vips(
+    game_id: int,
+    db: DbDep,
+    user: CurrentUser,
+    request: Request,
+) -> TimedVipView:
+    await ServerAuthzService(db).require_role(
+        user=user, game="bf1", server_id=game_id, min_role="moderator"
+    )
+    return await _vip_service(db, request, user, game_id).view()
+
+
+@router.post("/{game_id}/vip/apply", response_model=VipApplyResult)
+async def apply_vips(
+    game_id: int,
+    payload: VipApplyRequest,
+    db: DbDep,
+    user: CurrentUser,
+    request: Request,
+) -> VipApplyResult:
+    """checkvip：先下掉过期的，再按排队顺序补空位。行动服空服时拒绝执行。"""
+    await ServerAuthzService(db).require_role(
+        user=user, game="bf1", server_id=game_id, min_role="admin"
+    )
+    return await _vip_service(db, request, user, game_id).apply(payload.restart)
 
 
 # 管理员名单的增减比 VIP 更敏感，限定服主（owner）级别，避免管理员互相增删。

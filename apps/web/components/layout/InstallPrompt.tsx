@@ -62,7 +62,11 @@ function Hint({ method }: { method: InstallMethod }) {
       );
     case "in-app":
       return <>这里装不了。点右上角 ··· 选「在浏览器打开」，再从浏览器装</>;
+    case "harmony":
+      return <>点右下角 ∷ 选「添加至桌面」</>;
+    case "harmony-other":
+      return <>用自带的华为浏览器打开本页，点右下角 ∷ 选「添加至桌面」</>;
     case "menu":
-      return <>在浏览器菜单里找「添加到主屏幕」或「安装应用」</>;
+      return <>在浏览器菜单里找「添加到主屏幕」或「安装应用」。鸿蒙手机请用自带的华为浏览器</>;
   }
 }

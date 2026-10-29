@@ -32,6 +32,8 @@ router = APIRouter()
 
 # 这些接口会用到 EA 账号池或 Blaze 连接，按 IP / 账号限流并计入公共 EA 预算
 _lookup = rate_limit("lookup")
+# 只读库的接口不占 EA 号，额度宽松，只防整站爬取
+_read = rate_limit("read")
 
 
 @router.get("", dependencies=[_lookup], response_model=ServerListResponse)
@@ -80,13 +82,15 @@ async def get_server_players_route(
     return await get_server_players(db, game_id, include_stats=include_stats)
 
 
-@router.get("/{game_id}/player-counts", response_model=list[ServerPlayerCountPoint])
+@router.get(
+    "/{game_id}/player-counts", dependencies=[_read], response_model=list[ServerPlayerCountPoint]
+)
 async def get_server_player_counts(game_id: int, db: DbDep) -> list[ServerPlayerCountPoint]:
     # 人数点由全服统计轮询每分钟写入一次，服重启前后的实例合在一起
     return await list_player_counts(db, game_id)
 
 
-@router.get("/{game_id}/map-stats", response_model=list[ServerMapStat])
+@router.get("/{game_id}/map-stats", dependencies=[_read], response_model=list[ServerMapStat])
 async def get_server_map_stats(
     game_id: int, db: DbDep, days: int = Query(7, ge=1, le=7)
 ) -> list[ServerMapStat]:
@@ -94,7 +98,7 @@ async def get_server_map_stats(
     return await list_map_stats(db, game_id, days=days)
 
 
-@router.get("/{game_id}/leaderboard", response_model=ServerLeaderboard)
+@router.get("/{game_id}/leaderboard", dependencies=[_read], response_model=ServerLeaderboard)
 async def get_server_leaderboard(
     game_id: int,
     db: DbDep,
@@ -105,7 +109,7 @@ async def get_server_leaderboard(
     return await get_leaderboard(db, game_id, days=days, limit=limit)
 
 
-@router.get("/{game_id}/snapshots", response_model=ServerRosterPage)
+@router.get("/{game_id}/snapshots", dependencies=[_read], response_model=ServerRosterPage)
 async def get_server_snapshots(
     game_id: int,
     db: DbDep,
@@ -118,12 +122,12 @@ async def get_server_snapshots(
     return await list_roster_points(db, game_id, before=before, limit=limit)
 
 
-@router.get("/{game_id}/snapshots/{ts}", response_model=ServerRosterSnapshot)
+@router.get("/{game_id}/snapshots/{ts}", dependencies=[_read], response_model=ServerRosterSnapshot)
 async def get_server_snapshot(game_id: int, ts: int, db: DbDep) -> ServerRosterSnapshot:
     return await get_roster_snapshot(db, game_id, ts)
 
 
-@router.get("/{game_id}/rounds", response_model=RoundPage)
+@router.get("/{game_id}/rounds", dependencies=[_read], response_model=RoundPage)
 async def get_server_rounds(
     game_id: int,
     db: DbDep,

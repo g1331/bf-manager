@@ -26,6 +26,8 @@ from app.services.bf1.card_service import CardService, resolve_credentials
 router = APIRouter()
 
 TokenHeader = Annotated[str | None, Header(alias="X-Card-Token")]
+# 任务页每 2 秒轮询一次进度，用宽松的只读额度
+_read = rate_limit("read")
 
 
 @router.post("/precheck", response_model=CardPrecheck, dependencies=[rate_limit("card_check")])
@@ -47,14 +49,14 @@ async def start(
     return CardStartResult(job=job, token=token)
 
 
-@router.get("/jobs/{job_id}", response_model=CardJobView)
+@router.get("/jobs/{job_id}", response_model=CardJobView, dependencies=[_read])
 async def get_job(
     job_id: int, db: DbDep, user: CurrentUserOptional, token: TokenHeader = None
 ) -> CardJobView:
     return await CardService(db).get(job_id, token, user)
 
 
-@router.post("/jobs/{job_id}/cancel", response_model=CardJobView)
+@router.post("/jobs/{job_id}/cancel", response_model=CardJobView, dependencies=[_read])
 async def cancel_job(
     job_id: int, db: DbDep, user: CurrentUserOptional, token: TokenHeader = None
 ) -> CardJobView:

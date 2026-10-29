@@ -90,12 +90,15 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 
 def create_app() -> FastAPI:
     settings = get_settings()
+    # 生产不公开接口文档：完整的 OpenAPI 等于把全部接口（含号池管理）的地图交给爬虫。
+    # 前端类型由 tools/generate-types.sh 从本地开发后端生成，不受影响
+    expose_docs = not settings.is_production
     app = FastAPI(
         title=settings.app_name,
         version=settings.app_version,
-        openapi_url="/api/v1/openapi.json",
-        docs_url="/docs",
-        redoc_url="/redoc",
+        openapi_url="/api/v1/openapi.json" if expose_docs else None,
+        docs_url="/docs" if expose_docs else None,
+        redoc_url="/redoc" if expose_docs else None,
         lifespan=lifespan,
     )
 

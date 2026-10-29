@@ -24,6 +24,8 @@ router = APIRouter()
 
 # 这些接口会用到 EA 账号池或 Blaze 连接，按 IP / 账号限流并计入公共 EA 预算
 _lookup = rate_limit("lookup")
+# 只读库的接口不占 EA 号，额度宽松，只防整站爬取
+_read = rate_limit("read")
 
 
 @router.get("/{persona_id}", dependencies=[_lookup], response_model=PlayerStatsDetail)
@@ -46,7 +48,7 @@ async def get_recent_servers(persona_id: int, db: DbDep) -> RecentServers:
     return await BF1StatsService(db).get_recent_servers(persona_id)
 
 
-@router.get("/{persona_id}/rounds", response_model=PlayerRoundPage)
+@router.get("/{persona_id}/rounds", dependencies=[_read], response_model=PlayerRoundPage)
 async def get_player_rounds(
     persona_id: int,
     db: DbDep,

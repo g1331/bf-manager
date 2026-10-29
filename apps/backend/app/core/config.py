@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     # ===== JWT =====
     jwt_secret_key: str = ""
     jwt_algorithm: str = "HS256"
-    jwt_access_token_expire_minutes: int = 7 * 24 * 60  # 7 天
+    jwt_access_token_expire_minutes: int = 30 * 24 * 60  # 30 天，/auth/session 会滑动续期
 
     # ===== HTTP 代理（EA API 部分网络环境需要）=====
     http_proxy: str = ""

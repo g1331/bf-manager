@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
+
+from app.core.config import get_settings
 from app.core.passwords import hash_password
-from app.core.security import create_access_token
+from app.core.security import create_access_token, decode_access_token
 from app.models import User
+from jose import jwt
 
 
 async def test_session_returns_local_admin_without_binding(local_admin_client) -> None:
@@ -83,3 +87,73 @@ async def test_local_login_rejects_frozen_admin(client, test_session) -> None:
     assert resp.status_code == 401
     # 不应携带 set-cookie
     assert "bfm_access_token" not in resp.cookies
+
+
+def _token_issued_at(user_id: int, issued_at: datetime) -> str:
+    """签发一张指定签发时间的会话 token，模拟登录了一段时间的用户。"""
+    settings = get_settings()
+    payload = {
+        "sub": str(user_id),
+        "iat": int(issued_at.timestamp()),
+        "exp": int((issued_at + timedelta(days=30)).timestamp()),
+        "type": "access",
+        "role": "user",
+    }
+    return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
+
+
+async def _add_active_user(test_session, user_id: int) -> User:
+    user = User(
+        id=user_id,
+        username=f"active_{user_id}",
+        local_password_hash=None,
+        email=None,
+        role="user",
+        is_active=True,
+        is_frozen=False,
+    )
+    test_session.add(user)
+    await test_session.commit()
+    return user
+
+
+async def test_session_renews_token_issued_over_a_day_ago(client, test_session) -> None:
+    """token 签发超过 24 小时，/session 换发新 token，有效期重新算满"""
+    user = await _add_active_user(test_session, 210)
+    client.cookies.set(
+        "bfm_access_token", _token_issued_at(user.id, datetime.now(UTC) - timedelta(days=2))
+    )
+
+    resp = await client.get("/api/v1/auth/session")
+    assert resp.status_code == 200
+    assert resp.json()["user"]["id"] == user.id
+
+    renewed = resp.cookies.get("bfm_access_token")
+    assert renewed is not None
+    payload = decode_access_token(renewed)
+    assert payload["sub"] == str(user.id)
+    expected_exp = datetime.now(UTC) + timedelta(
+        minutes=get_settings().jwt_access_token_expire_minutes
+    )
+    assert abs(payload["exp"] - expected_exp.timestamp()) < 60
+
+
+async def test_session_keeps_fresh_token(client, test_session) -> None:
+    """token 签发不到 24 小时，/session 不重写 cookie"""
+    user = await _add_active_user(test_session, 211)
+    client.cookies.set(
+        "bfm_access_token", _token_issued_at(user.id, datetime.now(UTC) - timedelta(hours=1))
+    )
+
+    resp = await client.get("/api/v1/auth/session")
+    assert resp.status_code == 200
+    assert resp.json()["user"]["id"] == user.id
+    assert "set-cookie" not in resp.headers
+
+
+async def test_session_anonymous_sets_no_cookie(client) -> None:
+    """未登录访问 /session 不签发任何 cookie"""
+    resp = await client.get("/api/v1/auth/session")
+    assert resp.status_code == 200
+    assert resp.json()["user"] is None
+    assert "set-cookie" not in resp.headers

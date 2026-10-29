@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from typing import Annotated
 
-from fastapi import APIRouter, Request, Response
+from fastapi import APIRouter, Cookie, Request, Response
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
@@ -13,7 +14,7 @@ from app.api.deps import CurrentUser, CurrentUserOptional, DbDep
 from app.api.errors import UnauthorizedError
 from app.api.rate_limit import rate_limit
 from app.core.config import get_settings
-from app.core.security import create_access_token
+from app.core.security import JWTError, create_access_token, decode_access_token
 from app.models import EaBinding, User
 from app.schemas.auth import (
     LocalLoginRequest,
@@ -30,6 +31,10 @@ router = APIRouter()
 
 
 COOKIE_NAME = "bfm_access_token"
+
+# 滑动续期：会话 token 签发超过这么久，/session 就换发一张新的。
+# 前端每次打开都会查 /session，所以常用的人不会掉线，长期不用才需要重新登录。
+SESSION_RENEW_AFTER = timedelta(hours=24)
 
 
 def _primary_binding(user: User) -> EaBinding | None:
@@ -62,8 +67,11 @@ def _build_session_user(user: User) -> SessionUser:
     )
 
 
-def _set_session_cookie(response: Response, token: str, *, expires_in_minutes: int) -> None:
+def _issue_session(response: Response, user: User) -> None:
+    """签发会话 JWT 并写入 httpOnly cookie。"""
     settings = get_settings()
+    token = create_access_token(subject=user.id, extra_claims={"role": user.role})
+    expires_in_minutes = settings.jwt_access_token_expire_minutes
     response.set_cookie(
         key=COOKIE_NAME,
         value=token,
@@ -74,6 +82,16 @@ def _set_session_cookie(response: Response, token: str, *, expires_in_minutes: i
         httponly=True,
         samesite="lax",
     )
+
+
+def _token_needs_renewal(token: str) -> bool:
+    try:
+        issued_at = decode_access_token(token).get("iat")
+    except JWTError:
+        return False
+    if not isinstance(issued_at, int):
+        return True
+    return datetime.now(UTC) - datetime.fromtimestamp(issued_at, UTC) >= SESSION_RENEW_AFTER
 
 
 async def _load_user_with_bindings(db: DbDep, user_id: int) -> User | None:
@@ -93,14 +111,10 @@ async def login(
 
     路径：EA cookie → 校验 → 拿到 persona_id → 找/创建 user → 更新 binding → 颁发 JWT。
     """
-    settings = get_settings()
     service = AuthService(db)
     user, _binding = await service.login_with_cookie(payload.remid, payload.sid)
 
-    token = create_access_token(subject=user.id, extra_claims={"role": user.role})
-    _set_session_cookie(
-        response, token, expires_in_minutes=settings.jwt_access_token_expire_minutes
-    )
+    _issue_session(response, user)
 
     full_user = await _load_user_with_bindings(db, user.id)
     if full_user is None:
@@ -122,7 +136,6 @@ async def local_login(
     校验失败统一返回 401，不区分「用户不存在」与「密码错误」。
     同一用户名或 IP 失败过多时先返回 429，见 login_throttle。
     """
-    settings = get_settings()
     service = AuthService(db)
     ip = client_ip(request)
     await login_throttle.ensure_not_locked(payload.username, ip)
@@ -133,10 +146,7 @@ async def local_login(
         raise
     await login_throttle.clear(payload.username)
 
-    token = create_access_token(subject=user.id, extra_claims={"role": user.role})
-    _set_session_cookie(
-        response, token, expires_in_minutes=settings.jwt_access_token_expire_minutes
-    )
+    _issue_session(response, user)
 
     full_user = await _load_user_with_bindings(db, user.id)
     if full_user is None:
@@ -145,10 +155,16 @@ async def local_login(
 
 
 @router.get("/session", response_model=SessionResponse)
-async def session(user: CurrentUserOptional) -> SessionResponse:
+async def session(
+    user: CurrentUserOptional,
+    response: Response,
+    access_token: Annotated[str | None, Cookie(alias=COOKIE_NAME)] = None,
+) -> SessionResponse:
     # get_current_user 已经 eager-load 了 ea_bindings，无需再查
     if user is None:
         return SessionResponse(user=None)
+    if access_token and _token_needs_renewal(access_token):
+        _issue_session(response, user)
     return SessionResponse(user=_build_session_user(user))
 
 

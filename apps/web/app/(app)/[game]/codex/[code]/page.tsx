@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { CodexArticle } from "@/components/bf1/codex/CodexArticle";
 import { CodexBack, CodexCopyActions } from "@/components/bf1/codex/CodexActions";
 import { CodexCard } from "@/components/bf1/codex/CodexCard";
 import { CodexFootnote } from "@/components/bf1/codex/CodexHeader";
+import {
+  Breadcrumbs,
+  DetailPanel,
+  type StepItem,
+  StepNav,
+} from "@/components/bf1/codex/DetailParts";
 import { ZoomableImage } from "@/components/bf1/codex/ZoomableImage";
 import {
   CODEX_ENTRIES,
@@ -66,25 +71,16 @@ export default async function CodexEntryPage({ params }: Props) {
     <main className="mx-auto max-w-6xl px-4 py-4 text-white sm:py-8">
       <CodexBack fallback="/bf1/codex" />
 
-      <nav
-        aria-label="位置"
-        className="flex flex-wrap items-center gap-1.5 text-xs text-white/45 lg:mt-4"
-      >
-        <Link href="/bf1/codex" className="inline-action hover:text-white">
-          图鉴
-        </Link>
-        <span className="text-white/20">/</span>
-        <Link href="/bf1/codex" className="inline-action hover:text-white">
-          百科
-        </Link>
-        <span className="text-white/20">/</span>
-        <Link
-          href={codexListHref({ cat: entry.category, wc: entry.weaponClass })}
-          className="inline-action hover:text-white"
-        >
-          {codexKind(entry)}
-        </Link>
-      </nav>
+      <Breadcrumbs
+        items={[
+          { label: "图鉴", href: "/bf1/codex" },
+          { label: "百科", href: "/bf1/codex" },
+          {
+            label: codexKind(entry),
+            href: codexListHref({ cat: entry.category, wc: entry.weaponClass }),
+          },
+        ]}
+      />
 
       <div className="mt-5 grid items-start gap-7 lg:mt-6 lg:grid-cols-[minmax(0,400px)_minmax(0,1fr)] lg:gap-14">
         <div className="lg:sticky lg:top-6">
@@ -104,19 +100,15 @@ export default async function CodexEntryPage({ params }: Props) {
           </p>
         </div>
 
-        {/* 正文压在战场氛围图上，桌面端垫一层深色面板保证可读 */}
-        <div className="max-w-[42rem] min-w-0 lg:border lg:border-white/[0.06] lg:bg-black/45 lg:p-8 lg:backdrop-blur-sm">
+        <DetailPanel>
           <CodexArticle entry={entry} body={body} as="h1" />
           <div className="mt-7 border-t border-white/10 pt-4">
             <CodexCopyActions entry={entry} body={body} />
           </div>
-        </div>
+        </DetailPanel>
       </div>
 
-      <nav aria-label="翻页" className="mt-12 grid grid-cols-2 gap-3 sm:gap-4">
-        {prev ? <StepLink entry={prev} dir="prev" /> : <span />}
-        {next ? <StepLink entry={next} dir="next" /> : <span />}
-      </nav>
+      <StepNav prev={prev && stepItem(prev)} next={next && stepItem(next)} />
 
       {related.length ? (
         <section className="mt-12">
@@ -147,33 +139,11 @@ export default async function CodexEntryPage({ params }: Props) {
   );
 }
 
-function StepLink({ entry, dir }: { entry: CodexEntry; dir: "prev" | "next" }) {
-  const next = dir === "next";
-  return (
-    <Link
-      href={`/bf1/codex/${entry.code}`}
-      className={`group flex min-w-0 items-center gap-3 border border-white/10 bg-black/30 p-2.5 transition-colors hover:border-amber-400/50 ${next ? "flex-row-reverse text-right" : ""}`}
-    >
-      {next ? (
-        <ChevronRight className="size-5 shrink-0 text-white/40 group-hover:text-amber-300" />
-      ) : (
-        <ChevronLeft className="size-5 shrink-0 text-white/40 group-hover:text-amber-300" />
-      )}
-      {/* eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp */}
-      <img
-        src={codexImage(entry.code, 480)}
-        alt=""
-        width={CODEX_IMAGE_WIDTH}
-        height={CODEX_IMAGE_HEIGHT}
-        loading="lazy"
-        className="hidden h-16 w-auto shrink-0 ring-1 ring-white/10 sm:block"
-      />
-      <span className="min-w-0">
-        <span className="block text-[11px] text-white/40">{next ? "下一条" : "上一条"}</span>
-        <span className="block truncate text-sm font-medium text-white/90 group-hover:text-amber-200">
-          {entry.name}
-        </span>
-      </span>
-    </Link>
-  );
+function stepItem(e: CodexEntry): StepItem {
+  return {
+    href: `/bf1/codex/${e.code}`,
+    name: e.name,
+    image: codexImage(e.code, 480),
+    shape: "card",
+  };
 }

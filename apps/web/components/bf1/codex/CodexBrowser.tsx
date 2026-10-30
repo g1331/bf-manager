@@ -9,8 +9,6 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { Search, X } from "lucide-react";
-import { DarkInput } from "@/components/common/DarkInput";
 import { usePageState } from "@/hooks/useNavigation";
 import {
   CODEX_CATEGORIES,
@@ -24,6 +22,7 @@ import { bodySnippet, scoreEntry, searchTerms } from "@/lib/bf1/codex/search";
 import { cn } from "@/lib/utils";
 import { CodexCard } from "./CodexCard";
 import { CodexReader } from "./CodexReader";
+import { Chip, ChipRow, Segmented, StickySearch } from "./FilterControls";
 
 type Density = "s" | "m" | "l";
 type Sort = "game" | "name";
@@ -102,21 +101,6 @@ export function CodexBrowser() {
   );
   const ready = useRef(false);
   const pushed = useRef(false);
-  const input = useRef<HTMLInputElement>(null);
-  const sentinel = useRef<HTMLDivElement>(null);
-  const [stuck, setStuck] = useState(false);
-
-  // 搜索栏吸顶后才铺底色：停在原位时和页头融为一体，滚动起来再和卡片分开
-  useEffect(() => {
-    const el = sentinel.current;
-    if (!el) return;
-    // 手机端顶栏 48px；桌面端滚动容器在顶栏下方，哨兵被容器裁掉同样算离开
-    const io = new IntersectionObserver(([e]) => setStuck(!e.isIntersecting), {
-      rootMargin: "-48px 0px 0px 0px",
-    });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
 
   const deferredQuery = useDeferredValue(query);
   const terms = useMemo(() => searchTerms(deferredQuery), [deferredQuery]);
@@ -155,18 +139,6 @@ export function CodexBrowser() {
   useEffect(() => {
     if (deferredQuery.trim() || openCode) wantTexts();
   }, [deferredQuery, openCode, wantTexts]);
-
-  // 「/」聚焦搜索框
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const el = e.target as HTMLElement;
-      if (e.key !== "/" || openCode || el.closest("input, textarea, [contenteditable]")) return;
-      e.preventDefault();
-      input.current?.focus();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [openCode]);
 
   // 每组筛选的计数按「其它条件不变、只放开这一组」来算，点哪个都不会落到空结果
   const matchedBy = useCallback(
@@ -254,59 +226,15 @@ export function CodexBrowser() {
 
   return (
     <div className="mt-4">
-      <div ref={sentinel} aria-hidden className="h-px" />
-      <div
-        className={cn(
-          "sticky top-12 z-20 -mx-4 flex items-center gap-4 border-b px-4 py-2.5 transition-[background-color,border-color] duration-200 sm:-mx-10 sm:px-10 lg:top-0",
-          stuck
-            ? "border-white/[0.07] bg-black/80 backdrop-blur-md"
-            : "border-transparent bg-transparent",
-        )}
-      >
-        <div className="relative w-full max-w-2xl">
-          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-white/40" />
-          <DarkInput
-            ref={input}
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onFocus={wantTexts}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") {
-                setQuery("");
-                e.currentTarget.blur();
-              }
-            }}
-            placeholder="搜索名称、正文、解锁条件或编号"
-            aria-label="搜索百科"
-            enterKeyHint="search"
-            className="h-11 pr-16 pl-9 [&::-webkit-search-cancel-button]:hidden"
-          />
-          {query ? (
-            <button
-              type="button"
-              aria-label="清空搜索"
-              onClick={() => {
-                setQuery("");
-                input.current?.focus();
-              }}
-              className="compact-action absolute top-1/2 right-2 flex size-8 -translate-y-1/2 items-center justify-center text-white/50 hover:text-white"
-            >
-              <X className="size-4" />
-            </button>
-          ) : (
-            <kbd className="pointer-events-none absolute top-1/2 right-3 hidden -translate-y-1/2 border border-white/15 px-1.5 font-mono text-[11px] text-white/40 [@media(hover:hover)]:block">
-              /
-            </kbd>
-          )}
-        </div>
-        {stuck ? (
-          <span className="hidden shrink-0 text-xs text-white/45 tabular-nums sm:block">
-            {activeSummary ? `${activeSummary} · ` : ""}
-            {list.length} 条
-          </span>
-        ) : null}
-      </div>
+      <StickySearch
+        value={query}
+        onChange={setQuery}
+        onFocus={wantTexts}
+        placeholder="搜索名称、正文、解锁条件或编号"
+        label="搜索百科"
+        summary={`${activeSummary ? `${activeSummary} · ` : ""}${list.length} 条`}
+        shortcut={!openCode}
+      />
 
       <div className="mt-4 space-y-2.5">
         <ChipRow label="类别">
@@ -475,76 +403,4 @@ function setEntry(code: string | null, mode: "push" | "replace") {
   if (mode === "push") window.history.pushState(null, "", url);
   else window.history.replaceState(null, "", url);
   window.dispatchEvent(new Event(ENTRY_EVENT));
-}
-
-function ChipRow({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-3">
-      <span className="w-10 shrink-0 text-xs text-white/40">{label}</span>
-      <div className="-mr-4 flex min-w-0 flex-1 [scrollbar-width:none] gap-1.5 overflow-x-auto pr-4 sm:mr-0 sm:flex-wrap sm:pr-0 [&::-webkit-scrollbar]:hidden">
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function Chip({
-  label,
-  n,
-  active,
-  onClick,
-}: {
-  label: string;
-  n: number;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={active}
-      disabled={!active && n === 0}
-      onClick={onClick}
-      className={cn(
-        "compact-action flex h-9 shrink-0 items-center gap-1.5 border px-3 text-[13px] whitespace-nowrap transition-colors sm:h-8 sm:px-2.5 sm:text-xs",
-        active
-          ? "border-white bg-white font-semibold text-black"
-          : "border-white/20 text-white/65 hover:border-white/45 hover:text-white disabled:cursor-default disabled:border-white/10 disabled:text-white/25",
-      )}
-    >
-      {label}
-      <span className={cn("tabular-nums", active ? "text-black/50" : "text-white/35")}>{n}</span>
-    </button>
-  );
-}
-
-function Segmented({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  options: Array<{ value: string; label: string }>;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <div role="group" aria-label={label} className="flex border border-white/15">
-      {options.map((o) => (
-        <button
-          key={o.value}
-          type="button"
-          aria-pressed={value === o.value}
-          onClick={() => onChange(o.value)}
-          className={cn(
-            "compact-action h-8 px-2.5 text-xs transition-colors",
-            value === o.value ? "bg-white/12 text-white" : "text-white/50 hover:text-white/85",
-          )}
-        >
-          {o.label}
-        </button>
-      ))}
-    </div>
-  );
 }

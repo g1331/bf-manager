@@ -578,7 +578,8 @@ async def test_turnstile_needs_both_keys_and_checks_header(env, monkeypatch) -> 
     monkeypatch.setattr(settings, "turnstile_site_key", "0x4AAA-site")
     cfg = (await client.get("/api/v1/auth/config")).json()
     assert cfg == {
-        "invite_required": settings.registration_invite_required,
+        "registration_mode": "invite",
+        "invite_required": True,
         "turnstile_site_key": "0x4AAA-site",
     }
 

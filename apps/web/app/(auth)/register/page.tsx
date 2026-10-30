@@ -51,10 +51,17 @@ function RegisterForm() {
   const captcha = useCaptcha();
   const [mode, setMode] = useState<RegisterMode>("ea");
   const [submitting, setSubmitting] = useState(false);
-  const [sent, setSent] = useState<{ message: string; mode: RegisterMode } | null>(null);
+  const [sent, setSent] = useState<{
+    message: string;
+    mode: RegisterMode;
+    claimOnly: boolean;
+  } | null>(null);
   // 从群邀请链接点过来的：用链接代替邀请码
   const [groupInvite, setGroupInvite] = useState<PendingInvite | null>(null);
-  const inviteRequired = (config.data?.invite_required ?? true) && !groupInvite;
+  const registrationMode = config.data?.registration_mode ?? "invite";
+  // 暂停注册：只剩用 EA 邮箱认领旧账号这一条路
+  const closed = registrationMode === "closed";
+  const inviteRequired = registrationMode === "invite" && !groupInvite;
 
   useEffect(() => {
     // sessionStorage 只能在浏览器里读
@@ -71,14 +78,20 @@ function RegisterForm() {
     setSubmitting(true);
     try {
       const res = await register(
-        groupInvite
-          ? { email: values.email, mode, group_invite_token: groupInvite.token }
-          : { email: values.email, mode, invite_code: values.invite_code || undefined },
+        closed
+          ? { email: values.email, mode: "ea" }
+          : groupInvite
+            ? { email: values.email, mode, group_invite_token: groupInvite.token }
+            : {
+                email: values.email,
+                mode,
+                invite_code: (inviteRequired && values.invite_code) || undefined,
+              },
         captcha.token,
       );
-      setSent({ message: res.message, mode });
+      setSent({ message: res.message, mode: closed ? "ea" : mode, claimOnly: closed });
       // 群邀请已经跟着验证信走了，完成注册时自动进群；页面状态留着，换邮箱重新提交还能用
-      if (groupInvite) clearPendingInvite();
+      if (groupInvite && !closed) clearPendingInvite();
     } catch (err) {
       toast.error(err instanceof ApiException ? err.message : "提交失败，请稍后重试");
     } finally {
@@ -100,6 +113,88 @@ function RegisterForm() {
       </Link>
     </>
   );
+
+  // 注册方式没拿到之前不画表单，免得暂停注册时先闪一下完整的注册表单
+  if (!config.data) {
+    return (
+      <AuthCard kicker="Sign Up" title="注册 BF-Manager" footer={footer}>
+        {config.isError ? (
+          <div className="space-y-4 py-4 text-center text-sm">
+            <p className="text-muted-foreground">读取注册设置失败，请稍后重试。</p>
+            <Button
+              variant="outline"
+              className="w-full"
+              disabled={config.isFetching}
+              onClick={() => void config.refetch()}
+            >
+              {config.isFetching ? "重试中…" : "重试"}
+            </Button>
+          </div>
+        ) : (
+          <div className="text-muted-foreground py-8 text-center text-sm">加载中…</div>
+        )}
+      </AuthCard>
+    );
+  }
+
+  if (sent?.claimOnly) {
+    return (
+      <AuthCard kicker="Claim Account" title="去邮箱查收认领信" footer={footer}>
+        <MailSentNotice message={sent.message}>
+          <ul className="text-muted-foreground list-disc space-y-1.5 pl-5 text-sm leading-relaxed">
+            <li>
+              这个邮箱对应的 EA 账号以前用 remid
+              登录过本站的话，会收到认领信，打开链接设置密码就能用回旧账号。链接 4 小时内有效。
+            </li>
+            <li>一直没收到？确认填的是 EA 账号的登录邮箱。新账号要等重新开放注册。</li>
+          </ul>
+          <Button variant="outline" className="w-full" onClick={() => setSent(null)}>
+            换个邮箱重新提交
+          </Button>
+        </MailSentNotice>
+      </AuthCard>
+    );
+  }
+
+  if (closed) {
+    return (
+      <AuthCard kicker="Sign Up" title="暂停注册" footer={footer}>
+        <div className="mb-5 rounded-sm border border-amber-500/30 bg-amber-500/10 p-3 text-sm leading-relaxed text-amber-100">
+          现在暂停注册新账号，已有账号照常登录。
+        </div>
+        <p className="text-muted-foreground mb-5 text-sm leading-relaxed">
+          以前用 remid 登录过的老用户，填 EA 账号（EA App /
+          Origin）的登录邮箱就能认领旧账号，服务器权限和操作记录都会保留。
+        </p>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>EA 账号邮箱</FormLabel>
+                  <FormControl>
+                    <Input type="email" autoComplete="email" spellCheck={false} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {captcha.widget}
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full"
+              disabled={submitting || !captcha.ready}
+            >
+              {submitting ? "提交中…" : "发送认领信"}
+            </Button>
+          </form>
+        </Form>
+      </AuthCard>
+    );
+  }
 
   if (sent) {
     return (

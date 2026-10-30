@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -79,3 +82,17 @@ class AdminMetrics(BaseModel):
     ea_hourly: list[EaHourCount] = Field(default_factory=list)
     # 今天对局跟踪器各环节的人数，按名字排序
     tracker_events: list[TrackerEventCount] = Field(default_factory=list)
+
+
+class RegistrationSettingResponse(BaseModel):
+    """注册方式：open 开放注册 / invite 邀请注册 / closed 暂停注册"""
+
+    mode: Literal["open", "invite", "closed"]
+    # 还没在后台设置过，用的是环境变量 REGISTRATION_INVITE_REQUIRED 推出来的默认值
+    is_default: bool
+    updated_at: datetime | None = None
+    updated_by_name: str | None = None
+
+
+class RegistrationSettingRequest(BaseModel):
+    mode: Literal["open", "invite", "closed"]

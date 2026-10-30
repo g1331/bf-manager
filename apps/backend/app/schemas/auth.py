@@ -53,6 +53,8 @@ class VerificationInfoResponse(BaseModel):
 class AuthConfigResponse(BaseModel):
     """注册、登录页需要的公开配置"""
 
+    # open 开放注册 / invite 邀请注册 / closed 暂停注册（旧账号认领照常）
+    registration_mode: Literal["open", "invite", "closed"]
     invite_required: bool
     # 为空表示没启用人机验证，前端不加载 Turnstile
     turnstile_site_key: str | None = None

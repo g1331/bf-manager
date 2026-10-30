@@ -21,7 +21,14 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { ResponsiveTable, type Column } from "@/components/common/ResponsiveTable";
-import { auditApi, type AuditLogItem, GROUP_ACTION_LABEL, GROUP_AUDIT_GAME } from "@/lib/api/audit";
+import {
+  auditApi,
+  auditGameLabel,
+  type AuditLogItem,
+  GROUP_ACTION_LABEL,
+  GROUP_AUDIT_GAME,
+  SITE_ACTION_LABEL,
+} from "@/lib/api/audit";
 import { useSession } from "@/hooks/useSession";
 
 const ACTION_LABEL: Record<string, string> = {
@@ -41,6 +48,7 @@ const ACTION_LABEL: Record<string, string> = {
   card_fail: "卡行动失败",
   card_restore: "恢复卡行动前设置",
   ...GROUP_ACTION_LABEL,
+  ...SITE_ACTION_LABEL,
 };
 
 export default function AdminAuditPage() {
@@ -94,7 +102,7 @@ export default function AdminAuditPage() {
     {
       key: "game",
       header: "游戏",
-      cell: (l) => (l.game === GROUP_AUDIT_GAME ? "群组" : l.game.toUpperCase()),
+      cell: (l) => auditGameLabel(l.game),
     },
     { key: "action", header: "操作", cell: (l) => ACTION_LABEL[l.action] ?? l.action },
     {

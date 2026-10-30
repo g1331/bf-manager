@@ -146,6 +146,7 @@ export const MODULES: RailModule[] = [
       { label: "EA 账号池", code: "Accounts", href: "/admin/ea-accounts" },
       { label: "服管权限", code: "Roles", href: "/admin/memberships" },
       { label: "API Key", code: "Keys", href: "/admin/api-keys" },
+      { label: "设置", code: "Settings", href: "/admin/settings" },
       { label: "审计日志", code: "Audit", href: "/admin/audit" },
     ],
   },

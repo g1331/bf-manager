@@ -28,6 +28,7 @@ from app.models.ea_account import EAAccount
 from app.models.ea_binding import EaBinding
 from app.models.group import Group, GroupInvite, GroupMember
 from app.models.server import Server, ServerMembership
+from app.models.site_setting import SiteSetting
 from app.models.user import User
 
 __all__ = [
@@ -61,5 +62,6 @@ __all__ = [
     "InviteCode",
     "Server",
     "ServerMembership",
+    "SiteSetting",
     "User",
 ]

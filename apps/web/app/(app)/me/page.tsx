@@ -15,7 +15,14 @@ import { SectionHeading } from "@/components/layout/SectionHeading";
 import { ResponsiveTable, type Column } from "@/components/common/ResponsiveTable";
 import { EaLoginDialog } from "@/components/common/EaLoginFlow";
 import { type BindingListItem, listMyBindings, unbindEa } from "@/lib/auth";
-import { auditApi, type AuditLogItem, GROUP_ACTION_LABEL, GROUP_AUDIT_GAME } from "@/lib/api/audit";
+import {
+  auditApi,
+  auditGameLabel,
+  type AuditLogItem,
+  GROUP_ACTION_LABEL,
+  GROUP_AUDIT_GAME,
+  SITE_ACTION_LABEL,
+} from "@/lib/api/audit";
 import { ENABLED_GAMES } from "@/lib/game-registry";
 import { useSession } from "@/hooks/useSession";
 import { ApiException } from "@/lib/api-client";
@@ -38,6 +45,7 @@ const ACTION_LABEL: Record<string, string> = {
   card_fail: "卡行动失败",
   card_restore: "恢复卡行动前设置",
   ...GROUP_ACTION_LABEL,
+  ...SITE_ACTION_LABEL,
 };
 
 export default function MePage() {
@@ -101,7 +109,7 @@ export default function MePage() {
     {
       key: "game",
       header: "游戏",
-      cell: (l) => (l.game === GROUP_AUDIT_GAME ? "群组" : l.game.toUpperCase()),
+      cell: (l) => auditGameLabel(l.game),
     },
     { key: "action", header: "操作", cell: (l) => ACTION_LABEL[l.action] ?? l.action },
     {

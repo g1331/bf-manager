@@ -40,8 +40,8 @@ from app.schemas.auth import (
     VerificationInfoResponse,
     VerificationTokenRequest,
 )
-from app.services import account_service, login_throttle
-from app.services.account_service import normalize_email, primary_binding
+from app.services import account_service, login_throttle, site_settings_service
+from app.services.account_service import AccountError, normalize_email, primary_binding
 from app.services.auth_service import AuthService
 
 router = APIRouter()
@@ -123,10 +123,12 @@ async def _load_user_with_bindings(db: DbDep, user_id: int) -> User | None:
 
 
 @router.get("/config", response_model=AuthConfigResponse, dependencies=[rate_limit("read")])
-async def auth_config() -> AuthConfigResponse:
+async def auth_config(db: DbDep) -> AuthConfigResponse:
     settings = get_settings()
+    mode = await site_settings_service.get_registration_mode(db)
     return AuthConfigResponse(
-        invite_required=settings.registration_invite_required,
+        registration_mode=mode,
+        invite_required=mode == "invite",
         turnstile_site_key=settings.turnstile_site_key if turnstile_enabled() else None,
     )
 
@@ -203,13 +205,20 @@ async def register(
     """
     invite_id: int | None = None
     group_invite_id: int | None = None
-    if payload.group_invite_token and payload.group_invite_token.strip():
+    registration = await site_settings_service.get_registration_mode(db)
+    if registration == "closed":
+        # 暂停注册：其他邮箱注册一定是新建账号，直接拒；EA 邮箱照常受理，旧账号还能认领，
+        # 后台判断出要新建账号时不发信。邀请码、群链接这时都用不上，不校验
+        if payload.mode == "plain":
+            raise AccountError("REGISTRATION_CLOSED", "现在暂停注册，暂时不能新建账号", 403)
+    elif payload.group_invite_token and payload.group_invite_token.strip():
         group_invite_id = (
             await account_service.check_group_invite_for_register(
                 db, payload.group_invite_token.strip()
             )
         ).id
-    elif payload.invite_code and payload.invite_code.strip():
+    elif registration == "invite" and payload.invite_code and payload.invite_code.strip():
+        # 开放注册时带了邀请码（比如点的是旧的邀请链接）也不看，免得过期的码挡住注册
         invite_id = (await account_service.check_invite_code(db, payload.invite_code)).id
     background.add_task(
         account_service.process_register_request,

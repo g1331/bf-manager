@@ -41,6 +41,7 @@ from app.schemas.bf1.server import (
     ServerRosterSnapshot,
     ServerSummary,
 )
+from app.services.bf1.rsp_list_service import store_lists
 from app.services.bf1.server_roster_service import (
     Rosters,
     insert_for,
@@ -78,7 +79,7 @@ async def resolve_server_ids(db: AsyncSession, summaries: list[ServerSummary]) -
     """返回本轮有服主的服 gameId → serverId。
 
     先查缓存，未命中的每轮最多问 Gateway RESOLVE_PER_ROUND 个；新解析到的顺手把登记表里同一
-    serverId 的 game_id 更新成当前这一局。实例表由 record_player_counts 随点一起写。
+    serverId 的 game_id 更新成当前这一局，并存下同一响应里的名单（天眼查）。实例表由 record_player_counts 随点一起写。
     """
     cache = await get_cache()
     resolved: dict[int, int] = {}
@@ -97,17 +98,19 @@ async def resolve_server_ids(db: AsyncSession, summaries: list[ServerSummary]) -
             continue
         budget -= 1
         try:
-            identity = await BF1ServerService(db).get_admin_identity(gid)
+            got = await BF1ServerService(db).get_extras(gid)
         except EAApiError as e:
             logger.warning("BF1 serverId resolve failed, retry next round: {}", e)
             break
-        server_id = identity[2] if identity else None
+        server_id = got[0].server_id if got else None
         await cache.set(
             key, server_id or 0, ttl=SERVER_ID_TTL if server_id else MISSING_SERVER_ID_TTL
         )
         if not server_id:
             continue
         resolved[gid] = server_id
+        # 同一次请求里的名单顺手存下，天眼查不必再为它单独拉一次
+        await store_lists(db, server_id, gid, got[1] or s.name, got[0])
         await db.execute(
             update(Server)
             .where(Server.game == "bf1", Server.server_id == server_id)

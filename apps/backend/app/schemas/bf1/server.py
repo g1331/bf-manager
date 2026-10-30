@@ -343,3 +343,33 @@ class ServerDetail(BaseModel):
     players: list[ServerPlayer] = []
     extras: ServerExtras = ServerExtras()
     raw: dict[str, Any] = {}
+
+
+class PlayerRspServer(BaseModel):
+    """玩家在其中有身份的一台私服"""
+
+    server_id: int
+    # 最近一次看到的实例，详情页按它跳转
+    game_id: int
+    name: str
+    # 名单最近一次从 EA 拉到的时间（unix 秒）
+    refreshed_at: int
+    # 这台服此刻在全服快照里的人数；快照里没有（空服或已关）时为空
+    player_count: int | None = None
+    max_player_count: int | None = None
+    map_display_name: str | None = None
+    map_image_url: str | None = None
+
+
+class PlayerRspServers(BaseModel):
+    """天眼查：玩家是哪些私服的服主 / 管理 / VIP，又被哪些服封禁。
+
+    名单来自平台收录的私服（快照里出现过、有服主的服），按间隔轮流刷新，并非 EA 全量。
+    """
+
+    owner: list[PlayerRspServer] = []
+    admin: list[PlayerRspServer] = []
+    vip: list[PlayerRspServer] = []
+    ban: list[PlayerRspServer] = []
+    # 收录了名单的私服数
+    tracked_servers: int = 0

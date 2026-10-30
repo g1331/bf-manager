@@ -19,6 +19,7 @@ from app.schemas.bf1.server import (
 )
 from app.services.bf1.blaze_service import get_server_players
 from app.services.bf1.round_service import list_server_rounds
+from app.services.bf1.rsp_list_service import remember_detail_lists
 from app.services.bf1.server_player_count_service import (
     get_leaderboard,
     get_roster_snapshot,
@@ -66,7 +67,10 @@ async def list_servers(
 
 @router.get("/{game_id}", dependencies=[_lookup], response_model=ServerDetail)
 async def get_server(game_id: int, db: DbDep) -> ServerDetail:
-    return await BF1ServerService(db).get_detail(game_id)
+    detail = await BF1ServerService(db).get_detail(game_id)
+    # 名单顺手写回天眼查，省得等轮询刷新
+    await remember_detail_lists(db, game_id, detail.summary.name, detail.extras)
+    return detail
 
 
 @router.get("/{game_id}/players", dependencies=[_lookup], response_model=ServerPlayersResponse)

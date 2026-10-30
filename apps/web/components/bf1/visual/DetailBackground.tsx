@@ -78,22 +78,26 @@ export function DetailError({
   notFoundText,
   onRetry,
   retrying,
+  children,
 }: {
   error: unknown;
   notFoundText: string;
   onRetry: () => void;
   retrying: boolean;
+  /** 主数据失败时仍能给出的内容，排在错误提示下方 */
+  children?: React.ReactNode;
 }) {
   return (
     <div className="relative min-h-screen w-full overflow-hidden text-white">
       <DetailBackground url={null} />
-      <div className="relative z-10 flex min-h-screen items-center justify-center">
+      <div className="relative z-10 flex min-h-screen flex-col items-center justify-center gap-6 px-4 py-8">
         <QueryErrorState
           error={error}
           notFoundText={notFoundText}
           onRetry={onRetry}
           retrying={retrying}
         />
+        {children ? <div className="w-full max-w-3xl">{children}</div> : null}
       </div>
     </div>
   );

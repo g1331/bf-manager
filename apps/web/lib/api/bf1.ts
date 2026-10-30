@@ -168,6 +168,29 @@ export interface RecentServers {
   servers: RecentServer[];
 }
 
+/** 玩家在其中有身份的一台私服；人数等实时字段只在服务器此刻有人时才有 */
+export interface PlayerRspServer {
+  server_id: number;
+  /** 最近一次看到的实例，详情页按它跳转 */
+  game_id: number;
+  name: string;
+  /** 名单最近一次从 EA 拉到的时间（unix 秒） */
+  refreshed_at: number;
+  player_count: number | null;
+  max_player_count: number | null;
+  map_display_name: string | null;
+  map_image_url: string | null;
+}
+
+/** 天眼查：只覆盖平台收录的私服 */
+export interface PlayerRspServers {
+  owner: PlayerRspServer[];
+  admin: PlayerRspServer[];
+  vip: PlayerRspServer[];
+  ban: PlayerRspServer[];
+  tracked_servers: number;
+}
+
 export interface ServerSummary {
   server_id: number;
   game_id: number | null;
@@ -652,6 +675,9 @@ export const bf1Api = {
 
   getRecentServers: (personaId: number) =>
     api.get<RecentServers>(`/bf1/stats/${personaId}/recent-servers`),
+
+  getPlayerServers: (personaId: number) =>
+    api.get<PlayerRspServers>(`/bf1/stats/${personaId}/servers`),
 
   getOnline: (personaId: number) => api.get<OnlineStatus>(`/bf1/stats/${personaId}/online`),
 

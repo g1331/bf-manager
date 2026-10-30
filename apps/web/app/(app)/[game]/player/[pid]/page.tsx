@@ -6,6 +6,7 @@
  * 版式与服务器详情页一致：全屏模糊背景 + 首屏横幅 + 吸顶分区导航（状态记在 URL hash）。
  * 概览一屏看完生涯：战斗、团队贡献、兵种、常用装备；武器 / 载具分区是可排序的排行列表。
  * 武器 / 载具进页即在后台拉取（概览的常用装备要用），最近服务器切到该分区时再拉。
+ * 「服务器」分区是天眼查：收录私服里这个人当服主 / 管理 / VIP 或被封禁的服。
  */
 
 import { useEffect } from "react";
@@ -28,6 +29,7 @@ import {
 } from "@/components/bf1/player-detail/EquipmentTable";
 import { PlayerHeroBanner } from "@/components/bf1/player-detail/PlayerHeroBanner";
 import { PlayerRounds } from "@/components/bf1/player-detail/PlayerRounds";
+import { PlayerServers, playerServerCount } from "@/components/bf1/player-detail/PlayerServers";
 import { fmtFixed, fmtFull, perMinute } from "@/components/bf1/player-detail/format";
 import { PlayerDetailSkeleton, RowsSkeleton } from "@/components/layout/PageSkeleton";
 import {
@@ -42,7 +44,7 @@ import { pushRecentPlayer } from "@/lib/bf1/recent-players";
 import { useBack } from "@/hooks/useNavigation";
 import { formatDuration } from "@/lib/utils";
 
-const TAB_KEYS = ["overview", "weapons", "vehicles", "rounds", "recent"] as const;
+const TAB_KEYS = ["overview", "weapons", "vehicles", "rounds", "servers", "recent"] as const;
 
 const fmtPctValue = (v: number | null) => (v == null ? "—" : `${v.toFixed(1)}%`);
 const fmtTime = (v: number | null) => (v == null ? "—" : formatDuration(v));
@@ -97,10 +99,22 @@ export default function Bf1PlayerPage() {
         notFoundText="没有找到这个玩家"
         onRetry={() => void statsQ.refetch()}
         retrying={statsQ.isFetching}
-      />
+      >
+        {/* 拉不到生涯的号（常见于被封的号）照样能查服务器身份 */}
+        <StatsFailedServers game={game} personaId={personaId} />
+      </DetailError>
     );
   }
   return <PlayerDetailView game={game} personaId={personaId} stats={statsQ.data} />;
+}
+
+function StatsFailedServers({ game, personaId }: { game: string; personaId: number }) {
+  const serversQ = useQuery({
+    queryKey: ["bf1-player-servers", personaId],
+    queryFn: () => bf1Api.getPlayerServers(personaId),
+  });
+  if (!playerServerCount(serversQ.data)) return null;
+  return <PlayerServers game={game} data={serversQ.data} loading={false} error={false} />;
 }
 
 /** 战绩到手后才挂载（纯客户端），分区状态可以直接从 window 读初值 */
@@ -143,6 +157,11 @@ function PlayerDetailView({
     queryKey: ["bf1-vehicles", personaId],
     queryFn: () => bf1Api.getVehicles(personaId),
   });
+  // 只读库，进页就拉，分区标签上显示条数
+  const serversQ = useQuery({
+    queryKey: ["bf1-player-servers", personaId],
+    queryFn: () => bf1Api.getPlayerServers(personaId),
+  });
 
   const weapons = weaponsQ.data?.weapons;
   const vehicles = vehiclesQ.data?.vehicles;
@@ -153,6 +172,7 @@ function PlayerDetailView({
     { key: "weapons" as const, label: "武器", count: usedCount(weapons) },
     { key: "vehicles" as const, label: "载具", count: usedCount(vehicles) },
     { key: "rounds" as const, label: "对局" },
+    { key: "servers" as const, label: "服务器", count: playerServerCount(serversQ.data) },
     { key: "recent" as const, label: "最近" },
   ];
   const [tab, setTab] = useTabHash(TAB_KEYS, TAB_KEYS);
@@ -244,6 +264,14 @@ function PlayerDetailView({
             />
           )}
           {tab === "rounds" && <PlayerRounds personaId={personaId} game={game} />}
+          {tab === "servers" && (
+            <PlayerServers
+              game={game}
+              data={serversQ.data}
+              loading={serversQ.isLoading}
+              error={serversQ.isError}
+            />
+          )}
           {tab === "recent" && (
             <RecentServers
               game={game}

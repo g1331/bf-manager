@@ -9,7 +9,7 @@ from app.api.errors import ValidationError
 from app.models import Server
 from app.models.bf1.game_instance import Bf1GameInstance
 from app.models.bf1.server_player_count import Bf1ServerPlayerCount
-from app.schemas.bf1.server import ServerSummary
+from app.schemas.bf1.server import ServerExtras, ServerSummary
 from app.services.bf1 import server_player_count_service, server_service
 from app.services.bf1.server_filters import filter_summaries
 from app.services.bf1.server_player_count_service import (
@@ -266,12 +266,14 @@ async def test_resolve_server_ids_caches_and_skips_true_official(test_session, m
     async def fake_get_cache():
         return cache
 
-    async def fake_identity(self, gid):
+    async def fake_extras(self, gid):
         asked.append(gid)
-        return (None, [], {1: 11, 6: 66}.get(gid), "x") if gid != 2 else None
+        if gid == 2:
+            return None
+        return ServerExtras(server_id={1: 11, 6: 66}.get(gid)), "x"
 
     monkeypatch.setattr(server_player_count_service, "get_cache", fake_get_cache)
-    monkeypatch.setattr(BF1ServerService, "get_admin_identity", fake_identity)
+    monkeypatch.setattr(BF1ServerService, "get_extras", fake_extras)
     monkeypatch.setattr(server_player_count_service, "RESOLVE_PER_ROUND", 3)
     registered = Server(game="bf1", server_id=11, game_id=999, name="mine")
     test_session.add(registered)

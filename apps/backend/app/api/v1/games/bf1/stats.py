@@ -8,6 +8,7 @@ from app.api.deps import DbDep
 from app.api.rate_limit import rate_limit
 from app.schemas.bf1.ban import BanStatus
 from app.schemas.bf1.rounds import PlayerRoundPage
+from app.schemas.bf1.server import PlayerRspServers
 from app.schemas.bf1.stats import (
     OnlineStatus,
     PlayerPlatoon,
@@ -18,6 +19,7 @@ from app.schemas.bf1.stats import (
 )
 from app.services.bf1.ban_service import BF1BanService
 from app.services.bf1.round_service import list_player_rounds
+from app.services.bf1.rsp_list_service import list_player_servers
 from app.services.bf1.stats_service import BF1StatsService
 
 router = APIRouter()
@@ -57,6 +59,12 @@ async def get_player_rounds(
 ) -> PlayerRoundPage:
     # 我们跟踪到的对局（含官服），由生涯差分算出，保留 90 天
     return await list_player_rounds(db, persona_id, before=before, limit=limit)
+
+
+@router.get("/{persona_id}/servers", dependencies=[_read], response_model=PlayerRspServers)
+async def get_player_servers(persona_id: int, db: DbDep) -> PlayerRspServers:
+    # 天眼查：收录私服的服主 / 管理 / VIP / 封禁名单里有没有这个人，只读库
+    return await list_player_servers(db, persona_id)
 
 
 @router.get("/{persona_id}/online", dependencies=[_lookup], response_model=OnlineStatus)

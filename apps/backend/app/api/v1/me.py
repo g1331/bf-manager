@@ -167,6 +167,7 @@ def _invite_item(row: InviteCode, now: datetime) -> InviteCodeItem:
         expires_at=expires_at,
         used_at=row.used_at,
         created_at=row.created_at,
+        via_group_link=account_service.is_group_link_code(row.code),
     )
 
 

@@ -311,14 +311,18 @@ function InviteRow({
     <li className="border-border flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-sm border p-3">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
-          <span
-            className={cn(
-              "font-mono text-base tracking-wider",
-              !usable && "text-muted-foreground line-through",
-            )}
-          >
-            {item.code}
-          </span>
+          {item.via_group_link ? (
+            <span className="text-muted-foreground text-sm">群邀请链接注册</span>
+          ) : (
+            <span
+              className={cn(
+                "font-mono text-base tracking-wider",
+                !usable && "text-muted-foreground line-through",
+              )}
+            >
+              {item.code}
+            </span>
+          )}
           <span className={cn("rounded px-1.5 py-0.5 text-[10px] font-semibold", status.className)}>
             {status.label}
           </span>
@@ -390,6 +394,7 @@ export function InviteSection({ canCreate }: { canCreate: boolean }) {
         新用户注册要填邀请码。每个邀请码只能用一次，7 天内有效
         {quota_left !== null ? `，你还能生成 ${quota_left} 个` : ""}
         {canCreate ? "。" : "。绑定 EA 账号后才能生成。"}
+        有人用你发的群邀请链接注册，也算用掉一个名额。
       </p>
       {items.length === 0 ? (
         <p className="text-muted-foreground text-sm">还没有生成过邀请码。</p>

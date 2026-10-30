@@ -14,6 +14,7 @@ class AuditLogItem(BaseModel):
     acting_persona_id: int
     game: str
     server_id: int | None
+    group_id: int | None = None
     action: str
     target_persona_id: int | None
     payload: dict[str, Any]

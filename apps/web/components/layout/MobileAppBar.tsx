@@ -15,6 +15,7 @@ const DETAIL_ROUTES = [
   { prefix: "/bf1/server/", title: "服务器", fallback: "/bf1/servers" },
   { prefix: "/bf1/player/", title: "玩家战绩", fallback: "/bf1/players" },
   { prefix: "/bf1/platoon/", title: "战队", fallback: "/bf1/platoons" },
+  { prefix: "/me/groups/", title: "群组", fallback: "/me/groups" },
 ];
 
 export function getDetailRoute(pathname: string) {

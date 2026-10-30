@@ -128,6 +128,7 @@ export const MODULES: RailModule[] = [
     icon: CircleUser,
     tabs: [
       { label: "我的主页", code: "Profile", href: "/me", exact: true },
+      { label: "群组", code: "Groups", href: "/me/groups" },
       { label: "开放 API", code: "API", href: "/me/api" },
     ],
   },

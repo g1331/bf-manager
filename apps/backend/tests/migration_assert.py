@@ -117,9 +117,26 @@ async def assert_upgraded() -> None:
         assert persona_idx is not None and "is_frozen" in persona_idx.lower(), (
             f"persona partial index missing: {persona_idx}"
         )
-        for table in ("email_verifications", "invite_codes"):
+        for table in (
+            "email_verifications",
+            "invite_codes",
+            "groups",
+            "group_members",
+            "group_invites",
+        ):
             reg = (await conn.execute(text(f"SELECT to_regclass('public.{table}')"))).scalar_one()
             assert reg is not None, f"{table} missing"
+
+        # 9. 0019：群组审计记在 audit_logs.group_id 上，带索引
+        group_idx = (
+            await conn.execute(
+                text(
+                    "SELECT indexdef FROM pg_indexes "
+                    "WHERE tablename='audit_logs' AND indexname='ix_audit_logs_group_id'"
+                )
+            )
+        ).scalar_one_or_none()
+        assert group_idx is not None, "audit_logs.group_id index missing"
 
     await engine.dispose()
     print("assert_upgraded: all checks passed")

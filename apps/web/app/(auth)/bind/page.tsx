@@ -22,6 +22,7 @@ import { AuthCard } from "@/components/auth/AuthCard";
 import { EaLoginDialog } from "@/components/common/EaLoginFlow";
 import { useSession } from "@/hooks/useSession";
 import { bindWithCookie, logout } from "@/lib/auth";
+import { readPendingInvite } from "@/lib/api/groups";
 import { ApiException } from "@/lib/api-client";
 
 const cookieSchema = z.object({
@@ -63,15 +64,17 @@ export default function BindPage() {
   });
 
   const finish = (claimed: boolean, name: string | null) => {
+    // 绑定前打开过群邀请链接的，绑好后回邀请页接着进群
+    const invited = readPendingInvite() !== null;
+    setLeaving(true);
     if (claimed) {
-      setLeaving(true);
       qc.setQueryData(["session"], null);
-      router.replace("/login?claimed=1");
+      router.replace(invited ? "/login?claimed=1&next=/invite" : "/login?claimed=1");
       return;
     }
     toast.success(name ? `已绑定 ${name}` : "EA 账号已绑定");
     qc.invalidateQueries({ queryKey: ["session"] });
-    router.replace("/stats");
+    router.replace(invited ? "/invite" : "/stats");
   };
 
   const onCookieSubmit = async (values: CookieValues) => {

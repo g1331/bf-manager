@@ -63,6 +63,8 @@ export interface RegisterRequest {
   email: string;
   mode: RegisterMode;
   invite_code?: string;
+  /** 从群邀请链接过来注册：不用邀请码，验证后自动进群 */
+  group_invite_token?: string;
 }
 
 export interface AcceptedResponse {
@@ -87,6 +89,8 @@ export interface InviteCodeItem {
   expires_at: string;
   used_at: string | null;
   created_at: string;
+  /** 群邀请链接注册时记下的名额占用，不是能发给别人的码 */
+  via_group_link: boolean;
 }
 
 export interface InviteCodeList {

@@ -43,6 +43,7 @@ async def list_audit_logs(
             acting_persona_id=log.acting_persona_id,
             game=log.game,
             server_id=log.server_id,
+            group_id=log.group_id,
             action=log.action,
             target_persona_id=log.target_persona_id,
             payload=log.payload,

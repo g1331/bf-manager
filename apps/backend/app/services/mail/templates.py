@@ -142,6 +142,12 @@ def _render(
     return MailMessage(to=to, subject=subject, text=text, html=html, kind=kind)
 
 
+def _group_line(group_name: str | None) -> list[str]:
+    if not group_name:
+        return []
+    return [f"完成后会自动加入群组 <strong>{escape(group_name)}</strong>。"]
+
+
 def _strip_tags(s: str) -> str:
     return s.replace("<strong>", "").replace("</strong>", "")
 
@@ -150,7 +156,13 @@ _NOT_ME = "如果这不是你本人的操作，忽略这封信即可，账号不
 
 
 def register_ea(
-    *, to: str, persona_name: str, url: str, ttl_hours: int, meta: RequestMeta
+    *,
+    to: str,
+    persona_name: str,
+    url: str,
+    ttl_hours: int,
+    meta: RequestMeta,
+    group_name: str | None = None,
 ) -> MailMessage:
     name = escape(persona_name)
     return _render(
@@ -161,6 +173,7 @@ def register_ea(
         paragraphs=[
             f"有人用这个 EA 账号的邮箱申请注册 {SITE_NAME}，要绑定的 EA 账号是 <strong>{name}</strong>。",
             "点下面的按钮设置登录密码，注册就完成了。以后用这个邮箱和密码登录。",
+            *_group_line(group_name),
         ],
         button=("设置密码，完成注册", url),
         note=f"链接 {ttl_hours} 小时内有效，只能使用一次。",
@@ -169,7 +182,9 @@ def register_ea(
     )
 
 
-def register_plain(*, to: str, url: str, ttl_hours: int, meta: RequestMeta) -> MailMessage:
+def register_plain(
+    *, to: str, url: str, ttl_hours: int, meta: RequestMeta, group_name: str | None = None
+) -> MailMessage:
     return _render(
         to=to,
         kind="register_plain",
@@ -178,6 +193,7 @@ def register_plain(*, to: str, url: str, ttl_hours: int, meta: RequestMeta) -> M
         paragraphs=[
             f"有人用这个邮箱申请注册 {SITE_NAME}。",
             "点下面的按钮设置登录密码。注册后还要绑定一个 EA 账号（填 remid，或用 EA 账号密码登录一次）才能开始使用。",
+            *_group_line(group_name),
         ],
         button=("设置密码", url),
         note=f"链接 {ttl_hours} 小时内有效，只能使用一次。",
@@ -187,7 +203,13 @@ def register_plain(*, to: str, url: str, ttl_hours: int, meta: RequestMeta) -> M
 
 
 def claim_legacy(
-    *, to: str, persona_name: str, url: str, ttl_hours: int, meta: RequestMeta
+    *,
+    to: str,
+    persona_name: str,
+    url: str,
+    ttl_hours: int,
+    meta: RequestMeta,
+    group_name: str | None = None,
 ) -> MailMessage:
     name = escape(persona_name)
     return _render(
@@ -198,6 +220,7 @@ def claim_legacy(
         paragraphs=[
             f"EA 账号 <strong>{name}</strong> 以前用 remid 登录过 {SITE_NAME}，留下了一个旧账号。",
             "现在改成邮箱和密码登录。点下面的按钮设置密码，旧账号的服务器权限、操作记录都会保留。",
+            *_group_line(group_name),
         ],
         button=("设置密码，认领账号", url),
         note=f"链接 {ttl_hours} 小时内有效，只能使用一次。",

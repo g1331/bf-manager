@@ -26,6 +26,8 @@ class RegisterRequest(BaseModel):
     # plain：用任意邮箱注册，之后再用 remid 或 EA 账号密码绑定
     mode: Literal["ea", "plain"] = "ea"
     invite_code: str | None = Field(default=None, max_length=32)
+    # 群邀请链接里的 token：当注册资格用（不用邀请码），注册完成后自动进群
+    group_invite_token: str | None = Field(default=None, max_length=128)
 
 
 class EmailOnlyRequest(BaseModel):
@@ -79,6 +81,8 @@ class InviteCodeItem(BaseModel):
     expires_at: datetime
     used_at: datetime | None = None
     created_at: datetime
+    # 群邀请链接注册时记下的名额占用，不是能发给别人的码
+    via_group_link: bool = False
 
 
 class InviteCodeListResponse(BaseModel):

@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import os
+from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 
 # 在 import app 之前先把测试用的密钥与 DB URL 注入环境
@@ -21,10 +22,18 @@ os.environ.setdefault("JWT_SECRET_KEY", "test-jwt-secret-not-secure-but-determin
 os.environ.setdefault("ENVIRONMENT", "test")
 
 import pytest_asyncio
-from app.api.deps import get_current_user, get_current_user_any_status, get_current_user_optional
+from app.api.deps import (
+    get_current_user,
+    get_current_user_any_status,
+    get_current_user_optional,
+    get_session_factory,
+)
 from app.db.session import get_db
 from app.main import create_app
 from app.models import Base, EaBinding, User
+from app.services import account_service
+from app.services.account_service import EaEmailMatch
+from app.services.mail import LogMailSender, set_mail_sender
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
@@ -194,3 +203,37 @@ async def local_admin_client(test_session):
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
         yield ac, admin
     app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture
+async def env(test_session, monkeypatch):
+    """未登录客户端 + 内存发信箱 + 假的 EA 邮箱反查。返回 (client, outbox, ea_directory)。"""
+    outbox = LogMailSender()
+    set_mail_sender(outbox)
+    directory: dict[str, EaEmailMatch] = {}
+
+    async def fake_lookup(_db, email):
+        return directory.get(email)
+
+    async def always(*_a, **_k):
+        return True
+
+    monkeypatch.setattr(account_service, "lookup_ea_by_email", fake_lookup)
+    monkeypatch.setattr(account_service, "_mail_allowed", always)
+    monkeypatch.setattr(account_service, "_invite_mail_allowed", always)
+
+    app = create_app()
+
+    async def _db():
+        yield test_session
+
+    @asynccontextmanager
+    async def _factory():
+        yield test_session
+
+    app.dependency_overrides[get_db] = _db
+    app.dependency_overrides[get_session_factory] = lambda: _factory
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
+        yield ac, outbox, directory
+    app.dependency_overrides.clear()
+    set_mail_sender(None)

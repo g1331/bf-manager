@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -27,6 +27,7 @@ import {
   type VerificationInfo,
 } from "@/lib/auth";
 import { ApiException } from "@/lib/api-client";
+import { useHashToken } from "@/hooks/useHashToken";
 
 const schema = z.object(newPasswordFields).refine(confirmMatches, confirmMismatch);
 type Values = z.infer<typeof schema>;
@@ -76,20 +77,6 @@ function copyFor(info: VerificationInfo) {
   if (info.kind === "register")
     return COPY[info.mode === "plain" ? "register_plain" : "register_ea"];
   return COPY[info.kind];
-}
-
-/** 从 #token=… 里取出 token 后立刻把它从地址栏抹掉，免得截图、分享时带出去 */
-function useHashToken(): string | null | undefined {
-  const [token, setToken] = useState<string | null | undefined>(undefined);
-  useEffect(() => {
-    const value = new URLSearchParams(window.location.hash.slice(1)).get("token");
-    if (value) window.history.replaceState(null, "", window.location.pathname);
-    // 只在挂载时从地址栏读一次，读完就清掉 hash。开发模式下 effect 会跑两遍，
-    // 第二遍 hash 已经清空，不能把第一遍读到的 token 覆盖成 null
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setToken((prev) => prev ?? value);
-  }, []);
-  return token;
 }
 
 export default function VerifyPage() {

@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import re
 import secrets
 from collections.abc import Callable
 from contextlib import AbstractAsyncContextManager
@@ -30,7 +31,8 @@ from app.api.errors import AppError, NotFoundError, UnauthorizedError, Validatio
 from app.core.cache import get_redis
 from app.core.config import get_settings
 from app.core.passwords import hash_password, verify_password, verify_password_timing_safe
-from app.models import EaBinding, EmailVerification, InviteCode, User
+from app.models import EaBinding, EmailVerification, Group, GroupInvite, InviteCode, User
+from app.services import group_service
 from app.services.bf1.gateway_factory import get_bf1_client
 from app.services.mail import MailMessage, get_mail_sender, templates
 from app.services.mail.templates import RequestMeta
@@ -41,6 +43,17 @@ SessionFactory = Callable[[], AbstractAsyncContextManager[AsyncSession]]
 PASSWORD_MIN_LENGTH = 8
 PASSWORD_MAX_LENGTH = 128
 _INVITE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+# 从群邀请链接注册时记一条已用的邀请码占名额：G{群 id}-{8 位十六进制}。
+# 普通邀请码是 XXXX-XXXX（后半段 4 位），两种格式不会撞
+_GROUP_LINK_CODE = re.compile(r"G\d+-[0-9A-F]{8}")
+
+
+def group_link_code(group_id: int) -> str:
+    return f"G{group_id}-{secrets.token_hex(4).upper()}"
+
+
+def is_group_link_code(code: str) -> bool:
+    return _GROUP_LINK_CODE.fullmatch(code) is not None
 
 
 def normalize_email(email: str) -> str:
@@ -113,10 +126,11 @@ async def lookup_ea_by_email(db: AsyncSession, email: str) -> EaEmailMatch | Non
 # ===== 发信频率 =====
 
 
-async def _invite_mail_allowed(invite_id: int) -> bool:
+async def _invite_mail_allowed(invite_key: str) -> bool:
+    """同一个邀请码 / 群邀请链接每天最多触发几封注册信。invite_key 形如 code:12、group:3"""
     try:
         r = await get_redis()
-        key = f"bfm:mail:invite:{_now():%Y%m%d}:{invite_id}"
+        key = f"bfm:mail:invite:{_now():%Y%m%d}:{invite_key}"
         count = await r.incr(key)
         if count == 1:
             await r.expire(key, 86400)
@@ -256,6 +270,79 @@ async def check_invite_code(db: AsyncSession, code: str) -> InviteCode:
     return row
 
 
+async def check_group_invite_for_register(db: AsyncSession, token: str) -> GroupInvite:
+    """群邀请链接当注册资格用：链接有效，且发链接人还有邀请名额（管理员不限）"""
+    invite = await group_service.find_invite(db, token)
+    creator = (
+        await db.scalar(
+            select(User).options(selectinload(User.ea_bindings)).where(User.id == invite.created_by)
+        )
+        if invite.created_by is not None
+        else None
+    )
+    left = await invite_quota_left(db, creator) if creator is not None else 0
+    if left is not None and left <= 0:
+        raise AccountError(
+            "GROUP_INVITE_NO_QUOTA",
+            "发这个链接的人邀请名额用完了，不能用它注册新账号；已有账号的话登录后就能加入",
+        )
+    return invite
+
+
+async def _consume_group_invite_quota(db: AsyncSession, invite_id: int, user: User) -> None:
+    """靠群邀请注册的新账号计入发链接人的邀请码名额：记一条已使用的邀请码"""
+    invite = await db.get(GroupInvite, invite_id)
+    creator = await lock_user(db, invite.created_by) if invite and invite.created_by else None
+    if creator is None:
+        raise AccountError("INVITE_INVALID", "群邀请链接已失效，请向群管理要新链接后重新注册")
+    left = await invite_quota_left(db, creator)
+    if left is not None and left <= 0:
+        raise AccountError(
+            "INVITE_INVALID", "发这个链接的人邀请名额用完了，请向群管理要新链接后重新注册"
+        )
+    now = _now()
+    db.add(
+        InviteCode(
+            code=group_link_code(invite.group_id),
+            created_by=creator.id,
+            used_by=user.id,
+            used_at=now,
+            expires_at=now,
+        )
+    )
+    await db.flush()
+
+
+async def _join_group_for_register(db: AsyncSession, invite_id: int, user: User) -> None:
+    """靠群邀请注册的新账号必须进得了群：链接的次数、有效期、作废状态在这里和建号同一个事务里
+    原子地扣、查。进不了就抛错，整个注册回滚（验证链接也不算用掉），不会出现
+    「一次性链接发出多封验证信、每封都能建号」或者「链接作废后还能靠旧验证信建号」。
+    """
+    invite = await db.get(GroupInvite, invite_id)
+    if invite is None:
+        raise AccountError("INVITE_INVALID", "群邀请链接已失效，请向群管理要新链接后重新注册")
+    try:
+        await group_service.join_with_invite(db, invite, user, commit=False)
+    except group_service.GroupError as e:
+        if e.code == "GROUP_FULL":
+            raise AccountError("INVITE_INVALID", "这个群人数已满，不能用这个链接注册") from e
+        raise AccountError(
+            "INVITE_INVALID",
+            "群邀请链接已经用完、过期或被作废，请向群管理要新链接后重新注册",
+        ) from e
+
+
+async def _join_group_quietly(db: AsyncSession, invite_id: int, user: User) -> None:
+    """认领旧账号完成时顺便进群。旧账号本来就在，链接这时已经用完或过期就只是不进群，不影响认领"""
+    invite = await db.get(GroupInvite, invite_id)
+    if invite is None:
+        return
+    try:
+        await group_service.join_with_invite(db, invite, user, commit=False)
+    except group_service.GroupError as e:
+        logger.info("注册后自动进群失败，跳过: {}", e.code)
+
+
 async def _consume_invite(db: AsyncSession, invite_id: int, user_id: int) -> None:
     now = _now()
     hit = await db.scalar(
@@ -349,18 +436,34 @@ async def process_register_request(
     mode: str,
     invite_id: int | None,
     ip: str | None,
+    group_invite_id: int | None = None,
 ) -> None:
-    """注册请求的后台部分。mode=ea 先按邮箱反查 EA 号；mode=plain 用任意邮箱注册、之后再绑 EA。"""
+    """注册请求的后台部分。mode=ea 先按邮箱反查 EA 号；mode=plain 用任意邮箱注册、之后再绑 EA。
+
+    注册资格二选一：邀请码（invite_id），或群邀请链接（group_invite_id，注册完自动进群）。
+    """
     try:
         if not await _mail_allowed(email):
             logger.info("注册信频率超限，跳过")
             return
-        if invite_id is not None and not await _invite_mail_allowed(invite_id):
-            logger.info("邀请码 {} 今天触发的注册信已达上限，跳过", invite_id)
+        invite_key = (
+            f"group:{group_invite_id}"
+            if group_invite_id is not None
+            else f"code:{invite_id}"
+            if invite_id is not None
+            else None
+        )
+        if invite_key is not None and not await _invite_mail_allowed(invite_key):
+            logger.info("{} 今天触发的注册信已达上限，跳过", invite_key)
             return
         async with session_factory() as db:
             message = await _build_register_mail(
-                db, email=email, mode=mode, invite_id=invite_id, ip=ip
+                db,
+                email=email,
+                mode=mode,
+                invite_id=invite_id,
+                group_invite_id=group_invite_id,
+                ip=ip,
             )
         if message is not None:
             await get_mail_sender().send(message)
@@ -369,12 +472,30 @@ async def process_register_request(
 
 
 async def _build_register_mail(  # noqa: PLR0911 按情形逐个返回比嵌套分支好读
-    db: AsyncSession, *, email: str, mode: str, invite_id: int | None, ip: str | None
+    db: AsyncSession,
+    *,
+    email: str,
+    mode: str,
+    invite_id: int | None,
+    ip: str | None,
+    group_invite_id: int | None = None,
 ) -> MailMessage | None:
     settings = get_settings()
     meta = RequestMeta.now(ip)
     ttl = settings.verify_link_ttl_hours
     login_url, forgot_url = _site("/login"), _site("/forgot-password")
+    group_name = (
+        await db.scalar(
+            select(Group.name)
+            .join(GroupInvite, GroupInvite.group_id == Group.id)
+            .where(GroupInvite.id == group_invite_id)
+        )
+        if group_invite_id is not None
+        else None
+    )
+    if group_name is None:
+        group_invite_id = None
+    eligible = invite_id is not None or group_invite_id is not None
 
     if mode == "ea":
         match = await lookup_ea_by_email(db, email)
@@ -394,6 +515,7 @@ async def _build_register_mail(  # noqa: PLR0911 按情形逐个返回比嵌套�
                         "persona_id": match.persona_id,
                         "ea_user_id": match.ea_user_id,
                         "display_name": match.display_name,
+                        "group_invite_id": group_invite_id,
                     },
                     ip=ip,
                 )
@@ -403,6 +525,7 @@ async def _build_register_mail(  # noqa: PLR0911 按情形逐个返回比嵌套�
                     url=_site(f"/verify#token={token}"),
                     ttl_hours=ttl,
                     meta=meta,
+                    group_name=group_name,
                 )
             return templates.already_registered(
                 to=email,
@@ -415,7 +538,7 @@ async def _build_register_mail(  # noqa: PLR0911 按情形逐个返回比嵌套�
             return templates.already_registered(
                 to=email, persona_name=None, login_url=login_url, forgot_url=forgot_url, meta=meta
             )
-        if settings.registration_invite_required and invite_id is None:
+        if settings.registration_invite_required and not eligible:
             logger.info("EA 邮箱注册缺少邀请码，跳过")
             return None
         token = await _create_verification(
@@ -428,7 +551,8 @@ async def _build_register_mail(  # noqa: PLR0911 按情形逐个返回比嵌套�
                 "persona_id": match.persona_id,
                 "ea_user_id": match.ea_user_id,
                 "display_name": match.display_name,
-                "invite_id": invite_id,
+                "invite_id": None if group_invite_id else invite_id,
+                "group_invite_id": group_invite_id,
             },
             ip=ip,
         )
@@ -438,6 +562,7 @@ async def _build_register_mail(  # noqa: PLR0911 按情形逐个返回比嵌套�
             url=_site(f"/verify#token={token}"),
             ttl_hours=ttl,
             meta=meta,
+            group_name=group_name,
         )
 
     # mode == "plain"
@@ -445,7 +570,7 @@ async def _build_register_mail(  # noqa: PLR0911 按情形逐个返回比嵌套�
         return templates.already_registered(
             to=email, persona_name=None, login_url=login_url, forgot_url=forgot_url, meta=meta
         )
-    if settings.registration_invite_required and invite_id is None:
+    if settings.registration_invite_required and not eligible:
         logger.info("其他邮箱注册缺少邀请码，跳过")
         return None
     token = await _create_verification(
@@ -453,11 +578,19 @@ async def _build_register_mail(  # noqa: PLR0911 按情形逐个返回比嵌套�
         kind="register",
         email=email,
         ttl_hours=ttl,
-        payload={"mode": "plain", "invite_id": invite_id},
+        payload={
+            "mode": "plain",
+            "invite_id": None if group_invite_id else invite_id,
+            "group_invite_id": group_invite_id,
+        },
         ip=ip,
     )
     return templates.register_plain(
-        to=email, url=_site(f"/verify#token={token}"), ttl_hours=ttl, meta=meta
+        to=email,
+        url=_site(f"/verify#token={token}"),
+        ttl_hours=ttl,
+        meta=meta,
+        group_name=group_name,
     )
 
 
@@ -654,7 +787,11 @@ async def _finish_register(db: AsyncSession, row: EmailVerification, password: s
                 last_verified_at=now,
             )
         )
-    if payload.get("invite_id"):
+    if payload.get("group_invite_id"):
+        # 先进群（锁群行、扣链接次数），再扣发链接人的名额（锁发链接人）；任一步失败整体回滚
+        await _join_group_for_register(db, int(payload["group_invite_id"]), user)
+        await _consume_group_invite_quota(db, int(payload["group_invite_id"]), user)
+    elif payload.get("invite_id"):
         await _consume_invite(db, int(payload["invite_id"]), user.id)
     await db.flush()
     return user
@@ -683,6 +820,8 @@ async def _finish_claim(db: AsyncSession, row: EmailVerification, password: str)
     await db.flush()
     # 旧会话可能是别人拿 remid 登的，认领后全部作废
     await bump_token_version(db, user)
+    if payload.get("group_invite_id"):
+        await _join_group_quietly(db, int(payload["group_invite_id"]), user)
     return user
 
 

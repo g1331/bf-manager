@@ -26,6 +26,7 @@ from app.models.bf1 import (
 )
 from app.models.ea_account import EAAccount
 from app.models.ea_binding import EaBinding
+from app.models.group import Group, GroupInvite, GroupMember
 from app.models.server import Server, ServerMembership
 from app.models.user import User
 
@@ -54,6 +55,9 @@ __all__ = [
     "EAAccount",
     "EaBinding",
     "EmailVerification",
+    "Group",
+    "GroupInvite",
+    "GroupMember",
     "InviteCode",
     "Server",
     "ServerMembership",

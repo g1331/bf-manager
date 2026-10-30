@@ -21,7 +21,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { ResponsiveTable, type Column } from "@/components/common/ResponsiveTable";
-import { auditApi, type AuditLogItem } from "@/lib/api/audit";
+import { auditApi, type AuditLogItem, GROUP_ACTION_LABEL, GROUP_AUDIT_GAME } from "@/lib/api/audit";
 import { useSession } from "@/hooks/useSession";
 
 const ACTION_LABEL: Record<string, string> = {
@@ -40,6 +40,7 @@ const ACTION_LABEL: Record<string, string> = {
   card_success: "卡行动完成",
   card_fail: "卡行动失败",
   card_restore: "恢复卡行动前设置",
+  ...GROUP_ACTION_LABEL,
 };
 
 export default function AdminAuditPage() {
@@ -90,7 +91,11 @@ export default function AdminAuditPage() {
       cell: (l) => new Date(l.created_at).toLocaleString("zh-CN"),
       isCardTitle: true,
     },
-    { key: "game", header: "游戏", cell: (l) => l.game.toUpperCase() },
+    {
+      key: "game",
+      header: "游戏",
+      cell: (l) => (l.game === GROUP_AUDIT_GAME ? "群组" : l.game.toUpperCase()),
+    },
     { key: "action", header: "操作", cell: (l) => ACTION_LABEL[l.action] ?? l.action },
     {
       key: "result",
@@ -106,7 +111,14 @@ export default function AdminAuditPage() {
       key: "server",
       header: "服务器",
       cell: (l) =>
-        l.server_id ? (
+        l.game === GROUP_AUDIT_GAME && l.group_id ? (
+          <Link
+            href={`/me/groups/${l.group_id}`}
+            className="text-foreground tabular-nums hover:underline"
+          >
+            群 #{l.group_id}
+          </Link>
+        ) : l.server_id ? (
           <Link
             href={`/${l.game}/server/${l.server_id}`}
             className="text-foreground tabular-nums hover:underline"
@@ -121,7 +133,9 @@ export default function AdminAuditPage() {
       key: "target",
       header: "目标玩家",
       cell: (l) =>
-        l.target_persona_id ? (
+        l.game === GROUP_AUDIT_GAME ? (
+          (l.target_persona_id ?? "—")
+        ) : l.target_persona_id ? (
           <Link
             href={`/${l.game}/player/${l.target_persona_id}`}
             className="text-foreground tabular-nums hover:underline"

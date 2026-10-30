@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import JSON, BigInteger, DateTime, ForeignKey, String, Text, func
+from sqlalchemy import JSON, BigInteger, DateTime, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
@@ -23,6 +23,8 @@ class AuditLog(Base):
 
     game: Mapped[str] = mapped_column(String(16), index=True, nullable=False)
     server_id: Mapped[int | None] = mapped_column(BigInteger, index=True)
+    # 群组相关操作记在哪个群下；不设外键，群删了记录还在
+    group_id: Mapped[int | None] = mapped_column(Integer, index=True)
 
     action: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
     target_persona_id: Mapped[int | None] = mapped_column(BigInteger, index=True)

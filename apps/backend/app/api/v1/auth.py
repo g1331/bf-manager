@@ -202,7 +202,14 @@ async def register(
     真要新建账号又没有邀请码时，后台不发信。
     """
     invite_id: int | None = None
-    if payload.invite_code and payload.invite_code.strip():
+    group_invite_id: int | None = None
+    if payload.group_invite_token and payload.group_invite_token.strip():
+        group_invite_id = (
+            await account_service.check_group_invite_for_register(
+                db, payload.group_invite_token.strip()
+            )
+        ).id
+    elif payload.invite_code and payload.invite_code.strip():
         invite_id = (await account_service.check_invite_code(db, payload.invite_code)).id
     background.add_task(
         account_service.process_register_request,
@@ -210,6 +217,7 @@ async def register(
         email=normalize_email(payload.email),
         mode=payload.mode,
         invite_id=invite_id,
+        group_invite_id=group_invite_id,
         ip=client_ip(request),
     )
     return AcceptedResponse(message=MAIL_ACCEPTED)

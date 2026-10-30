@@ -2,62 +2,23 @@
 
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 
 import pytest
-import pytest_asyncio
-from app.api.deps import get_session_factory
 from app.core.passwords import hash_password, verify_password
 from app.core.security import create_access_token
-from app.db.session import get_db
-from app.main import create_app
 from app.models import EaBinding, EmailVerification, InviteCode, User
 from app.services import account_service
 from app.services.account_service import EaEmailMatch
 from app.services.auth_service import AuthService, EaIdentity
-from app.services.mail import LogMailSender, set_mail_sender
+from app.services.mail import LogMailSender
 from app.services.mail.templates import RequestMeta, mask_ip, register_ea
-from httpx import ASGITransport, AsyncClient
+from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 EA_EMAIL = "Player@Example.com"
 PERSONA = 1004198901469
-
-
-@pytest_asyncio.fixture
-async def env(test_session, monkeypatch):
-    """未登录客户端 + 内存发信箱 + 假的 EA 邮箱反查。返回 (client, outbox, ea_directory)。"""
-    outbox = LogMailSender()
-    set_mail_sender(outbox)
-    directory: dict[str, EaEmailMatch] = {}
-
-    async def fake_lookup(_db, email):
-        return directory.get(email)
-
-    async def always(*_a, **_k):
-        return True
-
-    monkeypatch.setattr(account_service, "lookup_ea_by_email", fake_lookup)
-    monkeypatch.setattr(account_service, "_mail_allowed", always)
-    monkeypatch.setattr(account_service, "_invite_mail_allowed", always)
-
-    app = create_app()
-
-    async def _db():
-        yield test_session
-
-    @asynccontextmanager
-    async def _factory():
-        yield test_session
-
-    app.dependency_overrides[get_db] = _db
-    app.dependency_overrides[get_session_factory] = lambda: _factory
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
-        yield ac, outbox, directory
-    app.dependency_overrides.clear()
-    set_mail_sender(None)
 
 
 def _token_from(outbox: LogMailSender) -> str:

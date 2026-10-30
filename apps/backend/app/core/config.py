@@ -118,6 +118,11 @@ class Settings(BaseSettings):
     registration_invite_required: bool = True
     invite_quota_per_user: int = 5
     invite_ttl_days: int = 7
+    # 群组：每人最多建几个群、每群人数上限、同时有效的邀请链接数、单条链接最多用几次
+    group_owned_limit_per_user: int = 5
+    group_member_limit: int = 200
+    group_invite_active_limit: int = 20
+    group_invite_max_uses: int = 10
     # 验证链接有效期
     verify_link_ttl_hours: int = 4
     reset_link_ttl_hours: int = 1

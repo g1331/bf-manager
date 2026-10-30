@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { AuthCard, MailSentNotice } from "@/components/auth/AuthCard";
 import { useAuthConfig, useCaptcha } from "@/components/auth/Turnstile";
 import { register, type RegisterMode } from "@/lib/auth";
+import { clearPendingInvite, type PendingInvite, readPendingInvite } from "@/lib/api/groups";
 import { ApiException } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
@@ -51,7 +52,15 @@ function RegisterForm() {
   const [mode, setMode] = useState<RegisterMode>("ea");
   const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState<{ message: string; mode: RegisterMode } | null>(null);
-  const inviteRequired = config.data?.invite_required ?? true;
+  // 从群邀请链接点过来的：用链接代替邀请码
+  const [groupInvite, setGroupInvite] = useState<PendingInvite | null>(null);
+  const inviteRequired = (config.data?.invite_required ?? true) && !groupInvite;
+
+  useEffect(() => {
+    // sessionStorage 只能在浏览器里读
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setGroupInvite(readPendingInvite());
+  }, []);
 
   const form = useForm<Values>({
     resolver: zodResolver(schema),
@@ -62,10 +71,14 @@ function RegisterForm() {
     setSubmitting(true);
     try {
       const res = await register(
-        { email: values.email, mode, invite_code: values.invite_code || undefined },
+        groupInvite
+          ? { email: values.email, mode, group_invite_token: groupInvite.token }
+          : { email: values.email, mode, invite_code: values.invite_code || undefined },
         captcha.token,
       );
       setSent({ message: res.message, mode });
+      // 群邀请已经跟着验证信走了，完成注册时自动进群；页面状态留着，换邮箱重新提交还能用
+      if (groupInvite) clearPendingInvite();
     } catch (err) {
       toast.error(err instanceof ApiException ? err.message : "提交失败，请稍后重试");
     } finally {
@@ -152,6 +165,22 @@ function RegisterForm() {
           ? "填 EA 账号（EA App / Origin）的登录邮箱。我们据此找到你的 EA 账号，验证信能打开，就同时证明了邮箱和 EA 账号都是你的，不用再另外绑定。以前用 remid 登录过的，用这个方式认领旧账号。"
           : "用任意邮箱注册。注册后还要填一次 remid，或用 EA 账号密码登录一次，把 EA 账号绑上才能开始使用。"}
       </p>
+
+      {groupInvite ? (
+        <div className="mb-5 rounded-sm border border-amber-500/30 bg-amber-500/10 p-3 text-sm leading-relaxed text-amber-100">
+          正在通过群组「{groupInvite.groupName}」的邀请链接注册，不需要邀请码，完成注册后自动进群。
+          <button
+            type="button"
+            className="text-muted-foreground hover:text-foreground ml-1 underline underline-offset-4"
+            onClick={() => {
+              clearPendingInvite();
+              setGroupInvite(null);
+            }}
+          >
+            不用这个链接
+          </button>
+        </div>
+      ) : null}
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">

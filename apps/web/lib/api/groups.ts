@@ -148,6 +148,37 @@ export interface ServerGroup {
   created_at: string;
 }
 
+/** 成员在服里的位置：两队、排队、观战 */
+export type PresenceSlot = "team1" | "team2" | "queue" | "spectator";
+
+/** 成员所在的服；服务器摘要缓存里没有这台服时只有 game_id 和 slot */
+export interface MemberServer {
+  game_id: number;
+  slot: PresenceSlot;
+  name: string | null;
+  map_display_name: string | null;
+  mode_display_name: string | null;
+  player_count: number | null;
+  max_player_count: number | null;
+}
+
+export interface PresenceMember {
+  user_id: number;
+  username: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  persona_id: number | null;
+  role: GroupRole;
+  /** 不在任何有人的服里：可能离线，也可能停在主菜单 */
+  server: MemberServer | null;
+}
+
+export interface GroupPresence {
+  /** 最近一轮全服快照的时间；null 表示状态暂不可用 */
+  updated_at: string | null;
+  groups: { id: number; name: string; members: PresenceMember[] }[];
+}
+
 export function accountLabel(a: { display_name: string | null; persona_id: number }): string {
   return a.display_name ?? String(a.persona_id);
 }
@@ -168,6 +199,8 @@ export function inviteUrl(token: string): string {
 
 export const groupsApi = {
   list: () => api.get<GroupList>("/groups"),
+  /** 我所在各群的其他成员此刻在哪个服（不含自己），右侧好友栏用 */
+  presence: () => api.get<GroupPresence>("/groups/presence"),
   create: (name: string) => api.post<GroupDetail>("/groups", { name }),
   get: (id: number) => api.get<GroupDetail>(`/groups/${id}`),
   rename: (id: number, name: string) => api.patch<GroupDetail>(`/groups/${id}`, { name }),

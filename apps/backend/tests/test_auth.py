@@ -27,8 +27,9 @@ async def test_logout_without_session_returns_401() -> None:
 
 
 @pytest.mark.asyncio
-async def test_login_with_invalid_payload_returns_422() -> None:
+async def test_remid_login_is_gone() -> None:
+    """remid 登录已下线，remid 只用来绑定 EA"""
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        resp = await client.post("/api/v1/auth/login", json={"remid": "x", "sid": "y"})
-    assert resp.status_code == 422
+        resp = await client.post("/api/v1/auth/login", json={"remid": "x" * 20, "sid": ""})
+    assert resp.status_code in (404, 405)

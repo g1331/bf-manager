@@ -20,7 +20,7 @@ cd "$(cd "$(dirname "$0")/.." && pwd)"
 ENV_FILE=".env.prod"
 COMPOSE_FILE="docker-compose.prod.yml"
 SECRETS_DIR="secrets"
-REQUIRED_SECRETS=(postgres_password database_url ea_cred_encryption_key jwt_secret_key)
+REQUIRED_SECRETS=(postgres_password database_url ea_cred_encryption_key jwt_secret_key resend_api_key turnstile_secret_key)
 # .env.example 里 DOMAIN 的占位值，等同于「未配置」
 DOMAIN_PLACEHOLDER="bf-manager.example.com"
 

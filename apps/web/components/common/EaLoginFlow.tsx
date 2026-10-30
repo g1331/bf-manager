@@ -420,8 +420,10 @@ export function EaLoginPanel({ actor, target, onSucceeded, onDone }: PanelProps)
               )}
             />
             <p className="text-muted-foreground text-xs @xl:col-span-2">
-              邮箱、密码和验证码只在本次登录中使用，不会保存；登录成功后凭据以 AES-256-GCM
-              加密入库。有二次验证时，EA 发来的验证码会在下一步填写。
+              {actor === "user"
+                ? "邮箱、密码和验证码只用来证明这个 EA 账号是你的，不会保存。"
+                : "邮箱、密码和验证码只在本次登录中使用，不会保存；登录成功后凭据以 AES-256-GCM 加密入库。"}
+              有二次验证时，EA 发来的验证码会在下一步填写。
             </p>
             <div className="@xl:col-span-2">
               <Button type="submit" disabled={submitting} size="lg" className="w-full @xl:w-auto">
@@ -432,6 +434,7 @@ export function EaLoginPanel({ actor, target, onSucceeded, onDone }: PanelProps)
         </Form>
       ) : (
         <TaskProgress
+          actor={actor}
           task={task}
           submitting={submitting}
           onSelectMethod={onSelectMethod}
@@ -469,7 +472,7 @@ export function EaLoginDialog({ open, onOpenChange, ...panelProps }: DialogProps
             {target
               ? `重新登录 ${target.label}`
               : actor === "user"
-                ? "邮箱密码绑定 EA 账号"
+                ? "用 EA 账号密码绑定"
                 : "邮箱密码新增 EA 账号"}
           </DialogTitle>
           <DialogDescription>
@@ -485,6 +488,7 @@ export function EaLoginDialog({ open, onOpenChange, ...panelProps }: DialogProps
 }
 
 function TaskProgress({
+  actor,
   task,
   submitting,
   onSelectMethod,
@@ -494,6 +498,7 @@ function TaskProgress({
   onAddAnother,
   onDone,
 }: {
+  actor: EALoginTaskActor;
   task: EALoginTaskResponse;
   submitting: boolean;
   onSelectMethod: (method: string) => void;
@@ -581,7 +586,9 @@ function TaskProgress({
               {task.result.display_name ? ` · ${task.result.display_name}` : ""}
             </p>
           ) : null}
-          <p className="text-muted-foreground text-xs">凭据已加密保存。</p>
+          {actor === "admin" ? (
+            <p className="text-muted-foreground text-xs">凭据已加密保存。</p>
+          ) : null}
           {onDone ? (
             <Button size="sm" onClick={onDone}>
               完成

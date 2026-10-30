@@ -42,6 +42,8 @@ _BUCKETS: dict[str, list[tuple[int, str]]] = {
     "avatar": [(60, "rate_limit_avatar_per_minute")],
     "read": [(60, "rate_limit_read_per_minute"), (86400, "rate_limit_read_per_day")],
     "ea_login": [(600, "rate_limit_ea_login_per_10min")],
+    "account_mail": [(3600, "rate_limit_account_mail_per_hour")],
+    "account_link": [(600, "rate_limit_account_link_per_10min")],
     "card_check": [(3600, "rate_limit_card_check_per_hour")],
     "card_start": [(3600, "rate_limit_card_start_per_hour")],
 }

@@ -11,7 +11,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # 生产环境 Docker secrets 挂载点。dev/本地无此目录时传 None，让 pydantic-settings 跳过此 source。
 # 字段名 → /run/secrets/<field_name>：
-#   database_url, ea_cred_encryption_key, jwt_secret_key
+#   database_url, ea_cred_encryption_key, jwt_secret_key, resend_api_key, turnstile_secret_key
 # pydantic-settings 会自动把文件内容做 strip 后填入字段。
 _SECRETS_DIR = "/run/secrets" if os.path.isdir("/run/secrets") else None
 
@@ -100,6 +100,38 @@ class Settings(BaseSettings):
     # 全站公共查询每分钟最多占用多少次 EA 账号池 / Blaze 连接；管服操作和后台任务不计入。
     # 0 表示不限
     ea_public_budget_per_minute: int = 120
+
+    # ===== 账号与发信 =====
+    # 邮件里链接指向的站点地址
+    public_site_url: str = "http://localhost:3000"
+    # resend：走 Resend HTTP API；log：只把信件写进日志（开发、测试用）
+    mail_backend: str = "log"
+    mail_from: str = "BF Manager <no-reply@umrbotech.com>"
+    # 生产从 /run/secrets/resend_api_key 读取
+    resend_api_key: str = ""
+    # Cloudflare Turnstile 人机验证（注册、找回密码、补邮箱）。没配 secret 就不校验；
+    # 生产从 /run/secrets/turnstile_secret_key 读取，site key 给前端用
+    turnstile_secret_key: str = ""
+    # 公开值，经 /auth/config 下发给前端；和 secret 都配上才启用人机验证
+    turnstile_site_key: str = ""
+    # 注册是否必须填邀请码；EA 号本身已经一号一账号，邀请码只用来控制增长速度
+    registration_invite_required: bool = True
+    invite_quota_per_user: int = 5
+    invite_ttl_days: int = 7
+    # 验证链接有效期
+    verify_link_ttl_hours: int = 4
+    reset_link_ttl_hours: int = 1
+    # 用非 EA 邮箱注册、迟迟没绑 EA 的账号，多久后清理
+    pending_binding_ttl_hours: int = 24
+    # 注册、找回密码、重发验证信：同一 IP 每小时、同一邮箱每天的请求上限，
+    # 同一邮箱两封信之间至少隔多少秒
+    rate_limit_account_mail_per_hour: int = 10
+    # 打开、提交验证链接（每用一次链接调两次）
+    rate_limit_account_link_per_10min: int = 30
+    account_mail_per_email_per_day: int = 5
+    account_mail_cooldown_seconds: int = 60
+    # 同一个邀请码每天最多触发几次注册信：邀请码要到设置密码时才算用掉，防止拿一个码反复刷信
+    account_mail_per_invite_per_day: int = 3
 
     # ===== EA 邮箱密码登录链路 =====
     # 任务整体生命周期上限：从创建到终态的最长时间，超过则自动作废，避免内存中残留 aiohttp

@@ -1,5 +1,6 @@
 """SQLAlchemy 模型聚合导出"""
 
+from app.models.account import EmailVerification, InviteCode
 from app.models.api_key import ApiKey
 from app.models.audit_log import AuditLog
 from app.models.base import Base
@@ -48,6 +49,8 @@ __all__ = [
     "Bf1ServerVip",
     "EAAccount",
     "EaBinding",
+    "EmailVerification",
+    "InviteCode",
     "Server",
     "ServerMembership",
     "User",

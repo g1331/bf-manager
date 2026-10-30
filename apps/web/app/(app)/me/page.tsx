@@ -18,6 +18,8 @@ import { type BindingListItem, listMyBindings, unbindEa } from "@/lib/auth";
 import { auditApi, type AuditLogItem } from "@/lib/api/audit";
 import { ENABLED_GAMES } from "@/lib/game-registry";
 import { useSession } from "@/hooks/useSession";
+import { ApiException } from "@/lib/api-client";
+import { InviteSection, SecuritySection, SetEmailCard } from "./AccountSection";
 
 const ACTION_LABEL: Record<string, string> = {
   kick_player: "踢人",
@@ -71,7 +73,8 @@ export default function MePage() {
       qc.invalidateQueries({ queryKey: ["my-ea-bindings"] });
       qc.invalidateQueries({ queryKey: ["session"] });
     },
-    onError: () => toast.error("解绑失败，请稍后重试"),
+    onError: (err) =>
+      toast.error(err instanceof ApiException ? err.message : "解绑失败，请稍后重试"),
   });
 
   if (session.isLoading || !session.data) {
@@ -149,6 +152,8 @@ export default function MePage() {
         description="账号信息、个人战绩、EA 绑定与操作记录"
       />
 
+      {user.status === "legacy" ? <SetEmailCard /> : null}
+
       {/* 账号信息 + 我的战绩 */}
       <section className="flex flex-col gap-4 sm:flex-row sm:items-stretch">
         <div className="border-border bg-card flex flex-1 items-center gap-4 rounded-sm border p-5">
@@ -221,15 +226,14 @@ export default function MePage() {
         <div className="mb-3 flex items-center justify-between">
           <SectionHeading className="mb-0">EA 绑定</SectionHeading>
           <Button size="sm" onClick={() => setLoginFlowOpen(true)}>
-            用邮箱密码绑定
+            用 EA 账号密码绑定
           </Button>
         </div>
         {bindings.isLoading ? (
           <p className="text-muted-foreground text-sm">加载中…</p>
         ) : !bindings.data || bindings.data.length === 0 ? (
           <p className="text-muted-foreground text-sm">
-            当前账号尚未绑定任何 EA persona。需要执行 EA 相关操作时，请退出后用 EA Cookie
-            重新登录，或使用上方邮箱密码绑定。
+            当前账号尚未绑定任何 EA 账号，点右上角用 EA 账号密码绑定。
           </p>
         ) : (
           <ul className="space-y-3">
@@ -288,6 +292,10 @@ export default function MePage() {
           </ul>
         )}
       </section>
+
+      <SecuritySection user={user} />
+
+      <InviteSection canCreate={user.role === "admin" || !!primary} />
 
       {/* 我的操作日志 */}
       <section>

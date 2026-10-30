@@ -103,6 +103,8 @@ class EALoginTaskResultData(BaseModel):
     # ``account_id``。两者互斥，前端按当前 actor 自行区分。
     binding_id: int | None = None
     account_id: int | None = None
+    # 普通用户路径：这个 EA 号原来挂在旧账号上，已认领，需要用同样的邮箱密码重新登录
+    claimed: bool = False
 
 
 class EALoginTaskResponse(BaseModel):

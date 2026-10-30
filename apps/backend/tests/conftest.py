@@ -21,7 +21,7 @@ os.environ.setdefault("JWT_SECRET_KEY", "test-jwt-secret-not-secure-but-determin
 os.environ.setdefault("ENVIRONMENT", "test")
 
 import pytest_asyncio
-from app.api.deps import get_current_user, get_current_user_optional
+from app.api.deps import get_current_user, get_current_user_any_status, get_current_user_optional
 from app.db.session import get_db
 from app.main import create_app
 from app.models import Base, EaBinding, User
@@ -124,6 +124,7 @@ async def user_client(test_session):
 
     app.dependency_overrides[get_db] = _override_get_db
     app.dependency_overrides[get_current_user] = lambda: user
+    app.dependency_overrides[get_current_user_any_status] = lambda: user
     app.dependency_overrides[get_current_user_optional] = lambda: user
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
@@ -153,6 +154,7 @@ async def admin_client(test_session):
 
     app.dependency_overrides[get_db] = _override_get_db
     app.dependency_overrides[get_current_user] = lambda: admin
+    app.dependency_overrides[get_current_user_any_status] = lambda: admin
     app.dependency_overrides[get_current_user_optional] = lambda: admin
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
@@ -186,6 +188,7 @@ async def local_admin_client(test_session):
 
     app.dependency_overrides[get_db] = _override_get_db
     app.dependency_overrides[get_current_user] = lambda: admin
+    app.dependency_overrides[get_current_user_any_status] = lambda: admin
     app.dependency_overrides[get_current_user_optional] = lambda: admin
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:

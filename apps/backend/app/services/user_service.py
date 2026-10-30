@@ -29,35 +29,8 @@ class UserService:
         return await self.db.scalar(
             select(User)
             .join(EaBinding, EaBinding.user_id == User.id)
-            .where(EaBinding.persona_id == persona_id)
+            .where(EaBinding.persona_id == persona_id, EaBinding.is_frozen.is_(False))
         )
-
-    async def get_or_create_by_ea_login(self, persona_id: int) -> tuple[User, bool]:
-        """根据 persona_id 找 user；找不到则自动开户。
-
-        返回 (user, created)。created=True 表示本次新建。
-        新建用户：username=`persona_<id>`、role='user'、local_password_hash=NULL。
-        """
-        user = await self.get_by_persona_id(persona_id)
-        if user is not None:
-            user.last_login_at = datetime.now(UTC)
-            await self.db.commit()
-            await self.db.refresh(user)
-            return user, False
-
-        user = User(
-            username=f"persona_{persona_id}",
-            local_password_hash=None,
-            email=None,
-            role="user",
-            is_active=True,
-            is_frozen=False,
-            last_login_at=datetime.now(UTC),
-        )
-        self.db.add(user)
-        await self.db.commit()
-        await self.db.refresh(user)
-        return user, True
 
     async def create_local_admin(
         self,
@@ -73,7 +46,7 @@ class UserService:
         user = User(
             username=username,
             local_password_hash=hash_password(password),
-            email=email,
+            email=email.strip().lower() if email else None,
             role="admin",
             is_active=True,
             is_frozen=False,

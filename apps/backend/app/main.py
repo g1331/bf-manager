@@ -22,11 +22,12 @@ from app.core.cache import close_redis, get_redis
 from app.core.config import get_settings
 from app.core.ea_metrics import ea_metrics_flusher
 from app.core.logging import setup_logging
-from app.db.session import close_engine
+from app.db.session import close_engine, get_sessionmaker
 from app.domain.ea.login.task_manager import close_task_manager, init_task_manager
 
 # 触发游戏 profile 注册
 from app.domain.games import GameRegistry  # noqa: F401
+from app.services.account_service import account_cleanup_poller
 from app.services.bf1.auto_switch_service import auto_switch_poller
 from app.services.bf1.blaze_service import close_blaze_pool
 from app.services.bf1.card_service import mark_interrupted_jobs, shutdown_card_jobs
@@ -63,7 +64,11 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     # BF1 后台轮询：仅在启用 bf1 时启动。全服统计写 Redis 供 /bf1/overview 只读；
     # 交换每小时检查一次换期，入库后供历史查询；行动服自动换图每 5 秒检查开启的服；
     # 计时 VIP 每分钟下掉普通服上到期的 VIP
-    pollers: list[asyncio.Task[None]] = [asyncio.create_task(ea_metrics_flusher())]
+    pollers: list[asyncio.Task[None]] = [
+        asyncio.create_task(ea_metrics_flusher()),
+        # 清理超时没绑 EA 的账号、过期的验证链接
+        asyncio.create_task(account_cleanup_poller(get_sessionmaker())),
+    ]
     if "bf1" in settings.games:
         if settings.bf1_match_tracking:
             await restore_tracker_state()

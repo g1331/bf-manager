@@ -7,7 +7,7 @@
 :class:`BF1GatewayClient.login`，拿到 BF1 sparta 链路所需的 ``access_token``、
 ``session``、``persona_id`` 与 persona 详情，最终按 actor 类型加密回填到：
 
-- ``user`` 路径 → :class:`EaBindingService` 写入 ``ea_bindings``。
+- ``user`` 路径 → :class:`EaBindingService` 写入 ``ea_bindings``（只记 persona，不存凭据）。
 - ``admin`` 路径 → :class:`EAAccountService` 写入 ``ea_accounts``。
 
 实例由 :func:`init_task_manager` 注入到 ``task_manager``。每次 finalize 独立创建一
@@ -21,15 +21,18 @@ import contextlib
 from collections.abc import Iterator
 
 from loguru import logger
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from app.db.session import get_sessionmaker
-from app.domain.ea.login.exceptions import UpstreamError
+from app.domain.ea.login.exceptions import EALoginError, UpstreamError
 from app.domain.ea.login.login_engine import LoginCookies
 from app.domain.ea.login.schemas import EALoginTaskResultData
 from app.domain.ea.login.task_manager import ActorKind
 from app.domain.games.bf1.gateway import BF1GatewayClient
+from app.models import User
 from app.services.ea_account_service import EAAccountService
-from app.services.ea_binding_service import EaBindingService
+from app.services.ea_binding_service import BindingConflictError, EaBindingService
 
 
 @contextlib.contextmanager
@@ -100,21 +103,28 @@ class EALoginFinalizer:
                     await http_session.close()
 
         if actor_kind == "user":
-            binding = await EaBindingService(db).upsert_after_ea_login(
-                user_id=actor_id,
-                persona_id=persona_id,
-                display_name=display_name,
-                avatar_url=avatar_url,
-                remid=refreshed_remid,
-                sid=refreshed_sid,
-                session=session,
-                access_token=access_token,
+            # 普通用户只是借 EA 账号密码登录证明这个 EA 号归自己，凭据不保存
+            user = await db.scalar(
+                select(User).options(selectinload(User.ea_bindings)).where(User.id == actor_id)
             )
+            if user is None:
+                raise UpstreamError("发起绑定的账号已不存在", stage="finalize")
+            try:
+                outcome = await EaBindingService(db).bind_verified_persona(
+                    user=user,
+                    persona_id=persona_id,
+                    display_name=display_name,
+                    avatar_url=avatar_url,
+                    verified_via="password",
+                )
+            except BindingConflictError as e:
+                raise EALoginError(e.message, stage="finalize", code="EA_BINDING_CONFLICT") from e
             return EALoginTaskResultData(
                 persona_id=persona_id,
                 display_name=display_name,
                 avatar_url=avatar_url,
-                binding_id=binding.id,
+                binding_id=outcome.binding.id,
+                claimed=outcome.claimed_user_id is not None,
             )
 
         # actor_kind == "admin"

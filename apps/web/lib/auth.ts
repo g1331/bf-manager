@@ -12,10 +12,18 @@ export interface SessionBinding {
   is_frozen: boolean;
 }
 
+/**
+ * - legacy：remid 登录时代建的旧账号，还没设置登录邮箱
+ * - pending_binding：邮箱注册了但还没绑 EA，除绑定页外的功能都用不了
+ */
+export type AccountStatus = "legacy" | "pending_binding" | "active";
+
 export interface SessionUser {
   id: number;
   username: string;
   role: "user" | "admin";
+  email: string | null;
+  status: AccountStatus;
   is_frozen: boolean;
   last_login_at: string | null;
   primary_binding: SessionBinding | null;
@@ -25,10 +33,67 @@ export interface SessionResponse {
   user: SessionUser | null;
 }
 
-export interface LoginRequest {
+export interface CookieBindRequest {
   remid: string;
   // sid 留空时 EA 会在登录响应里自动签发新 sid，因此设为可选
   sid?: string;
+}
+
+export interface CookieBindResponse {
+  // true：这个 EA 号原来挂在旧账号上，已认领过去，需要用同样的邮箱密码重新登录
+  claimed: boolean;
+  persona_id: number;
+  display_name: string | null;
+}
+
+export interface EmailLoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface AuthConfig {
+  invite_required: boolean;
+  // 为 null 表示没启用人机验证
+  turnstile_site_key: string | null;
+}
+
+export type RegisterMode = "ea" | "plain";
+
+export interface RegisterRequest {
+  email: string;
+  mode: RegisterMode;
+  invite_code?: string;
+}
+
+export interface AcceptedResponse {
+  message: string;
+}
+
+export type VerificationKind = "register" | "claim" | "reset" | "set_email";
+
+export interface VerificationInfo {
+  kind: VerificationKind;
+  email: string;
+  persona_name: string | null;
+  mode: RegisterMode | null;
+}
+
+export type InviteStatus = "unused" | "used" | "expired" | "revoked";
+
+export interface InviteCodeItem {
+  id: number;
+  code: string;
+  status: InviteStatus;
+  expires_at: string;
+  used_at: string | null;
+  created_at: string;
+}
+
+export interface InviteCodeList {
+  items: InviteCodeItem[];
+  // 管理员不限，为 null
+  quota_left: number | null;
+  invite_required: boolean;
 }
 
 export interface LocalLoginRequest {
@@ -64,9 +129,81 @@ export async function getSession(): Promise<SessionUser | null> {
   }
 }
 
-export async function login(payload: LoginRequest): Promise<SessionUser> {
-  const res = await api.post<LoginResponse>("/auth/login", payload);
+/** 带人机验证 token 的请求头；没启用 Turnstile 时 token 为 null，不带头 */
+function captchaHeaders(token: string | null): HeadersInit | undefined {
+  return token ? { "X-Turnstile-Token": token } : undefined;
+}
+
+export async function getAuthConfig(): Promise<AuthConfig> {
+  return api.get<AuthConfig>("/auth/config");
+}
+
+export async function emailLogin(payload: EmailLoginRequest): Promise<SessionUser> {
+  const res = await api.post<LoginResponse>("/auth/email-login", payload);
   return res.user;
+}
+
+export async function register(
+  payload: RegisterRequest,
+  captcha: string | null,
+): Promise<AcceptedResponse> {
+  return api.post<AcceptedResponse>("/auth/register", payload, {
+    headers: captchaHeaders(captcha),
+  });
+}
+
+export async function requestPasswordReset(
+  email: string,
+  captcha: string | null,
+): Promise<AcceptedResponse> {
+  return api.post<AcceptedResponse>(
+    "/auth/password-reset",
+    { email },
+    { headers: captchaHeaders(captcha) },
+  );
+}
+
+export async function lookupVerification(token: string): Promise<VerificationInfo> {
+  return api.post<VerificationInfo>("/auth/verifications/lookup", { token });
+}
+
+export async function confirmVerification(token: string, password: string): Promise<SessionUser> {
+  const res = await api.post<LoginResponse>("/auth/verifications/confirm", { token, password });
+  return res.user;
+}
+
+export async function bindWithCookie(payload: CookieBindRequest): Promise<CookieBindResponse> {
+  return api.post<CookieBindResponse>("/me/ea-bindings/cookie", payload);
+}
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  await api.post("/me/password", {
+    current_password: currentPassword,
+    new_password: newPassword,
+  });
+}
+
+export async function requestSetEmail(
+  email: string,
+  captcha: string | null,
+): Promise<AcceptedResponse> {
+  return api.post<AcceptedResponse>("/me/email", { email }, { headers: captchaHeaders(captcha) });
+}
+
+export async function logoutAll(): Promise<void> {
+  await api.post("/auth/logout-all");
+}
+
+export async function listInviteCodes(): Promise<InviteCodeList> {
+  return api.get<InviteCodeList>("/me/invite-codes");
+}
+
+export async function createInviteCode(): Promise<InviteCodeList> {
+  return api.post<InviteCodeList>("/me/invite-codes");
+}
+
+export async function revokeInviteCode(id: number): Promise<InviteCodeList> {
+  return api.post<InviteCodeList>(`/me/invite-codes/${id}/revoke`);
 }
 
 export async function localLogin(payload: LocalLoginRequest): Promise<SessionUser> {
@@ -85,4 +222,9 @@ export async function listMyBindings(): Promise<BindingListItem[]> {
 
 export async function unbindEa(bindingId: number): Promise<void> {
   await api.post(`/me/ea-bindings/${bindingId}/unbind`);
+}
+
+/** 登录后去哪：还没绑 EA 的先去绑定页，其余回到原来要去的页面 */
+export function landingPath(user: SessionUser, next: string): string {
+  return user.status === "pending_binding" ? "/bind" : next;
 }

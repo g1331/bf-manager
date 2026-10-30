@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, get_current_user_any_status
 from app.api.v1 import auth, games, health
 from app.api.v1.router import api_router
 from app.core.config import get_settings
@@ -16,8 +16,14 @@ from httpx import ASGITransport, AsyncClient
 # 不需要通用限流的公开接口：
 # - healthz、games 不碰 EA 也不读业务数据
 # - session 只解当前 cookie，每个页面都会调
-# - local-login 有按用户名和 IP 的失败锁定（login_throttle），比固定窗口更合适
-_EXEMPT = {health.healthz, games.get_games, auth.session, auth.local_login}
+# - local-login、email-login 有按账号和 IP 的失败锁定（login_throttle），比固定窗口更合适
+_EXEMPT = {
+    health.healthz,
+    games.get_games,
+    auth.session,
+    auth.local_login,
+    auth.email_login,
+}
 
 
 def _api_routes(routes: list[Any]) -> list[APIRoute]:
@@ -66,7 +72,11 @@ def test_every_anonymous_route_is_rate_limited() -> None:
         if route.endpoint in _EXEMPT:
             continue
         calls = _calls(route.dependant)
-        if get_current_user in calls or any(_is_rate_limited(c) for c in calls):
+        if (
+            get_current_user in calls
+            or get_current_user_any_status in calls
+            or any(_is_rate_limited(c) for c in calls)
+        ):
             continue
         missing.append(f"{sorted(route.methods)} {route.path}")
     assert missing == []

@@ -2,6 +2,7 @@
  * 平台运维统计 API 客户端
  */
 import { api } from "@/lib/api-client";
+import type { RegistrationMode } from "@/lib/auth";
 
 /** 按接口分组累计的请求次数，group 形如 bf1/stats、bf1/servers */
 export interface EndpointCount {
@@ -67,6 +68,17 @@ export interface AdminMetrics {
   tracker_events: TrackerEventCount[];
 }
 
+/** 注册方式；is_default 为 true 表示后台还没设过，跟着环境变量的默认值走 */
+export interface RegistrationSetting {
+  mode: RegistrationMode;
+  is_default: boolean;
+  updated_at: string | null;
+  updated_by_name: string | null;
+}
+
 export const adminApi = {
   getMetrics: () => api.get<AdminMetrics>("/admin/metrics"),
+  getRegistration: () => api.get<RegistrationSetting>("/admin/settings/registration"),
+  setRegistration: (mode: RegistrationMode) =>
+    api.put<RegistrationSetting>("/admin/settings/registration", { mode }),
 };

@@ -80,7 +80,8 @@ export function useAuthConfig() {
   return useQuery({
     queryKey: ["auth-config"],
     queryFn: getAuthConfig,
-    staleTime: 10 * 60 * 1000,
+    // 注册方式可以在后台随时切换，别缓存太久
+    staleTime: 30 * 1000,
   });
 }
 

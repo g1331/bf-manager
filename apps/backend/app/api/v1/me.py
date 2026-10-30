@@ -12,7 +12,6 @@ from app.api.errors import NotFoundError
 from app.api.rate_limit import rate_limit
 from app.api.turnstile import require_turnstile
 from app.api.v1.auth import MAIL_ACCEPTED, clear_session, issue_session
-from app.core.config import get_settings
 from app.models import InviteCode
 from app.schemas.auth import (
     AcceptedResponse,
@@ -25,7 +24,7 @@ from app.schemas.auth import (
     InviteCodeItem,
     InviteCodeListResponse,
 )
-from app.services import account_service
+from app.services import account_service, site_settings_service
 from app.services.account_service import AccountError, normalize_email
 from app.services.auth_service import AuthService
 from app.services.ea_binding_service import EaBindingService
@@ -177,7 +176,7 @@ async def _invite_list(db: DbDep, user: CurrentUser) -> InviteCodeListResponse:
     return InviteCodeListResponse(
         items=[_invite_item(r, now) for r in rows],
         quota_left=await account_service.invite_quota_left(db, user),
-        invite_required=get_settings().registration_invite_required,
+        invite_required=await site_settings_service.get_registration_mode(db) == "invite",
     )
 
 

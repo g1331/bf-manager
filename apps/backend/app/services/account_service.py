@@ -32,7 +32,7 @@ from app.core.cache import get_redis
 from app.core.config import get_settings
 from app.core.passwords import hash_password, verify_password, verify_password_timing_safe
 from app.models import EaBinding, EmailVerification, Group, GroupInvite, InviteCode, User
-from app.services import group_service
+from app.services import group_service, site_settings_service
 from app.services.bf1.gateway_factory import get_bf1_client
 from app.services.mail import MailMessage, get_mail_sender, templates
 from app.services.mail.templates import RequestMeta
@@ -271,8 +271,10 @@ async def check_invite_code(db: AsyncSession, code: str) -> InviteCode:
 
 
 async def check_group_invite_for_register(db: AsyncSession, token: str) -> GroupInvite:
-    """群邀请链接当注册资格用：链接有效，且发链接人还有邀请名额（管理员不限）"""
+    """群邀请链接当注册资格用：链接有效，且发链接人还有邀请名额（管理员不限；开放注册时不看名额）"""
     invite = await group_service.find_invite(db, token)
+    if await site_settings_service.get_registration_mode(db) == "open":
+        return invite
     creator = (
         await db.scalar(
             select(User).options(selectinload(User.ea_bindings)).where(User.id == invite.created_by)
@@ -496,6 +498,7 @@ async def _build_register_mail(  # noqa: PLR0911 按情形逐个返回比嵌套�
     if group_name is None:
         group_invite_id = None
     eligible = invite_id is not None or group_invite_id is not None
+    registration = await site_settings_service.get_registration_mode(db)
 
     if mode == "ea":
         match = await lookup_ea_by_email(db, email)
@@ -538,7 +541,10 @@ async def _build_register_mail(  # noqa: PLR0911 按情形逐个返回比嵌套�
             return templates.already_registered(
                 to=email, persona_name=None, login_url=login_url, forgot_url=forgot_url, meta=meta
             )
-        if settings.registration_invite_required and not eligible:
+        if registration == "closed":
+            logger.info("暂停注册中，EA 邮箱不是旧账号，跳过")
+            return None
+        if registration == "invite" and not eligible:
             logger.info("EA 邮箱注册缺少邀请码，跳过")
             return None
         token = await _create_verification(
@@ -570,7 +576,10 @@ async def _build_register_mail(  # noqa: PLR0911 按情形逐个返回比嵌套�
         return templates.already_registered(
             to=email, persona_name=None, login_url=login_url, forgot_url=forgot_url, meta=meta
         )
-    if settings.registration_invite_required and not eligible:
+    if registration == "closed":
+        logger.info("暂停注册中，其他邮箱注册跳过")
+        return None
+    if registration == "invite" and not eligible:
         logger.info("其他邮箱注册缺少邀请码，跳过")
         return None
     token = await _create_verification(
@@ -755,6 +764,10 @@ async def _unique_username(db: AsyncSession, preferred: str | None) -> str:
 
 
 async def _finish_register(db: AsyncSession, row: EmailVerification, password: str) -> User:
+    # 验证信发出后才暂停注册的，也不能再建号
+    registration = await site_settings_service.get_registration_mode(db)
+    if registration == "closed":
+        raise AccountError("REGISTRATION_CLOSED", "现在暂停注册，暂时不能新建账号", 403)
     payload = row.payload or {}
     now = _now()
     mode = payload.get("mode")
@@ -790,7 +803,9 @@ async def _finish_register(db: AsyncSession, row: EmailVerification, password: s
     if payload.get("group_invite_id"):
         # 先进群（锁群行、扣链接次数），再扣发链接人的名额（锁发链接人）；任一步失败整体回滚
         await _join_group_for_register(db, int(payload["group_invite_id"]), user)
-        await _consume_group_invite_quota(db, int(payload["group_invite_id"]), user)
+        # 开放注册时谁都能注册，不用再占发链接人的名额
+        if registration == "invite":
+            await _consume_group_invite_quota(db, int(payload["group_invite_id"]), user)
     elif payload.get("invite_id"):
         await _consume_invite(db, int(payload["invite_id"]), user.id)
     await db.flush()

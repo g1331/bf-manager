@@ -37,6 +37,20 @@ export const GROUP_ACTION_LABEL: Record<string, string> = {
   group_invite_revoke: "作废群邀请链接",
 };
 
+/** 站点设置的审计记录：game 固定为 "site" */
+export const SITE_AUDIT_GAME = "site";
+
+export const SITE_ACTION_LABEL: Record<string, string> = {
+  site_registration_mode: "切换注册方式",
+};
+
+/** 审计列表“游戏”一列：群组、站点操作不属于某个游戏 */
+export function auditGameLabel(game: string): string {
+  if (game === GROUP_AUDIT_GAME) return "群组";
+  if (game === SITE_AUDIT_GAME) return "站点";
+  return game.toUpperCase();
+}
+
 export interface AuditLogPage {
   items: AuditLogItem[];
   total: number;

@@ -123,6 +123,7 @@ async def assert_upgraded() -> None:
             "groups",
             "group_members",
             "group_invites",
+            "site_settings",
         ):
             reg = (await conn.execute(text(f"SELECT to_regclass('public.{table}')"))).scalar_one()
             assert reg is not None, f"{table} missing"

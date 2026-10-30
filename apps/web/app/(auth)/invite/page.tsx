@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { AuthCard } from "@/components/auth/AuthCard";
+import { useAuthConfig } from "@/components/auth/Turnstile";
 import { useHashToken } from "@/hooks/useHashToken";
 import { useSession } from "@/hooks/useSession";
 import {
@@ -28,6 +29,8 @@ export default function InvitePage() {
   const qc = useQueryClient();
   const hashToken = useHashToken();
   const session = useSession();
+  const config = useAuthConfig();
+  const registrationClosed = config.data?.registration_mode === "closed";
   const [token, setToken] = useState<string | null | undefined>(undefined);
 
   useEffect(() => {
@@ -124,7 +127,9 @@ export default function InvitePage() {
             </Button>
           ) : (
             <p className="text-muted-foreground text-sm leading-relaxed">
-              邀请人的邀请名额已经用完，这条链接只能给已有账号的人用。
+              {registrationClosed
+                ? "现在暂停注册，这条链接只能给已有账号的人用。"
+                : "邀请人的邀请名额已经用完，这条链接只能给已有账号的人用。"}
             </p>
           )}
         </div>

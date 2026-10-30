@@ -33,7 +33,7 @@ from app.schemas.group import (
     InviteTokenRequest,
     MemberRoleRequest,
 )
-from app.services import account_service, group_service
+from app.services import account_service, group_service, site_settings_service
 
 router = APIRouter()
 invite_router = APIRouter()
@@ -265,8 +265,13 @@ async def lookup_invite(payload: InviteTokenRequest, db: DbDep) -> InviteLookupR
         select(func.count()).select_from(GroupMember).where(GroupMember.group_id == group.id)
     )
     inviter = (await _users(db, {invite.created_by or 0})).get(invite.created_by or 0)
-    can_register = True
-    if inviter is None:
+    # 能不能拿这条链接注册新账号：暂停注册时不能；开放注册时不看名额；邀请注册时看发链接人的名额
+    registration = await site_settings_service.get_registration_mode(db)
+    if registration == "closed":
+        can_register = False
+    elif registration == "open":
+        can_register = True
+    elif inviter is None:
         can_register = False
     else:
         left = await account_service.invite_quota_left(db, inviter)

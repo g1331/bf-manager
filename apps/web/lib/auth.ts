@@ -51,7 +51,11 @@ export interface EmailLoginRequest {
   password: string;
 }
 
+/** open 开放注册 / invite 邀请注册 / closed 暂停注册（旧账号认领照常） */
+export type RegistrationMode = "open" | "invite" | "closed";
+
 export interface AuthConfig {
+  registration_mode: RegistrationMode;
   invite_required: boolean;
   // 为 null 表示没启用人机验证
   turnstile_site_key: string | null;

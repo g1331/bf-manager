@@ -1,0 +1,879 @@
+[
+  {
+    "code": "m05",
+    "category": "载具",
+    "expansion": "",
+    "name": "优异奥古斯都勋章",
+    "description": "进行坦克兵种专属任务。",
+    "score": 25000,
+    "stages": [
+      { "name": "瘫痪 3 台履带车", "score": 5000 },
+      { "name": "用任何坦克击杀 25 人", "score": 5000 },
+      { "name": "取得 10 次乘客助攻", "score": 5000 },
+      { "name": "在同一回合中，用任何坦克击杀 10 人", "score": 5000 },
+      { "name": "用任何坦克在同一条生命中击杀 5 人", "score": 0 }
+    ],
+    "dogtags": ["df015"]
+  },
+  {
+    "code": "m06",
+    "category": "载具",
+    "expansion": "",
+    "name": "优异伊卡洛斯勋章",
+    "description": "进行飞行员兵种专属任务。",
+    "score": 25000,
+    "stages": [
+      { "name": "损毁 10 个机翼", "score": 5000 },
+      { "name": "用任何飞机击杀 20 人", "score": 5000 },
+      { "name": "用任何攻击机击杀 10 人", "score": 5000 },
+      { "name": "用任何轰炸机击杀 10 人", "score": 5000 },
+      { "name": "用任何战斗机击杀 10 人", "score": 0 }
+    ],
+    "dogtags": ["df016"]
+  },
+  {
+    "code": "m08",
+    "category": "载具",
+    "expansion": "",
+    "name": "牛顿力学军功勋章",
+    "description": "专注在载具战斗上。",
+    "score": 25000,
+    "stages": [
+      { "name": "对载具造成 75 次伤害", "score": 5000 },
+      { "name": "瘫痪 10 台载具", "score": 5000 },
+      { "name": "摧毁 10 个载具", "score": 0 }
+    ],
+    "dogtags": ["df018"]
+  },
+  {
+    "code": "m34",
+    "category": "载具",
+    "expansion": "",
+    "name": "公牛勋章",
+    "description": "专注于机械巨兽。",
+    "score": 25000,
+    "stages": [
+      { "name": "在机械巨兽中摧毁 5 个载具", "score": 5000 },
+      { "name": "在机械巨兽中，得到 50 点士兵伤害", "score": 5000 },
+      { "name": "用机械巨兽击杀 20 人", "score": 0 }
+    ],
+    "dogtags": ["df044"]
+  },
+  {
+    "code": "mxp105",
+    "category": "载具",
+    "expansion": "XPACK1",
+    "name": "机械勋章指令",
+    "description": "专注于法国载具。",
+    "score": 25000,
+    "stages": [
+      { "name": "在圣沙蒙坦克中进行 25 次击杀", "score": 5000 },
+      { "name": "在 Char 2C 法国机械巨兽中进行 3 次击杀", "score": 5000 },
+      { "name": "在 BL 9.2 攻城炮中进行 3 次击杀", "score": 5000 }
+    ],
+    "dogtags": []
+  },
+  {
+    "code": "mxp205",
+    "category": "载具",
+    "expansion": "XPACK2",
+    "name": "哥萨克骑兵的马刺",
+    "description": "专注于俄罗斯帝国载具。",
+    "score": 25000,
+    "stages": [
+      { "name": "用朴帝洛夫·加福德装甲车进行 15 次击杀", "score": 5000 },
+      { "name": "用西科斯基·伊利亚·穆罗梅茨轰炸机进行 5 次击杀", "score": 5000 },
+      { "name": "用海岸阵地加农炮进行 3 次击杀", "score": 5000 }
+    ],
+    "dogtags": []
+  },
+  {
+    "code": "mxp304",
+    "category": "载具",
+    "expansion": "XPACK3",
+    "name": "波塞顿三叉戟",
+    "description": "专注海上载具战",
+    "score": 25000,
+    "stages": [
+      { "name": "用 L 级驱逐舰击杀 10 人", "score": 5000 },
+      { "name": "用 C 级飞船击杀 10 人", "score": 5000 },
+      { "name": "摧毁 C 级飞船 1 次", "score": 5000 },
+      { "name": "摧毁 L 级驱逐舰 1 次", "score": 5000 }
+    ],
+    "dogtags": []
+  },
+  {
+    "code": "m01",
+    "category": "兵种",
+    "expansion": "",
+    "name": "钢铁之星勋章",
+    "description": "进行突击兵种专属任务。",
+    "score": 25000,
+    "stages": [
+      { "name": "以突击兵身份击杀 20 人", "score": 5000 },
+      { "name": "用炸药击杀 10 人", "score": 5000 },
+      { "name": "用反坦克手榴弹击杀 10 人", "score": 5000 },
+      { "name": "用反坦克火箭炮击杀 10 人", "score": 5000 },
+      { "name": "以突击兵身份在同一条生命中击杀 5 人", "score": 0 }
+    ],
+    "dogtags": ["df011"]
+  },
+  {
+    "code": "m02",
+    "category": "兵种",
+    "expansion": "",
+    "name": "希波克拉底勋章",
+    "description": "进行医护兵种专属任务。",
+    "score": 25000,
+    "stages": [
+      { "name": "以医护兵身份击杀 20 人", "score": 5000 },
+      { "name": "进行 100 次治疗", "score": 5000 },
+      { "name": "用步枪手榴弹击杀 20 人", "score": 5000 },
+      { "name": "进行 20 次急救", "score": 5000 },
+      { "name": "以医护兵身份在同一条生命中击杀 5 人", "score": 0 }
+    ],
+    "dogtags": ["db059", "db060", "df012"]
+  },
+  {
+    "code": "m03",
+    "category": "兵种",
+    "expansion": "",
+    "name": "优异鹰隼勋章",
+    "description": "进行侦察兵种专属任务。",
+    "score": 25000,
+    "stages": [
+      { "name": "以侦察兵身份击杀 20 人", "score": 5000 },
+      { "name": "以侦察兵身份，击杀 10 个侦察兵", "score": 5000 },
+      { "name": "以 K 弹摧毁 3 次载具", "score": 5000 },
+      { "name": "爆头 10 次", "score": 5000 },
+      { "name": "以侦察兵身份在同一条生命中击杀 5 人", "score": 0 }
+    ],
+    "dogtags": ["db061", "df013"]
+  },
+  {
+    "code": "m04",
+    "category": "兵种",
+    "expansion": "",
+    "name": "优异圣克里斯多福勋章",
+    "description": "进行支援兵种专属任务。",
+    "score": 25000,
+    "stages": [
+      { "name": "以支援兵身份击杀 20 人", "score": 5000 },
+      { "name": "取得 15 次火力压制助攻", "score": 5000 },
+      { "name": "取得 10 次迫击炮击杀", "score": 5000 },
+      { "name": "进行 20 次重新补给", "score": 5000 },
+      { "name": "以支援兵身份在同一条生命中击杀 5 人", "score": 0 }
+    ],
+    "dogtags": ["db057", "df014"]
+  },
+  {
+    "code": "m35",
+    "category": "兵种",
+    "expansion": "",
+    "name": "可汗勋章",
+    "description": "专注于骑兵武器。",
+    "score": 25000,
+    "stages": [
+      { "name": "在马背上取得 20 次击杀数", "score": 5000 },
+      { "name": "用骑兵军刀击杀 10 人", "score": 5000 },
+      { "name": "同一回合中，在马背上完成 10 次击杀", "score": 0 }
+    ],
+    "dogtags": ["df045"]
+  },
+  {
+    "code": "mxp102",
+    "category": "兵种",
+    "expansion": "XPACK1",
+    "name": "拉斐特的国家指令",
+    "description": "专注于法国阵营。",
+    "score": 25000,
+    "stages": [
+      { "name": "以法国突击兵兵种进行 25 次击杀", "score": 5000 },
+      { "name": "以法国医护兵兵种进行 25 次击杀", "score": 5000 },
+      { "name": "以法国侦察兵兵种进行 25 次击杀", "score": 5000 },
+      { "name": "以法国支援兵兵种进行 25 次击杀", "score": 5000 },
+      { "name": "用圣沙蒙突击坦克进行 25 次击杀", "score": 5000 }
+    ],
+    "dogtags": []
+  },
+  {
+    "code": "mxp106",
+    "category": "兵种",
+    "expansion": "",
+    "name": "勤务勋章，第一级",
+    "description": "专注于步兵兵种。",
+    "score": 25000,
+    "stages": [
+      { "name": "以突击兵身份击杀 20 人", "score": 5000 },
+      { "name": "进行 20 次急救", "score": 5000 },
+      { "name": "进行 20 次重新补给", "score": 5000 },
+      { "name": "用单动式步枪击杀 10 人", "score": 5000 }
+    ],
+    "dogtags": []
+  },
+  {
+    "code": "mxp107",
+    "category": "兵种",
+    "expansion": "",
+    "name": "服役勋章",
+    "description": "专注于步兵兵种。",
+    "score": 25000,
+    "stages": [
+      { "name": "以突击兵身份游玩 10 分钟", "score": 5000 },
+      { "name": "以医护兵身份游玩 10 分钟", "score": 5000 },
+      { "name": "以支援兵身份游玩 10 分钟", "score": 5000 },
+      { "name": "以侦察兵身份游玩 10 分钟", "score": 5000 }
+    ],
+    "dogtags": []
+  },
+  {
+    "code": "mxp202",
+    "category": "兵种",
+    "expansion": "XPACK2",
+    "name": "俄罗斯英雄",
+    "description": "专注于俄罗斯帝国阵营上。",
+    "score": 25000,
+    "stages": [
+      { "name": "用俄罗斯突击兵装备进行 25 次击杀", "score": 5000 },
+      { "name": "用俄罗斯医护兵装备进行 25 次击杀", "score": 5000 },
+      { "name": "用俄罗斯支援兵装备进行 25 次击杀", "score": 5000 },
+      { "name": "用俄罗斯侦察兵装备进行 25 次击杀", "score": 5000 }
+    ],
+    "dogtags": []
+  },
+  {
+    "code": "mxp302",
+    "category": "兵种",
+    "expansion": "XPACK3",
+    "name": "约克公爵勋章",
+    "description": "在皇家海军陆战队有着卓越的服役表现",
+    "score": 25000,
+    "stages": [
+      { "name": "以皇家海军陆战队突击兵进行 25 次击杀", "score": 5000 },
+      { "name": "以皇家海军陆战队医护兵进行 25 次击杀", "score": 5000 },
+      { "name": "以皇家海军陆战队支援兵进行 25 次击杀", "score": 5000 },
+      { "name": "以皇家海军陆战队侦察兵进行 25 次击杀", "score": 5000 }
+    ],
+    "dogtags": []
+  },
+  {
+    "code": "m09",
+    "category": "武器",
+    "expansion": "",
+    "name": "突击兵英勇勋章",
+    "description": "专注于冲锋枪武器。",
+    "score": 25000,
+    "stages": [
+      { "name": "用冲锋枪击杀 20 人", "score": 5000 },
+      { "name": "以冲锋枪爆头 10 次", "score": 5000 },
+      { "name": "用冲锋枪在同一条生命中击杀 5 人", "score": 0 }
+    ],
+    "dogtags": ["df019"]
+  },
+  {
+    "code": "m10",
+    "category": "武器",
+    "expansion": "",
+    "name": "LeFever 突击兵勋章",
+    "description": "专注于霰弹枪武器。",
+    "score": 25000,
+    "stages": [
+      { "name": "用霰弹枪击杀 20 人", "score": 5000 },
+      { "name": "以霰弹枪爆头 10 次", "score": 5000 },
+      { "name": "用霰弹枪在同一条生命中击杀 5 人", "score": 0 }
+    ],
+    "dogtags": ["df020"]
+  },
+  {
+    "code": "m11",
+    "category": "武器",
+    "expansion": "",
+    "name": "医护兵英勇勋章",
+    "description": "专注于医护兵步枪武器。",
+    "score": 25000,
+    "stages": [
+      { "name": "用半自动步枪击杀 20 人", "score": 5000 },
+      { "name": "以半自动步枪爆头 10 次", "score": 5000 },
+      { "name": "用半自动步枪在同一条生命中击杀 5 人", "score": 0 }
+    ],
+    "dogtags": ["df021"]
+  },
+  {
+    "code": "m12",
+    "category": "武器",
+    "expansion": "",
+    "name": "支援兵英勇勋章",
+    "description": "专注于轻机枪武器。",
+    "score": 25000,
+    "stages": [
+      { "name": "用轻机枪击杀 20 人", "score": 5000 },
+      { "name": "以轻机枪爆头 5 次", "score": 5000 },
+      { "name": "用轻机枪在同一条生命中击杀 5 人", "score": 0 }
+    ],
+    "dogtags": ["df022"]
+  },
+  {
+    "code": "m13",
+    "category": "武器",
+    "expansion": "",
+    "name": "侦察兵英勇勋章",
+    "description": "专注于手动枪机步枪武器。",
+    "score": 25000,
+    "stages": [
+      { "name": "用单动式步枪击杀 20 人", "score": 5000 },
+      { "name": "以单动式步枪爆头 10 次", "score": 5000 },
+      { "name": "用单动式步枪在同一条生命中击杀 5 人", "score": 0 }
+    ],
+    "dogtags": ["df023"]
+  },
+  {
+    "code": "m14",
+    "category": "武器",
+    "expansion": "",
+    "name": "闪电十字勋章",
+    "description": "专注于半自动手枪。",
+    "score": 25000,
+    "stages": [
+      { "name": "用半自动手枪击杀 10 人", "score": 5000 },
+      { "name": "以半自动手枪爆头 5 次", "score": 5000 },
+      { "name": "用半自动手枪在同一条生命中击杀 5 人", "score": 0 }
+    ],
+    "dogtags": ["df024"]
+  },
+  {
+    "code": "m15",
+    "category": "武器",
+    "expansion": "",
+    "name": "圣巴斯弟盎勋章",
+    "description": "专注于左轮手枪。",
+    "score": 25000,
+    "stages": [
+      { "name": "用左轮手枪击杀 10 人", "score": 5000 },
+      { "name": "以左轮手枪爆头 5 次", "score": 5000 },
+      { "name": "用左轮手枪在同一条生命中击杀 5 人", "score": 0 }
+    ],
+    "dogtags": ["df025"]
+  },
+  {
+    "code": "m16",
+    "category": "武器",
+    "expansion": "",
+    "name": "红龙勋章",
+    "description": "专注于爆裂物武器。",
+    "score": 25000,
+    "stages": [
+      { "name": "用爆裂物击杀 10 人", "score": 5000 },
+      { "name": "利用爆裂物摧毁 5 个载具", "score": 5000 },
+      { "name": "用爆裂物在同一条生命中击杀 5 人", "score": 0 }
+    ],
+    "dogtags": ["df026"]
+  },
+  {
+    "code": "m17",
+    "category": "武器",
+    "expansion": "",
+    "name": "雄狮勋章",
+    "description": "专注于近战武器。",
+    "score": 25000,
+    "stages": [
+      { "name": "用近战武器击杀 10 人", "score": 5000 },
+      { "name": "在同一回合中，取得 5 次近战击杀", "score": 5000 },
+      { "name": "用近战武器在同一条生命中击杀 3 人", "score": 0 }
+    ],
+    "dogtags": ["df027"]
+  },
+  {
+    "code": "m18",
+    "category": "武器",
+    "expansion": "",
+    "name": "坚毅勋章",
+    "description": "专注于定点武器。",
+    "score": 25000,
+    "stages": [
+      { "name": "用定点武器击杀 15 人", "score": 5000 },
+      { "name": "以定点武器摧毁 5 个载具", "score": 5000 },
+      { "name": "在同一回合中，用定点武器击杀 10 人", "score": 0 }
+    ],
+    "dogtags": ["df028"]
+  },
+  {
+    "code": "mxp103",
+    "category": "武器",
+    "expansion": "XPACK1",
+    "name": "圣女贞德十字勋章",
+    "description": "专注于法国武器。",
+    "score": 25000,
+    "stages": [
+      { "name": "用利贝罗勒 1918 进行 20 次击杀", "score": 5000 },
+      { "name": "用 RSC MLE1917 进行 20 次击杀", "score": 5000 },
+      { "name": "用勒贝尔 M1886 进行 20 次击杀", "score": 5000 },
+      { "name": "用绍沙轻机枪进行 20 次击杀", "score": 5000 },
+      { "name": "用 Sjögren Inertial 进行 20 次击杀", "score": 5000 }
+    ],
+    "dogtags": []
+  },
+  {
+    "code": "mxp108",
+    "category": "武器",
+    "expansion": "",
+    "name": "神射手勤务勋章",
+    "description": "专注于步兵武器。",
+    "score": 25000,
+    "stages": [
+      { "name": "用 Model 10-A（原厂）取得 20 个击杀数", "score": 5000 },
+      { "name": "用蒙德拉贡步枪（冲锋）取得 20 个击杀数", "score": 5000 },
+      { "name": "用 MG15 n.A.（轻量化）取得 20 个击杀数", "score": 5000 },
+      { "name": "用 M1903（实验）取得 20 个击杀数", "score": 5000 }
+    ],
+    "dogtags": []
+  },
+  {
+    "code": "mxp109",
+    "category": "武器",
+    "expansion": "",
+    "name": "神射手精通勋章",
+    "description": "专注于步兵武器。",
+    "score": 25000,
+    "stages": [
+      { "name": "用 12g 自动霰弹枪（Back-Bored）取得 20 个击杀数", "score": 5000 },
+      { "name": "用自动装填步枪 8.25（加长）取得 20 个击杀数", "score": 5000 },
+      { "name": "用 M1918 勃朗宁自动步枪（壕沟战）取得 20 个击杀数", "score": 5000 },
+      { "name": "用 Gewehr 98（步兵）取得 20 个击杀数", "score": 5000 }
+    ],
+    "dogtags": []
+  },
+  {
+    "code": "mxp203",
+    "category": "武器",
+    "expansion": "XPACK2",
+    "name": "勃鲁西洛夫之星",
+    "description": "专注于俄罗斯帝国武器上。",
+    "score": 25000,
+    "stages": [
+      { "name": "用 Model 1900 进行 20 次击杀", "score": 5000 },
+      { "name": "用费德洛夫自动步枪进行 20 次击杀", "score": 5000 },
+      { "name": "用 Parabellum MG14/17 进行 20 次击杀", "score": 5000 },
+      { "name": "用莫辛-纳甘 M91 步枪进行 20 次击杀", "score": 5000 }
+    ],
+    "dogtags": []
+  },
+  {
+    "code": "mxp303",
+    "category": "武器",
+    "expansion": "XPACK3",
+    "name": "亡者头颅勋章",
+    "description": "海军武器达人",
+    "score": 25000,
+    "stages": [
+      { "name": "用 M1917 战壕卡宾枪击杀 20 人", "score": 5000 },
+      { "name": "用 Farquhar-Hill 步枪击杀 20 人", "score": 5000 },
+      { "name": "用 M1917 机枪击杀 20 人", "score": 5000 },
+      { "name": "用卡尔卡诺 M91 卡宾枪击杀 20 人", "score": 5000 }
+    ],
+    "dogtags": []
+  },
+  {
+    "code": "mxp403",
+    "category": "武器",
+    "expansion": "XPACK4",
+    "name": "默米东的黄金子弹",
+    "description": "《启示录》武器达人",
+    "score": 25000,
+    "stages": [
+      { "name": "用 RSC 冲锋枪进行 20 次击杀", "score": 5000 },
+      { "name": "用 Howell 自动步枪进行 20 次击杀", "score": 5000 },
+      { "name": "用轻机枪 08/18 进行 20 次击杀", "score": 5000 },
+      { "name": "用罗斯 MkIII 进行 20 次击杀", "score": 5000 }
+    ],
+    "dogtags": []
+  },
+  {
+    "code": "m19",
+    "category": "游戏模式",
+    "expansion": "",
+    "name": "腓特烈二世皇冠",
+    "description": "专注于行动模式。",
+    "score": 25000,
+    "stages": [
+      { "name": "游玩 1 回合的行动模式", "score": 5000 },
+      { "name": "在行动模式中赢得 1 回合", "score": 5000 },
+      { "name": "在行动模式中占领 10 面旗帜", "score": 0 }
+    ],
+    "dogtags": ["df029"]
+  },
+  {
+    "code": "m20",
+    "category": "游戏模式",
+    "expansion": "",
+    "name": "亚历山大之星",
+    "description": "专注于征服模式。",
+    "score": 25000,
+    "stages": [
+      { "name": "游玩 1 回合的征服模式", "score": 5000 },
+      { "name": "在征服模式中赢得 1 回合", "score": 5000 },
+      { "name": "在征服模式中占领 10 面旗帜", "score": 0 }
+    ],
+    "dogtags": ["df030"]
+  },
+  {
+    "code": "m21",
+    "category": "游戏模式",
+    "expansion": "",
+    "name": "查理曼大帝十字架",
+    "description": "专注于突袭模式。",
+    "score": 25000,
+    "stages": [
+      { "name": "游玩 1 回合的突袭模式", "score": 5000 },
+      { "name": "在突袭模式中赢得 1 回合", "score": 5000 },
+      { "name": "武装 5 个目标", "score": 0 }
+    ],
+    "dogtags": ["df031"]
+  },
+  {
+    "code": "m22",
+    "category": "游戏模式",
+    "expansion": "",
+    "name": "统领之星",
+    "description": "专注于抢攻模式。",
+    "score": 25000,
+    "stages": [
+      { "name": "游玩 2 回合的抢攻模式", "score": 5000 },
+      { "name": "在抢攻模式中赢得 1 回合", "score": 5000 },
+      { "name": "在抢攻模式中占领 20 面旗帜", "score": 0 }
+    ],
+    "dogtags": ["df032"]
+  },
+  {
+    "code": "m23",
+    "category": "游戏模式",
+    "expansion": "",
+    "name": "骷髅军团勋章",
+    "description": "专注于团队死斗模式。",
+    "score": 25000,
+    "stages": [
+      { "name": "游玩 2 回合的团队死斗模式", "score": 5000 },
+      { "name": "在团队死斗模式中赢得 1 回合", "score": 5000 },
+      { "name": "在同一回合中击杀 20 人", "score": 0 }
+    ],
+    "dogtags": ["df033"]
+  },
+  {
+    "code": "m24",
+    "category": "游戏模式",
+    "expansion": "",
+    "name": "飞禽十字勋章",
+    "description": "专注于战争信鸽。",
+    "score": 25000,
+    "stages": [
+      { "name": "游玩 2 回合的战争信鸽模式", "score": 5000 },
+      { "name": "在战争信鸽模式中赢得 1 回合", "score": 5000 },
+      { "name": "放出 5 只信鸽", "score": 0 }
+    ],
+    "dogtags": ["df034"]
+  },
+  {
+    "code": "mxp01",
+    "category": "游戏模式",
+    "expansion": "XPACK1",
+    "name": "维钦托利的大部队",
+    "description": "专注于前线模式。",
+    "score": 25000,
+    "stages": [
+      { "name": "在前线模式中夺得 20 面旗帜", "score": 5000 },
+      { "name": "在前线模式中赢得 1 场游戏", "score": 5000 },
+      { "name": "在前线模式中夺得 2 个目标", "score": 5000 }
+    ],
+    "dogtags": []
+  },
+  {
+    "code": "mxp201",
+    "category": "游戏模式",
+    "expansion": "XPACK2",
+    "name": "俄罗斯劳工勤务勋章",
+    "description": "专注于空降补给上。",
+    "score": 25000,
+    "stages": [
+      { "name": "进行 5 次空降补给防守击杀", "score": 5000 },
+      { "name": "占领 5 个空降补给", "score": 5000 },
+      { "name": "在空降补给中赢得 1 场游戏", "score": 5000 }
+    ],
+    "dogtags": []
+  },
+  {
+    "code": "mxp402",
+    "category": "游戏模式",
+    "expansion": "XPACK4",
+    "name": "天使之翼",
+    "description": "展示对空战技巧的精熟度",
+    "score": 25000,
+    "stages": [
+      { "name": "瘫痪 5 个空中载具", "score": 5000 },
+      { "name": "以空中载具乘客身份取得 5 个击杀数", "score": 5000 },
+      { "name": "对空中载具造成 500 点伤害", "score": 5000 },
+      { "name": "在空中突袭中赢得 1 场游戏", "score": 5000 }
+    ],
+    "dogtags": []
+  },
+  {
+    "code": "m07",
+    "category": "战斗",
+    "expansion": "",
+    "name": "优异黄金之心勋章",
+    "description": "专注在近距离战斗上。",
+    "score": 25000,
+    "stages": [
+      { "name": "用佩枪击杀 10 人", "score": 5000 },
+      { "name": "用冲锋枪击杀 20 人", "score": 5000 },
+      { "name": "用霰弹枪击杀 20 人", "score": 5000 },
+      { "name": "用近战刀械击杀 5 人", "score": 5000 },
+      { "name": "用近战钝器击杀 5 人", "score": 0 }
+    ],
+    "dogtags": ["df017"]
+  },
+  {
+    "code": "m26",
+    "category": "战斗",
+    "expansion": "",
+    "name": "雄鹿皇家勋章",
+    "description": "专注于战斗效率。",
+    "score": 25000,
+    "stages": [
+      { "name": "在同一回合中击杀 10 人", "score": 5000 },
+      { "name": "在同一条生命中击杀 5 人", "score": 5000 },
+      { "name": "赢得 2 回合", "score": 0 }
+    ],
+    "dogtags": ["df036"]
+  },
+  {
+    "code": "m27",
+    "category": "战斗",
+    "expansion": "",
+    "name": "狙击手护卫勋章",
+    "description": "专注于精准度。",
+    "score": 25000,
+    "stages": [
+      { "name": "用任何武器，在同一回合中爆头 5 次", "score": 5000 },
+      { "name": "用任何武器，在同一条生命中爆头 3 次", "score": 5000 },
+      { "name": "用手动枪机步枪击杀 10 个侦察兵（反狙击）", "score": 0 }
+    ],
+    "dogtags": ["df037"]
+  },
+  {
+    "code": "m28",
+    "category": "战斗",
+    "expansion": "",
+    "name": "皇冠皇家勋章",
+    "description": "成为佼佼者。",
+    "score": 25000,
+    "stages": [
+      { "name": "在同一回合中拿下前 5 名", "score": 5000 },
+      { "name": "取得 2 次多重击杀", "score": 5000 },
+      { "name": "在同一回合中击杀 20 人", "score": 0 }
+    ],
+    "dogtags": ["df038"]
+  },
+  {
+    "code": "m29",
+    "category": "战斗",
+    "expansion": "",
+    "name": "深红之心勋章",
+    "description": "与你的队伍执行支援任务。",
+    "score": 25000,
+    "stages": [
+      { "name": "进行 10 次团队助攻", "score": 5000 },
+      { "name": "进行 10 次火力压制助攻", "score": 5000 },
+      { "name": "进行 15 次索敌助攻", "score": 0 }
+    ],
+    "dogtags": ["df039"]
+  },
+  {
+    "code": "mxp104",
+    "category": "战斗",
+    "expansion": "XPACK1",
+    "name": "拉萨勒勋章",
+    "description": "专注于法国地图。",
+    "score": 25000,
+    "stages": [
+      { "name": "在凡尔登高地进行 10 次击杀", "score": 5000 },
+      { "name": "在法乌克斯要塞进行 10 次击杀", "score": 5000 },
+      { "name": "在苏瓦松进行 10 次击杀", "score": 5000 },
+      { "name": "在决裂进行 10 次击杀", "score": 5000 },
+      { "name": "在恶魔熔炉行动模式中赢得 1 场游戏", "score": 5000 }
+    ],
+    "dogtags": []
+  },
+  {
+    "code": "mxp204",
+    "category": "战斗",
+    "expansion": "XPACK2",
+    "name": "彼得大帝指令",
+    "description": "专注于俄罗斯地图上。",
+    "score": 25000,
+    "stages": [
+      { "name": "在武普库夫山口进行 10 次击杀", "score": 5000 },
+      { "name": "在勃鲁西洛夫关口进行 10 次击杀", "score": 5000 },
+      { "name": "在加利西亚进行 10 次击杀", "score": 5000 },
+      { "name": "取得赤潮行动胜利", "score": 5000 }
+    ],
+    "dogtags": []
+  },
+  {
+    "code": "mxp301",
+    "category": "战斗",
+    "expansion": "XPACK3",
+    "name": "士兵的银色长剑",
+    "description": "海军大战",
+    "score": 25000,
+    "stages": [
+      { "name": "摧毁 5 个海上载具", "score": 5000 },
+      { "name": "以海上载具击杀 20 人", "score": 5000 },
+      { "name": "达成 5 次旗帜防守击杀", "score": 5000 },
+      { "name": "在海丽丝岬赢得一场比赛", "score": 5000 }
+    ],
+    "dogtags": []
+  },
+  {
+    "code": "mxp305",
+    "category": "战斗",
+    "expansion": "XPACK3",
+    "name": "凯撒花环",
+    "description": "完成着重于加里波利战役的行动",
+    "score": 25000,
+    "stages": [
+      { "name": "在海丽丝岬击杀 10 人", "score": 5000 },
+      { "name": "在阿奇巴巴击杀 10 人", "score": 5000 },
+      { "name": "赢得加里波利行动", "score": 5000 }
+    ],
+    "dogtags": []
+  },
+  {
+    "code": "mxp306",
+    "category": "战斗",
+    "expansion": "XPACK3",
+    "name": "大师指南针",
+    "description": "在海军大战中展示出色的策略",
+    "score": 25000,
+    "stages": [
+      { "name": "在黑尔戈兰湾进行 10 次击杀", "score": 5000 },
+      { "name": "在泽布吕赫进行 10 次击杀", "score": 5000 },
+      { "name": "对 L 级驱逐舰造成 1000 点伤害", "score": 5000 }
+    ],
+    "dogtags": []
+  },
+  {
+    "code": "mxp401",
+    "category": "战斗",
+    "expansion": "XPACK4",
+    "name": "铁甲之拳勋章",
+    "description": "精熟末日之战中的战斗技巧",
+    "score": 25000,
+    "stages": [
+      { "name": "用近战武器造成 500 点士兵伤害", "score": 5000 },
+      { "name": "用毒气手榴弹造成 500 点士兵伤害", "score": 5000 },
+      { "name": "用燃烧手榴弹造成 500 点士兵伤害", "score": 5000 },
+      { "name": "用绊索炸弹（燃烧）造成 500 点士兵伤害", "score": 5000 },
+      { "name": "用霰弹枪造成 1000 点士兵伤害", "score": 5000 }
+    ],
+    "dogtags": []
+  },
+  {
+    "code": "mxp404",
+    "category": "战斗",
+    "expansion": "XPACK4",
+    "name": "探险家的黄金球",
+    "description": "战士对《启示录》战场的精熟度",
+    "score": 25000,
+    "stages": [
+      { "name": "在帕斯尚尔进行 10 次击杀", "score": 5000 },
+      { "name": "在索姆河进行 10 次击杀", "score": 5000 },
+      { "name": "在卡波雷托进行 10 次击杀", "score": 5000 }
+    ],
+    "dogtags": []
+  },
+  {
+    "code": "mxp405",
+    "category": "战斗",
+    "expansion": "XPACK4",
+    "name": "一等银盾",
+    "description": "临危不乱",
+    "score": 25000,
+    "stages": [
+      { "name": "在佩戴防毒面具的情况下取得 10 个击杀数", "score": 5000 },
+      { "name": "在自身着火的情况下取得 10 个击杀数", "score": 5000 },
+      { "name": "在装备“掩护特殊装备”的情况下击杀 10 人", "score": 5000 }
+    ],
+    "dogtags": []
+  },
+  {
+    "code": "mxp406",
+    "category": "战斗",
+    "expansion": "XPACK4",
+    "name": "永恒斗士勋章",
+    "description": "展示对《Battlefield 1》的全面精熟度",
+    "score": 25000,
+    "stages": [
+      { "name": "在主游戏的地图上获得 50,000 分", "score": 5000 },
+      { "name": "在《誓死坚守》的地图上获得 50,000 分", "score": 5000 },
+      { "name": "在《以沙皇之名》的地图上获得 50,000 分", "score": 5000 },
+      { "name": "在《力挽狂澜》的地图上获得 50,000 分", "score": 5000 },
+      { "name": "在《启示录》的地图上获得 50,000 分", "score": 5000 }
+    ],
+    "dogtags": []
+  },
+  {
+    "code": "m30",
+    "category": "小队",
+    "expansion": "",
+    "name": "神圣合一军团勋章",
+    "description": "与你的小队执行支援任务。",
+    "score": 25000,
+    "stages": [
+      { "name": "进行 10 次小队火力压制助攻", "score": 5000 },
+      { "name": "进行 5 次小队协助击杀", "score": 5000 },
+      { "name": "进行 2 小队复仇击杀", "score": 0 }
+    ],
+    "dogtags": ["df040"]
+  },
+  {
+    "code": "m31",
+    "category": "小队",
+    "expansion": "",
+    "name": "血海军团勋章",
+    "description": "与你的小队执行进攻任务。",
+    "score": 25000,
+    "stages": [
+      { "name": "进行 2 小队救星击杀", "score": 5000 },
+      { "name": "进行 2 小队复仇击杀", "score": 5000 },
+      { "name": "进行 5 小队扫荡击杀", "score": 0 }
+    ],
+    "dogtags": ["df041"]
+  },
+  {
+    "code": "m32",
+    "category": "小队",
+    "expansion": "",
+    "name": "荣耀军团勋章",
+    "description": "与你的小队执行兵种专属任务。",
+    "score": 25000,
+    "stages": [
+      { "name": "进行 20 次小队维修", "score": 5000 },
+      { "name": "进行 20 次小队治疗", "score": 5000 },
+      { "name": "进行 20 次小队重新补给", "score": 0 }
+    ],
+    "dogtags": ["db058", "df042"]
+  },
+  {
+    "code": "m33",
+    "category": "小队",
+    "expansion": "",
+    "name": "苍狼军团勋章",
+    "description": "与你的小队活到最后。",
+    "score": 25000,
+    "stages": [
+      { "name": "进行 10 次小队索敌", "score": 5000 },
+      { "name": "进行 20 次小队急救", "score": 5000 },
+      { "name": "取得 10 次小队重生数", "score": 0 }
+    ],
+    "dogtags": ["df043"]
+  }
+]

@@ -1,0 +1,7028 @@
+[
+ {
+  "name": "載具",
+  "awards": [
+   {
+    "code": "m05",
+    "name": "優異奧古斯都勳章",
+    "description": "進行坦克兵種專屬任務。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/18/35/M05-ee23aa30.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m05a",
+      "name": "癱瘓 3 台履帶車",
+      "description": "癱瘓 3 台履帶車",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m05a_vehTrack__m_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m05b",
+      "name": "用任何坦克擊殺 25 人",
+      "description": "用任何坦克擊殺 25 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m05b_ta__ki_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m05c",
+      "name": "取得 10 次乘客助攻",
+      "description": "取得 10 次乘客助攻",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m05c___pa_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m05d",
+      "name": "在同一回合中，用任何坦克擊殺 10 人",
+      "description": "在同一回合中，用任何坦克擊殺 10 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m05d_ta__ki_r",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m05e",
+      "name": "用任何坦克在同一條生命中擊殺 5 人",
+      "description": "用任何坦克在同一條生命中擊殺 5 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m05e_ta__ki_ghvs",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/18/35/M05-ee23aa30.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/18/35/M05-ee23aa30.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "m06",
+    "name": "優異伊卡洛斯勳章",
+    "description": "進行飛行員兵種專屬任務。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/127/14/M06-81f23bfc.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m06a",
+      "name": "損毀 10 個機翼",
+      "description": "損毀 10 個機翼",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m06a_vehWing__m_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m06b",
+      "name": "用任何飛機擊殺 20 人",
+      "description": "用任何飛機擊殺 20 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m06b_pl__ki_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m06c",
+      "name": "用任何攻擊機擊殺 10 人",
+      "description": "用任何攻擊機擊殺 10 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m06c_pl2s__ki_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m06d",
+      "name": "用任何轟炸機擊殺 10 人",
+      "description": "用任何轟炸機擊殺 10 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m06d_plBo__ki_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m06e",
+      "name": "用任何戰鬥機擊殺 10 人",
+      "description": "用任何戰鬥機擊殺 10 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m06e_plSc__ki_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/127/14/M06-81f23bfc.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/127/14/M06-81f23bfc.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "m08",
+    "name": "牛頓力學軍功勳章",
+    "description": "專注在載具戰鬥上。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/17/56/M08-ef386c24.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m08a",
+      "name": "對載具造成 75 次傷害",
+      "description": "對載具造成 75 次傷害",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m08a_amv__vd_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m08b",
+      "name": "癱瘓 10 台載具",
+      "description": "癱瘓 10 台載具",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m08b_av__ds_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m08c",
+      "name": "摧毀 10 個載具",
+      "description": "摧毀 10 個載具",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m08c_av__de_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/17/56/M08-ef386c24.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/17/56/M08-ef386c24.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "m34",
+    "name": "公牛勳章",
+    "description": "專注於機械巨獸。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/96/8/M34-a00859f4.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m34a",
+      "name": "在機械巨獸中摧毀 5 個載具",
+      "description": "在機械巨獸中摧毀 5 個載具",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m34a__abeh_di_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m34b",
+      "name": "在機械巨獸中，得到 50 點士兵傷害",
+      "description": "在機械巨獸中，得到 50 點士兵傷害",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m34b__abeh_sdoi_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m34c",
+      "name": "用機械巨獸擊殺 20 人",
+      "description": "用機械巨獸擊殺 20 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m34c_abeh__ki_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/96/8/M34-a00859f4.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/96/8/M34-a00859f4.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "mxp105",
+    "name": "機械勳章指令",
+    "description": "專注於法國載具。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/34/121/XP1_M04-2287019c.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "mxp105a",
+      "name": "在聖沙蒙坦克中進行 25 次擊殺",
+      "description": "在聖沙蒙坦克中進行 25 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp105a_taATSCHMD__ki_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp105b",
+      "name": "在 Char 2C 法國機械巨獸中進行 3 次擊殺",
+      "description": "在 Char 2C 法國機械巨獸中進行 3 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp105b_BeSht__ki_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp105c",
+      "name": "在 BL 9.2 攻城砲中進行 3 次擊殺",
+      "description": "在 BL 9.2 攻城砲中進行 3 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp105c_swBL9__ki_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/34/121/XP1_M04-2287019c.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/34/121/XP1_M04-2287019c.png"
+    },
+    "expansions": [
+     {
+      "name": "XPACK1",
+      "mask": 4,
+      "license": "xp1",
+      "prettyName": "誓死堅守"
+     }
+    ],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "mxp205",
+    "name": "哥薩克騎兵的馬刺",
+    "description": "專注於俄羅斯帝國載具。",
+    "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/103/128/XP2_M05-9980f56d.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "mxp205a",
+      "name": "用樸帝洛夫·加福德裝甲車進行 15 次擊殺",
+      "description": "用樸帝洛夫·加福德裝甲車進行 15 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp205a_taTrPUGAR__ki_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp205b",
+      "name": "用西科斯基·伊利亞·穆羅梅茨轟炸機進行 5 次擊殺",
+      "description": "用西科斯基·伊利亞·穆羅梅茨轟炸機進行 5 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp205b_plHBIM__ki_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp205c",
+      "name": "用海岸陣地加農砲進行 3 次擊殺",
+      "description": "用海岸陣地加農砲進行 3 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp205c_swCB__ki_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/Tunguska/103/128/XP2_M05-9980f56d.png",
+     "Small": "[BB_PREFIX]/gamedata/Tunguska/103/128/XP2_M05-9980f56d.png"
+    },
+    "expansions": [
+     {
+      "name": "XPACK2",
+      "mask": 8,
+      "license": "xp2",
+      "prettyName": "以沙皇之名"
+     }
+    ],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "mxp304",
+    "name": "波塞頓三叉戟",
+    "description": "專注海上載具戰",
+    "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/73/28/XP3_M04-b71c351e.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "mxp304a",
+      "name": "用 L 級驅逐艦擊殺 10 人",
+      "description": "用 L 級驅逐艦擊殺 10 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp304a_ShDeLa__ki_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp304b",
+      "name": "用 C 級飛船擊殺 10 人",
+      "description": "用 C 級飛船擊殺 10 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp304b_ashAt__ki_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp304c",
+      "name": "摧毀 C 級飛船 1 次",
+      "description": "摧毀 C 級飛船 1 次",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp304c_ashAt__de_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp304d",
+      "name": "摧毀 L 級驅逐艦 1 次",
+      "description": "摧毀 L 級驅逐艦 1 次",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp304d_ShDeLa__de_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/Tunguska/73/28/XP3_M04-b71c351e.png",
+     "Small": "[BB_PREFIX]/gamedata/Tunguska/73/28/XP3_M04-b71c351e.png"
+    },
+    "expansions": [
+     {
+      "name": "XPACK3",
+      "mask": 16,
+      "license": "xp3",
+      "prettyName": "力挽狂瀾"
+     }
+    ],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   }
+  ]
+ },
+ {
+  "name": "兵種",
+  "awards": [
+   {
+    "code": "m01",
+    "name": "鋼鐵之星勳章",
+    "description": "進行突擊兵種專屬任務。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/30/107/M01-e26bc50c.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m01a",
+      "name": "以突擊兵身分擊殺 20 人",
+      "description": "以突擊兵身分擊殺 20 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m01a__as_kwa_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m01b",
+      "name": "用炸藥擊殺 10 人",
+      "description": "用炸藥擊殺 10 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m01b_wXD__kwa_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m01c",
+      "name": "用反坦克手榴彈擊殺 10 人",
+      "description": "用反坦克手榴彈擊殺 10 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m01c_wXATG__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m01d",
+      "name": "用反坦克火箭砲擊殺 10 人",
+      "description": "用反坦克火箭砲擊殺 10 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m01d_wSPBG__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m01e",
+      "name": "以突擊兵身分在同一條生命中擊殺 5 人",
+      "description": "以突擊兵身分在同一條生命中擊殺 5 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m01e_as__ks_ghvs",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/30/107/M01-e26bc50c.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/30/107/M01-e26bc50c.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "m02",
+    "name": "希波克拉底勳章",
+    "description": "進行醫護兵種專屬任務。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/31/98/M02-e19ecb5e.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m02a",
+      "name": "以醫護兵身分擊殺 20 人",
+      "description": "以醫護兵身分擊殺 20 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m02a_md__ks_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m02b",
+      "name": "進行 100 次治療",
+      "description": "進行 100 次治療",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m02b___h_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m02c",
+      "name": "用步槍手榴彈擊殺 20 人",
+      "description": "用步槍手榴彈擊殺 20 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m02c_wXRG__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m02d",
+      "name": "進行 20 次急救",
+      "description": "進行 20 次急救",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m02d___re_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m02e",
+      "name": "以醫護兵身分在同一條生命中擊殺 5 人",
+      "description": "以醫護兵身分在同一條生命中擊殺 5 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m02e_md__ks_ghvs",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/31/98/M02-e19ecb5e.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/31/98/M02-e19ecb5e.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "m03",
+    "name": "優異鷹隼勳章",
+    "description": "進行偵察兵種專屬任務。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/112/40/M03-70283777.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m03a",
+      "name": "以偵察兵身分擊殺 20 人",
+      "description": "以偵察兵身分擊殺 20 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m03a_sc__ks_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m03b",
+      "name": "以偵察兵身分，擊殺 10 個偵察兵",
+      "description": "以偵察兵身分，擊殺 10 個偵察兵",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m03b_sc_sc_ko_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m03c",
+      "name": "以 K 彈摧毀 3 次載具",
+      "description": "以 K 彈摧毀 3 次載具",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m03c_av_wSPKb_diw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m03d",
+      "name": "爆頭 10 次",
+      "description": "爆頭 10 次",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m03d__wRSing_hsh_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m03e",
+      "name": "以偵察兵身分在同一條生命中擊殺 5 人",
+      "description": "以偵察兵身分在同一條生命中擊殺 5 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m03e_sc__ks_ghvs",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/112/40/M03-70283777.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/112/40/M03-70283777.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "m04",
+    "name": "優異聖克里斯多福勳章",
+    "description": "進行支援兵種專屬任務。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/25/11/M04-e7f5bc96.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m04a",
+      "name": "以支援兵身分擊殺 20 人",
+      "description": "以支援兵身分擊殺 20 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m04a_sp__ks_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m04b",
+      "name": "取得 15 次火力壓制助攻",
+      "description": "取得 15 次火力壓制助攻",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m04b___sua_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m04c",
+      "name": "取得 10 次迫擊砲擊殺",
+      "description": "取得 10 次迫擊砲擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m04c_aeqm__ki_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m04d",
+      "name": "進行 20 次重新補給",
+      "description": "進行 20 次重新補給",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m04d___rs_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m04e",
+      "name": "以支援兵身分在同一條生命中擊殺 5 人",
+      "description": "以支援兵身分在同一條生命中擊殺 5 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m04e_sp__ks_ghvs",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/25/11/M04-e7f5bc96.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/25/11/M04-e7f5bc96.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "m35",
+    "name": "可汗勳章",
+    "description": "專注於騎兵武器。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/72/7/M35-48f91d67.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m35a",
+      "name": "在馬背上取得 20 次擊殺數",
+      "description": "在馬背上取得 20 次擊殺數",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m35a_horse__ki_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m35b",
+      "name": "用騎兵軍刀擊殺 10 人",
+      "description": "用騎兵軍刀擊殺 10 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m35b_wMCavS__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m35c",
+      "name": "同一回合中，在馬背上完成 10 次擊殺",
+      "description": "同一回合中，在馬背上完成 10 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m35c_horse__ki_r",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/72/7/M35-48f91d67.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/72/7/M35-48f91d67.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "mxp102",
+    "name": "拉斐特的國家指令",
+    "description": "專注於法國陣營。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/35/71/XP1_M05-dd478f86.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "mxp102a",
+      "name": "以法國突擊兵兵種進行 25 次擊殺",
+      "description": "以法國突擊兵兵種進行 25 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp102a_asfr__ks_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp102b",
+      "name": "以法國醫護兵兵種進行 25 次擊殺",
+      "description": "以法國醫護兵兵種進行 25 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp102b_mdfr__ks_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp102c",
+      "name": "以法國偵察兵兵種進行 25 次擊殺",
+      "description": "以法國偵察兵兵種進行 25 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp102c_scfr__ks_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp102d",
+      "name": "以法國支援兵兵種進行 25 次擊殺",
+      "description": "以法國支援兵兵種進行 25 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp102d_spfr__ks_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp102e",
+      "name": "用聖沙蒙突擊坦克進行 25 次擊殺",
+      "description": "用聖沙蒙突擊坦克進行 25 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp102e_taATSCHMD__ki_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/35/71/XP1_M05-dd478f86.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/35/71/XP1_M05-dd478f86.png"
+    },
+    "expansions": [
+     {
+      "name": "XPACK1",
+      "mask": 4,
+      "license": "xp1",
+      "prettyName": "誓死堅守"
+     }
+    ],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "mxp106",
+    "name": "勤務勳章，第一級",
+    "description": "專注于步兵兵種。",
+    "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/48/15/XP1_M06-d00f89be.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "mxp106a",
+      "name": "以突擊兵身分擊殺 20 人",
+      "description": "以突擊兵身分擊殺 20 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp106a__as_kwa_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp106b",
+      "name": "進行 20 次急救",
+      "description": "進行 20 次急救",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp106b___re_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp106c",
+      "name": "進行 20 次重新補給",
+      "description": "進行 20 次重新補給",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp106c___rs_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp106d",
+      "name": "用單動式步槍擊殺 10 人",
+      "description": "用單動式步槍擊殺 10 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp106d_wR__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/Tunguska/48/15/XP1_M06-d00f89be.png",
+     "Small": "[BB_PREFIX]/gamedata/Tunguska/48/15/XP1_M06-d00f89be.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "mxp107",
+    "name": "服役勳章",
+    "description": "專注于步兵兵種。",
+    "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/113/39/XP1_M07-8f27c466.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "mxp107a",
+      "name": "以突擊兵身分遊玩 10 分鐘",
+      "description": "以突擊兵身分遊玩 10 分鐘",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp107a_as__sa_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp107b",
+      "name": "以醫護兵身分遊玩 10 分鐘",
+      "description": "以醫護兵身分遊玩 10 分鐘",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp107b_md__sa_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp107c",
+      "name": "以支援兵身分遊玩 10 分鐘",
+      "description": "以支援兵身分遊玩 10 分鐘",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp107c_sp__sa_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp107d",
+      "name": "以偵察兵身分遊玩 10 分鐘",
+      "description": "以偵察兵身分遊玩 10 分鐘",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp107d_sc__sa_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/Tunguska/113/39/XP1_M07-8f27c466.png",
+     "Small": "[BB_PREFIX]/gamedata/Tunguska/113/39/XP1_M07-8f27c466.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "mxp202",
+    "name": "俄羅斯英雄",
+    "description": "專注於俄羅斯帝國陣營上。",
+    "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/78/23/XP2_M02-b2e9f86c.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "mxp202a",
+      "name": "用俄羅斯突擊兵裝備進行 25 次擊殺",
+      "description": "用俄羅斯突擊兵裝備進行 25 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp202a_asru__ks_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp202b",
+      "name": "用俄羅斯醫護兵裝備進行 25 次擊殺",
+      "description": "用俄羅斯醫護兵裝備進行 25 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp202b_mdru__ks_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp202c",
+      "name": "用俄羅斯支援兵裝備進行 25 次擊殺",
+      "description": "用俄羅斯支援兵裝備進行 25 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp202c_spru__ks_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp202d",
+      "name": "用俄羅斯偵察兵裝備進行 25 次擊殺",
+      "description": "用俄羅斯偵察兵裝備進行 25 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp202d_scru__ks_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/Tunguska/78/23/XP2_M02-b2e9f86c.png",
+     "Small": "[BB_PREFIX]/gamedata/Tunguska/78/23/XP2_M02-b2e9f86c.png"
+    },
+    "expansions": [
+     {
+      "name": "XPACK2",
+      "mask": 8,
+      "license": "xp2",
+      "prettyName": "以沙皇之名"
+     }
+    ],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "mxp302",
+    "name": "約克公爵勳章",
+    "description": "在皇家海軍陸戰隊有著卓越的服役表現",
+    "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/68/33/XP3_M02-4421161c.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "mxp302a",
+      "name": "以皇家海軍陸戰隊突擊兵進行 25 次擊殺",
+      "description": "以皇家海軍陸戰隊突擊兵進行 25 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp302a_asukm__ks_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp302b",
+      "name": "以皇家海軍陸戰隊醫護兵進行 25 次擊殺",
+      "description": "以皇家海軍陸戰隊醫護兵進行 25 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp302b_mdukm__ks_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp302c",
+      "name": "以皇家海軍陸戰隊支援兵進行 25 次擊殺",
+      "description": "以皇家海軍陸戰隊支援兵進行 25 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp302c_spukm__ks_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp302d",
+      "name": "以皇家海軍陸戰隊偵察兵進行 25 次擊殺",
+      "description": "以皇家海軍陸戰隊偵察兵進行 25 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp302d_scukm__ks_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/Tunguska/68/33/XP3_M02-4421161c.png",
+     "Small": "[BB_PREFIX]/gamedata/Tunguska/68/33/XP3_M02-4421161c.png"
+    },
+    "expansions": [
+     {
+      "name": "XPACK3",
+      "mask": 16,
+      "license": "xp3",
+      "prettyName": "力挽狂瀾"
+     }
+    ],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   }
+  ]
+ },
+ {
+  "name": "武器",
+  "awards": [
+   {
+    "code": "m09",
+    "name": "突擊兵英勇勳章",
+    "description": "專注於衝鋒槍武器。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/49/93/M09-cfa30c38.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m09a",
+      "name": "用衝鋒槍擊殺 20 人",
+      "description": "用衝鋒槍擊殺 20 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m09a_wSMG__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m09b",
+      "name": "以衝鋒槍爆頭 10 次",
+      "description": "以衝鋒槍爆頭 10 次",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m09b__wSMG_hsh_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m09c",
+      "name": "用衝鋒槍在同一條生命中擊殺 5 人",
+      "description": "用衝鋒槍在同一條生命中擊殺 5 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m09c_wSMG__kw_ghvs",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/49/93/M09-cfa30c38.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/49/93/M09-cfa30c38.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "m10",
+    "name": "LeFever 突擊兵勳章",
+    "description": "專注於霰彈槍武器。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/40/92/M10-285c906b.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m10a",
+      "name": "用霰彈槍擊殺 20 人",
+      "description": "用霰彈槍擊殺 20 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m10a_wShot__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m10b",
+      "name": "以霰彈槍爆頭 10 次",
+      "description": "以霰彈槍爆頭 10 次",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m10b__wShot_hsh_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m10c",
+      "name": "用霰彈槍在同一條生命中擊殺 5 人",
+      "description": "用霰彈槍在同一條生命中擊殺 5 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m10c_wShot__kw_ghvs",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/40/92/M10-285c906b.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/40/92/M10-285c906b.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "m11",
+    "name": "醫護兵英勇勳章",
+    "description": "專注於醫護兵步槍武器。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/98/5/M11-9e0524ef.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m11a",
+      "name": "用半自動步槍擊殺 20 人",
+      "description": "用半自動步槍擊殺 20 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m11a_wRSem__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m11b",
+      "name": "以半自動步槍爆頭 10 次",
+      "description": "以半自動步槍爆頭 10 次",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m11b__wRSem_hsh_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m11c",
+      "name": "用半自動步槍在同一條生命中擊殺 5 人",
+      "description": "用半自動步槍在同一條生命中擊殺 5 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m11c_wRSem__kw_ghvs",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/98/5/M11-9e0524ef.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/98/5/M11-9e0524ef.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "m12",
+    "name": "支援兵英勇勳章",
+    "description": "專注於輕機槍武器。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/109/21/M12-9315f0bb.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m12a",
+      "name": "用輕機槍擊殺 20 人",
+      "description": "用輕機槍擊殺 20 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m12a_wLMG__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m12b",
+      "name": "以輕機槍爆頭 5 次",
+      "description": "以輕機槍爆頭 5 次",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m12b__wLMG_hsh_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m12c",
+      "name": "用輕機槍在同一條生命中擊殺 5 人",
+      "description": "用輕機槍在同一條生命中擊殺 5 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m12c_wLMG__kw_ghvs",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/109/21/M12-9315f0bb.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/109/21/M12-9315f0bb.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "m13",
+    "name": "偵察兵英勇勳章",
+    "description": "專注於手動槍機步槍武器。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/26/123/M13-e685512c.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m13a",
+      "name": "用單動式步槍擊殺 20 人",
+      "description": "用單動式步槍擊殺 20 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m13a_wRSing__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m13b",
+      "name": "以單動式步槍爆頭 10 次",
+      "description": "以單動式步槍爆頭 10 次",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m13b__wRSing_hsh_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m13c",
+      "name": "用單動式步槍在同一條生命中擊殺 5 人",
+      "description": "用單動式步槍在同一條生命中擊殺 5 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m13c_wRSing__kw_ghvs",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/26/123/M13-e685512c.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/26/123/M13-e685512c.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "m14",
+    "name": "閃電十字勳章",
+    "description": "專注於半自動手槍。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/118/73/M14-764970ad.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m14a",
+      "name": "用半自動手槍擊殺 10 人",
+      "description": "用半自動手槍擊殺 10 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m14a_wHS__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m14b",
+      "name": "以半自動手槍爆頭 5 次",
+      "description": "以半自動手槍爆頭 5 次",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m14b__wHS_hsh_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m14c",
+      "name": "用半自動手槍在同一條生命中擊殺 5 人",
+      "description": "用半自動手槍在同一條生命中擊殺 5 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m14c_wHS__kw_ghvs",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/118/73/M14-764970ad.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/118/73/M14-764970ad.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "m15",
+    "name": "聖巴斯弟盎勳章",
+    "description": "專注於左輪手槍。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/67/16/M15-bd10ef18.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m15a",
+      "name": "用左輪手槍擊殺 10 人",
+      "description": "用左輪手槍擊殺 10 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m15a_wHR__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m15b",
+      "name": "以左輪手槍爆頭 5 次",
+      "description": "以左輪手槍爆頭 5 次",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m15b__wHR_hsh_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m15c",
+      "name": "用左輪手槍在同一條生命中擊殺 5 人",
+      "description": "用左輪手槍在同一條生命中擊殺 5 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m15c_wHR__kw_ghvs",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/67/16/M15-bd10ef18.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/67/16/M15-bd10ef18.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "m16",
+    "name": "紅龍勳章",
+    "description": "專注於爆裂物武器。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/102/17/M16-9aef9a7c.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m16a",
+      "name": "用爆裂物擊殺 10 人",
+      "description": "用爆裂物擊殺 10 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m16a_wX__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m16b",
+      "name": "利用爆裂物摧毀 5 個載具",
+      "description": "利用爆裂物摧毀 5 個載具",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m16b_wX__dewa_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m16c",
+      "name": "用爆裂物在同一條生命中擊殺 5 人",
+      "description": "用爆裂物在同一條生命中擊殺 5 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m16c_wX__kw_ghvs",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/102/17/M16-9aef9a7c.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/102/17/M16-9aef9a7c.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "m17",
+    "name": "雄獅勳章",
+    "description": "專注於近戰武器。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/100/58/M17-9cc61289.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m17a",
+      "name": "用近戰武器擊殺 10 人",
+      "description": "用近戰武器擊殺 10 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m17a_wM__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m17b",
+      "name": "在同一回合中，取得 5 次近戰擊殺",
+      "description": "在同一回合中，取得 5 次近戰擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m17b_wM__kw_r",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m17c",
+      "name": "用近戰武器在同一條生命中擊殺 3 人",
+      "description": "用近戰武器在同一條生命中擊殺 3 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m17c_wM__kw_ghvs",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/100/58/M17-9cc61289.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/100/58/M17-9cc61289.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "m18",
+    "name": "堅毅勳章",
+    "description": "專注於定點武器。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/118/65/M18-8abf7200.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m18a",
+      "name": "用定點武器擊殺 15 人",
+      "description": "用定點武器擊殺 15 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m18a_sw__ki_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m18b",
+      "name": "以定點武器摧毀 5 個載具",
+      "description": "以定點武器摧毀 5 個載具",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m18b__sw_di_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m18c",
+      "name": "在同一回合中，用定點武器擊殺 10 人",
+      "description": "在同一回合中，用定點武器擊殺 10 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m18c_sw__ki_r",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/118/65/M18-8abf7200.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/118/65/M18-8abf7200.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "mxp103",
+    "name": "聖女貞德十字勳章",
+    "description": "專注於法國武器。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/64/79/XP1_M01-c04fe72e.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "mxp103a",
+      "name": "用利貝羅勒 1918 進行 20 次擊殺",
+      "description": "用利貝羅勒 1918 進行 20 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp103a_wSMGRib__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp103b",
+      "name": "用 RSC MLE1917 進行 20 次擊殺",
+      "description": "用 RSC MLE1917 進行 20 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp103b_wRSemRSCG__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp103c",
+      "name": "用勒貝爾 M1886 進行 20 次擊殺",
+      "description": "用勒貝爾 M1886 進行 20 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp103c_wRSinLebG__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp103d",
+      "name": "用紹沙輕機槍進行 20 次擊殺",
+      "description": "用紹沙輕機槍進行 20 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp103d_wLMGChG__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp103e",
+      "name": "用 Sjögren Inertial 進行 20 次擊殺",
+      "description": "用 Sjögren Inertial 進行 20 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp103e_wShotSjo__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/64/79/XP1_M01-c04fe72e.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/64/79/XP1_M01-c04fe72e.png"
+    },
+    "expansions": [
+     {
+      "name": "XPACK1",
+      "mask": 4,
+      "license": "xp1",
+      "prettyName": "誓死堅守"
+     }
+    ],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "mxp108",
+    "name": "神射手勤務勳章",
+    "description": "專注于步兵武器。",
+    "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/75/76/XP1_M08-b54cfecf.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "mxp108a",
+      "name": "用 Model 10-A（原廠）取得 20 個擊殺數",
+      "description": "用 Model 10-A（原廠）取得 20 個擊殺數",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp108a_wShotRem__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp108b",
+      "name": "用蒙德拉貢步槍（衝鋒）取得 20 個擊殺數",
+      "description": "用蒙德拉貢步槍（衝鋒）取得 20 個擊殺數",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp108b_wRSemMonS__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp108c",
+      "name": "用 MG15 n.A.（輕量化）取得 20 個擊殺數",
+      "description": "用 MG15 n.A.（輕量化）取得 20 個擊殺數",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp108c_wLMGBerg__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp108d",
+      "name": "用 M1903（實驗）取得 20 個擊殺數",
+      "description": "用 M1903（實驗）取得 20 個擊殺數",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp108d_wRSinSprT__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/Tunguska/75/76/XP1_M08-b54cfecf.png",
+     "Small": "[BB_PREFIX]/gamedata/Tunguska/75/76/XP1_M08-b54cfecf.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "mxp109",
+    "name": "神射手精通勳章",
+    "description": "專注于步兵武器。",
+    "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/90/34/XP1_M09-5a22e305.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "mxp109a",
+      "name": "用 12g 自動霰彈槍（Back-Bored）取得 20 個擊殺數",
+      "description": "用 12g 自動霰彈槍（Back-Bored）取得 20 個擊殺數",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp109a_wShotBA5L__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp109b",
+      "name": "用自動裝填步槍 8.25（加長）取得 20 個擊殺數",
+      "description": "用自動裝填步槍 8.25（加長）取得 20 個擊殺數",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp109b_wRSemR8E__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp109c",
+      "name": "用 M1918 白朗寧自動步槍（壕溝戰）取得 20 個擊殺數",
+      "description": "用 M1918 白朗寧自動步槍（壕溝戰）取得 20 個擊殺數",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp109c_wLMGBART__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp109d",
+      "name": "用 Gewehr 98（步兵）取得 20 個擊殺數",
+      "description": "用 Gewehr 98（步兵）取得 20 個擊殺數",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp109d_wRSiMa__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/Tunguska/90/34/XP1_M09-5a22e305.png",
+     "Small": "[BB_PREFIX]/gamedata/Tunguska/90/34/XP1_M09-5a22e305.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "mxp203",
+    "name": "勃魯西洛夫之星",
+    "description": "專注於俄羅斯帝國武器上。",
+    "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/42/74/XP2_M03-d64abf2e.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "mxp203a",
+      "name": "用 Model 1900 進行 20 次擊殺",
+      "description": "用 Model 1900 進行 20 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp203a_wShot19G__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp203b",
+      "name": "用費德洛夫自動步槍進行 20 次擊殺",
+      "description": "用費德洛夫自動步槍進行 20 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp203b_wRSemFedG__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp203c",
+      "name": "用 Parabellum MG14/17 進行 20 次擊殺",
+      "description": "用 Parabellum MG14/17 進行 20 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp203c_wLMGParaG__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp203d",
+      "name": "用莫辛-納甘 M91 步槍進行 20 次擊殺",
+      "description": "用莫辛-納甘 M91 步槍進行 20 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp203d_wRSinMosG__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/Tunguska/42/74/XP2_M03-d64abf2e.png",
+     "Small": "[BB_PREFIX]/gamedata/Tunguska/42/74/XP2_M03-d64abf2e.png"
+    },
+    "expansions": [
+     {
+      "name": "XPACK2",
+      "mask": 8,
+      "license": "xp2",
+      "prettyName": "以沙皇之名"
+     }
+    ],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "mxp303",
+    "name": "亡者頭顱勳章",
+    "description": "海軍武器達人",
+    "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/111/15/XP3_M03-91f19643.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "mxp303a",
+      "name": "用 M1917 戰壕卡賓槍擊殺 20 人",
+      "description": "用 M1917 戰壕卡賓槍擊殺 20 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp303a_wSMGMau__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp303b",
+      "name": "用 Farquhar-Hill 步槍擊殺 20 人",
+      "description": "用 Farquhar-Hill 步槍擊殺 20 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp303b_wRSemFarG__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp303c",
+      "name": "用 M1917 機槍擊殺 20 人",
+      "description": "用 M1917 機槍擊殺 20 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp303c_wLMGBroG__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp303d",
+      "name": "用卡爾卡諾 M91 卡賓槍擊殺 20 人",
+      "description": "用卡爾卡諾 M91 卡賓槍擊殺 20 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp303d_wRSinCarG__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/Tunguska/111/15/XP3_M03-91f19643.png",
+     "Small": "[BB_PREFIX]/gamedata/Tunguska/111/15/XP3_M03-91f19643.png"
+    },
+    "expansions": [
+     {
+      "name": "XPACK3",
+      "mask": 16,
+      "license": "xp3",
+      "prettyName": "力挽狂瀾"
+     }
+    ],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "mxp403",
+    "name": "默米東的黃金子彈",
+    "description": "《啟示錄》武器達人",
+    "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/54/37/XP4_M03-ca25748e.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "mxp403a",
+      "name": "用 RSC 衝鋒槍進行 20 次擊殺",
+      "description": "用 RSC 衝鋒槍進行 20 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp403a_wSMGCSRG__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp403b",
+      "name": "用 Howell 自動步槍進行 20 次擊殺",
+      "description": "用 Howell 自動步槍進行 20 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp403b_wRSemBSAG__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp403c",
+      "name": "用輕機槍 08/18 進行 20 次擊殺",
+      "description": "用輕機槍 08/18 進行 20 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp403c_wLMG0818G__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp403d",
+      "name": "用羅斯 MkIII 進行 20 次擊殺",
+      "description": "用羅斯 MkIII 進行 20 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp403d_wRSinRoG__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/Tunguska/54/37/XP4_M03-ca25748e.png",
+     "Small": "[BB_PREFIX]/gamedata/Tunguska/54/37/XP4_M03-ca25748e.png"
+    },
+    "expansions": [
+     {
+      "name": "XPACK4",
+      "mask": 32,
+      "license": "xp4",
+      "prettyName": "啟示錄"
+     }
+    ],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   }
+  ]
+ },
+ {
+  "name": "遊戲模式",
+  "awards": [
+   {
+    "code": "m19",
+    "name": "腓特烈二世皇冠",
+    "description": "專注於行動模式。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/117/29/M19-751d5472.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m19a",
+      "name": "遊玩 1 回合的行動模式",
+      "description": "遊玩 1 回合的行動模式",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m19a_mo_mgb_roo_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m19b",
+      "name": "在行動模式中贏得 1 回合",
+      "description": "在行動模式中贏得 1 回合",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m19b_mwin_mgb_roo_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m19c",
+      "name": "在行動模式中佔領 10 面旗幟",
+      "description": "在行動模式中佔領 10 面旗幟",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m19c_mgb__ccp_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/117/29/M19-751d5472.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/117/29/M19-751d5472.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "m20",
+    "name": "亞歷山大之星",
+    "description": "專注於征服模式。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/35/99/M20-dd632f8c.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m20a",
+      "name": "遊玩 1 回合的征服模式",
+      "description": "遊玩 1 回合的征服模式",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m20a_mo_mgc_roo_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m20b",
+      "name": "在征服模式中贏得 1 回合",
+      "description": "在征服模式中贏得 1 回合",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m20b_mwin_mgc_roo_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m20c",
+      "name": "在征服模式中佔領 10 面旗幟",
+      "description": "在征服模式中佔領 10 面旗幟",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m20c_mgc__ccp_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/35/99/M20-dd632f8c.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/35/99/M20-dd632f8c.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "m21",
+    "name": "查理曼大帝十字架",
+    "description": "專注於突襲模式。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/14/20/M21-f2ec4410.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m21a",
+      "name": "遊玩 1 回合的突襲模式",
+      "description": "遊玩 1 回合的突襲模式",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m21a_mo_mgr_roo_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m21b",
+      "name": "在突襲模式中贏得 1 回合",
+      "description": "在突襲模式中贏得 1 回合",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m21b_mwin_mgr_roo_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m21c",
+      "name": "武裝 5 個目標",
+      "description": "武裝 5 個目標",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m21c___ca_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/14/20/M21-f2ec4410.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/14/20/M21-f2ec4410.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "m22",
+    "name": "統領之星",
+    "description": "專注於搶攻模式。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/32/124/M22-e07c7b09.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m22a",
+      "name": "遊玩 2 回合的搶攻模式",
+      "description": "遊玩 2 回合的搶攻模式",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m22a_mo_mgdo_roo_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m22b",
+      "name": "在搶攻模式中贏得 1 回合",
+      "description": "在搶攻模式中贏得 1 回合",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m22b_mwin_mgdo_roo_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m22c",
+      "name": "在搶攻模式中佔領 20 面旗幟",
+      "description": "在搶攻模式中佔領 20 面旗幟",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m22c_mgdo__ccp_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/32/124/M22-e07c7b09.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/32/124/M22-e07c7b09.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "m23",
+    "name": "骷髏軍團勳章",
+    "description": "專注於團隊死鬥模式。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/6/17/M23-fa11cbff.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m23a",
+      "name": "遊玩 2 回合的團隊死鬥模式",
+      "description": "遊玩 2 回合的團隊死鬥模式",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m23a_mo_mgtd_roo_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m23b",
+      "name": "在團隊死鬥模式中贏得 1 回合",
+      "description": "在團隊死鬥模式中贏得 1 回合",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m23b_mwin_mgtd_roo_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m23c",
+      "name": "在同一回合中擊殺 20 人",
+      "description": "在同一回合中擊殺 20 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m23c___k_r",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/6/17/M23-fa11cbff.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/6/17/M23-fa11cbff.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "m24",
+    "name": "飛禽十字勳章",
+    "description": "專注於戰爭信鴿。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/4/29/M24-fce33d7d.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m24a",
+      "name": "遊玩 2 回合的戰爭信鴿模式",
+      "description": "遊玩 2 回合的戰爭信鴿模式",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m24a_mo_Poss_roo_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m24b",
+      "name": "在戰爭信鴿模式中贏得 1 回合",
+      "description": "在戰爭信鴿模式中贏得 1 回合",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m24b_mwin_Poss_roo_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m24c",
+      "name": "放出 5 隻信鴿",
+      "description": "放出 5 隻信鴿",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m24c_Possd__m_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/4/29/M24-fce33d7d.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/4/29/M24-fce33d7d.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "mxp01",
+    "name": "維欽托利的大部隊",
+    "description": "專注於前線模式。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/118/64/XP1_M02-8a40a7fe.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "mxp01a",
+      "name": "在前線模式中奪得 20 面旗幟",
+      "description": "在前線模式中奪得 20 面旗幟",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp01a_mgf__ccp_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp01b",
+      "name": "在前線模式中贏得 1 場遊戲",
+      "description": "在前線模式中贏得 1 場遊戲",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp01b_mwin_mgf_roo_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp01c",
+      "name": "在前線模式中奪得 2 個目標",
+      "description": "在前線模式中奪得 2 個目標",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp01c___ca_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/118/64/XP1_M02-8a40a7fe.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/118/64/XP1_M02-8a40a7fe.png"
+    },
+    "expansions": [
+     {
+      "name": "XPACK1",
+      "mask": 4,
+      "license": "xp1",
+      "prettyName": "誓死堅守"
+     }
+    ],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "mxp201",
+    "name": "俄羅斯勞工勤務勳章",
+    "description": "專注於空降補給上。",
+    "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/106/55/XP2_M01-9637a17d.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "mxp201a",
+      "name": "進行 5 次空降補給防守擊殺",
+      "description": "進行 5 次空降補給防守擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp201a_mzc__cpd_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp201b",
+      "name": "佔領 5 個空降補給",
+      "description": "佔領 5 個空降補給",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp201b_mzcsc__m_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp201c",
+      "name": "在空降補給中贏得 1 場遊戲",
+      "description": "在空降補給中贏得 1 場遊戲",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp201c_mwin_mzc_roo_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/Tunguska/106/55/XP2_M01-9637a17d.png",
+     "Small": "[BB_PREFIX]/gamedata/Tunguska/106/55/XP2_M01-9637a17d.png"
+    },
+    "expansions": [
+     {
+      "name": "XPACK2",
+      "mask": 8,
+      "license": "xp2",
+      "prettyName": "以沙皇之名"
+     }
+    ],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "mxp402",
+    "name": "天使之翼",
+    "description": "展示對空戰技巧的精熟度",
+    "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/43/48/XP4_M02-2bd0d438.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "mxp402a",
+      "name": "癱瘓 5 個空中載具",
+      "description": "癱瘓 5 個空中載具",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp402a_aav__ds_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp402b",
+      "name": "以空中載具乘客身分取得 5 個擊殺數",
+      "description": "以空中載具乘客身分取得 5 個擊殺數",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp402b_aav__kapi_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp402c",
+      "name": "對空中載具造成 500 點傷害",
+      "description": "對空中載具造成 500 點傷害",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp402c_aav__vd_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp402d",
+      "name": "在空中突襲中贏得 1 場遊戲",
+      "description": "在空中突襲中贏得 1 場遊戲",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp402d_mwin_mgaas_roo_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/Tunguska/43/48/XP4_M02-2bd0d438.png",
+     "Small": "[BB_PREFIX]/gamedata/Tunguska/43/48/XP4_M02-2bd0d438.png"
+    },
+    "expansions": [
+     {
+      "name": "XPACK4",
+      "mask": 32,
+      "license": "xp4",
+      "prettyName": "啟示錄"
+     }
+    ],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   }
+  ]
+ },
+ {
+  "name": "戰鬥",
+  "awards": [
+   {
+    "code": "m07",
+    "name": "優異黃金之心勳章",
+    "description": "專注在近距離戰鬥上。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/18/49/M07-123104d6.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m07a",
+      "name": "用佩槍擊殺 10 人",
+      "description": "用佩槍擊殺 10 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m07a_wH__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m07b",
+      "name": "用衝鋒槍擊殺 20 人",
+      "description": "用衝鋒槍擊殺 20 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m07b_wSMG__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m07c",
+      "name": "用霰彈槍擊殺 20 人",
+      "description": "用霰彈槍擊殺 20 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m07c_wShot__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m07d",
+      "name": "用近戰刀械擊殺 5 人",
+      "description": "用近戰刀械擊殺 5 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m07d_wMBa__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m07e",
+      "name": "用近戰鈍器擊殺 5 人",
+      "description": "用近戰鈍器擊殺 5 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m07e_wMBl__kw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/18/49/M07-123104d6.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/18/49/M07-123104d6.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "m26",
+    "name": "雄鹿皇家勳章",
+    "description": "專注於戰鬥效率。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/122/37/M26-7adb8a73.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m26a",
+      "name": "在同一回合中擊殺 10 人",
+      "description": "在同一回合中擊殺 10 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m26a___k_r",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m26b",
+      "name": "在同一條生命中擊殺 5 人",
+      "description": "在同一條生命中擊殺 5 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m26b___k_ghvs",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m26c",
+      "name": "贏得 2 回合",
+      "description": "贏得 2 回合",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m26c_mwin_mg_roo_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/122/37/M26-7adb8a73.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/122/37/M26-7adb8a73.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "m27",
+    "name": "狙擊手護衛勳章",
+    "description": "專注於精準度。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/9/44/M27-f72c4714.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m27a",
+      "name": "用任何武器，在同一回合中爆頭 5 次",
+      "description": "用任何武器，在同一回合中爆頭 5 次",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m27a___hsh_r",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m27b",
+      "name": "用任何武器，在同一條生命中爆頭 3 次",
+      "description": "用任何武器，在同一條生命中爆頭 3 次",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m27b___hsh_ghvs",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m27c",
+      "name": "用手動槍機步槍擊殺 10 個偵察兵（反狙擊）",
+      "description": "用手動槍機步槍擊殺 10 個偵察兵（反狙擊）",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m27c_sc_wRSing_kow_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/9/44/M27-f72c4714.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/9/44/M27-f72c4714.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "m28",
+    "name": "皇冠皇家勳章",
+    "description": "成為佼佼者。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/69/58/M28-453a3b53.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m28a",
+      "name": "在同一回合中拿下前 5 名",
+      "description": "在同一回合中拿下前 5 名",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m28a_t5__psx_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m28b",
+      "name": "取得 2 次多重擊殺",
+      "description": "取得 2 次多重擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m28b___mk_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m28c",
+      "name": "在同一回合中擊殺 20 人",
+      "description": "在同一回合中擊殺 20 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m28c___k_r",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/69/58/M28-453a3b53.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/69/58/M28-453a3b53.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "m29",
+    "name": "深紅之心勳章",
+    "description": "與你的隊伍執行支援任務。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/71/1/M29-47016967.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m29a",
+      "name": "進行 10 次團隊助攻",
+      "description": "進行 10 次團隊助攻",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m29a___ka_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m29b",
+      "name": "進行 10 次火力壓制助攻",
+      "description": "進行 10 次火力壓制助攻",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m29b___sua_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m29c",
+      "name": "進行 15 次索敵助攻",
+      "description": "進行 15 次索敵助攻",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m29c___sp_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/71/1/M29-47016967.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/71/1/M29-47016967.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "mxp104",
+    "name": "拉薩勒勳章",
+    "description": "專注於法國地圖。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/65/8/XP1_M03-4108ff03.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "mxp104a",
+      "name": "在凡爾登高地進行 10 次擊殺",
+      "description": "在凡爾登高地進行 10 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp104a_xp1mp1__kl_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp104b",
+      "name": "在法烏克斯要塞進行 10 次擊殺",
+      "description": "在法烏克斯要塞進行 10 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp104b_xp1mp2__kl_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp104c",
+      "name": "在蘇瓦松進行 10 次擊殺",
+      "description": "在蘇瓦松進行 10 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp104c_xp1mp3__kl_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp104d",
+      "name": "在決裂進行 10 次擊殺",
+      "description": "在決裂進行 10 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp104d_xp1mp4__kl_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp104e",
+      "name": "在惡魔熔爐行動模式中贏得 1 場遊戲",
+      "description": "在惡魔熔爐行動模式中贏得 1 場遊戲",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp104e_mwin_mopxp11_m_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/65/8/XP1_M03-4108ff03.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/65/8/XP1_M03-4108ff03.png"
+    },
+    "expansions": [
+     {
+      "name": "XPACK1",
+      "mask": 4,
+      "license": "xp1",
+      "prettyName": "誓死堅守"
+     }
+    ],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "mxp204",
+    "name": "彼得大帝指令",
+    "description": "專注於俄羅斯地圖上。",
+    "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/96/126/XP2_M04-a07eec78.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "mxp204a",
+      "name": "在武普庫夫山口進行 10 次擊殺",
+      "description": "在武普庫夫山口進行 10 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp204a_xp2mp2__kl_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp204b",
+      "name": "在勃魯西洛夫關口進行 10 次擊殺",
+      "description": "在勃魯西洛夫關口進行 10 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp204b_xp2mp1__kl_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp204c",
+      "name": "在加利西亞進行 10 次擊殺",
+      "description": "在加利西亞進行 10 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp204c_xp2mp3__kl_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp204d",
+      "name": "取得赤潮行動勝利",
+      "description": "取得赤潮行動勝利",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp204d_mwin_mopxp23_m_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/Tunguska/96/126/XP2_M04-a07eec78.png",
+     "Small": "[BB_PREFIX]/gamedata/Tunguska/96/126/XP2_M04-a07eec78.png"
+    },
+    "expansions": [
+     {
+      "name": "XPACK2",
+      "mask": 8,
+      "license": "xp2",
+      "prettyName": "以沙皇之名"
+     }
+    ],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "mxp301",
+    "name": "士兵的銀色長劍",
+    "description": "海軍大戰",
+    "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/21/21/XP3_M01-15150095.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "mxp301a",
+      "name": "摧毀 5 個海上載具",
+      "description": "摧毀 5 個海上載具",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp301a_asv__de_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp301b",
+      "name": "以海上載具擊殺 20 人",
+      "description": "以海上載具擊殺 20 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp301b_asv__ki_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp301c",
+      "name": "達成 5 次旗幟防守擊殺",
+      "description": "達成 5 次旗幟防守擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp301c___cpd_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp301d",
+      "name": "在海麗絲岬贏得一場比賽",
+      "description": "在海麗絲岬贏得一場比賽",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp301d_mwin_mmplx31_m_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/Tunguska/21/21/XP3_M01-15150095.png",
+     "Small": "[BB_PREFIX]/gamedata/Tunguska/21/21/XP3_M01-15150095.png"
+    },
+    "expansions": [
+     {
+      "name": "XPACK3",
+      "mask": 16,
+      "license": "xp3",
+      "prettyName": "力挽狂瀾"
+     }
+    ],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "mxp305",
+    "name": "凱撒花環",
+    "description": "完成著重於加里波利戰役的行動",
+    "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/0/72/XP3_M05-0048bf7c.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "mxp305a",
+      "name": "在海麗絲岬擊殺 10 人",
+      "description": "在海麗絲岬擊殺 10 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp305a_xp3mp1__kl_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp305b",
+      "name": "在阿奇巴巴擊殺 10 人",
+      "description": "在阿奇巴巴擊殺 10 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp305b_xp3mp2__kl_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp305c",
+      "name": "贏得加里波利行動",
+      "description": "贏得加里波利行動",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp305c_mwin_mopxp31_m_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/Tunguska/0/72/XP3_M05-0048bf7c.png",
+     "Small": "[BB_PREFIX]/gamedata/Tunguska/0/72/XP3_M05-0048bf7c.png"
+    },
+    "expansions": [
+     {
+      "name": "XPACK3",
+      "mask": 16,
+      "license": "xp3",
+      "prettyName": "力挽狂瀾"
+     }
+    ],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "mxp306",
+    "name": "大師指南針",
+    "description": "在海軍大戰中展示出色的策略",
+    "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/42/108/XP3_M06-2a94cee6.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "mxp306a",
+      "name": "在黑爾戈蘭灣進行 10 次擊殺",
+      "description": "在黑爾戈蘭灣進行 10 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp306a_xp3mp3__kl_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp306b",
+      "name": "在澤布呂赫進行 10 次擊殺",
+      "description": "在澤布呂赫進行 10 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp306b_xp3mp4__kl_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp306c",
+      "name": "對 L 級驅逐艦造成 1000 點傷害",
+      "description": "對 L 級驅逐艦造成 1000 點傷害",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp306c_ShDeLa__vd_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/Tunguska/42/108/XP3_M06-2a94cee6.png",
+     "Small": "[BB_PREFIX]/gamedata/Tunguska/42/108/XP3_M06-2a94cee6.png"
+    },
+    "expansions": [
+     {
+      "name": "XPACK3",
+      "mask": 16,
+      "license": "xp3",
+      "prettyName": "力挽狂瀾"
+     }
+    ],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "mxp401",
+    "name": "鐵甲之拳勳章",
+    "description": "精熟末日之戰中的戰鬥技巧",
+    "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/84/27/XP4_M01-ace5293e.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "mxp401a",
+      "name": "用近戰武器造成 500 點士兵傷害",
+      "description": "用近戰武器造成 500 點士兵傷害",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp401a_wM__sdw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp401b",
+      "name": "用毒氣手榴彈造成 500 點士兵傷害",
+      "description": "用毒氣手榴彈造成 500 點士兵傷害",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp401b_wXGG__sdw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp401c",
+      "name": "用燃燒手榴彈造成 500 點士兵傷害",
+      "description": "用燃燒手榴彈造成 500 點士兵傷害",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp401c_wXGN__sdw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp401d",
+      "name": "用絆索炸彈（燃燒）造成 500 點士兵傷害",
+      "description": "用絆索炸彈（燃燒）造成 500 點士兵傷害",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp401d_wXTI__sdw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp401e",
+      "name": "用霰彈槍造成 1000 點士兵傷害",
+      "description": "用霰彈槍造成 1000 點士兵傷害",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp401e_wShot__sdw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/Tunguska/84/27/XP4_M01-ace5293e.png",
+     "Small": "[BB_PREFIX]/gamedata/Tunguska/84/27/XP4_M01-ace5293e.png"
+    },
+    "expansions": [
+     {
+      "name": "XPACK4",
+      "mask": 32,
+      "license": "xp4",
+      "prettyName": "啟示錄"
+     }
+    ],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "mxp404",
+    "name": "探險家的黃金球",
+    "description": "戰士對《啟示錄》戰場的精熟度",
+    "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/103/21/XP4_M04-9915ae67.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "mxp404a",
+      "name": "在帕斯尚爾進行 10 次擊殺",
+      "description": "在帕斯尚爾進行 10 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp404a_xp4mp1__kl_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp404b",
+      "name": "在索姆河進行 10 次擊殺",
+      "description": "在索姆河進行 10 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp404b_xp4mp2__kl_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp404c",
+      "name": "在卡波雷托進行 10 次擊殺",
+      "description": "在卡波雷托進行 10 次擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp404c_xp4mp3__kl_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/Tunguska/103/21/XP4_M04-9915ae67.png",
+     "Small": "[BB_PREFIX]/gamedata/Tunguska/103/21/XP4_M04-9915ae67.png"
+    },
+    "expansions": [
+     {
+      "name": "XPACK4",
+      "mask": 32,
+      "license": "xp4",
+      "prettyName": "啟示錄"
+     }
+    ],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "mxp405",
+    "name": "一等銀盾",
+    "description": "臨危不亂",
+    "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/42/72/XP4_M05-2a480a6d.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "mxp405a",
+      "name": "在佩戴防毒面具的情況下取得 10 個擊殺數",
+      "description": "在佩戴防毒面具的情況下取得 10 個擊殺數",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp405a___kwgm_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp405b",
+      "name": "在自身著火的情況下取得 10 個擊殺數",
+      "description": "在自身著火的情況下取得 10 個擊殺數",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp405b___kwof_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp405c",
+      "name": "在裝備「掩護特殊裝備」的情況下擊殺 10 人",
+      "description": "在裝備「掩護特殊裝備」的情況下擊殺 10 人",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp405c_fspcovr__kws_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/Tunguska/42/72/XP4_M05-2a480a6d.png",
+     "Small": "[BB_PREFIX]/gamedata/Tunguska/42/72/XP4_M05-2a480a6d.png"
+    },
+    "expansions": [
+     {
+      "name": "XPACK4",
+      "mask": 32,
+      "license": "xp4",
+      "prettyName": "啟示錄"
+     }
+    ],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "mxp406",
+    "name": "永恆鬥士勳章",
+    "description": "展示對《Battlefield 1》的全面精熟度",
+    "imageUrl": "[BB_PREFIX]/gamedata/Tunguska/47/14/XP4_M06-2f0edec6.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "mxp406a",
+      "name": "在主遊戲的地圖上獲得 50,000 分",
+      "description": "在主遊戲的地圖上獲得 50,000 分",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp406a_mpl__sl_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp406b",
+      "name": "在《誓死堅守》的地圖上獲得 50,000 分",
+      "description": "在《誓死堅守》的地圖上獲得 50,000 分",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp406b_xp1l__sl_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp406c",
+      "name": "在《以沙皇之名》的地圖上獲得 50,000 分",
+      "description": "在《以沙皇之名》的地圖上獲得 50,000 分",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp406c_xp2l__sl_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp406d",
+      "name": "在《力挽狂瀾》的地圖上獲得 50,000 分",
+      "description": "在《力挽狂瀾》的地圖上獲得 50,000 分",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp406d_xp3l__sl_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "mxp406e",
+      "name": "在《啟示錄》的地圖上獲得 50,000 分",
+      "description": "在《啟示錄》的地圖上獲得 50,000 分",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_mxp406e_xp4l__sl_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/Tunguska/47/14/XP4_M06-2f0edec6.png",
+     "Small": "[BB_PREFIX]/gamedata/Tunguska/47/14/XP4_M06-2f0edec6.png"
+    },
+    "expansions": [
+     {
+      "name": "XPACK4",
+      "mask": 32,
+      "license": "xp4",
+      "prettyName": "啟示錄"
+     }
+    ],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   }
+  ]
+ },
+ {
+  "name": "小隊",
+  "awards": [
+   {
+    "code": "m30",
+    "name": "神聖合一軍團勳章",
+    "description": "與你的小隊執行支援任務。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/96/124/M30-a084eb16.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m30a",
+      "name": "進行 10 次小隊火力壓制助攻",
+      "description": "進行 10 次小隊火力壓制助攻",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m30a___ssua_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m30b",
+      "name": "進行 5 次小隊協助擊殺",
+      "description": "進行 5 次小隊協助擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m30b___skak_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m30c",
+      "name": "進行 2 小隊復仇擊殺",
+      "description": "進行 2 小隊復仇擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m30c___sak_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/96/124/M30-a084eb16.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/96/124/M30-a084eb16.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "m31",
+    "name": "血海軍團勳章",
+    "description": "與你的小隊執行進攻任務。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/99/60/M31-633c3d1b.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m31a",
+      "name": "進行 2 小隊救星擊殺",
+      "description": "進行 2 小隊救星擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m31a___ssk_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m31b",
+      "name": "進行 2 小隊復仇擊殺",
+      "description": "進行 2 小隊復仇擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m31b___sak_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m31c",
+      "name": "進行 5 小隊掃蕩擊殺",
+      "description": "進行 5 小隊掃蕩擊殺",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m31c___sqw_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/99/60/M31-633c3d1b.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/99/60/M31-633c3d1b.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "m32",
+    "name": "榮耀軍團勳章",
+    "description": "與你的小隊執行兵種專屬任務。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/51/5/M32-33fb39c6.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m32a",
+      "name": "進行 20 次小隊維修",
+      "description": "進行 20 次小隊維修",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m32a___sqr_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m32b",
+      "name": "進行 20 次小隊治療",
+      "description": "進行 20 次小隊治療",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m32b___qh_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m32c",
+      "name": "進行 20 次小隊重新補給",
+      "description": "進行 20 次小隊重新補給",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m32c___sr_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/51/5/M32-33fb39c6.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/51/5/M32-33fb39c6.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   },
+   {
+    "code": "m33",
+    "name": "蒼狼軍團勳章",
+    "description": "與你的小隊活到最後。",
+    "imageUrl": "[BB_PREFIX]/gamedata/tunguska/0/109/M33-006d9dc9.png",
+    "unlocks": [],
+    "dependencies": [],
+    "stages": [
+     {
+      "code": "m33a",
+      "name": "進行 10 次小隊索敵",
+      "description": "進行 10 次小隊索敵",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m33a___ssp_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m33b",
+      "name": "進行 20 次小隊急救",
+      "description": "進行 20 次小隊急救",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m33b___sre_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 5000,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     },
+     {
+      "code": "m33c",
+      "name": "取得 10 次小隊重生數",
+      "description": "取得 10 次小隊重生數",
+      "imageUrl": "",
+      "unlocks": null,
+      "dependencies": null,
+      "stages": null,
+      "criterias": [
+       {
+        "code": "c_m33c___ss_g",
+        "name": "",
+        "awardName": null,
+        "criteriaType": null
+       }
+      ],
+      "codexEntry": null,
+      "images": {
+       "Png256xANY": "",
+       "Small": ""
+      },
+      "expansions": [],
+      "score": 0,
+      "dependencyRequired": null,
+      "criteriaRequired": null
+     }
+    ],
+    "criterias": [],
+    "codexEntry": null,
+    "images": {
+     "Png256xANY": "[BB_PREFIX]/gamedata/tunguska/0/109/M33-006d9dc9.png",
+     "Small": "[BB_PREFIX]/gamedata/tunguska/0/109/M33-006d9dc9.png"
+    },
+    "expansions": [],
+    "score": 25000,
+    "dependencyRequired": null,
+    "criteriaRequired": null
+   }
+  ]
+ }
+]

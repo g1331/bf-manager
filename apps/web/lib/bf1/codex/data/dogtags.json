@@ -1,0 +1,2882 @@
+[
+  {
+    "id": "df082",
+    "category": "进度",
+    "side": "front",
+    "expansion": "",
+    "name": "初显身手",
+    "description": "我想我不小心拦截到要给其他人的讯息了。满满的密语和谜团，真是太有趣了。我实在无法忍住不多看几眼。",
+    "index": 77
+  },
+  {
+    "id": "dfxp108",
+    "category": "进度",
+    "side": "front",
+    "expansion": "",
+    "name": "冲突",
+    "description": "这件事情背后牵扯到的比我想像中还多。我可能见证到比战争更为灵异的可怕事件了。我现在所追寻的线索可能会直接引导我走向这一切的源头，我必须继续努力才行。",
+    "index": 92
+  },
+  {
+    "id": "dfxp313",
+    "category": "进度",
+    "side": "front",
+    "expansion": "",
+    "name": "一个不祥之兆",
+    "description": "他们的行动正在分崩离析。我所追寻的每个线索都引导我发现更多废弃哨站和失败的实验。这究竟是他们能力不足，还是有人恶意破坏呢？我想我找到另一个继续挖掘这些秘密的理由了。",
+    "index": 119
+  },
+  {
+    "id": "dfxp502",
+    "category": "进度",
+    "side": "front",
+    "expansion": "",
+    "name": "密室",
+    "description": "还有哪些被尘封的秘密？",
+    "index": 129
+  },
+  {
+    "id": "dbxp508",
+    "category": "进度",
+    "side": "back",
+    "expansion": "",
+    "name": "觉醒",
+    "description": "生存成了我的第二本能。我再也不会惧怕我的敌人了，但老天啊，他们现在可惧怕我了...惧怕我所成为的这个怪物。等到我发掘出深藏在阴影中的事实后，这场战争就不过是令人烦闷的小事而已。",
+    "index": 181
+  },
+  {
+    "id": "dbxp516",
+    "category": "进度",
+    "side": "back",
+    "expansion": "",
+    "name": "看见天使",
+    "description": "必须在没有头的情况下活着，我开始忌妒我的姊妹们。在令人悔恨的怒火攻心之下，我盲目地大发雷霆，剪去了我右方姊妹的羽翼，并毁掉我左方姊妹的头颅。在发现我的三妹消失后，我不禁向前狂奔，她八成是逃跑了。我的四妹把我砍成两段，害我只剩下双腿。她的全身依旧完整无缺，并持续守护着我们的秘密。",
+    "index": 189
+  },
+  {
+    "id": "dbxp517",
+    "category": "进度",
+    "side": "back",
+    "expansion": "",
+    "name": "野兽之源",
+    "description": "无人可知晓通往地狱入口的关键。然而，囚徒似乎知道。这些看起来毫无道理的涂鸦不只是密码而已，它们是地图来着！北极星请引导我前行。如果我走最短路径，并且一路上避免杀生，我可能就能找出导致这可怜虫陷入癫狂的原因。",
+    "index": 190
+  },
+  {
+    "id": "df000",
+    "category": "阶级",
+    "side": "front",
+    "expansion": "",
+    "name": "空白正面",
+    "description": "这是你狗牌的预设正面。",
+    "index": 0
+  },
+  {
+    "id": "df001",
+    "category": "阶级",
+    "side": "front",
+    "expansion": "",
+    "name": "下士正面",
+    "description": "升到阶级 10 时的奖励。",
+    "index": 1
+  },
+  {
+    "id": "df002",
+    "category": "阶级",
+    "side": "front",
+    "expansion": "",
+    "name": "中士正面",
+    "description": "升到阶级 20 时的奖励。",
+    "index": 2
+  },
+  {
+    "id": "df003",
+    "category": "阶级",
+    "side": "front",
+    "expansion": "",
+    "name": "军士长正面",
+    "description": "升到阶级 30 时的奖励。",
+    "index": 3
+  },
+  {
+    "id": "df004",
+    "category": "阶级",
+    "side": "front",
+    "expansion": "",
+    "name": "军校生正面",
+    "description": "升到阶级 40 时的奖励。",
+    "index": 4
+  },
+  {
+    "id": "df005",
+    "category": "阶级",
+    "side": "front",
+    "expansion": "",
+    "name": "少尉正面",
+    "description": "升到阶级 50 时的奖励。",
+    "index": 5
+  },
+  {
+    "id": "df006",
+    "category": "阶级",
+    "side": "front",
+    "expansion": "",
+    "name": "中尉正面",
+    "description": "升到阶级 60 时的奖励。",
+    "index": 6
+  },
+  {
+    "id": "df007",
+    "category": "阶级",
+    "side": "front",
+    "expansion": "",
+    "name": "上尉正面",
+    "description": "升到阶级 70 时的奖励。",
+    "index": 7
+  },
+  {
+    "id": "df008",
+    "category": "阶级",
+    "side": "front",
+    "expansion": "",
+    "name": "少校正面",
+    "description": "升到阶级 80 时的奖励。",
+    "index": 8
+  },
+  {
+    "id": "df009",
+    "category": "阶级",
+    "side": "front",
+    "expansion": "",
+    "name": "中校正面",
+    "description": "升到阶级 90 时的奖励。",
+    "index": 9
+  },
+  {
+    "id": "df010",
+    "category": "阶级",
+    "side": "front",
+    "expansion": "",
+    "name": "上校正面",
+    "description": "升到阶级 100 时的奖励。",
+    "index": 10
+  },
+  {
+    "id": "dfxp101",
+    "category": "阶级",
+    "side": "front",
+    "expansion": "",
+    "name": "准将正面",
+    "description": "升到阶级 110 时的奖励。",
+    "index": 85
+  },
+  {
+    "id": "dfxp102",
+    "category": "阶级",
+    "side": "front",
+    "expansion": "XPACK1",
+    "name": "前线模式正面",
+    "description": "在前线模式赢得 100 场对战的奖励。",
+    "index": 86
+  },
+  {
+    "id": "dfxp103",
+    "category": "阶级",
+    "side": "front",
+    "expansion": "XPACK1",
+    "name": "《誓死坚守》正面",
+    "description": "在《誓死坚守》每张地图都获得 1 次胜利的奖励。",
+    "index": 87
+  },
+  {
+    "id": "dfxp201",
+    "category": "阶级",
+    "side": "front",
+    "expansion": "",
+    "name": "少将正面",
+    "description": "升到阶级 120 时的奖励。",
+    "index": 99
+  },
+  {
+    "id": "dfxp202",
+    "category": "阶级",
+    "side": "front",
+    "expansion": "XPACK2",
+    "name": "空降补给正面",
+    "description": "在空降补给赢得 50 场对战的奖励。",
+    "index": 100
+  },
+  {
+    "id": "dfxp203",
+    "category": "阶级",
+    "side": "front",
+    "expansion": "XPACK2",
+    "name": "《以沙皇之名》正面",
+    "description": "在《以沙皇之名》每张地图都获得 1 轮胜利的奖励。",
+    "index": 101
+  },
+  {
+    "id": "dfxp301",
+    "category": "阶级",
+    "side": "front",
+    "expansion": "XPACK3",
+    "name": "中将正面",
+    "description": "升到阶级 130 时的奖励",
+    "index": 107
+  },
+  {
+    "id": "dfxp302",
+    "category": "阶级",
+    "side": "front",
+    "expansion": "XPACK3",
+    "name": "海军权威",
+    "description": "摧毁 100 个海上载具",
+    "index": 108
+  },
+  {
+    "id": "dfxp303",
+    "category": "阶级",
+    "side": "front",
+    "expansion": "XPACK3",
+    "name": "力挽狂澜",
+    "description": "在所有加里波利地图上赢得一回合游戏",
+    "index": 109
+  },
+  {
+    "id": "dfxp401",
+    "category": "阶级",
+    "side": "front",
+    "expansion": "XPACK4",
+    "name": "上将正面",
+    "description": "升到阶级 140 时的奖励",
+    "index": 120
+  },
+  {
+    "id": "dfxp402",
+    "category": "阶级",
+    "side": "front",
+    "expansion": "XPACK4",
+    "name": "空中突袭正面",
+    "description": "赢得 50 回合的空中突袭",
+    "index": 121
+  },
+  {
+    "id": "dfxp403",
+    "category": "阶级",
+    "side": "front",
+    "expansion": "XPACK4",
+    "name": "《启示录》正面",
+    "description": "在《启示录》的每张地面战地图上赢得一回合",
+    "index": 122
+  },
+  {
+    "id": "dfxp501",
+    "category": "阶级",
+    "side": "front",
+    "expansion": "",
+    "name": "五星上将正面",
+    "description": "升到阶级 150 时的奖励",
+    "index": 128
+  },
+  {
+    "id": "dfxp504",
+    "category": "阶级",
+    "side": "front",
+    "expansion": "",
+    "name": "闪击行动正面",
+    "description": "赢得每个闪击行动的奖励",
+    "index": 130
+  },
+  {
+    "id": "dbxp408",
+    "category": "小任务",
+    "side": "back",
+    "expansion": "",
+    "name": "暴食印记",
+    "description": "完成暴食之证勤务小任务",
+    "index": 162
+  },
+  {
+    "id": "dbxp409",
+    "category": "小任务",
+    "side": "back",
+    "expansion": "",
+    "name": "色欲印记",
+    "description": "完成色欲之证勤务小任务",
+    "index": 163
+  },
+  {
+    "id": "dbxp410",
+    "category": "小任务",
+    "side": "back",
+    "expansion": "",
+    "name": "贪婪印记",
+    "description": "完成贪婪之证勤务小任务",
+    "index": 164
+  },
+  {
+    "id": "dbxp411",
+    "category": "小任务",
+    "side": "back",
+    "expansion": "",
+    "name": "傲慢印记",
+    "description": "完成傲慢之证勤务小任务",
+    "index": 165
+  },
+  {
+    "id": "dbxp412",
+    "category": "小任务",
+    "side": "back",
+    "expansion": "",
+    "name": "懒惰印记",
+    "description": "完成懒惰之证勤务小任务",
+    "index": 166
+  },
+  {
+    "id": "dbxp413",
+    "category": "小任务",
+    "side": "back",
+    "expansion": "",
+    "name": "愤怒印记",
+    "description": "完成愤怒之证勤务小任务",
+    "index": 167
+  },
+  {
+    "id": "dbxp414",
+    "category": "小任务",
+    "side": "back",
+    "expansion": "",
+    "name": "嫉妒印记",
+    "description": "完成嫉妒之证勤务小任务",
+    "index": 168
+  },
+  {
+    "id": "dbxp415",
+    "category": "小任务",
+    "side": "back",
+    "expansion": "",
+    "name": "瘟疫",
+    "description": "完成窒息瘟疫勤务小任务的奖励",
+    "index": 169
+  },
+  {
+    "id": "dbxp416",
+    "category": "小任务",
+    "side": "back",
+    "expansion": "",
+    "name": "战争",
+    "description": "完成兵凶战危勤务小任务的奖励",
+    "index": 170
+  },
+  {
+    "id": "dbxp417",
+    "category": "小任务",
+    "side": "back",
+    "expansion": "",
+    "name": "饥荒",
+    "description": "完成饿殍遍野勤务小任务的奖励",
+    "index": 171
+  },
+  {
+    "id": "dbxp418",
+    "category": "小任务",
+    "side": "back",
+    "expansion": "",
+    "name": "死亡",
+    "description": "完成十死无生勤务小任务的奖励",
+    "index": 172
+  },
+  {
+    "id": "df062",
+    "category": "社群",
+    "side": "front",
+    "expansion": "",
+    "name": "Game Changer",
+    "description": "利用 Game Changers 建立出更好的游戏。",
+    "index": 61
+  },
+  {
+    "id": "df064",
+    "category": "社群",
+    "side": "front",
+    "expansion": "",
+    "name": "DICE 25 周年庆",
+    "description": "在你们创造全面战争时，时光飞逝。又一个二十五周年来临。",
+    "index": 63
+  },
+  {
+    "id": "df067",
+    "category": "社群",
+    "side": "front",
+    "expansion": "",
+    "name": "DICE 之友",
+    "description": "延续传统。拥有此狗牌的玩家都是 DICE 的朋友。感谢你参与此社群的活动。",
+    "index": 64
+  },
+  {
+    "id": "df069",
+    "category": "社群",
+    "side": "front",
+    "expansion": "",
+    "name": "《战地风云》老鸟",
+    "description": "我是《战地风云》老鸟。",
+    "index": 66
+  },
+  {
+    "id": "df072",
+    "category": "社群",
+    "side": "front",
+    "expansion": "",
+    "name": "CTE 老鸟",
+    "description": "给协助我们制作更好《战地风云》体验的玩家们。感谢你们！",
+    "index": 69
+  },
+  {
+    "id": "df078",
+    "category": "社群",
+    "side": "front",
+    "expansion": "",
+    "name": "全世界最棒的社群",
+    "description": "我从 Battlefield Game Changer 拿到了这个狗牌。",
+    "index": 75
+  },
+  {
+    "id": "df079",
+    "category": "社群",
+    "side": "front",
+    "expansion": "",
+    "name": "Battlefield Insider",
+    "description": "成为 Battlefield Insider，取得多款游戏中的奖励、独家内容，并抢先阅读《战地风云》的最新消息。",
+    "index": 76
+  },
+  {
+    "id": "dfxp114",
+    "category": "社群",
+    "side": "front",
+    "expansion": "",
+    "name": "《战地风云》15 周年庆",
+    "description": "庆祝《战地风云》15 周年。",
+    "index": 98
+  },
+  {
+    "id": "dfxp208",
+    "category": "社群",
+    "side": "front",
+    "expansion": "",
+    "name": "1 周年庆",
+    "description": "欢庆《Battlefield 1》的首个周年庆",
+    "index": 106
+  },
+  {
+    "id": "dfxp308",
+    "category": "社群",
+    "side": "front",
+    "expansion": "",
+    "name": "撞击测试徽章",
+    "description": "感谢你协助我们让《Battlefield 1》成为业界佼佼者！",
+    "index": 114
+  },
+  {
+    "id": "dfxp309",
+    "category": "社群",
+    "side": "front",
+    "expansion": "",
+    "name": "战地发电机",
+    "description": "四条腿的好过两条腿的",
+    "index": 115
+  },
+  {
+    "id": "dfxp310",
+    "category": "社群",
+    "side": "front",
+    "expansion": "",
+    "name": "鸽子伞兵",
+    "description": "将鸽子空投至敌军战线后方，用于为间谍送回重要情报",
+    "index": 116
+  },
+  {
+    "id": "dfxp311",
+    "category": "社群",
+    "side": "front",
+    "expansion": "",
+    "name": "军用喇叭",
+    "description": "用于侦测远处飞机引擎发出的声音",
+    "index": 117
+  },
+  {
+    "id": "dfxp312",
+    "category": "社群",
+    "side": "front",
+    "expansion": "",
+    "name": "小威利",
+    "description": "现存历史最悠久的坦克",
+    "index": 118
+  },
+  {
+    "id": "db074",
+    "category": "社群",
+    "side": "back",
+    "expansion": "",
+    "name": "假期休战",
+    "description": "传言说在某个寒冷且宁静的冬季夜晚，在战场上的各国士兵们会聚在一起和平地庆祝佳节。",
+    "index": 73
+  },
+  {
+    "id": "db076",
+    "category": "社群",
+    "side": "back",
+    "expansion": "",
+    "name": "#FridayNightBattlefield",
+    "description": "快来跟我们一起玩《战地风云》吧。在你的服务器浏览器上搜寻 #FridayNightBattlefield。",
+    "index": 75
+  },
+  {
+    "id": "db082",
+    "category": "社群",
+    "side": "back",
+    "expansion": "",
+    "name": "情人节",
+    "description": "玫瑰正红，紫罗兰正蓝。救助你的队友，也要记得帮他们看看有没有敌人来犯。",
+    "index": 82
+  },
+  {
+    "id": "db083",
+    "category": "社群",
+    "side": "back",
+    "expansion": "",
+    "name": "复活节",
+    "description": "享受复活节的彩蛋寻宝活动，到了战场上记得也要睁大眼睛找。",
+    "index": 83
+  },
+  {
+    "id": "dbxp107",
+    "category": "社群",
+    "side": "back",
+    "expansion": "",
+    "name": "Answers HQ",
+    "description": "成为英雄。",
+    "index": 119
+  },
+  {
+    "id": "dbxp108",
+    "category": "社群",
+    "side": "back",
+    "expansion": "",
+    "name": "樱花",
+    "description": "为了感谢所有日本《Battlefield 1》玩家的长期支持，我们将向你们奖励这款樱花狗牌。",
+    "index": 120
+  },
+  {
+    "id": "dbxp109",
+    "category": "社群",
+    "side": "back",
+    "expansion": "",
+    "name": "干杯！",
+    "description": "支援兵的选择：新酿德国佳酿。开怀畅饮！",
+    "index": 121
+  },
+  {
+    "id": "dbxp110",
+    "category": "社群",
+    "side": "back",
+    "expansion": "",
+    "name": "游玩就是回馈",
+    "description": "庆祝 EA 回馈活动。",
+    "index": 122
+  },
+  {
+    "id": "dbxp113",
+    "category": "社群",
+    "side": "back",
+    "expansion": "",
+    "name": "青铜战斗包收藏家",
+    "description": "打开 10 个战斗包。",
+    "index": 123
+  },
+  {
+    "id": "dbxp114",
+    "category": "社群",
+    "side": "back",
+    "expansion": "",
+    "name": "白银战斗包收藏家",
+    "description": "打开 50 个战斗包。",
+    "index": 124
+  },
+  {
+    "id": "dbxp115",
+    "category": "社群",
+    "side": "back",
+    "expansion": "",
+    "name": "黄金战斗包收藏家",
+    "description": "打开 100 个战斗包。",
+    "index": 125
+  },
+  {
+    "id": "dbxp116",
+    "category": "社群",
+    "side": "back",
+    "expansion": "",
+    "name": "精英战斗包收藏家",
+    "description": "打开 250 个战斗包。",
+    "index": 126
+  },
+  {
+    "id": "dbxp117",
+    "category": "社群",
+    "side": "back",
+    "expansion": "",
+    "name": "“行动呼吁”",
+    "description": "参与“行动呼吁”社群任务。",
+    "index": 127
+  },
+  {
+    "id": "dbxp118",
+    "category": "社群",
+    "side": "back",
+    "expansion": "",
+    "name": "“守住前线”",
+    "description": "参与“守住前线”社群任务。",
+    "index": 128
+  },
+  {
+    "id": "dbxp119",
+    "category": "社群",
+    "side": "back",
+    "expansion": "",
+    "name": "“新前线”",
+    "description": "参与“新前线”社群任务。",
+    "index": 129
+  },
+  {
+    "id": "dbxp120",
+    "category": "社群",
+    "side": "back",
+    "expansion": "",
+    "name": "《战地风云》之夏精英",
+    "description": "参与所有《战地风云》之夏社群任务。",
+    "index": 130
+  },
+  {
+    "id": "dbxp212",
+    "category": "社群",
+    "side": "back",
+    "expansion": "",
+    "name": "失落的印加金币",
+    "description": "黄金国的传说源自于有关尚未发现之印加宝藏的流言",
+    "index": 143
+  },
+  {
+    "id": "dbxp213",
+    "category": "社群",
+    "side": "back",
+    "expansion": "",
+    "name": "巴黎凯旋门",
+    "description": "无名士兵之墓的陈列地",
+    "index": 144
+  },
+  {
+    "id": "dbxp214",
+    "category": "社群",
+    "side": "back",
+    "expansion": "",
+    "name": "俄罗斯套娃",
+    "description": "这些俄罗斯套娃中往往藏着惊喜！",
+    "index": 145
+  },
+  {
+    "id": "dbxp215",
+    "category": "社群",
+    "side": "back",
+    "expansion": "",
+    "name": "贝都因战士",
+    "description": "这些游牧民族在对抗鄂图曼帝国时得到了阿拉伯的劳伦斯的协助",
+    "index": 146
+  },
+  {
+    "id": "dbxp216",
+    "category": "社群",
+    "side": "back",
+    "expansion": "",
+    "name": "2017 年万圣节",
+    "description": "不给糖就捣蛋！",
+    "index": 147
+  },
+  {
+    "id": "dbxp308",
+    "category": "社群",
+    "side": "back",
+    "expansion": "",
+    "name": "2018 年中国新年",
+    "description": "庆祝狗年",
+    "index": 155
+  },
+  {
+    "id": "dbxp502",
+    "category": "社群",
+    "side": "back",
+    "expansion": "",
+    "name": "“游玩就是回馈”2018",
+    "description": "在 2018 年庆祝 EA 回馈活动",
+    "index": 175
+  },
+  {
+    "id": "db075",
+    "category": "十二宫",
+    "side": "back",
+    "expansion": "",
+    "name": "牡羊座",
+    "description": "喜爱冒险与探索新天地是这星座的特质。众所皆知他们个性冲动，可能会造成一两样东西爆炸。",
+    "index": 74
+  },
+  {
+    "id": "db077",
+    "category": "十二宫",
+    "side": "back",
+    "expansion": "",
+    "name": "射手座",
+    "description": "这星座的人不但诚实且喜爱自由。但也有点粗心大意，时常会盲目冲入战斗中。",
+    "index": 76
+  },
+  {
+    "id": "db078",
+    "category": "十二宫",
+    "side": "back",
+    "expansion": "",
+    "name": "摩羯座",
+    "description": "这星座的人不但野心勃勃、有耐性，还很小心谨慎。可别惹到他们了，因为他们会记仇的。",
+    "index": 77
+  },
+  {
+    "id": "db079",
+    "category": "十二宫",
+    "side": "back",
+    "expansion": "",
+    "name": "水瓶座",
+    "description": "这星座的人非常独立自主，同时保有忠诚的特质。他们有些难以捉摸，有时甚至会一意孤行。",
+    "index": 78
+  },
+  {
+    "id": "db080",
+    "category": "十二宫",
+    "side": "back",
+    "expansion": "",
+    "name": "双鱼座",
+    "description": "这星座的人敏感、具同情心且无私。然而，他们藏着许多秘密，也喜欢在黑暗中做事。",
+    "index": 79
+  },
+  {
+    "id": "db087",
+    "category": "十二宫",
+    "side": "back",
+    "expansion": "",
+    "name": "金牛座",
+    "description": "这个星座在战斗中不但可靠还很坚毅。但他们有时候会嫉妒或讨厌其他有着更好装备的人。",
+    "index": 84
+  },
+  {
+    "id": "db088",
+    "category": "十二宫",
+    "side": "back",
+    "expansion": "",
+    "name": "双子座",
+    "description": "这个星座非常喜欢社交、沟通跟玩文字游戏。但有时候也会很狡猾跟肤浅。",
+    "index": 85
+  },
+  {
+    "id": "db089",
+    "category": "十二宫",
+    "side": "back",
+    "expansion": "",
+    "name": "巨蟹座",
+    "description": "这个星座很容易投注情绪，他们用想像力来解决问题。然而他们的情绪起伏嘛……最好小心一点。",
+    "index": 86
+  },
+  {
+    "id": "db090",
+    "category": "十二宫",
+    "side": "back",
+    "expansion": "",
+    "name": "狮子座",
+    "description": "这个星座大方热情。他们会协助有需要的朋友，但有时候会显得盛气凌人。",
+    "index": 87
+  },
+  {
+    "id": "db091",
+    "category": "十二宫",
+    "side": "back",
+    "expansion": "",
+    "name": "处女座",
+    "description": "这个星座聪明且热爱分析。但他们难搞起来也会令人难以承受，所以最好不要挡着他们的路。",
+    "index": 88
+  },
+  {
+    "id": "db092",
+    "category": "十二宫",
+    "side": "back",
+    "expansion": "",
+    "name": "天秤座",
+    "description": "这个星座平和且落落大方，这让他们有时显得不太可靠。他们是出了名的容易受人影响，所以记得好好利用这点。",
+    "index": 89
+  },
+  {
+    "id": "db093",
+    "category": "十二宫",
+    "side": "back",
+    "expansion": "",
+    "name": "天蝎座",
+    "description": "力量与决心是这个星座最大的武器。但力量越大，情绪也越大，这也是为何他们也是出了名的善妒与固执。",
+    "index": 90
+  },
+  {
+    "id": "df077",
+    "category": "促销",
+    "side": "front",
+    "expansion": "",
+    "name": "Origin Access 会员",
+    "description": "奖励给启动 Origin Access《Battlefield 1》试玩版的玩家。透过 Origin Access，你可以探索不断增加的优质 EA 游戏精选、提前试玩 EA 游戏并获得折扣等。",
+    "index": 74
+  },
+  {
+    "id": "db070",
+    "category": "促销",
+    "side": "back",
+    "expansion": "",
+    "name": "ThinkGeek",
+    "description": "此狗牌是由 ThinkGeek 所提供的特别奖项。享受独特且真实的体验，并成为在战场上冲锋陷阵的一员。欢迎来到这个史诗般的世界！",
+    "index": 69
+  },
+  {
+    "id": "db071",
+    "category": "促销",
+    "side": "back",
+    "expansion": "",
+    "name": "DarkHorse",
+    "description": "我们为《Battlefield 1》创造了数百幅美术作品。此狗牌是用来奖励所有购买标准版《The Art of Battlefield 1》的玩家。",
+    "index": 70
+  },
+  {
+    "id": "db072",
+    "category": "促销",
+    "side": "back",
+    "expansion": "",
+    "name": "PDP",
+    "description": "提升了游玩的艺术性。PDP 设计出了能让你与游戏连结的《Battlefield 1》控制器。",
+    "index": 71
+  },
+  {
+    "id": "db073",
+    "category": "促销",
+    "side": "back",
+    "expansion": "",
+    "name": "AMD",
+    "description": "奖励给做出最佳选择，使用 AMD Radeon™ 显卡的玩家。AMD 利用先进技术与出色效能让玩家更有竞争力。",
+    "index": 72
+  },
+  {
+    "id": "db081",
+    "category": "促销",
+    "side": "back",
+    "expansion": "",
+    "name": "行动版《战地风云》",
+    "description": "透过在小帮手移动应用程序上获取此狗牌，来获得行动版《战地风云》的奖励。",
+    "index": 80
+  },
+  {
+    "id": "db095",
+    "category": "促销",
+    "side": "back",
+    "expansion": "",
+    "name": "2016 年 11 月 Battlefest",
+    "description": "2016 年 11 月 Battlefest。",
+    "index": 81
+  },
+  {
+    "id": "dbxp106",
+    "category": "促销",
+    "side": "back",
+    "expansion": "",
+    "name": "2017 年 4 月 Battlefest",
+    "description": "2017 年 4 月 Battlefest。",
+    "index": 118
+  },
+  {
+    "id": "dbxp121",
+    "category": "促销",
+    "side": "back",
+    "expansion": "",
+    "name": "2017 年 9 月 Battlefest",
+    "description": "2017 年 9 月 Battlefest。",
+    "index": 131
+  },
+  {
+    "id": "dbCal003",
+    "category": "促销",
+    "side": "back",
+    "expansion": "",
+    "name": "《Battlefield 1 入侵》",
+    "description": "庆祝《战地风云》竞技性游戏的首次揭露",
+    "index": 173
+  },
+  {
+    "id": "dbxp503",
+    "category": "促销",
+    "side": "back",
+    "expansion": "",
+    "name": "鸢尾花",
+    "description": "在《战地风云 5》之路的法军关卡奖励",
+    "index": 176
+  },
+  {
+    "id": "dbxp504",
+    "category": "促销",
+    "side": "back",
+    "expansion": "",
+    "name": "土匪",
+    "description": "在《战地风云 5》之路的俄军关卡奖励",
+    "index": 177
+  },
+  {
+    "id": "dbxp505",
+    "category": "促销",
+    "side": "back",
+    "expansion": "",
+    "name": "扭曲",
+    "description": "在《战地风云 5》之路的海军陆战队关卡奖励",
+    "index": 178
+  },
+  {
+    "id": "dbxp506",
+    "category": "促销",
+    "side": "back",
+    "expansion": "",
+    "name": "先驱",
+    "description": "在《战地风云 5》之路的启示录关卡奖励",
+    "index": 179
+  },
+  {
+    "id": "df046",
+    "category": "兵种",
+    "side": "front",
+    "expansion": "",
+    "name": "突击新兵正面",
+    "description": "达到突击兵种阶级 1 时奖励。",
+    "index": 45
+  },
+  {
+    "id": "df047",
+    "category": "兵种",
+    "side": "front",
+    "expansion": "",
+    "name": "医护新兵正面",
+    "description": "达到医护兵种阶级 1 时奖励。",
+    "index": 46
+  },
+  {
+    "id": "df048",
+    "category": "兵种",
+    "side": "front",
+    "expansion": "",
+    "name": "侦察新兵正面",
+    "description": "达到侦察兵种阶级 1 时奖励。",
+    "index": 47
+  },
+  {
+    "id": "df049",
+    "category": "兵种",
+    "side": "front",
+    "expansion": "",
+    "name": "支援新兵正面",
+    "description": "达到支援兵种阶级 1 时奖励。",
+    "index": 48
+  },
+  {
+    "id": "df050",
+    "category": "兵种",
+    "side": "front",
+    "expansion": "",
+    "name": "坦克新兵正面",
+    "description": "达到坦克兵种阶级 1 时奖励。",
+    "index": 49
+  },
+  {
+    "id": "df051",
+    "category": "兵种",
+    "side": "front",
+    "expansion": "",
+    "name": "飞行新兵正面",
+    "description": "达到飞行员兵种阶级 1 时奖励。",
+    "index": 50
+  },
+  {
+    "id": "df052",
+    "category": "兵种",
+    "side": "front",
+    "expansion": "",
+    "name": "骑兵新兵正面",
+    "description": "达到骑兵兵种阶级 1 时奖励。",
+    "index": 51
+  },
+  {
+    "id": "dfka01",
+    "category": "兵种",
+    "side": "front",
+    "expansion": "",
+    "name": "突击兵专家正面",
+    "description": "达到突击兵兵种阶级 50 级时奖励。",
+    "index": 78
+  },
+  {
+    "id": "dfkm01",
+    "category": "兵种",
+    "side": "front",
+    "expansion": "",
+    "name": "医护兵专家正面",
+    "description": "达到医护兵兵种阶级 50 级时奖励。",
+    "index": 79
+  },
+  {
+    "id": "dfks01",
+    "category": "兵种",
+    "side": "front",
+    "expansion": "",
+    "name": "侦察兵专家正面",
+    "description": "达到侦察兵兵种阶级 50 时奖励。",
+    "index": 80
+  },
+  {
+    "id": "dfku01",
+    "category": "兵种",
+    "side": "front",
+    "expansion": "",
+    "name": "支援兵专家正面",
+    "description": "达到支援兵兵种阶级 50 级时奖励。",
+    "index": 81
+  },
+  {
+    "id": "dfkt01",
+    "category": "兵种",
+    "side": "front",
+    "expansion": "",
+    "name": "坦克兵专家正面",
+    "description": "达到坦克兵兵种阶级 50 级时奖励。",
+    "index": 82
+  },
+  {
+    "id": "dfkp01",
+    "category": "兵种",
+    "side": "front",
+    "expansion": "",
+    "name": "飞行员专家正面",
+    "description": "达到飞行员兵种阶级 50 级时奖励。",
+    "index": 83
+  },
+  {
+    "id": "dfkc01",
+    "category": "兵种",
+    "side": "front",
+    "expansion": "",
+    "name": "骑兵专家正面",
+    "description": "达到骑兵兵种阶级 50 级时奖励。",
+    "index": 84
+  },
+  {
+    "id": "db000",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "空白背面",
+    "description": "这是你狗牌的预设背面。",
+    "index": 0
+  },
+  {
+    "id": "db057",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "弹药箱背面",
+    "description": "取得优异圣克里斯多福勋章时的奖励。",
+    "index": 57
+  },
+  {
+    "id": "db058",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "维修工具背面",
+    "description": "取得荣耀军团勋章时的奖励。",
+    "index": 58
+  },
+  {
+    "id": "db059",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "医护包背面",
+    "description": "取得优异医疗勋章时的奖励。",
+    "index": 59
+  },
+  {
+    "id": "db060",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "针筒背面",
+    "description": "取得优异医疗勋章时的奖励。",
+    "index": 60
+  },
+  {
+    "id": "db061",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "遇敌信号弹背面",
+    "description": "取得优异鹰隼勋章时的奖励。",
+    "index": 61
+  },
+  {
+    "id": "db062",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "突击兵背面",
+    "description": "达到突击兵种阶级 10 时奖励。",
+    "index": 62
+  },
+  {
+    "id": "db063",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "医护兵背面",
+    "description": "达到医护兵种阶级 10 时奖励。",
+    "index": 63
+  },
+  {
+    "id": "db064",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "侦察兵背面",
+    "description": "达到侦察兵种阶级 10 时奖励。",
+    "index": 64
+  },
+  {
+    "id": "db065",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "支援兵背面",
+    "description": "达到支援兵种阶级 10 时奖励。",
+    "index": 65
+  },
+  {
+    "id": "db066",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "坦克兵背面",
+    "description": "达到坦克兵种阶级 10 时奖励。",
+    "index": 66
+  },
+  {
+    "id": "db067",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "飞行员背面",
+    "description": "达到飞行员兵种阶级 10 时奖励。",
+    "index": 67
+  },
+  {
+    "id": "db068",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "骑兵背面",
+    "description": "达到骑兵兵种阶级 10 时奖励。",
+    "index": 68
+  },
+  {
+    "id": "dbka01",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "突击兵专家 I 背面",
+    "description": "达到突击兵兵种阶级 20 级时奖励。",
+    "index": 91
+  },
+  {
+    "id": "dbka02",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "突击兵专家 II 背面",
+    "description": "达到突击兵兵种阶级 30 级时奖励。",
+    "index": 92
+  },
+  {
+    "id": "dbka03",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "突击兵专家 III 背面",
+    "description": "达到突击兵兵种阶级 40 级时奖励。",
+    "index": 93
+  },
+  {
+    "id": "dbkc01",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "骑兵专家 I 背面",
+    "description": "达到骑兵兵种阶级 20 级时奖励。",
+    "index": 94
+  },
+  {
+    "id": "dbkc02",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "骑兵专家 II 背面",
+    "description": "达到骑兵兵种阶级 30 级时奖励。",
+    "index": 95
+  },
+  {
+    "id": "dbkc03",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "骑兵专家 III 背面",
+    "description": "达到骑兵兵种阶级 40 级时奖励。",
+    "index": 96
+  },
+  {
+    "id": "dbkm01",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "医护兵专家 I 背面",
+    "description": "达到医护兵兵种阶级 20 级时奖励。",
+    "index": 97
+  },
+  {
+    "id": "dbkm02",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "医护兵专家 II 背面",
+    "description": "达到医护兵兵种阶级 30 级时奖励。",
+    "index": 98
+  },
+  {
+    "id": "dbkm03",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "医护兵专家 III 背面",
+    "description": "达到医护兵兵种阶级 40 级时奖励。",
+    "index": 99
+  },
+  {
+    "id": "dbkp01",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "飞行员专家 I 背面",
+    "description": "达到飞行员兵种阶级 20 级时奖励。",
+    "index": 100
+  },
+  {
+    "id": "dbkp02",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "飞行员专家 II 背面",
+    "description": "达到飞行员兵种阶级 30 级时奖励。",
+    "index": 101
+  },
+  {
+    "id": "dbkp03",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "飞行员专家 III 背面",
+    "description": "达到飞行员兵种阶级 40 级时奖励。",
+    "index": 102
+  },
+  {
+    "id": "dbks01",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "侦察兵专家 I 背面",
+    "description": "达到侦察兵兵种阶级 20 时奖励。",
+    "index": 103
+  },
+  {
+    "id": "dbks02",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "侦察兵专家 II 背面",
+    "description": "达到侦察兵兵种阶级 30 时奖励。",
+    "index": 104
+  },
+  {
+    "id": "dbks03",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "侦察兵专家 III 背面",
+    "description": "达到侦察兵兵种阶级 40 时奖励。",
+    "index": 105
+  },
+  {
+    "id": "dbkt01",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "坦克兵专家 I 背面",
+    "description": "达到坦克兵兵种阶级 20 级时奖励。",
+    "index": 106
+  },
+  {
+    "id": "dbkt02",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "坦克兵专家 II 背面",
+    "description": "达到坦克兵兵种阶级 30 级时奖励。",
+    "index": 107
+  },
+  {
+    "id": "dbkt03",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "坦克兵专家 III 背面",
+    "description": "达到坦克兵兵种阶级 40 级时奖励。",
+    "index": 108
+  },
+  {
+    "id": "dbku01",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "支援兵专家 I 背面",
+    "description": "达到支援兵兵种阶级 20 级时奖励。",
+    "index": 109
+  },
+  {
+    "id": "dbku02",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "支援兵专家 II 背面",
+    "description": "达到支援兵兵种阶级 30 级时奖励。",
+    "index": 110
+  },
+  {
+    "id": "dbku03",
+    "category": "兵种",
+    "side": "back",
+    "expansion": "",
+    "name": "支援兵专家 III 背面",
+    "description": "达到支援兵兵种阶级 40 级时奖励。",
+    "index": 111
+  },
+  {
+    "id": "df011",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "优异钢铁之星勋章正面",
+    "description": "取得优异钢铁之星勋章时的奖励。",
+    "index": 11
+  },
+  {
+    "id": "df012",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "优异医疗勋章正面",
+    "description": "取得优异医疗勋章时的奖励。",
+    "index": 12
+  },
+  {
+    "id": "df013",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "优异鹰隼勋章正面",
+    "description": "取得优异鹰隼勋章时的奖励。",
+    "index": 13
+  },
+  {
+    "id": "df014",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "优异圣克里斯多福勋章正面",
+    "description": "取得优异圣克里斯多福勋章时的奖励。",
+    "index": 14
+  },
+  {
+    "id": "df015",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "优异奥古斯都勋章正面",
+    "description": "取得优异奥古斯都勋章时的奖励。",
+    "index": 15
+  },
+  {
+    "id": "df016",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "优异伊卡洛斯勋章正面",
+    "description": "取得优异伊卡洛斯勋章时的奖励。",
+    "index": 16
+  },
+  {
+    "id": "df017",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "优异黄金之心勋章正面",
+    "description": "取得优异黄金之心勋章时的奖励。",
+    "index": 17
+  },
+  {
+    "id": "df018",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "牛顿力学军功勋章正面",
+    "description": "取得牛顿力学军功勋章时的奖励。",
+    "index": 18
+  },
+  {
+    "id": "df019",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "突击兵英勇勋章正面",
+    "description": "取得突击兵英勇勋章时的奖励。",
+    "index": 19
+  },
+  {
+    "id": "df020",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "LeFever 突击兵勋章正面",
+    "description": "取得 LeFever 突击兵勋章时的奖励。",
+    "index": 20
+  },
+  {
+    "id": "df021",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "医护兵英勇勋章正面",
+    "description": "取得医护兵英勇勋章时的奖励。",
+    "index": 21
+  },
+  {
+    "id": "df022",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "支援兵英勇勋章正面",
+    "description": "取得支援兵英勇勋章时的奖励。",
+    "index": 22
+  },
+  {
+    "id": "df023",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "侦察兵英勇勋章正面",
+    "description": "取得侦察兵英勇勋章时的奖励。",
+    "index": 23
+  },
+  {
+    "id": "df024",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "闪电十字勋章正面",
+    "description": "取得闪电十字勋章时的奖励。",
+    "index": 24
+  },
+  {
+    "id": "df025",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "圣巴斯弟盎勋章正面",
+    "description": "取得圣巴斯弟盎勋章时的奖励。",
+    "index": 25
+  },
+  {
+    "id": "df026",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "红龙勋章正面",
+    "description": "取得红龙勋章时的奖励。",
+    "index": 26
+  },
+  {
+    "id": "df027",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "雄狮勋章正面",
+    "description": "取得雄狮勋章时的奖励。",
+    "index": 27
+  },
+  {
+    "id": "df028",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "坚毅勋章正面",
+    "description": "取得坚毅勋章时的奖励。",
+    "index": 28
+  },
+  {
+    "id": "df029",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "腓特烈二世皇冠正面",
+    "description": "取得腓特烈二世皇冠时的奖励。",
+    "index": 29
+  },
+  {
+    "id": "df030",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "亚历山大之星正面",
+    "description": "取得亚历山大之星时的奖励。",
+    "index": 30
+  },
+  {
+    "id": "df031",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "查理曼大帝十字架正面",
+    "description": "取得查理曼大帝十字架时的奖励。",
+    "index": 31
+  },
+  {
+    "id": "df032",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "统领之星正面",
+    "description": "取得统领之星时的奖励。",
+    "index": 32
+  },
+  {
+    "id": "df033",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "骷髅军团勋章正面",
+    "description": "取得骷髅军团勋章时的奖励。",
+    "index": 33
+  },
+  {
+    "id": "df034",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "飞禽十字勋章正面",
+    "description": "取得飞禽十字勋章时的奖励。",
+    "index": 34
+  },
+  {
+    "id": "df036",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "雄鹿皇家勋章正面",
+    "description": "取得雄鹿皇家勋章时的奖励。",
+    "index": 35
+  },
+  {
+    "id": "df037",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "狙击手护卫勋章正面",
+    "description": "取得狙击手护卫勋章时的奖励。",
+    "index": 36
+  },
+  {
+    "id": "df038",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "皇冠皇家勋章正面",
+    "description": "取得皇冠皇家勋章时的奖励。",
+    "index": 37
+  },
+  {
+    "id": "df039",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "深红之心勋章正面",
+    "description": "取得深红之心勋章时的奖励。",
+    "index": 38
+  },
+  {
+    "id": "df040",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "神圣合一军团勋章正面",
+    "description": "取得神圣合一军团勋章时的奖励。",
+    "index": 39
+  },
+  {
+    "id": "df041",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "血海军团勋章正面",
+    "description": "取得血海军团勋章时的奖励。",
+    "index": 40
+  },
+  {
+    "id": "df042",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "荣耀军团勋章正面",
+    "description": "取得荣耀军团勋章时的奖励。",
+    "index": 41
+  },
+  {
+    "id": "df043",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "苍狼军团勋章正面",
+    "description": "取得苍狼军团勋章时的奖励。",
+    "index": 42
+  },
+  {
+    "id": "df044",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "公牛勋章正面",
+    "description": "取得公牛勋章时的奖励。",
+    "index": 43
+  },
+  {
+    "id": "df045",
+    "category": "勋章",
+    "side": "front",
+    "expansion": "",
+    "name": "可汗勋章正面",
+    "description": "取得可汗勋章时的奖励。",
+    "index": 44
+  },
+  {
+    "id": "df053",
+    "category": "高级",
+    "side": "front",
+    "expansion": "",
+    "name": "战争男爵",
+    "description": "我有双翼，自由飞行。",
+    "index": 52
+  },
+  {
+    "id": "df054",
+    "category": "高级",
+    "side": "front",
+    "expansion": "",
+    "name": "那运气呢？",
+    "description": "凡事没有侥幸，技术才是唯一重要的事情。",
+    "index": 53
+  },
+  {
+    "id": "df055",
+    "category": "高级",
+    "side": "front",
+    "expansion": "",
+    "name": "送佛送到西",
+    "description": "杀掉猎物后，你必须给他们挖个坟墓。",
+    "index": 54
+  },
+  {
+    "id": "df056",
+    "category": "高级",
+    "side": "front",
+    "expansion": "",
+    "name": "猎隼",
+    "description": "猎隼是能协助你在战场上猎杀的可靠伙伴。",
+    "index": 55
+  },
+  {
+    "id": "df057",
+    "category": "高级",
+    "side": "front",
+    "expansion": "",
+    "name": "一发爆头",
+    "description": "一发爆头、一发爆头、一发……还是爆头！",
+    "index": 56
+  },
+  {
+    "id": "dfxp104",
+    "category": "高级",
+    "side": "front",
+    "expansion": "",
+    "name": "上校",
+    "description": "通往伟大之路由此开始。",
+    "index": 88
+  },
+  {
+    "id": "dfxp105",
+    "category": "高级",
+    "side": "front",
+    "expansion": "",
+    "name": "世界大战",
+    "description": "数个世纪的古老帝国衰落，从它们的废墟中建立了许多新国家。",
+    "index": 89
+  },
+  {
+    "id": "dfxp106",
+    "category": "高级",
+    "side": "front",
+    "expansion": "",
+    "name": "毒气来袭！",
+    "description": "第一次世界大战的所有主要参战方皆曾使用过毒气。",
+    "index": 90
+  },
+  {
+    "id": "dfxp107",
+    "category": "高级",
+    "side": "front",
+    "expansion": "",
+    "name": "摧毁交响曲",
+    "description": "每小时一百万发火炮。",
+    "index": 91
+  },
+  {
+    "id": "dfxp110",
+    "category": "高级",
+    "side": "front",
+    "expansion": "",
+    "name": "手榴弹",
+    "description": "万鸟在林，不如一鸟在手。",
+    "index": 94
+  },
+  {
+    "id": "dfxp111",
+    "category": "高级",
+    "side": "front",
+    "expansion": "",
+    "name": "沙漠绿洲",
+    "description": "苦战获胜之后，在树荫下好好休憩。",
+    "index": 95
+  },
+  {
+    "id": "dfxp112",
+    "category": "高级",
+    "side": "front",
+    "expansion": "",
+    "name": "沙漠上的足迹",
+    "description": "别踩我。",
+    "index": 96
+  },
+  {
+    "id": "dfxp113",
+    "category": "高级",
+    "side": "front",
+    "expansion": "",
+    "name": "金色光线",
+    "description": "记得穿戴正确的头部装备，来避免大量的眩光。",
+    "index": 97
+  },
+  {
+    "id": "dfxp204",
+    "category": "高级",
+    "side": "front",
+    "expansion": "",
+    "name": "帝国雄鹰",
+    "description": "众志成城。",
+    "index": 102
+  },
+  {
+    "id": "dfxp205",
+    "category": "高级",
+    "side": "front",
+    "expansion": "",
+    "name": "无敌骠骑兵",
+    "description": "近在咫尺。",
+    "index": 103
+  },
+  {
+    "id": "dfxp206",
+    "category": "高级",
+    "side": "front",
+    "expansion": "",
+    "name": "克里姆林宫",
+    "description": "城中堡垒。",
+    "index": 104
+  },
+  {
+    "id": "dfxp207",
+    "category": "高级",
+    "side": "front",
+    "expansion": "",
+    "name": "拉斯普丁",
+    "description": "妖僧。",
+    "index": 105
+  },
+  {
+    "id": "dfxp304",
+    "category": "高级",
+    "side": "front",
+    "expansion": "",
+    "name": "锚",
+    "description": "船闸。",
+    "index": 110
+  },
+  {
+    "id": "dfxp305",
+    "category": "高级",
+    "side": "front",
+    "expansion": "",
+    "name": "车轮",
+    "description": "遵命船长！",
+    "index": 111
+  },
+  {
+    "id": "dfxp307",
+    "category": "高级",
+    "side": "front",
+    "expansion": "",
+    "name": "地雷",
+    "description": "别鸣笛！",
+    "index": 112
+  },
+  {
+    "id": "dfxp306",
+    "category": "高级",
+    "side": "front",
+    "expansion": "",
+    "name": "飞船",
+    "description": "天空无限。",
+    "index": 113
+  },
+  {
+    "id": "dfxp404",
+    "category": "高级",
+    "side": "front",
+    "expansion": "",
+    "name": "瞬间爆炸",
+    "description": "非常适合于挖洞。",
+    "index": 123
+  },
+  {
+    "id": "dfxp405",
+    "category": "高级",
+    "side": "front",
+    "expansion": "",
+    "name": "审判",
+    "description": "结束即是开始。",
+    "index": 124
+  },
+  {
+    "id": "dfxp406",
+    "category": "高级",
+    "side": "front",
+    "expansion": "",
+    "name": "入侵",
+    "description": "你永远等不到他的到来…",
+    "index": 125
+  },
+  {
+    "id": "dfxp407",
+    "category": "高级",
+    "side": "front",
+    "expansion": "",
+    "name": "最后乐章",
+    "description": "完美谢幕。",
+    "index": 126
+  },
+  {
+    "id": "db001",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "Hellriegel 1915 背面",
+    "description": "用 Hellriegel 1915 击杀 100 人的奖励。",
+    "index": 1
+  },
+  {
+    "id": "db002",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "M1918 自动冲锋枪背面",
+    "description": "用 M1918 自动冲锋枪击杀 100 人的奖励。",
+    "index": 2
+  },
+  {
+    "id": "db003",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "MP18 背面",
+    "description": "用 MP18 击杀 100 人的奖励。",
+    "index": 3
+  },
+  {
+    "id": "db004",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "12g 自动霰弹枪背面",
+    "description": "用 12g 自动霰弹枪击杀 100 人的奖励。",
+    "index": 4
+  },
+  {
+    "id": "db005",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "Model 10-A 背面",
+    "description": "用 Model 10-A 击杀 100 人的奖励。",
+    "index": 5
+  },
+  {
+    "id": "db006",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "M97 战壕枪背面",
+    "description": "用 M97 战壕枪击杀 100 人的奖励。",
+    "index": 6
+  },
+  {
+    "id": "db007",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "Selbstlader 1906 背面",
+    "description": "用 Selbstlader 1906 击杀 100 人的奖励。",
+    "index": 7
+  },
+  {
+    "id": "db008",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "Model 8 自动装填步枪背面",
+    "description": "用 Model 8 自动装填步枪击杀 100 人的奖励。",
+    "index": 8
+  },
+  {
+    "id": "db009",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "Cei-Rigotti 背面",
+    "description": "用 Cei-Rigotti 击杀 100 人的奖励。",
+    "index": 9
+  },
+  {
+    "id": "db010",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "Selbstlader M1916 背面",
+    "description": "用 Selbstlader M1916 击杀 100 人的奖励。",
+    "index": 10
+  },
+  {
+    "id": "db011",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "蒙德拉贡步枪背面",
+    "description": "用蒙德拉贡步枪击杀 100 人的奖励。",
+    "index": 11
+  },
+  {
+    "id": "db012",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "M1907 半自动步枪背面",
+    "description": "用 M1907 半自动步枪击杀 100 人的奖励。",
+    "index": 12
+  },
+  {
+    "id": "db013",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "马提尼·亨利步枪背面",
+    "description": "用马提尼·亨利步枪击杀 100 人的奖励。",
+    "index": 13
+  },
+  {
+    "id": "db014",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "M1903 背面",
+    "description": "用 M1903 击杀 100 人的奖励。",
+    "index": 14
+  },
+  {
+    "id": "db015",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "SMLE MKIII 背面",
+    "description": "用 SMLE MKIII 击杀 100 人的奖励。",
+    "index": 15
+  },
+  {
+    "id": "db016",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "Gewehr 98 背面",
+    "description": "用 Gewehr 98 击杀 100 人的奖励。",
+    "index": 16
+  },
+  {
+    "id": "db017",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "Gewehr M.95 背面",
+    "description": "用 Gewehr M.95 击杀 100 人的奖励。",
+    "index": 17
+  },
+  {
+    "id": "db018",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "Russian 1895 背面",
+    "description": "用 Russian 1895 击杀 100 人的奖励。",
+    "index": 18
+  },
+  {
+    "id": "db019",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "M1918 勃朗宁自动步枪背面",
+    "description": "用 M1918 勃朗宁自动步枪击杀 100 人的奖励。",
+    "index": 19
+  },
+  {
+    "id": "db020",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "Huot 自动步枪背面",
+    "description": "用 Huot 自动步枪击杀 100 人的奖励。",
+    "index": 20
+  },
+  {
+    "id": "db021",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "MG 15 n.A 背面",
+    "description": "用 MG 15 n.A 击杀 100 人的奖励。",
+    "index": 21
+  },
+  {
+    "id": "db022",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "M1909 贝内特·梅西耶机枪背面",
+    "description": "用 M1909 贝内特·梅西耶机枪击杀 100 人的奖励。",
+    "index": 22
+  },
+  {
+    "id": "db023",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "路易士机枪背面",
+    "description": "用路易士机枪击杀 100 人的奖励。",
+    "index": 23
+  },
+  {
+    "id": "db024",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "麦德森机枪背面",
+    "description": "用麦德森机枪击杀 100 人的奖励。",
+    "index": 24
+  },
+  {
+    "id": "db025",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "斗牛犬左轮手枪背面",
+    "description": "用斗牛犬左轮手枪击杀 100 人的奖励。",
+    "index": 25
+  },
+  {
+    "id": "db026",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "费罗梅尔停止手枪背面",
+    "description": "用费罗梅尔停止手枪击杀 100 人的奖励。",
+    "index": 26
+  },
+  {
+    "id": "db027",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "Mle 1903 背面",
+    "description": "用 Mle 1903 击杀 100 人的奖励。",
+    "index": 27
+  },
+  {
+    "id": "db028",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "1903 Hammerless 背面",
+    "description": "用 1903 Hammerless 击杀 100 人的奖励。",
+    "index": 28
+  },
+  {
+    "id": "db029",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "Taschenpistole M1914 背面",
+    "description": "用 Taschenpistole M1914 击杀 100 人的奖励。",
+    "index": 29
+  },
+  {
+    "id": "db030",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "Kolibri 手枪背面",
+    "description": "用 Kolibri 手枪击杀 100 人的奖励。",
+    "index": 30
+  },
+  {
+    "id": "db031",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "C-93 背面",
+    "description": "用 C-93 击杀 100 人的奖励。",
+    "index": 31
+  },
+  {
+    "id": "db032",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "加塞 M1870 背面",
+    "description": "用加塞 M1870 击杀 100 人的奖励。",
+    "index": 32
+  },
+  {
+    "id": "db033",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "Mars 自动手枪背面",
+    "description": "用 Mars 自动手枪击杀 100 人的奖励。",
+    "index": 33
+  },
+  {
+    "id": "db034",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "Repetierpistole M1912 背面",
+    "description": "用 Repetierpistole M 1912 击杀 100 人的奖励。",
+    "index": 34
+  },
+  {
+    "id": "db035",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "Modello 1915 背面",
+    "description": "用 Modello 1915 击杀 100 人的奖励。",
+    "index": 35
+  },
+  {
+    "id": "db036",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "M1911 背面",
+    "description": "用 M1911 击杀 100 人的奖励。",
+    "index": 36
+  },
+  {
+    "id": "db037",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "Howdah 手枪背面",
+    "description": "用 Howdah 手枪击杀 100 人的奖励。",
+    "index": 37
+  },
+  {
+    "id": "db038",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "P08 手枪背面",
+    "description": "用 P08 手枪击杀 100 人的奖励。",
+    "index": 38
+  },
+  {
+    "id": "db039",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "C96 背面",
+    "description": "用 C96 击杀 100 人的奖励。",
+    "index": 39
+  },
+  {
+    "id": "db040",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "自动左轮手枪背面",
+    "description": "用自动左轮手枪击杀 100 人的奖励。",
+    "index": 40
+  },
+  {
+    "id": "db041",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "3 号左轮手枪背面",
+    "description": "用 3 号左轮手枪击杀 100 人的奖励。",
+    "index": 41
+  },
+  {
+    "id": "db042",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "Bodeo 1889 背面",
+    "description": "用 Bodeo 1889 击杀 100 人的奖励。",
+    "index": 42
+  },
+  {
+    "id": "db043",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "近战武器背面",
+    "description": "用近战武器击杀 100 人的奖励。",
+    "index": 43
+  },
+  {
+    "id": "db044",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "手榴弹背面",
+    "description": "用手榴弹击杀 100 人的奖励。",
+    "index": 44
+  },
+  {
+    "id": "db045",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "地雷背面",
+    "description": "用地雷击杀 100 人的奖励。",
+    "index": 45
+  },
+  {
+    "id": "db046",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "反坦克火箭炮背面",
+    "description": "用反坦克火箭炮击杀 100 人的奖励。",
+    "index": 46
+  },
+  {
+    "id": "db047",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "炸药背面",
+    "description": "用炸药击杀 100 人的奖励。",
+    "index": 47
+  },
+  {
+    "id": "db048",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "迫击炮背面",
+    "description": "用迫击炮击杀 100 人的奖励。",
+    "index": 48
+  },
+  {
+    "id": "db049",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "绊索炸弹背面",
+    "description": "用绊索炸弹击杀 100 人的奖励。",
+    "index": 49
+  },
+  {
+    "id": "db050",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "精英兵种武器背面",
+    "description": "用精英兵种武器击杀 50 人的奖励。",
+    "index": 50
+  },
+  {
+    "id": "db056",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "骑兵武器背面",
+    "description": "从马背上击杀 50 人的奖励。",
+    "index": 56
+  },
+  {
+    "id": "dbxp101",
+    "category": "武器",
+    "side": "back",
+    "expansion": "XPACK1",
+    "name": "利贝罗勒 1918 背面",
+    "description": "用利贝罗勒 1918 击杀 100 人的奖励。",
+    "index": 112
+  },
+  {
+    "id": "dbxp102",
+    "category": "武器",
+    "side": "back",
+    "expansion": "XPACK1",
+    "name": "Sjögren Inertial 背面",
+    "description": "用 Sjögren Inertial 击杀 100 人的奖励。",
+    "index": 113
+  },
+  {
+    "id": "dbxp103",
+    "category": "武器",
+    "side": "back",
+    "expansion": "XPACK1",
+    "name": "RSC 1917 背面",
+    "description": "用 RSC 1917 击杀 100 人的奖励。",
+    "index": 114
+  },
+  {
+    "id": "dbxp104",
+    "category": "武器",
+    "side": "back",
+    "expansion": "XPACK1",
+    "name": "绍沙轻机枪背面",
+    "description": "用绍沙轻机枪击杀 100 人的奖励。",
+    "index": 115
+  },
+  {
+    "id": "dbxp105",
+    "category": "武器",
+    "side": "back",
+    "expansion": "XPACK1",
+    "name": "勒贝尔 1886 背面",
+    "description": "用勒贝尔 M1886 击杀 100 人的奖励。",
+    "index": 116
+  },
+  {
+    "id": "dbxp001",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "十字弓发射器背面",
+    "description": "用十字弓发射器击杀 100 人的奖励。",
+    "index": 117
+  },
+  {
+    "id": "dbxp201",
+    "category": "武器",
+    "side": "back",
+    "expansion": "XPACK2",
+    "name": "Model 1900 背面",
+    "description": "用 Model 1900 击杀 100 人的奖励。",
+    "index": 132
+  },
+  {
+    "id": "dbxp202",
+    "category": "武器",
+    "side": "back",
+    "expansion": "XPACK2",
+    "name": "SMG 08/18 背面",
+    "description": "用 SMG 08/18 击杀 100 人的奖励。",
+    "index": 133
+  },
+  {
+    "id": "dbxp203",
+    "category": "武器",
+    "side": "back",
+    "expansion": "XPACK2",
+    "name": "费德洛夫自动步枪背面",
+    "description": "用费德洛夫自动步枪击杀 100 人的奖励。",
+    "index": 134
+  },
+  {
+    "id": "dbxp204",
+    "category": "武器",
+    "side": "back",
+    "expansion": "XPACK2",
+    "name": "刘将军步枪背面",
+    "description": "用刘将军步枪击杀 100 人的奖励。",
+    "index": 135
+  },
+  {
+    "id": "dbxp205",
+    "category": "武器",
+    "side": "back",
+    "expansion": "XPACK2",
+    "name": "Parabellum MG14/17 背面",
+    "description": "用 Parabellum MG14/17 击杀 100 人的奖励。",
+    "index": 136
+  },
+  {
+    "id": "dbxp206",
+    "category": "武器",
+    "side": "back",
+    "expansion": "XPACK2",
+    "name": "Perino Model 1908 步枪背面",
+    "description": "用 Perino Model 1908 步枪击杀 100 人的奖励。",
+    "index": 137
+  },
+  {
+    "id": "dbxp207",
+    "category": "武器",
+    "side": "back",
+    "expansion": "XPACK2",
+    "name": "莫辛-纳甘 M91 步枪背面",
+    "description": "用莫辛-纳甘 M91 步枪击杀 100 人的奖励。",
+    "index": 138
+  },
+  {
+    "id": "dbxp208",
+    "category": "武器",
+    "side": "back",
+    "expansion": "XPACK2",
+    "name": "Vetterli-Vitali M1870/87 步枪背面",
+    "description": "用 Vetterli-Vitali M1870/87 步枪击杀 100 人的奖励。",
+    "index": 139
+  },
+  {
+    "id": "dbxp209",
+    "category": "武器",
+    "side": "back",
+    "expansion": "XPACK2",
+    "name": "纳甘左轮手枪背面",
+    "description": "用纳甘左轮手枪击杀 100 人的奖励。",
+    "index": 140
+  },
+  {
+    "id": "dbxp210",
+    "category": "武器",
+    "side": "back",
+    "expansion": "XPACK2",
+    "name": "Obrez 手枪背面",
+    "description": "用 Obrez 手枪击杀 100 人的奖励。",
+    "index": 141
+  },
+  {
+    "id": "dbxp211",
+    "category": "武器",
+    "side": "back",
+    "expansion": "XPACK2",
+    "name": "C93 卡宾枪背面",
+    "description": "用 C93 卡宾枪击杀 100 人的奖励。",
+    "index": 142
+  },
+  {
+    "id": "dbxp301",
+    "category": "武器",
+    "side": "back",
+    "expansion": "XPACK3",
+    "name": "抱抱它",
+    "description": "从敌人身上取得 100 枚狗牌的奖励",
+    "index": 148
+  },
+  {
+    "id": "dbxp302",
+    "category": "武器",
+    "side": "back",
+    "expansion": "XPACK3",
+    "name": "M1917 战壕卡宾枪背面",
+    "description": "用 M1911 战壕卡宾枪击杀 100 人的奖励",
+    "index": 149
+  },
+  {
+    "id": "dbxp303",
+    "category": "武器",
+    "side": "back",
+    "expansion": "XPACK3",
+    "name": "M1912/P.16 背面",
+    "description": "用 M1912/P.16 击杀 100 人的奖励",
+    "index": 150
+  },
+  {
+    "id": "dbxp304",
+    "category": "武器",
+    "side": "back",
+    "expansion": "XPACK3",
+    "name": "Farquhar-Hill 步枪背面",
+    "description": "用 Farquhar-Hill 步枪击杀 100 人的奖励",
+    "index": 151
+  },
+  {
+    "id": "dbxp305",
+    "category": "武器",
+    "side": "back",
+    "expansion": "XPACK3",
+    "name": "卡尔卡诺 M91 卡宾枪背面",
+    "description": "用卡尔卡诺 M91 卡宾枪击杀 100 人的奖励",
+    "index": 152
+  },
+  {
+    "id": "dbxp306",
+    "category": "武器",
+    "side": "back",
+    "expansion": "XPACK3",
+    "name": "三八式步枪背面",
+    "description": "用三八式步枪击杀 100 人的奖励",
+    "index": 153
+  },
+  {
+    "id": "dbxp307",
+    "category": "武器",
+    "side": "back",
+    "expansion": "XPACK3",
+    "name": "M1917 机枪背面",
+    "description": "用 M1917 机枪击杀 100 人的奖励",
+    "index": 154
+  },
+  {
+    "id": "dbxp401",
+    "category": "武器",
+    "side": "back",
+    "expansion": "XPACK4",
+    "name": "RSC 冲锋枪背面",
+    "description": "用 RSC 冲锋枪击杀 100 人的奖励",
+    "index": 156
+  },
+  {
+    "id": "dbxp402",
+    "category": "武器",
+    "side": "back",
+    "expansion": "XPACK4",
+    "name": "Howell 自动步枪背面",
+    "description": "用 Howell 自动步枪击杀 100 人的奖励",
+    "index": 157
+  },
+  {
+    "id": "dbxp403",
+    "category": "武器",
+    "side": "back",
+    "expansion": "XPACK4",
+    "name": "轻机枪 08/18 背面",
+    "description": "用 lMG 08/18 击杀 100 人的奖励",
+    "index": 158
+  },
+  {
+    "id": "dbxp404",
+    "category": "武器",
+    "side": "back",
+    "expansion": "XPACK4",
+    "name": "罗斯 MkIII 背面",
+    "description": "用罗斯 MkIII 击杀 100 人的奖励",
+    "index": 159
+  },
+  {
+    "id": "dbxp405",
+    "category": "武器",
+    "side": "back",
+    "expansion": "XPACK4",
+    "name": "M1917 Enfield 背面",
+    "description": "用 M1917 Enfield 击杀 100 人的奖励",
+    "index": 160
+  },
+  {
+    "id": "dbxp406",
+    "category": "武器",
+    "side": "back",
+    "expansion": "XPACK4",
+    "name": "Mk VI 左轮手枪背面",
+    "description": "用 Mk VI 左轮手枪击杀 100 人的奖励",
+    "index": 161
+  },
+  {
+    "id": "dbxp501",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "M1919 冲锋枪背面",
+    "description": "用 M1919 冲锋枪取得 100 个击杀数的奖励",
+    "index": 174
+  },
+  {
+    "id": "dbxp507",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "Burton LMR 轻机枪背面",
+    "description": "用 Burton LMR 轻机枪击杀 100 人的奖励",
+    "index": 180
+  },
+  {
+    "id": "dbxp509",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "费罗梅尔停止手枪背面",
+    "description": "用费罗梅尔停止手枪击杀 100 人的奖励",
+    "index": 182
+  },
+  {
+    "id": "dbxp510",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "短管霰弹枪背面",
+    "description": "用短管霰弹枪击杀 100 人的奖励",
+    "index": 183
+  },
+  {
+    "id": "dbxp511",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "M1911（加长）背面",
+    "description": "用 M1911（加长）击杀 100 人的奖励",
+    "index": 184
+  },
+  {
+    "id": "dbxp512",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "P08 Artillerie 背面",
+    "description": "用 P08 Artillerie 击杀 100 人的奖励",
+    "index": 185
+  },
+  {
+    "id": "dbxp513",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "皮珀 M1893 背面",
+    "description": "用皮珀 M1893 击杀 100 人的奖励",
+    "index": 186
+  },
+  {
+    "id": "dbxp514",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "Mle 1903（加长）背面",
+    "description": "用 Mle 1903（加长）击杀 100 人的奖励",
+    "index": 187
+  },
+  {
+    "id": "dbxp515",
+    "category": "武器",
+    "side": "back",
+    "expansion": "",
+    "name": "C96 卡宾枪背面",
+    "description": "用 C96 宾枪击杀 100 人的奖励",
+    "index": 188
+  },
+  {
+    "id": "df058",
+    "category": "专属",
+    "side": "front",
+    "expansion": "",
+    "name": "DICE",
+    "description": "奖励给制作《Battlefield 1》的开发人员。",
+    "index": 57
+  },
+  {
+    "id": "df059",
+    "category": "专属",
+    "side": "front",
+    "expansion": "",
+    "name": "DICE LA",
+    "description": "奖励给制作《Battlefield 1》的开发人员。",
+    "index": 58
+  },
+  {
+    "id": "df060",
+    "category": "专属",
+    "side": "front",
+    "expansion": "",
+    "name": "Uprise",
+    "description": "奖励给制作《Battlefield 1》的开发人员。",
+    "index": 59
+  },
+  {
+    "id": "df061",
+    "category": "专属",
+    "side": "front",
+    "expansion": "",
+    "name": "EA",
+    "description": "Electronic Arts。",
+    "index": 60
+  },
+  {
+    "id": "df063",
+    "category": "专属",
+    "side": "front",
+    "expansion": "",
+    "name": "DICE 开发团队",
+    "description": "奖励给制作《Battlefield 1》的开发人员。",
+    "index": 62
+  },
+  {
+    "id": "df068",
+    "category": "专属",
+    "side": "front",
+    "expansion": "",
+    "name": "《Battlefield 1》之路",
+    "description": "奖励给在《战地风云 4》或《战地风云：Hardline》中完成了“《Battlefield 1》之路”任务的玩家。",
+    "index": 65
+  },
+  {
+    "id": "df070",
+    "category": "专属",
+    "side": "front",
+    "expansion": "",
+    "name": "妈我在这！",
+    "description": "奖励给任何参加过 《Battlefield 1》 实体活动的玩家。",
+    "index": 67
+  },
+  {
+    "id": "df071",
+    "category": "专属",
+    "side": "front",
+    "expansion": "",
+    "name": "线上魅影",
+    "description": "奖励给任何参加过 《Battlefield 1》 线上活动的玩家。",
+    "index": 68
+  },
+  {
+    "id": "df073",
+    "category": "专属",
+    "side": "front",
+    "expansion": "",
+    "name": "战壕奇兵",
+    "description": "奖励给透过 Origin Access 启动 EA Access 抢先试玩版加入 《Battlefield 1》 的首批玩家。",
+    "index": 70
+  },
+  {
+    "id": "df074",
+    "category": "专属",
+    "side": "front",
+    "expansion": "",
+    "name": "战争之梦",
+    "description": "奖励给曾加入 《Battlefield 1》 Alpha 测试，并完成了 Alpha 挑战的玩家们。",
+    "index": 71
+  },
+  {
+    "id": "df075",
+    "category": "专属",
+    "side": "front",
+    "expansion": "",
+    "name": "前线先锋",
+    "description": "奖励给曾加入 《Battlefield 1》 Beta 测试，并完成了 Beta 挑战的玩家们。",
+    "index": 72
+  },
+  {
+    "id": "dfCal001",
+    "category": "专属",
+    "side": "front",
+    "expansion": "",
+    "name": "西奈狗牌",
+    "description": "代表你最喜欢的《Battlefield 1 入侵》小狗",
+    "index": 127
+  },
+  {
+    "id": "db051",
+    "category": "载具",
+    "side": "back",
+    "expansion": "",
+    "name": "定点武器背面",
+    "description": "用定点武器击杀 100 人的奖励。",
+    "index": 51
+  },
+  {
+    "id": "db052",
+    "category": "载具",
+    "side": "back",
+    "expansion": "",
+    "name": "坦克兵背面",
+    "description": "用坦克兵击杀 100 人的奖励。",
+    "index": 52
+  },
+  {
+    "id": "db053",
+    "category": "载具",
+    "side": "back",
+    "expansion": "",
+    "name": "飞行员背面",
+    "description": "用飞行员击杀 100 人的奖励。",
+    "index": 53
+  },
+  {
+    "id": "db054",
+    "category": "载具",
+    "side": "back",
+    "expansion": "",
+    "name": "船只武器背面",
+    "description": "用船只武器击杀 100 人的奖励。",
+    "index": 54
+  },
+  {
+    "id": "db055",
+    "category": "载具",
+    "side": "back",
+    "expansion": "",
+    "name": "机械巨兽武器背面",
+    "description": "用机械巨兽武器击杀 50 人的奖励。",
+    "index": 55
+  }
+]

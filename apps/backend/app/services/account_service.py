@@ -764,11 +764,18 @@ async def _unique_username(db: AsyncSession, preferred: str | None) -> str:
 
 
 async def _finish_register(db: AsyncSession, row: EmailVerification, password: str) -> User:
-    # 验证信发出后才暂停注册的，也不能再建号
+    # 按确认这一刻的注册方式办：发信后才暂停注册的不能再建号；开放注册时发的信（没带邀请码），
+    # 确认前改成了邀请注册的，也要重新拿邀请码注册
     registration = await site_settings_service.get_registration_mode(db)
     if registration == "closed":
         raise AccountError("REGISTRATION_CLOSED", "现在暂停注册，暂时不能新建账号", 403)
     payload = row.payload or {}
+    if (
+        registration == "invite"
+        and not payload.get("group_invite_id")
+        and not payload.get("invite_id")
+    ):
+        raise AccountError("INVITE_REQUIRED", "现在注册需要邀请码，请带上邀请码重新注册", 403)
     now = _now()
     mode = payload.get("mode")
     persona_id = payload.get("persona_id")
@@ -806,7 +813,8 @@ async def _finish_register(db: AsyncSession, row: EmailVerification, password: s
         # 开放注册时谁都能注册，不用再占发链接人的名额
         if registration == "invite":
             await _consume_group_invite_quota(db, int(payload["group_invite_id"]), user)
-    elif payload.get("invite_id"):
+    elif payload.get("invite_id") and registration == "invite":
+        # 开放注册时邀请码用不上，不白占朋友的码
         await _consume_invite(db, int(payload["invite_id"]), user.id)
     await db.flush()
     return user

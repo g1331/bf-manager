@@ -95,10 +95,26 @@ export function useCaptcha() {
   const [token, setToken] = useState<string | null>(null);
   const [round, setRound] = useState(0);
 
+  // 配置没拿到就不知道要不要人机验证：给出重试入口，别放行提交
+  const failed = !config.data && config.isError;
+
   return {
-    widget: siteKey ? <TurnstileWidget key={round} siteKey={siteKey} onToken={setToken} /> : null,
+    widget: failed ? (
+      <p className="text-destructive text-sm">
+        读取站点配置失败，
+        <button
+          type="button"
+          className="underline underline-offset-4"
+          onClick={() => void config.refetch()}
+        >
+          重试
+        </button>
+      </p>
+    ) : siteKey ? (
+      <TurnstileWidget key={round} siteKey={siteKey} onToken={setToken} />
+    ) : null,
     token,
-    ready: !config.isLoading && (!siteKey || token !== null),
+    ready: !!config.data && (!siteKey || token !== null),
     reset: () => {
       setToken(null);
       setRound((r) => r + 1);

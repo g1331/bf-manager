@@ -82,7 +82,11 @@ function RegisterForm() {
           ? { email: values.email, mode: "ea" }
           : groupInvite
             ? { email: values.email, mode, group_invite_token: groupInvite.token }
-            : { email: values.email, mode, invite_code: values.invite_code || undefined },
+            : {
+                email: values.email,
+                mode,
+                invite_code: (inviteRequired && values.invite_code) || undefined,
+              },
         captcha.token,
       );
       setSent({ message: res.message, mode: closed ? "ea" : mode, claimOnly: closed });
@@ -111,10 +115,24 @@ function RegisterForm() {
   );
 
   // 注册方式没拿到之前不画表单，免得暂停注册时先闪一下完整的注册表单
-  if (config.isLoading) {
+  if (!config.data) {
     return (
       <AuthCard kicker="Sign Up" title="注册 BF-Manager" footer={footer}>
-        <div className="text-muted-foreground py-8 text-center text-sm">加载中…</div>
+        {config.isError ? (
+          <div className="space-y-4 py-4 text-center text-sm">
+            <p className="text-muted-foreground">读取注册设置失败，请稍后重试。</p>
+            <Button
+              variant="outline"
+              className="w-full"
+              disabled={config.isFetching}
+              onClick={() => void config.refetch()}
+            >
+              {config.isFetching ? "重试中…" : "重试"}
+            </Button>
+          </div>
+        ) : (
+          <div className="text-muted-foreground py-8 text-center text-sm">加载中…</div>
+        )}
       </AuthCard>
     );
   }

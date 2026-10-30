@@ -182,3 +182,66 @@ async def test_group_link_follows_registration_mode(env, test_session, monkeypat
         select(func.count()).select_from(InviteCode).where(InviteCode.created_by == owner.id)
     )
     assert used == 0
+
+
+async def test_confirm_follows_mode_at_confirm_time(env, test_session) -> None:
+    ac, outbox, _ = env
+    # 开放注册时发的信没带邀请码，确认前改成邀请注册：不能建号
+    await _set_mode(ac, test_session, "open")
+    await ac.post(f"{API}/auth/register", json={"email": "slow@example.com", "mode": "plain"})
+    open_token = _token_from(outbox)
+    await _set_mode(ac, test_session, "invite")
+    resp = await _confirm(ac, open_token)
+    assert resp.status_code == 403
+    assert resp.json()["error"]["code"] == "INVITE_REQUIRED"
+    assert (
+        await test_session.scalar(select(User.id).where(User.email == "slow@example.com")) is None
+    )
+
+    # 邀请注册时带码发的信，确认前改成开放注册：照常建号，码不占用
+    inviter = await _active_user(test_session, user_id=51, email="inv@example.com", persona_id=5151)
+    _login_cookie(ac, inviter)
+    code = (await ac.post(f"{API}/me/invite-codes")).json()["items"][0]["code"]
+    ac.cookies.clear()
+    await ac.post(
+        f"{API}/auth/register",
+        json={"email": "coded@example.com", "mode": "plain", "invite_code": code},
+    )
+    coded_token = _token_from(outbox)
+    await _set_mode(ac, test_session, "open")
+    resp = await _confirm(ac, coded_token)
+    assert resp.status_code == 200, resp.text
+    invite = await test_session.scalar(select(InviteCode).where(InviteCode.code == code))
+    await test_session.refresh(invite)
+    assert invite.used_at is None
+
+
+async def test_open_mode_ignores_stale_invite_code(env, test_session) -> None:
+    ac, outbox, _ = env
+    await _set_mode(ac, test_session, "open")
+    resp = await ac.post(
+        f"{API}/auth/register",
+        json={"email": "stale@example.com", "mode": "plain", "invite_code": "DEAD-BEEF"},
+    )
+    assert resp.status_code == 202
+    resp = await _confirm(ac, _token_from(outbox))
+    assert resp.status_code == 200, resp.text
+
+
+async def test_audit_chain_records_actual_previous_mode(env, test_session) -> None:
+    ac, _, _ = env
+    for mode in ("open", "closed", "invite", "open"):
+        await _set_mode(ac, test_session, mode)
+    logs = (
+        await test_session.scalars(
+            select(AuditLog)
+            .where(AuditLog.action == "site_registration_mode")
+            .order_by(AuditLog.id)
+        )
+    ).all()
+    assert [(log.payload["from"], log.payload["to"]) for log in logs] == [
+        ("invite", "open"),
+        ("open", "closed"),
+        ("closed", "invite"),
+        ("invite", "open"),
+    ]

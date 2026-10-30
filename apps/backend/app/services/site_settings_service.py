@@ -17,6 +17,8 @@ from datetime import datetime
 from typing import Literal, cast
 
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.errors import AppError
@@ -61,13 +63,19 @@ async def set_registration_mode(
 ) -> RegistrationSetting:
     if mode not in REGISTRATION_MODES:
         raise AppError(422, "SETTING_INVALID", "注册方式无效")
-    before = await get_registration_mode(db)
-    row = await db.get(SiteSetting, REGISTRATION_KEY, with_for_update=True)
-    if row is None:
-        db.add(SiteSetting(key=REGISTRATION_KEY, value=mode, updated_by=actor.id))
-    else:
-        row.value = mode
-        row.updated_by = actor.id
+    # 第一次设置时库里还没有这一行，FOR UPDATE 锁不住不存在的行：先插一行默认值（已有就跳过，
+    # 并发时后来的会等先插的事务结束），再锁住这一行读出切换前的值，审计的 from 才对得上
+    insert = pg_insert if db.get_bind().dialect.name == "postgresql" else sqlite_insert
+    await db.execute(
+        insert(SiteSetting)
+        .values(key=REGISTRATION_KEY, value=default_registration_mode())
+        .on_conflict_do_nothing(index_elements=[SiteSetting.key])
+    )
+    row = await db.get(SiteSetting, REGISTRATION_KEY, with_for_update=True, populate_existing=True)
+    assert row is not None
+    before = row.value if row.value in REGISTRATION_MODES else default_registration_mode()
+    row.value = mode
+    row.updated_by = actor.id
     persona = await db.scalar(
         select(EaBinding.persona_id).where(
             EaBinding.user_id == actor.id, EaBinding.is_primary.is_(True)

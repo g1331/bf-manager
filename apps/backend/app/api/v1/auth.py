@@ -217,7 +217,8 @@ async def register(
                 db, payload.group_invite_token.strip()
             )
         ).id
-    elif payload.invite_code and payload.invite_code.strip():
+    elif registration == "invite" and payload.invite_code and payload.invite_code.strip():
+        # 开放注册时带了邀请码（比如点的是旧的邀请链接）也不看，免得过期的码挡住注册
         invite_id = (await account_service.check_invite_code(db, payload.invite_code)).id
     background.add_task(
         account_service.process_register_request,

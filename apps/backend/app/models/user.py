@@ -5,13 +5,19 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, String
+from sqlalchemy import Boolean, DateTime, Index, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
     from app.models.ea_binding import EaBinding
+
+# 账号状态：
+# - legacy：旧版 remid 登录自动建的号，有 EA 绑定、没有邮箱和密码，等本人认领
+# - pending_binding：用非 EA 邮箱注册、还没绑上 EA，只能做绑定相关操作
+# - active：正常账号（本地管理员也是 active）
+USER_STATUSES = ("legacy", "pending_binding", "active")
 
 
 class User(Base, TimestampMixin):
@@ -22,12 +28,22 @@ class User(Base, TimestampMixin):
     # 身份
     username: Mapped[str] = mapped_column(String(64), unique=True, index=True, nullable=False)
     local_password_hash: Mapped[str | None] = mapped_column(String(255))
+    # 只存验证过的邮箱。本地管理员和待认领的老账号没有邮箱
     email: Mapped[str | None] = mapped_column(String(255))
+    email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    status: Mapped[str] = mapped_column(
+        String(16), default="active", server_default="active", nullable=False
+    )
 
     # 平台角色
     role: Mapped[str] = mapped_column(String(16), default="user", nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_frozen: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    # 会话版本：JWT 带 sv，和这里不一致就失效。改密码、登出所有设备、冻结时 +1
+    token_version: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0", nullable=False
+    )
 
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
@@ -36,4 +52,15 @@ class User(Base, TimestampMixin):
         back_populates="user",
         cascade="all, delete-orphan",
         passive_deletes=True,
+    )
+
+    __table_args__ = (
+        # 邮箱不区分大小写唯一；没有邮箱的账号不参与
+        Index(
+            "uq_users_email_lower",
+            func.lower(email),
+            unique=True,
+            postgresql_where=email.isnot(None),
+            sqlite_where=email.isnot(None),
+        ),
     )

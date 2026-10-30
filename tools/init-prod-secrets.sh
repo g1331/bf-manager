@@ -7,6 +7,8 @@
 #   secrets/database_url              - 完整 asyncpg URL（嵌入密码）
 #   secrets/ea_cred_encryption_key    - AES-256-GCM key（base64 32 字节）
 #   secrets/jwt_secret_key            - JWT 签名密钥（hex 32 字节）
+#   secrets/resend_api_key            - Resend 发信 API Key（建空文件，需手动填入）
+#   secrets/turnstile_secret_key      - Cloudflare Turnstile secret（可留空，留空即不启用人机验证）
 
 set -euo pipefail
 
@@ -46,9 +48,15 @@ gen_if_missing "$SECRETS_DIR/ea_cred_encryption_key" \
 gen_if_missing "$SECRETS_DIR/jwt_secret_key" \
     "openssl rand -hex 32"
 
+# 第三方服务给的密钥没法生成，先建空文件让 compose 能起来，再手动填
+for name in resend_api_key turnstile_secret_key; do
+    gen_if_missing "$SECRETS_DIR/$name" "printf ''"
+done
+
 echo ""
 echo "Done. The following files are now in $SECRETS_DIR:"
 ls -la "$SECRETS_DIR"
 echo ""
+echo "resend_api_key 为空时注册、找回密码的邮件发不出去，记得填入 Resend 后台生成的 key。"
 echo "IMPORTANT: secrets/ is in .gitignore. Never commit these files."
 echo "Back them up securely (e.g., to a password manager or KMS)."

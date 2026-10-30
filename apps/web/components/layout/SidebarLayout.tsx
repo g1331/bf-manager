@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { AccountNotice } from "./AccountNotice";
 import { AppRail } from "./AppRail";
 import { FriendsRail } from "./FriendsRail";
 import { InstallPrompt } from "./InstallPrompt";
@@ -112,6 +113,7 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
            * 移动端底部留出标签栏的 h-14；底部安全区已由 body 的 padding 留过。
            */}
           <div className="pb-14 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:pb-0 [&_main:not(.max-w-md)]:!mr-auto [&_main:not(.max-w-md)]:!ml-0 [&_main:not(.max-w-md)]:!px-4 sm:[&_main:not(.max-w-md)]:!px-10">
+            <AccountNotice />
             <PageTransition>{children}</PageTransition>
           </div>
         </div>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { toast } from "sonner";
 import {
@@ -18,18 +19,14 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { localLogin, login } from "@/lib/auth";
+import { AuthCard } from "@/components/auth/AuthCard";
+import { emailLogin, landingPath, localLogin, type SessionUser } from "@/lib/auth";
 import { ApiException } from "@/lib/api-client";
 import { safeNextPath } from "@/lib/utils";
 
 const loginSchema = z.object({
-  remid: z.string().min(10, "remid 看上去不是合法 cookie 值"),
-  // sid 留空时由 EA 在登录响应里自动 Set-Cookie 出新值，所以前端也设为可选
-  sid: z
-    .string()
-    .optional()
-    .refine((v) => !v || v.length >= 10, "sid 如填写需是合法 cookie 值"),
+  email: z.string().trim().email("请输入正确的邮箱"),
+  password: z.string().min(1, "请输入密码"),
 });
 
 const localLoginSchema = z.object({
@@ -42,61 +39,25 @@ type LocalLoginValues = z.infer<typeof localLoginSchema>;
 
 export default function LoginPage() {
   return (
-    // 登录页统一深色战地外壳：与首页、应用内深色基调连贯，消除此前浅色卡片导致的「哗白」突兀
-    <div className="dark text-foreground relative flex min-h-screen flex-col bg-black">
-      {/* 战地背景：静态大图 + 渐变遮罩压暗，保证表单文字与输入框可读。
-          用 absolute inset-0 置于内容流首位，靠 DOM 顺序压在底层，避免 -z-10 被父背景遮挡 */}
-      <div className="absolute inset-0" aria-hidden>
-        {/* EA 素材域不在 next/image remotePatterns 内，且为静态首屏图，用原生 img */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/bf1/backgrounds/general/general-3.jpg"
-          alt=""
-          className="h-full w-full object-cover object-center"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/85 to-black/55" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent" />
-      </div>
-
-      {/* relative z-10：压在上面绝对定位的背景层之上，否则链接被盖住、点不到 */}
-      <header className="relative z-10 flex items-center justify-between px-4 py-2 sm:px-10 sm:py-6">
-        <Link
-          href="/"
-          className="font-display text-base font-semibold tracking-[0.2em] text-white uppercase"
-        >
-          BF-Manager
-        </Link>
-        <Link
-          href="/"
-          className="text-sm tracking-wide text-white/60 uppercase transition-colors hover:text-white"
-        >
-          返回首页
-        </Link>
-      </header>
-
-      <Suspense
-        fallback={
-          <main className="text-muted-foreground flex flex-1 items-center justify-center p-12 text-sm">
-            加载中…
-          </main>
-        }
-      >
-        <LoginForm />
-      </Suspense>
-    </div>
+    <Suspense fallback={<div className="text-muted-foreground p-12 text-sm">加载中…</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }
 
 function LoginForm() {
   const router = useRouter();
+  const qc = useQueryClient();
   const searchParams = useSearchParams();
   const next = safeNextPath(searchParams.get("next"), "/stats");
+  // 绑定 EA 时认领了旧账号：当前会话作废，回到这里用同样的邮箱密码重新登录
+  const claimed = searchParams.get("claimed") === "1";
   const [submitting, setSubmitting] = useState(false);
   const [showLocal, setShowLocal] = useState(false);
 
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { remid: "", sid: "" },
+    defaultValues: { email: "", password: "" },
   });
 
   const localForm = useForm<LocalLoginValues>({
@@ -104,18 +65,20 @@ function LoginForm() {
     defaultValues: { username: "", password: "" },
   });
 
+  const enter = (user: SessionUser) => {
+    qc.setQueryData(["session"], user);
+    const greet = user.primary_binding?.display_name ?? user.username;
+    toast.success(`欢迎回来，${greet}`);
+    router.push(landingPath(user, next));
+    router.refresh();
+  };
+
   const onSubmit = async (values: LoginValues) => {
     setSubmitting(true);
     try {
-      const user = await login(values);
-      const greet = user.primary_binding?.display_name ?? user.username;
-      toast.success(`欢迎回来，${greet}`);
-      router.push(next);
-      router.refresh();
+      enter(await emailLogin(values));
     } catch (err) {
-      const msg =
-        err instanceof ApiException ? err.message : "登录失败，请检查 remid / sid 是否正确";
-      toast.error(msg);
+      toast.error(err instanceof ApiException ? err.message : "登录失败，请稍后重试");
     } finally {
       setSubmitting(false);
     }
@@ -124,144 +87,129 @@ function LoginForm() {
   const onLocalSubmit = async (values: LocalLoginValues) => {
     setSubmitting(true);
     try {
-      const user = await localLogin(values);
-      toast.success(`欢迎回来，${user.username}`);
-      router.push(next);
-      router.refresh();
+      enter(await localLogin(values));
     } catch (err) {
-      const msg = err instanceof ApiException ? err.message : "本地登录失败";
-      toast.error(msg);
+      toast.error(err instanceof ApiException ? err.message : "本地登录失败");
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <main className="flex flex-1 items-start justify-center px-4 pt-6 pb-8 sm:items-center sm:py-12">
-      {/* 手机端不套卡片，表单直接铺在页面上，像 App 的登录页 */}
-      <Card className="sm:bg-card/80 w-full max-w-md border-0 bg-transparent shadow-none sm:border sm:border-white/10 sm:shadow-2xl sm:backdrop-blur-md">
-        <CardHeader className="px-0 pt-0 sm:p-6">
-          <div className="font-display mb-1 flex items-center gap-2 text-xs font-medium tracking-[0.2em] text-amber-500 uppercase">
-            <span className="h-[2px] w-6 bg-amber-500" />
-            Sign In
-          </div>
-          <CardTitle className="text-2xl sm:text-lg">登录 BF-Manager</CardTitle>
-          <CardDescription className="pt-1 leading-relaxed sm:pt-0">
-            使用 EA 账号的 Cookie 登录。一般只需要填 <strong>remid</strong>，sid 留空即可—— EA
-            会在登录过程里自动签发新的 sid。两个 Cookie 都能在浏览器中访问{" "}
-            <a
-              href="https://accounts.ea.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary underline-offset-4 hover:underline"
-            >
-              accounts.ea.com
-            </a>{" "}
-            后从开发者工具的 Cookies 面板获取。
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="px-0 sm:px-6">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+    <AuthCard
+      kicker="Sign In"
+      title="登录 BF-Manager"
+      description="用注册时的邮箱和密码登录。"
+      footer={
+        <>
+          <Link href="/register" className="text-primary underline-offset-4 hover:underline">
+            注册账号
+          </Link>
+          <Link href="/forgot-password" className="underline-offset-4 hover:underline">
+            忘记密码
+          </Link>
+        </>
+      }
+    >
+      {claimed ? (
+        <div className="mb-5 rounded-sm border border-amber-500/30 bg-amber-500/10 p-3 text-sm leading-relaxed text-amber-100">
+          旧账号已经认领，原来的服务器权限和操作记录都在。请用刚才设置的邮箱和密码重新登录。
+        </div>
+      ) : null}
+
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>邮箱</FormLabel>
+                <FormControl>
+                  <Input type="email" autoComplete="email" spellCheck={false} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>密码</FormLabel>
+                <FormControl>
+                  <Input type="password" autoComplete="current-password" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button type="submit" size="lg" className="w-full" disabled={submitting}>
+            {submitting ? "登录中…" : "登录"}
+          </Button>
+        </form>
+      </Form>
+
+      <div className="text-muted-foreground mt-5 rounded-sm border border-white/10 bg-white/[0.03] p-3 text-sm leading-relaxed">
+        以前用 remid 登录过？remid 登录已经停用。用 EA 账号的邮箱
+        <Link href="/register" className="text-primary mx-1 underline-offset-4 hover:underline">
+          注册
+        </Link>
+        就能认领旧账号，不需要邀请码，服务器权限和操作记录都会保留。
+      </div>
+
+      <div className="mt-6">
+        <button
+          type="button"
+          onClick={() => setShowLocal((v) => !v)}
+          className="text-muted-foreground hover:text-foreground text-sm underline-offset-4 hover:underline"
+        >
+          {showLocal ? "收起本地账号登录" : "使用本地账号登录（仅平台管理员）"}
+        </button>
+        {showLocal ? (
+          <Form {...localForm}>
+            <form onSubmit={localForm.handleSubmit(onLocalSubmit)} className="mt-4 space-y-4">
               <FormField
-                control={form.control}
-                name="remid"
+                control={localForm.control}
+                name="username"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>remid</FormLabel>
+                    <FormLabel>username</FormLabel>
                     <FormControl>
-                      <Input
-                        autoComplete="off"
-                        spellCheck={false}
-                        placeholder="EA 长效 Cookie，通常 2 年有效"
-                        {...field}
-                      />
+                      <Input autoComplete="username" spellCheck={false} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               <FormField
-                control={form.control}
-                name="sid"
+                control={localForm.control}
+                name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>sid（可选）</FormLabel>
+                    <FormLabel>密码</FormLabel>
                     <FormControl>
-                      <Input
-                        autoComplete="off"
-                        spellCheck={false}
-                        placeholder="留空即可，EA 会自动签发新的 sid"
-                        {...field}
-                        value={field.value ?? ""}
-                      />
+                      <Input type="password" autoComplete="current-password" {...field} />
                     </FormControl>
-                    <FormDescription>
-                      凭据通过 AES-256-GCM 加密存储，永远不会出现在任何 API 响应中。
-                    </FormDescription>
+                    <FormDescription>本地账号仅供平台管理员使用。</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" size="lg" className="w-full" disabled={submitting}>
-                {submitting ? "登录中…" : "登录"}
+              <Button
+                type="submit"
+                variant="secondary"
+                size="lg"
+                className="w-full"
+                disabled={submitting}
+              >
+                {submitting ? "登录中…" : "使用本地账号登录"}
               </Button>
             </form>
           </Form>
-
-          <div className="mt-6 border-t pt-4">
-            <button
-              type="button"
-              onClick={() => setShowLocal((v) => !v)}
-              className="text-muted-foreground hover:text-foreground text-sm underline-offset-4 hover:underline"
-            >
-              {showLocal ? "收起本地账号登录" : "使用本地账号登录（仅平台管理员）"}
-            </button>
-            {showLocal ? (
-              <Form {...localForm}>
-                <form onSubmit={localForm.handleSubmit(onLocalSubmit)} className="mt-4 space-y-4">
-                  <FormField
-                    control={localForm.control}
-                    name="username"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>username</FormLabel>
-                        <FormControl>
-                          <Input autoComplete="username" spellCheck={false} {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={localForm.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>密码</FormLabel>
-                        <FormControl>
-                          <Input type="password" autoComplete="current-password" {...field} />
-                        </FormControl>
-                        <FormDescription>本地账号仅供平台管理员使用。</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button
-                    type="submit"
-                    variant="secondary"
-                    size="lg"
-                    className="w-full"
-                    disabled={submitting}
-                  >
-                    {submitting ? "登录中…" : "使用本地账号登录"}
-                  </Button>
-                </form>
-              </Form>
-            ) : null}
-          </div>
-        </CardContent>
-      </Card>
-    </main>
+        ) : null}
+      </div>
+    </AuthCard>
   );
 }

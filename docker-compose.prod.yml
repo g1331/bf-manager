@@ -62,14 +62,21 @@ services:
       ENVIRONMENT: production
       LOG_LEVEL: INFO
       ENABLED_GAMES: bf1
+      # 注册、找回密码的邮件走 Resend，信里的链接指向这个站点
+      MAIL_BACKEND: resend
+      PUBLIC_SITE_URL: https://${DOMAIN:?DOMAIN required}
+      # Turnstile 的 site key 是公开值；和 secrets/turnstile_secret_key 都配上才启用人机验证
+      TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
     # 仅绑 127.0.0.1，杜绝外网直连绕过 openresty
     ports:
       - "127.0.0.1:${BACKEND_HOST_PORT:-8000}:8000"
-    # Settings 通过 secrets_dir=/run/secrets 自动按字段名读取这 3 个 secret 文件
+    # Settings 通过 secrets_dir=/run/secrets 自动按字段名读取这些 secret 文件
     secrets:
       - database_url
       - ea_cred_encryption_key
       - jwt_secret_key
+      - resend_api_key
+      - turnstile_secret_key
     depends_on:
       postgres:
         condition: service_healthy
@@ -110,3 +117,7 @@ secrets:
     file: ./secrets/ea_cred_encryption_key
   jwt_secret_key:
     file: ./secrets/jwt_secret_key
+  resend_api_key:
+    file: ./secrets/resend_api_key
+  turnstile_secret_key:
+    file: ./secrets/turnstile_secret_key

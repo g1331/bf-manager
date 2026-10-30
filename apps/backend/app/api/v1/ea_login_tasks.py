@@ -28,7 +28,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query
 
-from app.api.deps import CurrentAdmin, CurrentUser, DbDep
+from app.api.deps import CurrentAdmin, CurrentUserAnyStatus, DbDep
 from app.domain.ea.login.schemas import (
     EAAccountLoginTaskCreateRequest,
     EALoginTaskCreateRequest,
@@ -48,7 +48,7 @@ admin_router = APIRouter()
 
 @me_router.post("", response_model=EALoginTaskResponse, status_code=201)
 async def create_my_login_task(
-    payload: EALoginTaskCreateRequest, user: CurrentUser
+    payload: EALoginTaskCreateRequest, user: CurrentUserAnyStatus
 ) -> EALoginTaskResponse:
     return await svc.create_task(actor_kind="user", actor_id=user.id, payload=payload)
 
@@ -56,7 +56,7 @@ async def create_my_login_task(
 @me_router.get("/{task_id}", response_model=EALoginTaskResponse)
 async def get_my_login_task(
     task_id: str,
-    user: CurrentUser,
+    user: CurrentUserAnyStatus,
     since_version: Annotated[
         int | None,
         Query(
@@ -80,7 +80,7 @@ async def get_my_login_task(
 async def submit_my_2fa_method(
     task_id: str,
     payload: EALoginTaskSelectMethodRequest,
-    user: CurrentUser,
+    user: CurrentUserAnyStatus,
 ) -> EALoginTaskResponse:
     return await svc.submit_method(task_id, actor_kind="user", actor_id=user.id, payload=payload)
 
@@ -89,13 +89,13 @@ async def submit_my_2fa_method(
 async def submit_my_2fa_code(
     task_id: str,
     payload: EALoginTaskSubmitCodeRequest,
-    user: CurrentUser,
+    user: CurrentUserAnyStatus,
 ) -> EALoginTaskResponse:
     return await svc.submit_code(task_id, actor_kind="user", actor_id=user.id, payload=payload)
 
 
 @me_router.post("/{task_id}/cancel", response_model=EALoginTaskResponse)
-async def cancel_my_login_task(task_id: str, user: CurrentUser) -> EALoginTaskResponse:
+async def cancel_my_login_task(task_id: str, user: CurrentUserAnyStatus) -> EALoginTaskResponse:
     return await svc.cancel_task(task_id, actor_kind="user", actor_id=user.id)
 
 

@@ -26,6 +26,8 @@ export interface EALoginTaskResult {
   avatar_url: string | null;
   binding_id: number | null;
   account_id: number | null;
+  // 用户端：这个 EA 号原来挂在旧账号上，已认领过去，当前会话作废，需要重新登录
+  claimed?: boolean;
 }
 
 export interface EALoginTaskResponse {

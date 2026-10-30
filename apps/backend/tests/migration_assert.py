@@ -96,6 +96,31 @@ async def assert_upgraded() -> None:
         ).scalar_one_or_none()
         assert idx is not None and "is_primary" in idx.lower(), f"partial index missing: {idx}"
 
+        # 7. 0017：remid 时代建的号记 legacy，现有绑定记 verified_via=legacy
+        statuses = {row[0] for row in (await conn.execute(text("SELECT status FROM users"))).all()}
+        assert statuses == {"legacy"}, f"user status mismatch: {statuses}"
+        via = {
+            row[0]
+            for row in (await conn.execute(text("SELECT verified_via FROM ea_bindings"))).all()
+        }
+        assert via == {"legacy"}, f"verified_via mismatch: {via}"
+
+        # 8. 0017：persona 唯一约束改为只管未冻结的行
+        persona_idx = (
+            await conn.execute(
+                text(
+                    "SELECT indexdef FROM pg_indexes "
+                    "WHERE tablename='ea_bindings' AND indexname='uq_ea_bindings_persona_active'"
+                )
+            )
+        ).scalar_one_or_none()
+        assert persona_idx is not None and "is_frozen" in persona_idx.lower(), (
+            f"persona partial index missing: {persona_idx}"
+        )
+        for table in ("email_verifications", "invite_codes"):
+            reg = (await conn.execute(text(f"SELECT to_regclass('public.{table}')"))).scalar_one()
+            assert reg is not None, f"{table} missing"
+
     await engine.dispose()
     print("assert_upgraded: all checks passed")
 

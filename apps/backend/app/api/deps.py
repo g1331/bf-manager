@@ -10,20 +10,30 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.api.errors import ForbiddenError, NotFoundError, UnauthorizedError
+from app.api.errors import AppError, ForbiddenError, NotFoundError, UnauthorizedError
 from app.core.security import decode_access_token
-from app.db.session import get_db
+from app.db.session import get_db, get_sessionmaker
 from app.domain.games.base import GameProfile
 from app.domain.games.registry import GameRegistry
 from app.models import User
+from app.services.account_service import SessionFactory
 
 DbDep = Annotated[AsyncSession, Depends(get_db)]
 
 
-async def get_current_user(
+def get_session_factory() -> SessionFactory:
+    """后台任务自己开 session 用（请求的 session 在响应后就关了）。测试里换成测试库。"""
+    return get_sessionmaker()
+
+
+SessionFactoryDep = Annotated[SessionFactory, Depends(get_session_factory)]
+
+
+async def get_current_user_any_status(
     db: DbDep,
     access_token: Annotated[str | None, Cookie(alias="bfm_access_token")] = None,
 ) -> User:
+    """解析会话，不看账号状态。只给“还没绑 EA 也要能用”的接口：会话、登出、绑定 EA。"""
     if not access_token:
         raise UnauthorizedError()
     try:
@@ -44,6 +54,19 @@ async def get_current_user(
     )
     if user is None or not user.is_active or user.is_frozen:
         raise UnauthorizedError()
+    # 改密码、登出所有设备会把 token_version 加一，之前签发的会话全部失效。
+    # 这个字段上线前签发的 token 没有 sv，按 0 处理
+    if payload.get("sv", 0) != user.token_version:
+        raise UnauthorizedError("会话已失效，请重新登录")
+    return user
+
+
+async def get_current_user(
+    user: Annotated[User, Depends(get_current_user_any_status)],
+) -> User:
+    """当前登录用户。还没绑 EA 的账号（pending_binding）只能先去绑定。"""
+    if user.status == "pending_binding":
+        raise AppError(403, "ACCOUNT_PENDING_BINDING", "请先绑定 EA 账号")
     return user
 
 
@@ -54,12 +77,13 @@ async def get_current_user_optional(
     if not access_token:
         return None
     try:
-        return await get_current_user(db=db, access_token=access_token)
+        return await get_current_user_any_status(db=db, access_token=access_token)
     except UnauthorizedError:
         return None
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+CurrentUserAnyStatus = Annotated[User, Depends(get_current_user_any_status)]
 CurrentUserOptional = Annotated[User | None, Depends(get_current_user_optional)]
 
 

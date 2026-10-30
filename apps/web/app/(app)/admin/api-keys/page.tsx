@@ -182,7 +182,7 @@ export default function ApiKeysAdminPage() {
       <PageHeader
         kicker="Admin"
         title="API Key 管理"
-        description={`用户在「我的主页 → 开放 API」自助申请。默认额度倍数 ×${defaultMultiplier}，和登录用户一样；给可信的机器人调高倍数，滥用的直接吊销。全站 EA 预算对 key 同样生效。`}
+        description={`用户在「我的主页 → 开放 API」自助申请。默认额度倍数 ×${defaultMultiplier}，和登录用户一样；给可信的机器人调高倍数，滥用的直接吊销；反复申请的到「用户」里冻结账号。全站 EA 预算对 key 同样生效。`}
       />
 
       <section className="space-y-3">

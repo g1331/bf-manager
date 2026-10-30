@@ -152,6 +152,21 @@ async def assert_upgraded() -> None:
         ).scalar_one_or_none()
         assert executor_col is not None, "audit_logs.executor_persona_id missing"
 
+        # 11. 0022：冻结账号记时间、原因、操作人
+        frozen_cols = (
+            (
+                await conn.execute(
+                    text(
+                        "SELECT column_name FROM information_schema.columns "
+                        "WHERE table_name='users' AND column_name LIKE 'frozen_%'"
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
+        assert set(frozen_cols) == {"frozen_at", "frozen_reason", "frozen_by"}, frozen_cols
+
     await engine.dispose()
     print("assert_upgraded: all checks passed")
 

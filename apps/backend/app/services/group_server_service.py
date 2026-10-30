@@ -55,6 +55,7 @@ PROBLEM_EXECUTOR_NOT_ADMIN = "服务账号已不是这台服的服主或管理�
 PROBLEM_EXECUTOR_INVALID = "服务账号登录失败，需要群主重新提交凭据"
 REASON_BINDER_LOST = "绑定人已不是这台服的服主或管理员"
 REASON_BINDER_GONE = "绑定人的账号已不存在"
+REASON_BINDER_FROZEN = "挂服人的账号已被冻结"
 
 
 def _now() -> datetime:
@@ -583,7 +584,9 @@ async def remove_group_from_server(
 
 
 def _counts_for_groups(user: User) -> bool:
-    """还没绑 EA（或主绑定解绑了）的账号，群成员身份保留，但不参与权限计算"""
+    """还没绑 EA（或主绑定解绑了）、被冻结的账号，群成员身份保留，但不参与权限计算"""
+    if getattr(user, "is_frozen", False):
+        return False
     return user.role == "admin" or getattr(user, "status", "active") == "active"
 
 
@@ -683,9 +686,15 @@ async def _check_account(db: AsyncSession, account: GroupEaAccount) -> bool:
 async def _binder_status(
     db: AsyncSession, gs: GroupServer, identity: ServerIdentity
 ) -> tuple[str, str | None]:
-    binder = await db.get(User, gs.bound_by_user_id) if gs.bound_by_user_id is not None else None
+    binder = (
+        await db.get(User, gs.bound_by_user_id, populate_existing=True)
+        if gs.bound_by_user_id is not None
+        else None
+    )
     if binder is None:
         return "revoked", REASON_BINDER_GONE
+    if binder.is_frozen:
+        return "revoked", REASON_BINDER_FROZEN
     if identity.manages(await _personas_of(db, binder.id)) is None:
         return "revoked", REASON_BINDER_LOST
     return "active", None

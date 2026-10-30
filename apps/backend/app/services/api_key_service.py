@@ -164,17 +164,17 @@ class ApiKeyService:
             key.revoked_at = datetime.now(UTC)
             await self.db.commit()
             await self.db.refresh(key)
-            await self._drop_cache(key)
+            await self.drop_cache(key)
         return key
 
     async def set_multiplier(self, key: ApiKey, multiplier: int | None) -> ApiKey:
         key.rate_multiplier = multiplier
         await self.db.commit()
         await self.db.refresh(key)
-        await self._drop_cache(key)
+        await self.drop_cache(key)
         return key
 
-    async def _drop_cache(self, key: ApiKey) -> None:
+    async def drop_cache(self, key: ApiKey) -> None:
         try:
             r = await get_redis()
             await r.delete(_cache_key(key.key_hash))

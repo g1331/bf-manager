@@ -247,6 +247,7 @@ const EA_SOURCE_LABEL: Record<string, string> = {
   tracker_weapons: "对局武器载具",
   snapshot: "全服快照",
   server_id: "serverId 解析",
+  rsp_lists: "私服名单刷新",
   auto_switch: "自动换图",
   exchange: "交换",
   other: "其他",

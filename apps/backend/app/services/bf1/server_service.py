@@ -347,6 +347,16 @@ class BF1ServerService:
         只拉一次 getFullServerDetails 并复用 _to_extras 解析，不构造完整 ServerDetail。
         EA 不可用 / 无 rspInfo 时返回 None，调用方据此判定无法识别（降级为无权限）。
         """
+        got = await self.get_extras(game_id)
+        if got is None:
+            return None
+        extras, name = got
+        owner_pid = extras.owner.persona_id if extras.owner else None
+        admin_pids = [m.persona_id for m in extras.admins]
+        return owner_pid, admin_pids, extras.server_id, name
+
+    async def get_extras(self, game_id: int) -> tuple[ServerExtras, str | None] | None:
+        """拉一次 getFullServerDetails，返回 (扩展信息, 服名)；EA 不可用或无结果时返回 None。"""
         async with get_bf1_client(self.db) as client:
             res = await client.getFullServerDetails(game_id)
             if not isinstance(res, dict):
@@ -354,12 +364,8 @@ class BF1ServerService:
             raw = res.get("result") or {}
             if not raw:
                 return None
-            extras = _to_extras(raw)
-            owner_pid = extras.owner.persona_id if extras.owner else None
-            admin_pids = [m.persona_id for m in extras.admins]
             server_info = raw.get("serverInfo") or {}
-            name = server_info.get("name") or raw.get("name")
-            return owner_pid, admin_pids, extras.server_id, name
+            return _to_extras(raw), server_info.get("name") or raw.get("name")
 
     async def get_detail(self, game_id: int) -> ServerDetail:
         async with get_bf1_client(self.db) as client:

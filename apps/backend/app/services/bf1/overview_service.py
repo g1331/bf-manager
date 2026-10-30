@@ -36,6 +36,7 @@ from app.schemas.bf1.server import ServerSummary
 from app.services.bf1.blaze_service import fetch_game_list_snapshot
 from app.services.bf1.gateway_factory import get_bf1_client
 from app.services.bf1.round_service import run_match_tick
+from app.services.bf1.rsp_list_service import refresh_stale_lists
 from app.services.bf1.server_player_count_service import (
     record_player_counts,
     resolve_server_ids,
@@ -378,7 +379,13 @@ async def _record_player_counts(summaries: list[ServerSummary], rosters: Rosters
                 await db.rollback()
                 server_ids = {}
             written = await record_player_counts(db, summaries, server_ids, rosters)
-        logger.debug("BF1 server player counts recorded: {}", written)
+            logger.debug("BF1 server player counts recorded: {}", written)
+            try:
+                with ea_metrics.ea_source("rsp_lists"):
+                    await refresh_stale_lists(db, summaries, server_ids)
+            except Exception as e:
+                logger.warning("BF1 rsp lists refresh skipped: {}", e)
+                await db.rollback()
     except Exception as e:
         logger.warning("BF1 server player count write failed: {}", e)
 

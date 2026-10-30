@@ -35,6 +35,7 @@ from app.schemas.bf1.overview import BF1Overview, CountBreakdown, NamedCount, Tr
 from app.schemas.bf1.server import ServerSummary
 from app.services.bf1.blaze_service import fetch_game_list_snapshot
 from app.services.bf1.gateway_factory import get_bf1_client
+from app.services.bf1.presence_cache import write_presence
 from app.services.bf1.round_service import run_match_tick
 from app.services.bf1.rsp_list_service import refresh_stale_lists
 from app.services.bf1.server_player_count_service import (
@@ -337,6 +338,11 @@ async def refresh_overview_cache(db: AsyncSession) -> BF1Overview:
     cache = await get_cache()
     await cache.set(OVERVIEW_CACHE_KEY, overview.model_dump(), ttl=OVERVIEW_CACHE_TTL)
     await write_server_snapshot(summaries, source=source, ttl=OVERVIEW_CACHE_TTL)
+    if rosters is not None:
+        try:
+            await write_presence(rosters)
+        except RedisError as e:
+            logger.warning("BF1 presence cache write failed: {}", e)
     _spawn_record_player_counts(summaries, rosters)
     point = TrendPoint(
         ts=int(datetime.now(UTC).timestamp()),

@@ -326,6 +326,12 @@ async def test_refresh_writes_server_snapshot_and_spawns_counts(
         return cache
 
     spawned: list = []
+    presence: list = []
+
+    async def fake_write_presence(rosters: object) -> None:
+        presence.append(rosters)
+
+    monkeypatch.setattr(overview_service, "write_presence", fake_write_presence)
     monkeypatch.setattr(overview_service, "fetch_overview", fake_fetch)
     monkeypatch.setattr(overview_service, "get_cache", fake_get_cache)
     monkeypatch.setattr(server_snapshot_cache, "get_cache", fake_get_cache)
@@ -339,6 +345,7 @@ async def test_refresh_writes_server_snapshot_and_spawns_counts(
     assert value["source"] == "snapshot"
     assert [i["game_id"] for i in value["items"]] == [1]
     assert spawned == [(summaries, {1: {}})]
+    assert presence == [{1: {}}]
 
 
 class _FakeSocket:

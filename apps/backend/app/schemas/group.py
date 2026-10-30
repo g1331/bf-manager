@@ -197,3 +197,43 @@ class ServerGroupItem(BaseModel):
 
 class ServerGroupListResponse(BaseModel):
     items: list[ServerGroupItem]
+
+
+# ===== 群成员在玩状态（右侧好友栏） =====
+
+PresenceSlot = Literal["team1", "team2", "queue", "spectator"]
+
+
+class MemberServer(BaseModel):
+    """成员所在的服。服务器摘要缓存里没有这台服时，只有 game_id 和 slot。"""
+
+    game_id: int
+    slot: PresenceSlot
+    name: str | None = None
+    map_display_name: str | None = None
+    mode_display_name: str | None = None
+    player_count: int | None = None
+    max_player_count: int | None = None
+
+
+class PresenceMemberItem(BaseModel):
+    user_id: int
+    username: str
+    display_name: str | None
+    avatar_url: str | None
+    persona_id: int | None
+    role: GroupRole
+    # 不在任何有人的服里时为 null：可能离线，也可能停在主菜单
+    server: MemberServer | None
+
+
+class PresenceGroupItem(BaseModel):
+    id: int
+    name: str
+    members: list[PresenceMemberItem]
+
+
+class GroupPresenceResponse(BaseModel):
+    # 最近一轮全服快照的时间；为 null 表示状态暂不可用（快照连续失败或缓存不可用）
+    updated_at: datetime | None
+    groups: list[PresenceGroupItem]

@@ -23,6 +23,7 @@ from app.schemas.group import (
     GroupInviteItem,
     GroupListResponse,
     GroupMemberItem,
+    GroupPresenceResponse,
     GroupRenameRequest,
     GroupSummaryItem,
     InviteAcceptResponse,
@@ -32,8 +33,13 @@ from app.schemas.group import (
     InviteLookupResponse,
     InviteTokenRequest,
     MemberRoleRequest,
+    MemberServer,
+    PresenceGroupItem,
+    PresenceMemberItem,
 )
 from app.services import account_service, group_service, site_settings_service
+from app.services.bf1.presence_cache import read_presence
+from app.services.bf1.server_snapshot_cache import read_server_snapshot
 
 router = APIRouter()
 invite_router = APIRouter()
@@ -130,6 +136,69 @@ async def create_group(
 ) -> GroupDetailResponse:
     group = await group_service.create_group(db, user, payload.name, ip=client_ip(request))
     return await _detail(db, group.id, user)
+
+
+@router.get("/presence", response_model=GroupPresenceResponse)
+async def group_presence(user: CurrentUser, db: DbDep) -> GroupPresenceResponse:
+    """我所在各群的其他成员此刻在哪个服，给右侧好友栏用。
+
+    所在服来自全服快照的名单缓存，不请求 EA；在服的成员排在前面。
+    """
+    groups = [
+        (s.group, await group_service.list_members(db, s.group.id))
+        for s in await group_service.list_my_groups(db, user)
+    ]
+    pids = {
+        binding.persona_id
+        for _, members in groups
+        for m in members
+        if m.user_id != user.id and (binding := account_service.primary_binding(m.user))
+    }
+    updated_at, presence = await read_presence(sorted(pids))
+    servers = (
+        {s.game_id: s for s in await read_server_snapshot() or [] if s.game_id is not None}
+        if presence
+        else {}
+    )
+
+    def _server(persona_id: int | None) -> MemberServer | None:
+        found = presence.get(persona_id) if persona_id is not None else None
+        if found is None:
+            return None
+        game_id, slot = found
+        s = servers.get(game_id)
+        return MemberServer(
+            game_id=game_id,
+            slot=slot,  # type: ignore[arg-type]
+            name=s.name if s else None,
+            map_display_name=s.map_display_name if s else None,
+            mode_display_name=s.mode_display_name if s else None,
+            player_count=s.player_count if s else None,
+            max_player_count=s.max_player_count if s else None,
+        )
+
+    items = []
+    for group, members in groups:
+        rows = []
+        for m in members:
+            if m.user_id == user.id:
+                continue
+            binding = account_service.primary_binding(m.user)
+            persona_id = binding.persona_id if binding else None
+            rows.append(
+                PresenceMemberItem(
+                    user_id=m.user_id,
+                    username=m.user.username,
+                    display_name=binding.display_name if binding else None,
+                    avatar_url=binding.avatar_url if binding else None,
+                    persona_id=persona_id,
+                    role=m.role,  # type: ignore[arg-type]
+                    server=_server(persona_id),
+                )
+            )
+        rows.sort(key=lambda r: r.server is None)
+        items.append(PresenceGroupItem(id=group.id, name=group.name, members=rows))
+    return GroupPresenceResponse(updated_at=updated_at, groups=items)
 
 
 @router.get("/{group_id}", response_model=GroupDetailResponse)

@@ -13,7 +13,7 @@ from app.models import (
     GroupServer,
     User,
 )
-from app.services import account_deletion_service, api_key_service
+from app.services import account_deletion_service, account_service, api_key_service
 from app.services.api_key_service import ApiKeyService
 from app.services.group_server_service import REASON_BINDER_GONE
 from sqlalchemy import select, update
@@ -260,3 +260,18 @@ async def test_admin_frozen_account_still_cannot_reset_password(env, test_sessio
     sent = len(outbox.outbox)
     await ac.post(f"{API}/auth/password-reset", json={"email": "carol@example.com"})
     assert len(outbox.outbox) == sent
+
+
+async def test_pending_binding_cleanup_keeps_deleting_account(env, test_session) -> None:
+    """注册后没绑 EA 就申请注销的，不能被 24 小时的待绑定清理提前删掉"""
+    ac, _, _ = env
+    dave = await _active_user(test_session, user_id=33, email="dave@example.com", persona_id=None)
+    await test_session.execute(
+        update(User).where(User.id == 33).values(created_at=datetime.now(UTC) - timedelta(days=3))
+    )
+    await test_session.commit()
+    _login_cookie(ac, dave)
+    assert (await _request(ac)).status_code == 200
+    await account_service.cleanup_once(test_session)
+    test_session.expire_all()
+    assert await test_session.get(User, 33) is not None

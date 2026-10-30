@@ -123,7 +123,8 @@ async def request_deletion(
     if user.local_password_hash is None:
         raise AccountError("PASSWORD_NOT_SET", "这个账号还没有设置密码，请先设置登录邮箱")
 
-    locked = await lock_with_groups(db, user.id)
+    # 所在的群也要锁：唯一群主的检查不能和并发的改角色、退群交错
+    locked = await lock_with_groups(db, user.id, member_groups=True)
     if locked is None:
         raise UnauthorizedError()
     if not verify_password(password, locked.local_password_hash):
@@ -172,12 +173,15 @@ async def cancel_deletion(
     db: AsyncSession, email: str, password: str, ip: str | None = None
 ) -> User:
     """冷静期内撤销注销：核对邮箱和密码，解除冻结并登录。Key 不恢复，挂服等复核按 EA 现状恢复"""
-    user = await db.scalar(select(User).where(func.lower(User.email) == email))
-    password_ok = verify_password_timing_safe(password, user.local_password_hash if user else None)
-    if user is None or not password_ok:
+    user_id = await db.scalar(select(User.id).where(func.lower(User.email) == email))
+    # 锁住再核对密码：和重置密码并发时，要用重置后的密码
+    locked = await lock_user(db, user_id) if user_id is not None else None
+    password_ok = verify_password_timing_safe(
+        password, locked.local_password_hash if locked else None
+    )
+    if locked is None or not password_ok or not locked.is_active:
         raise UnauthorizedError("邮箱或密码错误")
-    locked = await lock_user(db, user.id)
-    if locked is None or locked.deletion_scheduled_at is None:
+    if locked.deletion_scheduled_at is None:
         raise AccountError("ACCOUNT_NOT_DELETING", "这个账号没有在注销中，直接登录即可", 409)
     locked.is_frozen = False
     locked.frozen_at = None

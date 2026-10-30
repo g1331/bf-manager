@@ -102,7 +102,7 @@ export function CodexReader({
             onPointerDown={(e) => {
               if (e.target === e.currentTarget) onClose();
             }}
-            className="min-h-0 flex-1 overflow-y-auto overscroll-contain lg:grid lg:grid-cols-[auto_minmax(320px,440px)] lg:items-center lg:justify-center lg:gap-12 lg:overflow-hidden lg:px-24 lg:py-12"
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain lg:grid lg:grid-cols-[auto_minmax(320px,440px)] lg:items-center lg:justify-center lg:gap-12 lg:overflow-hidden lg:px-20 lg:py-12"
           >
             <div
               key={entry.code}

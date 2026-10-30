@@ -349,6 +349,6 @@
   .codex-reader-image {
     width: auto;
     max-width: none;
-    height: min(calc(100dvh - 7rem), 901px, calc((100vw - 46rem) * 901 / 640));
+    height: min(calc(100dvh - 7rem), 901px, calc((100vw - 42rem) * 901 / 640));
   }
 }

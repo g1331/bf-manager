@@ -92,6 +92,7 @@ function gameModule(g: GameMeta): RailModule {
         { label: "交换", code: "Exchange", href: "/bf1/exchange" },
         { label: "行动", code: "Operations", href: "/bf1/campaign" },
         { label: "卡行动", code: "Card", href: "/bf1/card" },
+        { label: "图鉴", code: "Codex", href: "/bf1/codex" },
       ],
     };
   }

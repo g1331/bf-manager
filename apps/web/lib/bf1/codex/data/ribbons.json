@@ -1,0 +1,378 @@
+[
+  {
+    "code": "r05",
+    "category": "载具",
+    "expansion": "",
+    "name": "奥古斯都勋带",
+    "description": "使用任何坦克，在同一回合中击杀 7 人",
+    "score": 500
+  },
+  {
+    "code": "r06",
+    "category": "载具",
+    "expansion": "",
+    "name": "伊卡洛斯勋带",
+    "description": "使用任何飞机，在同一回合中击杀 5 人",
+    "score": 500
+  },
+  {
+    "code": "r19",
+    "category": "载具",
+    "expansion": "",
+    "name": "公牛勋带",
+    "description": "在同一回合中进行 3 次机械巨兽击杀",
+    "score": 500
+  },
+  {
+    "code": "r21",
+    "category": "载具",
+    "expansion": "",
+    "name": "牛顿力学军功勋带",
+    "description": "在同一回合中摧毁 3 个载具",
+    "score": 500
+  },
+  {
+    "code": "r45",
+    "category": "载具",
+    "expansion": "",
+    "name": "波塞顿勋带",
+    "description": "使用任何海上载具，在同一回合中击杀 5 人",
+    "score": 500
+  },
+  {
+    "code": "r47",
+    "category": "载具",
+    "expansion": "",
+    "name": "王牌飞行员勋带",
+    "description": "使用任何战斗机，在同一回合中取得 5 次战斗机击杀数",
+    "score": 500
+  },
+  {
+    "code": "r01",
+    "category": "兵种",
+    "expansion": "",
+    "name": "钢铁之星勋带",
+    "description": "以突击兵身份，在同一回合中击杀 7 人",
+    "score": 500
+  },
+  {
+    "code": "r02",
+    "category": "兵种",
+    "expansion": "",
+    "name": "希波克拉底勋带",
+    "description": "以医护兵身份，在同一回合中击杀 7 人",
+    "score": 500
+  },
+  {
+    "code": "r03",
+    "category": "兵种",
+    "expansion": "",
+    "name": "猎隼勋带",
+    "description": "以侦察兵身份，在同一回合中击杀 7 人",
+    "score": 500
+  },
+  {
+    "code": "r04",
+    "category": "兵种",
+    "expansion": "",
+    "name": "圣克里斯多福勋带",
+    "description": "以支援兵身份，在同一回合中击杀 7 人",
+    "score": 500
+  },
+  {
+    "code": "r20",
+    "category": "兵种",
+    "expansion": "",
+    "name": "可汗勋带",
+    "description": "在同一回合中从马背上击杀 3 人",
+    "score": 500
+  },
+  {
+    "code": "r34",
+    "category": "兵种",
+    "expansion": "",
+    "name": "修复勋带",
+    "description": "在同一回合中使用扳手修复友军载具 5 次",
+    "score": 500
+  },
+  {
+    "code": "r35",
+    "category": "兵种",
+    "expansion": "",
+    "name": "治愈勋带",
+    "description": "在同一回合中完成 300 治疗",
+    "score": 500
+  },
+  {
+    "code": "r36",
+    "category": "兵种",
+    "expansion": "",
+    "name": "补给勋带",
+    "description": "在同一回合中完成 10 次重新补给",
+    "score": 500
+  },
+  {
+    "code": "r38",
+    "category": "兵种",
+    "expansion": "",
+    "name": "新生勋带",
+    "description": "在同一回合中完成 5 次急救",
+    "score": 500
+  },
+  {
+    "code": "r40",
+    "category": "兵种",
+    "expansion": "",
+    "name": "信号弹勋带",
+    "description": "在同一回合中完成 5 次索敌信号弹助攻",
+    "score": 500
+  },
+  {
+    "code": "r44",
+    "category": "兵种",
+    "expansion": "",
+    "name": "反击勋带",
+    "description": "在同一回合中完成 5 次反狙击",
+    "score": 500
+  },
+  {
+    "code": "r08",
+    "category": "武器",
+    "expansion": "",
+    "name": "突击兵英勇勋带",
+    "description": "用冲锋枪在同一回合中击杀 5 人",
+    "score": 500
+  },
+  {
+    "code": "r09",
+    "category": "武器",
+    "expansion": "",
+    "name": "突击兵 LeFever 勋带",
+    "description": "用霰弹枪在同一回合中击杀 5 人",
+    "score": 500
+  },
+  {
+    "code": "r10",
+    "category": "武器",
+    "expansion": "",
+    "name": "医护兵英勇勋带",
+    "description": "用半自动步枪在同一回合中击杀 5 人",
+    "score": 500
+  },
+  {
+    "code": "r11",
+    "category": "武器",
+    "expansion": "",
+    "name": "支援兵英勇勋带",
+    "description": "用轻机枪在同一回合中击杀 5 人",
+    "score": 500
+  },
+  {
+    "code": "r12",
+    "category": "武器",
+    "expansion": "",
+    "name": "侦察兵英勇勋带",
+    "description": "用单动式步枪在同一回合中击杀 5 人",
+    "score": 500
+  },
+  {
+    "code": "r22",
+    "category": "武器",
+    "expansion": "",
+    "name": "闪电十字勋带",
+    "description": "用半自动手枪在同一回合中击杀 4 人",
+    "score": 500
+  },
+  {
+    "code": "r23",
+    "category": "武器",
+    "expansion": "",
+    "name": "圣巴斯弟盎勋带",
+    "description": "用左轮手枪在同一回合中击杀 4 人",
+    "score": 500
+  },
+  {
+    "code": "r24",
+    "category": "武器",
+    "expansion": "",
+    "name": "红龙勋带",
+    "description": "用爆炸物在同一回合中击杀 4 人",
+    "score": 500
+  },
+  {
+    "code": "r25",
+    "category": "武器",
+    "expansion": "",
+    "name": "勇气勋带",
+    "description": "用定点武器在同一回合中击杀 4 人",
+    "score": 500
+  },
+  {
+    "code": "r26",
+    "category": "游戏模式",
+    "expansion": "",
+    "name": "腓特烈二世勋带",
+    "description": "赢得一回合行动模式",
+    "score": 500
+  },
+  {
+    "code": "r27",
+    "category": "游戏模式",
+    "expansion": "",
+    "name": "亚历山大勋带",
+    "description": "赢得一回合征服",
+    "score": 500
+  },
+  {
+    "code": "r28",
+    "category": "游戏模式",
+    "expansion": "",
+    "name": "查理曼勋带",
+    "description": "赢得一回合突袭",
+    "score": 500
+  },
+  {
+    "code": "r29",
+    "category": "游戏模式",
+    "expansion": "",
+    "name": "抢攻勋带",
+    "description": "赢得一回合抢攻",
+    "score": 500
+  },
+  {
+    "code": "r30",
+    "category": "游戏模式",
+    "expansion": "",
+    "name": "头骨勋带",
+    "description": "赢得一回合团队死斗",
+    "score": 500
+  },
+  {
+    "code": "r31",
+    "category": "游戏模式",
+    "expansion": "",
+    "name": "飞鸟勋带",
+    "description": "赢得一回合战争信鸽",
+    "score": 500
+  },
+  {
+    "code": "r32",
+    "category": "游戏模式",
+    "expansion": "",
+    "name": "维钦托利勋带",
+    "description": "赢得一回合前线",
+    "score": 500
+  },
+  {
+    "code": "r46",
+    "category": "游戏模式",
+    "expansion": "",
+    "name": "航空大师勋带",
+    "description": "赢得一回合的空中突袭",
+    "score": 500
+  },
+  {
+    "code": "r07",
+    "category": "战斗",
+    "expansion": "",
+    "name": "黄金之心勋带",
+    "description": "用近战武器在同一回合中击杀 3 人",
+    "score": 500
+  },
+  {
+    "code": "r13",
+    "category": "战斗",
+    "expansion": "",
+    "name": "皇家雄鹿勋带",
+    "description": "在同一回合中击杀 10 人",
+    "score": 500
+  },
+  {
+    "code": "r14",
+    "category": "战斗",
+    "expansion": "",
+    "name": "狙击手护卫勋带",
+    "description": "在同一回合中进行 5 次爆头",
+    "score": 500
+  },
+  {
+    "code": "r15",
+    "category": "战斗",
+    "expansion": "",
+    "name": "深红之心勋带",
+    "description": "在同一回合中进行 5 次队伍支援",
+    "score": 500
+  },
+  {
+    "code": "r33",
+    "category": "战斗",
+    "expansion": "",
+    "name": "皇冠皇家勋带",
+    "description": "成为最有价值玩家",
+    "score": 500
+  },
+  {
+    "code": "r37",
+    "category": "战斗",
+    "expansion": "",
+    "name": "洞察勋带",
+    "description": "在同一回合中完成 5 次索敌助攻",
+    "score": 500
+  },
+  {
+    "code": "r41",
+    "category": "战斗",
+    "expansion": "",
+    "name": "火力压制勋带",
+    "description": "在同一回合中完成 5 次火力压制助攻",
+    "score": 500
+  },
+  {
+    "code": "r42",
+    "category": "战斗",
+    "expansion": "",
+    "name": "地狱杀手勋带",
+    "description": "在同一回合中完成 3 次多重击杀",
+    "score": 500
+  },
+  {
+    "code": "r16",
+    "category": "小队",
+    "expansion": "",
+    "name": "神圣合一勋带",
+    "description": "在同一回合中进行 2 次小队火力压制助攻",
+    "score": 500
+  },
+  {
+    "code": "r17",
+    "category": "小队",
+    "expansion": "",
+    "name": "鲜血勋带",
+    "description": "在同一回合中进行 2 次小队救星击杀",
+    "score": 500
+  },
+  {
+    "code": "r18",
+    "category": "小队",
+    "expansion": "",
+    "name": "野狼勋带",
+    "description": "在同一回合中进行 3 次小队索敌",
+    "score": 500
+  },
+  {
+    "code": "r39",
+    "category": "小队",
+    "expansion": "",
+    "name": "后勤勋带",
+    "description": "在同一回合中完成 7 次小队重生",
+    "score": 500
+  },
+  {
+    "code": "r43",
+    "category": "小队",
+    "expansion": "",
+    "name": "正义勋带",
+    "description": "在同一回合中完成 2 次小队复仇击杀",
+    "score": 500
+  }
+]

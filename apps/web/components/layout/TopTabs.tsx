@@ -48,7 +48,7 @@ export function TopTabs({
       <nav
         ref={navRef}
         className={cn(
-          "relative z-10 flex items-end gap-5 overflow-x-auto lg:gap-7 xl:gap-8 2xl:gap-14",
+          "relative z-10 flex items-end gap-5 overflow-x-auto xl:gap-8 2xl:gap-14",
           // 隐藏横向滚动条，保留可滚动能力（移动端）
           "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
         )}

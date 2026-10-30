@@ -11,15 +11,21 @@ import { UserMenu } from "./UserMenu";
  *   - 详情页：左侧换成返回键（回到真正来的那一页，直接打开时退到列表），中间是页面名。
  * 详情页自己的「返回」按钮只在桌面端显示。
  */
-const DETAIL_ROUTES = [
+const DETAIL_ROUTES: Array<{ prefix: string | RegExp; title: string; fallback: string }> = [
   { prefix: "/bf1/server/", title: "服务器", fallback: "/bf1/servers" },
   { prefix: "/bf1/player/", title: "玩家战绩", fallback: "/bf1/players" },
   { prefix: "/bf1/platoon/", title: "战队", fallback: "/bf1/platoons" },
   { prefix: "/me/groups/", title: "群组", fallback: "/me/groups" },
+  // 图鉴下的分区列表（/bf1/codex/medals 等）不算详情页，只有百科条目 c003、cxp113 这类才是
+  { prefix: /^\/bf1\/codex\/c[a-z]*\d/, title: "百科", fallback: "/bf1/codex" },
 ];
 
 export function getDetailRoute(pathname: string) {
-  return DETAIL_ROUTES.find((r) => pathname.startsWith(r.prefix)) ?? null;
+  return (
+    DETAIL_ROUTES.find((r) =>
+      typeof r.prefix === "string" ? pathname.startsWith(r.prefix) : r.prefix.test(pathname),
+    ) ?? null
+  );
 }
 
 export function MobileAppBar({ onMenu }: { onMenu: () => void }) {

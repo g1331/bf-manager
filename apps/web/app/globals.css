@@ -276,3 +276,79 @@
     animation: none;
   }
 }
+
+/* 图鉴卡片的选中框：平时只有一圈发丝线，悬停 / 键盘选中时四角浮出金色角标（BF1 菜单的选中样式）。
+   角标用八段线性渐变画在一个伪元素上，不额外占 DOM；外扩 inset 让角标略大于卡面，选中时再张开一点。 */
+.codex-frame {
+  --bracket: oklch(0.828 0.189 84.429); /* amber-400 */
+  --bracket-len: 16px;
+  --bracket-w: 2px;
+}
+.codex-frame::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  pointer-events: none;
+  opacity: 0;
+  transition:
+    opacity 0.2s,
+    inset 0.25s;
+  background:
+    linear-gradient(var(--bracket), var(--bracket)) top left / var(--bracket-len) var(--bracket-w)
+      no-repeat,
+    linear-gradient(var(--bracket), var(--bracket)) top left / var(--bracket-w) var(--bracket-len)
+      no-repeat,
+    linear-gradient(var(--bracket), var(--bracket)) top right / var(--bracket-len) var(--bracket-w)
+      no-repeat,
+    linear-gradient(var(--bracket), var(--bracket)) top right / var(--bracket-w) var(--bracket-len)
+      no-repeat,
+    linear-gradient(var(--bracket), var(--bracket)) bottom left / var(--bracket-len)
+      var(--bracket-w) no-repeat,
+    linear-gradient(var(--bracket), var(--bracket)) bottom left / var(--bracket-w)
+      var(--bracket-len) no-repeat,
+    linear-gradient(var(--bracket), var(--bracket)) bottom right / var(--bracket-len)
+      var(--bracket-w) no-repeat,
+    linear-gradient(var(--bracket), var(--bracket)) bottom right / var(--bracket-w)
+      var(--bracket-len) no-repeat;
+}
+.group:hover .codex-frame::after,
+.group:focus-visible .codex-frame::after,
+.codex-frame[data-active="true"]::after {
+  opacity: 1;
+  inset: -7px;
+}
+
+/* 卡片随指针倾斜：变量由脚本直接写在元素上，不经 React 渲染；指针离开后缓慢回正 */
+.codex-tilt {
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.codex-tilt[data-live="true"] {
+  transition: transform 0.07s linear;
+}
+.codex-glare {
+  background: radial-gradient(
+    circle at var(--gx, 50%) var(--gy, 50%),
+    rgb(255 255 255 / 0.55),
+    transparent 55%
+  );
+  mix-blend-mode: soft-light;
+}
+@media (prefers-reduced-motion: reduce) {
+  .codex-tilt {
+    transform: none !important;
+    transition: none;
+  }
+  .codex-frame::after {
+    transition: none;
+  }
+}
+
+/* 阅读层的大图：桌面端按高度定尺寸，一屏放得下、给右侧正文（最宽 440px）留出位置；原图 901 高，不再放大 */
+@media (min-width: 1024px) {
+  .codex-reader-image {
+    width: auto;
+    max-width: none;
+    height: min(calc(100dvh - 7rem), 901px, calc((100vw - 42rem) * 901 / 640));
+  }
+}

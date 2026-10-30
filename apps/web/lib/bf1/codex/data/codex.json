@@ -1,0 +1,3102 @@
+[
+  {
+    "code": "c003",
+    "category": "武器",
+    "weaponClass": "冲锋枪",
+    "expansion": "",
+    "name": "MP18",
+    "header": "MP18 冲锋枪",
+    "subHeader": "",
+    "unlock": "用 MP18 冲锋枪进行 10 次击杀"
+  },
+  {
+    "code": "c002",
+    "category": "武器",
+    "weaponClass": "冲锋枪",
+    "expansion": "",
+    "name": "M1918 自动冲锋枪",
+    "header": "M1918 自动冲锋枪",
+    "subHeader": "",
+    "unlock": "用 M1918 自动冲锋枪进行 10 次击杀"
+  },
+  {
+    "code": "c001",
+    "category": "武器",
+    "weaponClass": "冲锋枪",
+    "expansion": "",
+    "name": "HELLRIEGEL 1915",
+    "header": "HELLRIEGEL 1915 冲锋枪",
+    "subHeader": "",
+    "unlock": "用 Hellriegel 1915 冲锋枪进行 10 次击杀"
+  },
+  {
+    "code": "c004",
+    "category": "武器",
+    "weaponClass": "霰弹枪",
+    "expansion": "",
+    "name": "12g 自动霰弹枪",
+    "header": "12g 自动霰弹枪",
+    "subHeader": "",
+    "unlock": "用 12g 自动霰弹枪进行 10 次击杀"
+  },
+  {
+    "code": "c007",
+    "category": "武器",
+    "weaponClass": "半自动步枪",
+    "expansion": "",
+    "name": "SELBSTLADER 1906",
+    "header": "SELBSTLADER 1906 步枪",
+    "subHeader": "",
+    "unlock": "用 Selbstlader 1906 步枪进行 10 次击杀"
+  },
+  {
+    "code": "c005",
+    "category": "武器",
+    "weaponClass": "霰弹枪",
+    "expansion": "",
+    "name": "MODEL 10 霰弹枪",
+    "header": "MODEL 10 霰弹枪",
+    "subHeader": "",
+    "unlock": "用 Model 10 霰弹枪进行 10 次击杀"
+  },
+  {
+    "code": "c006",
+    "category": "武器",
+    "weaponClass": "霰弹枪",
+    "expansion": "",
+    "name": "M1897 霰弹枪",
+    "header": "M1897 霰弹枪",
+    "subHeader": "",
+    "unlock": "用 M1897 霰弹枪进行 10 次击杀"
+  },
+  {
+    "code": "c008",
+    "category": "武器",
+    "weaponClass": "半自动步枪",
+    "expansion": "",
+    "name": "MODEL 8 自动装填步枪",
+    "header": "MODEL 8 自动装填步枪",
+    "subHeader": "",
+    "unlock": "用 Model 8 自动装填步枪进行 10 次击杀"
+  },
+  {
+    "code": "c010",
+    "category": "武器",
+    "weaponClass": "半自动步枪",
+    "expansion": "",
+    "name": "SELBSTLADER M1916",
+    "header": "SELBSTLADER M1916 步枪",
+    "subHeader": "",
+    "unlock": "用 Selbstlader M1916 步枪进行 10 次击杀"
+  },
+  {
+    "code": "c009",
+    "category": "武器",
+    "weaponClass": "半自动步枪",
+    "expansion": "",
+    "name": "CEI-RIGOTTI",
+    "header": "CEI-RIGOTTI 自动步枪",
+    "subHeader": "",
+    "unlock": "用 Cei-Rigotti 自动步枪进行 10 次击杀"
+  },
+  {
+    "code": "c011",
+    "category": "武器",
+    "weaponClass": "半自动步枪",
+    "expansion": "",
+    "name": "蒙德拉贡步枪",
+    "header": "蒙德拉贡步枪",
+    "subHeader": "",
+    "unlock": "用蒙德拉贡步枪进行 10 次击杀"
+  },
+  {
+    "code": "c012",
+    "category": "武器",
+    "weaponClass": "半自动步枪",
+    "expansion": "",
+    "name": "M1907 半自动步枪",
+    "header": "M1907 半自动步枪",
+    "subHeader": "",
+    "unlock": "用 M1907 半自动步枪进行 10 次击杀"
+  },
+  {
+    "code": "c013",
+    "category": "武器",
+    "weaponClass": "栓动步枪",
+    "expansion": "",
+    "name": "马提尼·亨利步枪",
+    "header": "马提尼·亨利步枪",
+    "subHeader": "",
+    "unlock": "用马提尼·亨利步枪进行 10 次击杀"
+  },
+  {
+    "code": "c014",
+    "category": "武器",
+    "weaponClass": "栓动步枪",
+    "expansion": "",
+    "name": "M1903",
+    "header": "M1903 步枪",
+    "subHeader": "",
+    "unlock": "用 M1903 步枪进行 10 次击杀"
+  },
+  {
+    "code": "c015",
+    "category": "武器",
+    "weaponClass": "栓动步枪",
+    "expansion": "",
+    "name": "SMLE MKIII",
+    "header": "SMLE MKIII 步枪",
+    "subHeader": "",
+    "unlock": "用 SMLE MKIII 步枪进行 10 次击杀"
+  },
+  {
+    "code": "c016",
+    "category": "武器",
+    "weaponClass": "栓动步枪",
+    "expansion": "",
+    "name": "GEWEHR 98",
+    "header": "GEWEHR 98",
+    "subHeader": "",
+    "unlock": "用 Gewehr 98 进行 10 次击杀"
+  },
+  {
+    "code": "c017",
+    "category": "武器",
+    "weaponClass": "栓动步枪",
+    "expansion": "",
+    "name": "GEWEHR M.95",
+    "header": "GEWEHR M.95",
+    "subHeader": "",
+    "unlock": "用 Gewehr M.95 进行 10 次击杀"
+  },
+  {
+    "code": "c018",
+    "category": "武器",
+    "weaponClass": "栓动步枪",
+    "expansion": "",
+    "name": "RUSSIAN 1895",
+    "header": "RUSSIAN 1895 步枪",
+    "subHeader": "",
+    "unlock": "用 Russian 1895 步枪进行 10 次击杀"
+  },
+  {
+    "code": "c019",
+    "category": "武器",
+    "weaponClass": "轻机枪",
+    "expansion": "",
+    "name": "M1918 勃朗宁自动步枪",
+    "header": "M1918 勃朗宁轻机枪",
+    "subHeader": "",
+    "unlock": "用 M1918 勃朗宁自动步枪进行 10 次击杀"
+  },
+  {
+    "code": "c020",
+    "category": "武器",
+    "weaponClass": "轻机枪",
+    "expansion": "",
+    "name": "HUOT 自动步枪",
+    "header": "HUOT 自动步枪",
+    "subHeader": "",
+    "unlock": "用 Huot 自动步枪进行 10 次击杀"
+  },
+  {
+    "code": "c021",
+    "category": "武器",
+    "weaponClass": "轻机枪",
+    "expansion": "",
+    "name": "MG15 N.A",
+    "header": "MG15 N.A 轻机枪",
+    "subHeader": "",
+    "unlock": "用 MG15 n.A 轻机枪进行 10 次击杀"
+  },
+  {
+    "code": "c022",
+    "category": "武器",
+    "weaponClass": "轻机枪",
+    "expansion": "",
+    "name": "M1909 贝内特·梅西耶机枪",
+    "header": "M1909 贝内特·梅西耶轻机枪",
+    "subHeader": "",
+    "unlock": "用 M1909 贝内特·梅西耶机枪进行 10 次击杀"
+  },
+  {
+    "code": "c023",
+    "category": "武器",
+    "weaponClass": "轻机枪",
+    "expansion": "",
+    "name": "路易士机枪",
+    "header": "路易士机枪",
+    "subHeader": "",
+    "unlock": "用路易士机枪进行 10 次击杀"
+  },
+  {
+    "code": "c024",
+    "category": "武器",
+    "weaponClass": "轻机枪",
+    "expansion": "",
+    "name": "麦德森机枪",
+    "header": "麦德森轻机枪",
+    "subHeader": "",
+    "unlock": "用麦德森轻机枪进行 10 次击杀"
+  },
+  {
+    "code": "c025",
+    "category": "武器",
+    "weaponClass": "手枪",
+    "expansion": "",
+    "name": "英国斗牛犬转轮手枪",
+    "header": "英国斗牛犬左轮手枪",
+    "subHeader": "",
+    "unlock": "用英国斗牛犬左轮手枪手枪进行 10 次击杀"
+  },
+  {
+    "code": "c026",
+    "category": "武器",
+    "weaponClass": "手枪",
+    "expansion": "",
+    "name": "费罗梅尔停止手枪",
+    "header": "费罗梅尔停止手枪",
+    "subHeader": "",
+    "unlock": "用费罗梅尔停止手枪进行 10 次击杀"
+  },
+  {
+    "code": "c027",
+    "category": "武器",
+    "weaponClass": "手枪",
+    "expansion": "",
+    "name": "MLE 1903 手枪",
+    "header": "MLE 1903 手枪",
+    "subHeader": "",
+    "unlock": "用 Mle 1903 手枪进行 10 次击杀"
+  },
+  {
+    "code": "c028",
+    "category": "武器",
+    "weaponClass": "手枪",
+    "expansion": "",
+    "name": "1903 HAMMERLESS",
+    "header": "1903 POCKET HAMMERLESS 手枪",
+    "subHeader": "",
+    "unlock": "用 1903 Pocket Hammerless 手枪进行 10 次击杀"
+  },
+  {
+    "code": "c029",
+    "category": "武器",
+    "weaponClass": "手枪",
+    "expansion": "",
+    "name": "M1914 TASCHENPISTOLE",
+    "header": "M1914 TASCHENPISTOLE",
+    "subHeader": "",
+    "unlock": "用 M1914 Taschenpistole 进行 10 次击杀"
+  },
+  {
+    "code": "c030",
+    "category": "武器",
+    "weaponClass": "手枪",
+    "expansion": "",
+    "name": "KOLIBRI 手枪",
+    "header": "KOLIBRI 手枪",
+    "subHeader": "",
+    "unlock": "用 Kolibri 手枪进行 10 次击杀"
+  },
+  {
+    "code": "c031",
+    "category": "武器",
+    "weaponClass": "手枪",
+    "expansion": "",
+    "name": "C-93 手枪",
+    "header": "C-93 手枪",
+    "subHeader": "",
+    "unlock": "用 C-93 手枪进行 10 次击杀"
+  },
+  {
+    "code": "c032",
+    "category": "武器",
+    "weaponClass": "手枪",
+    "expansion": "",
+    "name": "加塞 M1870 左轮手枪",
+    "header": "加塞 M1870 左轮手枪",
+    "subHeader": "",
+    "unlock": "用加塞 M1870 左轮手枪进行 10 次击杀"
+  },
+  {
+    "code": "c033",
+    "category": "武器",
+    "weaponClass": "手枪",
+    "expansion": "",
+    "name": "MARS 自动手枪",
+    "header": "MARS 自动手枪",
+    "subHeader": "",
+    "unlock": "用 Mars 自动手枪进行 10 次击杀"
+  },
+  {
+    "code": "c034",
+    "category": "武器",
+    "weaponClass": "手枪",
+    "expansion": "",
+    "name": "REPETIERPISTOLE M1912",
+    "header": "REPETIERPISTOLE M1912",
+    "subHeader": "",
+    "unlock": "用 Repetierpistole M1912 进行 10 次击杀"
+  },
+  {
+    "code": "c035",
+    "category": "武器",
+    "weaponClass": "手枪",
+    "expansion": "",
+    "name": "MODELLO 1915 手枪",
+    "header": "MODELLO 1915 手枪",
+    "subHeader": "",
+    "unlock": "用 Modello 1915 手枪进行 10 次击杀"
+  },
+  {
+    "code": "c036",
+    "category": "武器",
+    "weaponClass": "手枪",
+    "expansion": "",
+    "name": "M1911 手枪",
+    "header": "M1911 手枪",
+    "subHeader": "",
+    "unlock": "用 M1911 手枪进行 10 次击杀"
+  },
+  {
+    "code": "c037",
+    "category": "武器",
+    "weaponClass": "手枪",
+    "expansion": "",
+    "name": "HOWDAH 手枪",
+    "header": "HOWDAH 手枪",
+    "subHeader": "",
+    "unlock": "用 Howdah 手枪进行 10 次击杀"
+  },
+  {
+    "code": "c038",
+    "category": "武器",
+    "weaponClass": "手枪",
+    "expansion": "",
+    "name": "P08 手枪",
+    "header": "P08 手枪",
+    "subHeader": "",
+    "unlock": "用 P08 手枪进行 10 次击杀"
+  },
+  {
+    "code": "c039",
+    "category": "武器",
+    "weaponClass": "手枪",
+    "expansion": "",
+    "name": "C96 手枪",
+    "header": "C96 手枪",
+    "subHeader": "",
+    "unlock": "用 C96 手枪进行 10 次击杀"
+  },
+  {
+    "code": "c040",
+    "category": "武器",
+    "weaponClass": "手枪",
+    "expansion": "",
+    "name": "自动左轮手枪",
+    "header": "自动左轮手枪",
+    "subHeader": "",
+    "unlock": "用自动左轮手枪进行 10 次击杀"
+  },
+  {
+    "code": "c041",
+    "category": "武器",
+    "weaponClass": "手枪",
+    "expansion": "",
+    "name": "3 号左轮手枪",
+    "header": "3 号左轮手枪",
+    "subHeader": "",
+    "unlock": "用 3 号左轮手枪进行 10 次击杀"
+  },
+  {
+    "code": "c042",
+    "category": "武器",
+    "weaponClass": "手枪",
+    "expansion": "",
+    "name": "BODEO 1889 左轮手枪",
+    "header": "BODEO 1889 左轮手枪",
+    "subHeader": "",
+    "unlock": "用 Bodeo 1889 进行 10 次击杀"
+  },
+  {
+    "code": "c043",
+    "category": "武器",
+    "weaponClass": "近战",
+    "expansion": "",
+    "name": "近身战斗",
+    "header": "如中世纪般残酷的未来战争",
+    "subHeader": "回归中世纪的战斗方式",
+    "unlock": "用近战武器进行 10 次击杀"
+  },
+  {
+    "code": "c044",
+    "category": "武器",
+    "weaponClass": "配备",
+    "expansion": "",
+    "name": "手榴弹",
+    "header": "榴弹兵最好的朋友",
+    "subHeader": "一夜之间投出 15,000 颗手榴弹",
+    "unlock": "用手榴弹进行 10 次击杀"
+  },
+  {
+    "code": "c045",
+    "category": "武器",
+    "weaponClass": "配备",
+    "expansion": "",
+    "name": "反坦克地雷",
+    "header": "入土三分",
+    "subHeader": "",
+    "unlock": "用地雷进行 10 次击杀"
+  },
+  {
+    "code": "c046",
+    "category": "武器",
+    "weaponClass": "配备",
+    "expansion": "",
+    "name": "步兵支援武器",
+    "header": "和狗一样大的火炮",
+    "subHeader": "",
+    "unlock": "用反坦克火箭炮进行 10 次击杀"
+  },
+  {
+    "code": "c047",
+    "category": "武器",
+    "weaponClass": "配备",
+    "expansion": "",
+    "name": "轰轰轰",
+    "header": "炸药",
+    "subHeader": "",
+    "unlock": "用炸药进行 10 次击杀"
+  },
+  {
+    "code": "c048",
+    "category": "武器",
+    "weaponClass": "配备",
+    "expansion": "",
+    "name": "敌火来袭",
+    "header": "一次大战中的迫击炮",
+    "subHeader": "",
+    "unlock": "用迫击炮进行 10 次击杀"
+  },
+  {
+    "code": "c049",
+    "category": "武器",
+    "weaponClass": "配备",
+    "expansion": "",
+    "name": "当心脚下",
+    "header": "一次大战中的绊索炸弹",
+    "subHeader": "",
+    "unlock": "用绊索炸弹进行 10 次击杀"
+  },
+  {
+    "code": "c050",
+    "category": "武器",
+    "weaponClass": "配备",
+    "expansion": "",
+    "name": "帝国精英",
+    "header": "一次大战中的精英部队",
+    "subHeader": "全新的侵略式战斗风格",
+    "unlock": "用精英兵种武器进行 10 次击杀"
+  },
+  {
+    "code": "c063",
+    "category": "武器",
+    "weaponClass": "配备",
+    "expansion": "",
+    "name": "K 弹",
+    "header": "能打穿坦克的子弹",
+    "subHeader": "",
+    "unlock": "用 K 弹击杀敌军"
+  },
+  {
+    "code": "c074",
+    "category": "武器",
+    "weaponClass": "精英兵",
+    "expansion": "",
+    "name": "燃烧中的人",
+    "header": "WEX 火焰喷射器",
+    "subHeader": "",
+    "unlock": "用喷火兵精英兵种进行 10 次击杀"
+  },
+  {
+    "code": "c075",
+    "category": "武器",
+    "weaponClass": "精英兵",
+    "expansion": "",
+    "name": "愤怒之行",
+    "header": "MG 08/15",
+    "subHeader": "",
+    "unlock": "用哨兵精英兵种进行 10 次击杀"
+  },
+  {
+    "code": "c076",
+    "category": "武器",
+    "weaponClass": "精英兵",
+    "expansion": "",
+    "name": "钢板上的弹孔",
+    "header": "TANKGEWEHR 1918",
+    "subHeader": "",
+    "unlock": "用坦克猎手精英兵种进行 10 次击杀"
+  },
+  {
+    "code": "c084",
+    "category": "武器",
+    "weaponClass": "栓动步枪",
+    "expansion": "",
+    "name": "瞄准镜",
+    "header": "一次大战中的瞄准镜",
+    "subHeader": "",
+    "unlock": "以侦察兵身份进行 1 次神射手爆头。"
+  },
+  {
+    "code": "c178",
+    "category": "武器",
+    "weaponClass": "定点武器",
+    "expansion": "",
+    "name": "战地之后",
+    "header": "一次大战中的重机枪",
+    "subHeader": "微缩火炮模型",
+    "unlock": "用重机枪进行 10 次击杀"
+  },
+  {
+    "code": "c122",
+    "category": "武器",
+    "weaponClass": "手枪卡宾枪",
+    "expansion": "",
+    "name": "费罗梅尔停止手枪",
+    "header": "全自动费罗梅尔停止手枪",
+    "subHeader": "",
+    "unlock": "用费罗梅尔停止手枪（自动）进行 5 次击杀"
+  },
+  {
+    "code": "c121",
+    "category": "武器",
+    "weaponClass": "手枪卡宾枪",
+    "expansion": "",
+    "name": "约克手上的 1911",
+    "header": "1911 的传奇",
+    "subHeader": "",
+    "unlock": "用特别版 M1911 进行 5 次击杀"
+  },
+  {
+    "code": "c119",
+    "category": "武器",
+    "weaponClass": "手枪卡宾枪",
+    "expansion": "",
+    "name": "皮珀 M1893",
+    "header": "皮珀 M1893 轮转卡宾枪",
+    "subHeader": "",
+    "unlock": "用皮珀 M1893 进行 5 次击杀"
+  },
+  {
+    "code": "c118",
+    "category": "武器",
+    "weaponClass": "手枪卡宾枪",
+    "expansion": "",
+    "name": "C96",
+    "header": "C96 KAVALLERIE KARBINER",
+    "subHeader": "",
+    "unlock": "用 C96 卡宾枪进行 5 次击杀"
+  },
+  {
+    "code": "c117",
+    "category": "武器",
+    "weaponClass": "手枪卡宾枪",
+    "expansion": "",
+    "name": "LANGE PISTOLE 08",
+    "header": "LANGE PISTOLE 08 ARTILLERIE KARABINER",
+    "subHeader": "",
+    "unlock": "用 P08 Artillerie 进行 5 次击杀"
+  },
+  {
+    "code": "c179",
+    "category": "武器",
+    "weaponClass": "定点武器",
+    "expansion": "",
+    "name": "QF 1 砰砰炮",
+    "header": "QF 1 速射炮“砰砰”",
+    "subHeader": "",
+    "unlock": "用 QF 1 防空炮进行 10 次击杀"
+  },
+  {
+    "code": "c024x",
+    "category": "武器",
+    "weaponClass": "轻机枪",
+    "expansion": "",
+    "name": "精英级麦德森机枪",
+    "header": "精英级麦德森轻机枪",
+    "subHeader": "",
+    "unlock": "用麦德森轻机枪进行 500 次击杀"
+  },
+  {
+    "code": "c006x",
+    "category": "武器",
+    "weaponClass": "霰弹枪",
+    "expansion": "",
+    "name": "精英级 M1897 霰弹枪",
+    "header": "精英级 M1897 霰弹枪",
+    "subHeader": "",
+    "unlock": "用 M1897 霰弹枪进行 500 次击杀"
+  },
+  {
+    "code": "c002x",
+    "category": "武器",
+    "weaponClass": "冲锋枪",
+    "expansion": "",
+    "name": "精英级 M1918 自动冲锋枪",
+    "header": "精英级 M1918 自动冲锋枪",
+    "subHeader": "",
+    "unlock": "用 M1918 自动冲锋枪进行 500 次击杀"
+  },
+  {
+    "code": "c010x",
+    "category": "武器",
+    "weaponClass": "半自动步枪",
+    "expansion": "",
+    "name": "精英级 SELBSTLADER M1916",
+    "header": "精英级 SELBSTLADER M1916 步枪",
+    "subHeader": "",
+    "unlock": "用 Selbstlader M1916 步枪进行 500 次击杀"
+  },
+  {
+    "code": "c012x",
+    "category": "武器",
+    "weaponClass": "半自动步枪",
+    "expansion": "",
+    "name": "精英级 M1907 半自动步枪",
+    "header": "精英级 M1907 半自动步枪",
+    "subHeader": "",
+    "unlock": "用 M1907 半自动步枪进行 500 次击杀"
+  },
+  {
+    "code": "c022x",
+    "category": "武器",
+    "weaponClass": "轻机枪",
+    "expansion": "",
+    "name": "精英级 M1909 贝内特·梅西耶",
+    "header": "精英级 M1909 贝内特·梅西耶轻机枪",
+    "subHeader": "",
+    "unlock": "用 M1909 贝内特·梅西耶轻机枪进行 500 次击杀"
+  },
+  {
+    "code": "c017x",
+    "category": "武器",
+    "weaponClass": "栓动步枪",
+    "expansion": "",
+    "name": "精英级 GEWEHR M.95",
+    "header": "精英级 GEWEHR M.95",
+    "subHeader": "",
+    "unlock": "用 Gewehr M.95 进行 500 次击杀"
+  },
+  {
+    "code": "c015x",
+    "category": "武器",
+    "weaponClass": "栓动步枪",
+    "expansion": "",
+    "name": "精英级 SMLE MKIII",
+    "header": "精英级 SMLE MKIII 步枪",
+    "subHeader": "",
+    "unlock": "用 SMLE MKIII 步枪进行 500 次击杀"
+  },
+  {
+    "code": "cxp101",
+    "category": "武器",
+    "weaponClass": "冲锋枪",
+    "expansion": "XPACK1",
+    "name": "利贝罗勒 1918 卡宾步枪",
+    "header": "利贝罗勒 1918 卡宾步枪",
+    "subHeader": "",
+    "unlock": "用利贝罗勒 1918 进行 10 次击杀"
+  },
+  {
+    "code": "cxp102",
+    "category": "武器",
+    "weaponClass": "霰弹枪",
+    "expansion": "XPACK1",
+    "name": "SJÖGREN INERTIAL 霰弹枪",
+    "header": "SJÖGREN INERTIAL 霰弹枪",
+    "subHeader": "",
+    "unlock": "用 Sjögren Inertial 霰弹枪进行 10 次击杀"
+  },
+  {
+    "code": "cxp103",
+    "category": "武器",
+    "weaponClass": "半自动步枪",
+    "expansion": "XPACK1",
+    "name": "RSC 1917",
+    "header": "RSC 1917",
+    "subHeader": "",
+    "unlock": "用 RSC 1917 进行 10 次击杀"
+  },
+  {
+    "code": "cxp104",
+    "category": "武器",
+    "weaponClass": "轻机枪",
+    "expansion": "XPACK1",
+    "name": "绍沙轻机枪",
+    "header": "绍沙轻机枪",
+    "subHeader": "",
+    "unlock": "用绍沙轻机枪进行 10 次击杀"
+  },
+  {
+    "code": "cxp105",
+    "category": "武器",
+    "weaponClass": "栓动步枪",
+    "expansion": "XPACK1",
+    "name": "勒贝尔 M1886",
+    "header": "勒贝尔 M1886",
+    "subHeader": "",
+    "unlock": "用勒贝尔 M1886 进行 10 次击杀"
+  },
+  {
+    "code": "cxp107",
+    "category": "武器",
+    "weaponClass": "近战",
+    "expansion": "XPACK1",
+    "name": "齿轮槌",
+    "header": "齿轮槌",
+    "subHeader": "",
+    "unlock": "用齿轮槌进行 10 次击杀"
+  },
+  {
+    "code": "cxp108",
+    "category": "武器",
+    "weaponClass": "近战",
+    "expansion": "XPACK1",
+    "name": "铁钉小刀",
+    "header": "铁钉小刀",
+    "subHeader": "",
+    "unlock": "用铁钉小刀进行 10 次击杀"
+  },
+  {
+    "code": "cxp109",
+    "category": "武器",
+    "weaponClass": "近战",
+    "expansion": "XPACK1",
+    "name": "战壕鸢尾刀",
+    "header": "战壕鸢尾刀",
+    "subHeader": "",
+    "unlock": "用战壕鸢尾刀进行 10 次击杀"
+  },
+  {
+    "code": "cxp110",
+    "category": "武器",
+    "weaponClass": "精英兵",
+    "expansion": "XPACK1",
+    "name": "战壕奇兵",
+    "header": "战壕奇兵",
+    "subHeader": "",
+    "unlock": "用战壕奇兵精英兵种进行 10 次击杀"
+  },
+  {
+    "code": "cxp001",
+    "category": "武器",
+    "weaponClass": "配备",
+    "expansion": "",
+    "name": "十字弓发射器",
+    "header": "十字弓发射器",
+    "subHeader": "",
+    "unlock": "用十字弓发射器进行 10 次击杀"
+  },
+  {
+    "code": "cxp118",
+    "category": "武器",
+    "weaponClass": "定点武器",
+    "expansion": "XPACK1",
+    "name": "BL 9.2 攻城炮",
+    "header": "BL 9.2 攻城炮",
+    "subHeader": "",
+    "unlock": "用 BL 9.2 攻城炮进行 3 次击杀"
+  },
+  {
+    "code": "cxp202",
+    "category": "武器",
+    "weaponClass": "冲锋枪",
+    "expansion": "XPACK2",
+    "name": "SMG 08/18",
+    "header": "SMG 08/18 冲锋枪",
+    "subHeader": "",
+    "unlock": "用 SMG 08/18 进行 10 次击杀"
+  },
+  {
+    "code": "cxp206",
+    "category": "武器",
+    "weaponClass": "轻机枪",
+    "expansion": "XPACK2",
+    "name": "PERINO MODEL 1908",
+    "header": "PERINO MODEL 1908 机关枪",
+    "subHeader": "",
+    "unlock": "用 Perino Model 1908 进行 10 次击杀"
+  },
+  {
+    "code": "cxp219",
+    "category": "武器",
+    "weaponClass": "定点武器",
+    "expansion": "XPACK2",
+    "name": "305/52 O 海岸加农炮",
+    "header": "305/52 O 海岸加农炮",
+    "subHeader": "",
+    "unlock": "用 305/52 O 海岸加农炮进行 3 次击杀"
+  },
+  {
+    "code": "cxp208",
+    "category": "武器",
+    "weaponClass": "栓动步枪",
+    "expansion": "XPACK2",
+    "name": "VETTERLI-VITALI M1870/87",
+    "header": "VETTERLI-VITALI M1870/87 步枪",
+    "subHeader": "",
+    "unlock": "用 Vetterli-Vitali M1870/87 进行 10 次击杀"
+  },
+  {
+    "code": "cxp210",
+    "category": "武器",
+    "weaponClass": "手枪",
+    "expansion": "XPACK2",
+    "name": "OBREZ 手枪",
+    "header": "OBREZ 手枪",
+    "subHeader": "",
+    "unlock": "用 Obrez 手枪进行 10 次击杀"
+  },
+  {
+    "code": "cxp211",
+    "category": "武器",
+    "weaponClass": "手枪卡宾枪",
+    "expansion": "XPACK2",
+    "name": "C93 卡宾枪",
+    "header": "C93 卡宾枪",
+    "subHeader": "",
+    "unlock": "用 C93 卡宾枪进行 5 次击杀"
+  },
+  {
+    "code": "cxp209",
+    "category": "武器",
+    "weaponClass": "手枪",
+    "expansion": "XPACK2",
+    "name": "纳甘左轮手枪",
+    "header": "纳甘左轮手枪",
+    "subHeader": "",
+    "unlock": "用纳甘左轮手枪进行 10 次击杀"
+  },
+  {
+    "code": "cxp201",
+    "category": "武器",
+    "weaponClass": "霰弹枪",
+    "expansion": "XPACK2",
+    "name": "MODEL 1900",
+    "header": "MODEL 1900 霰弹枪",
+    "subHeader": "",
+    "unlock": "用 Model 1900 进行 10 次击杀"
+  },
+  {
+    "code": "cxp203",
+    "category": "武器",
+    "weaponClass": "半自动步枪",
+    "expansion": "XPACK2",
+    "name": "费德洛夫自动步枪",
+    "header": "费德洛夫自动步枪",
+    "subHeader": "",
+    "unlock": "用费德洛夫自动步枪进行 10 次击杀"
+  },
+  {
+    "code": "cxp205",
+    "category": "武器",
+    "weaponClass": "轻机枪",
+    "expansion": "XPACK2",
+    "name": "PARABELLUM MG14/17",
+    "header": "PARABELLUM MG14/17 轻机枪",
+    "subHeader": "",
+    "unlock": "用 Parabellum MG14/17 进行 10 次击杀"
+  },
+  {
+    "code": "cxp204",
+    "category": "武器",
+    "weaponClass": "半自动步枪",
+    "expansion": "XPACK2",
+    "name": "刘将军",
+    "header": "刘将军步枪",
+    "subHeader": "",
+    "unlock": "用刘将军步枪进行 10 次击杀"
+  },
+  {
+    "code": "cxp212",
+    "category": "武器",
+    "weaponClass": "近战",
+    "expansion": "XPACK2",
+    "name": "俄罗斯哥萨克匕首",
+    "header": "俄罗斯哥萨克匕首",
+    "subHeader": "",
+    "unlock": "用俄罗斯哥萨克匕首进行 10 次击杀"
+  },
+  {
+    "code": "cxp218",
+    "category": "武器",
+    "weaponClass": "骑兵",
+    "expansion": "XPACK2",
+    "name": "俄罗斯传奇骠骑兵",
+    "header": "俄罗斯传奇骠骑兵",
+    "subHeader": "",
+    "unlock": "在马背上进行 10 次击杀"
+  },
+  {
+    "code": "cxp207",
+    "category": "武器",
+    "weaponClass": "栓动步枪",
+    "expansion": "XPACK2",
+    "name": "莫辛-纳甘 M91 步枪",
+    "header": "莫辛-纳甘 M91 步枪",
+    "subHeader": "",
+    "unlock": "用莫辛-纳甘 M91 步枪进行 10 次击杀"
+  },
+  {
+    "code": "cxp213",
+    "category": "武器",
+    "weaponClass": "近战",
+    "expansion": "XPACK2",
+    "name": "哑弹棒",
+    "header": "哑弹棒",
+    "subHeader": "",
+    "unlock": "用哑弹棒进行 10 次击杀"
+  },
+  {
+    "code": "cxp236",
+    "category": "武器",
+    "weaponClass": "近战",
+    "expansion": "",
+    "name": "法军屠刀",
+    "header": "法军屠刀",
+    "subHeader": "",
+    "unlock": "用法军屠刀进行 10 次击杀"
+  },
+  {
+    "code": "cxp237",
+    "category": "武器",
+    "weaponClass": "近战",
+    "expansion": "",
+    "name": "俄军勋刀",
+    "header": "俄军勋刀",
+    "subHeader": "",
+    "unlock": "用俄军勋刀进行 10 次击杀"
+  },
+  {
+    "code": "cxp403",
+    "category": "武器",
+    "weaponClass": "轻机枪",
+    "expansion": "XPACK4",
+    "name": "轻机枪 08/18",
+    "header": "轻机枪 08/18",
+    "subHeader": "",
+    "unlock": "用轻机枪 08/18 进行 10 次击杀"
+  },
+  {
+    "code": "cxp302",
+    "category": "武器",
+    "weaponClass": "冲锋枪",
+    "expansion": "XPACK3",
+    "name": "MASCHINENPISTOLE M1912/P.16",
+    "header": "MASCHINENPISTOLE M1912/P.16",
+    "subHeader": "",
+    "unlock": "用 M1912/P.16 进行 10 次击杀"
+  },
+  {
+    "code": "cxp303",
+    "category": "武器",
+    "weaponClass": "半自动步枪",
+    "expansion": "XPACK3",
+    "name": "FARQUHAR-HILL 步枪",
+    "header": "FARQUHAR-HILL 步枪",
+    "subHeader": "",
+    "unlock": "用 Farquhar-Hill 步枪进行 10 次击杀"
+  },
+  {
+    "code": "cxp304",
+    "category": "武器",
+    "weaponClass": "轻机枪",
+    "expansion": "XPACK3",
+    "name": "M1917 机枪",
+    "header": "M1917 机枪",
+    "subHeader": "",
+    "unlock": "用 M1917 机枪进行 10 次击杀"
+  },
+  {
+    "code": "cxp305",
+    "category": "武器",
+    "weaponClass": "栓动步枪",
+    "expansion": "XPACK3",
+    "name": "卡尔卡诺 M91 卡宾枪",
+    "header": "卡尔卡诺 M91 卡宾枪",
+    "subHeader": "",
+    "unlock": "用卡尔卡诺 M91 卡宾枪进行 10 次击杀"
+  },
+  {
+    "code": "cxp306",
+    "category": "武器",
+    "weaponClass": "栓动步枪",
+    "expansion": "XPACK3",
+    "name": "三八式步枪",
+    "header": "三八式步枪",
+    "subHeader": "",
+    "unlock": "用三八式步枪进行 10 次击杀"
+  },
+  {
+    "code": "cxp309",
+    "category": "武器",
+    "weaponClass": "近战",
+    "expansion": "XPACK3",
+    "name": "海军弯刀",
+    "header": "海军弯刀",
+    "subHeader": "",
+    "unlock": "用海军弯刀进行 10 次击杀"
+  },
+  {
+    "code": "cxp307",
+    "category": "武器",
+    "weaponClass": "近战",
+    "expansion": "XPACK3",
+    "name": "鄂图曼钉头锤",
+    "header": "鄂图曼钉头锤",
+    "subHeader": "",
+    "unlock": "用鄂图曼钉头锤进行 10 次击杀"
+  },
+  {
+    "code": "cxp238",
+    "category": "武器",
+    "weaponClass": "近战",
+    "expansion": "",
+    "name": "俄军战斧",
+    "header": "俄军战斧",
+    "subHeader": "",
+    "unlock": "用俄军战斧进行 10 次击杀"
+  },
+  {
+    "code": "cxp308",
+    "category": "武器",
+    "weaponClass": "近战",
+    "expansion": "XPACK3",
+    "name": "鄂图曼弯刀",
+    "header": "鄂图曼弯刀",
+    "subHeader": "",
+    "unlock": "用鄂图曼弯刀进行 10 次击杀"
+  },
+  {
+    "code": "cxp301",
+    "category": "武器",
+    "weaponClass": "冲锋枪",
+    "expansion": "XPACK3",
+    "name": "M1917 战壕卡宾枪",
+    "header": "M1917 战壕卡宾枪",
+    "subHeader": "",
+    "unlock": "用 M1917 战壕卡宾枪进行 10 次击杀"
+  },
+  {
+    "code": "cxp402",
+    "category": "武器",
+    "weaponClass": "半自动步枪",
+    "expansion": "XPACK4",
+    "name": "HOWELL 自动步枪",
+    "header": "HOWELL 自动步枪",
+    "subHeader": "",
+    "unlock": "用 Howell 自动步枪进行 10 次击杀"
+  },
+  {
+    "code": "cxp401",
+    "category": "武器",
+    "weaponClass": "冲锋枪",
+    "expansion": "XPACK4",
+    "name": "RSC 冲锋枪",
+    "header": "RSC 冲锋枪",
+    "subHeader": "",
+    "unlock": "用 RSC 冲锋枪进行 10 次击杀"
+  },
+  {
+    "code": "cxp404",
+    "category": "武器",
+    "weaponClass": "栓动步枪",
+    "expansion": "XPACK4",
+    "name": "罗斯 MKIII",
+    "header": "罗斯 MKIII",
+    "subHeader": "",
+    "unlock": "用罗斯 MKIII 进行 10 次击杀"
+  },
+  {
+    "code": "cxp405",
+    "category": "武器",
+    "weaponClass": "栓动步枪",
+    "expansion": "XPACK4",
+    "name": "M1917 ENFIELD",
+    "header": "M1917 ENFIELD",
+    "subHeader": "",
+    "unlock": "用 M1917 Enfield 进行 10 次击杀"
+  },
+  {
+    "code": "cxp406",
+    "category": "武器",
+    "weaponClass": "手枪",
+    "expansion": "XPACK4",
+    "name": "MK VI 左轮手枪",
+    "header": "MK VI 左轮手枪",
+    "subHeader": "",
+    "unlock": "用 MK VI 左轮手枪进行 10 次击杀"
+  },
+  {
+    "code": "cxp418",
+    "category": "武器",
+    "weaponClass": "配备",
+    "expansion": "XPACK4",
+    "name": "防空火箭炮",
+    "header": "防空火箭炮",
+    "subHeader": "",
+    "unlock": "用防空火箭炮进行 10 次击杀"
+  },
+  {
+    "code": "c003x",
+    "category": "武器",
+    "weaponClass": "冲锋枪",
+    "expansion": "",
+    "name": "精英 MP18",
+    "header": "精英 MP18 冲锋枪",
+    "subHeader": "",
+    "unlock": "用 MP18 冲锋枪进行 500 次击杀"
+  },
+  {
+    "code": "c036x",
+    "category": "武器",
+    "weaponClass": "手枪",
+    "expansion": "",
+    "name": "精英 M1911",
+    "header": "精英 M1911 手枪",
+    "subHeader": "",
+    "unlock": "用 M1911 手枪进行 500 次击杀"
+  },
+  {
+    "code": "cxp501",
+    "category": "武器",
+    "weaponClass": "冲锋枪",
+    "expansion": "",
+    "name": "M1919 冲锋枪",
+    "header": "M1919 冲锋枪",
+    "subHeader": "",
+    "unlock": "用 M1919 进行 10 次击杀"
+  },
+  {
+    "code": "cxp502",
+    "category": "武器",
+    "weaponClass": "轻机枪",
+    "expansion": "",
+    "name": "BURTON LMR",
+    "header": "Burton LMR",
+    "subHeader": "",
+    "unlock": "用 Burton LMR 轻机枪进行 10 次击杀"
+  },
+  {
+    "code": "cxp503",
+    "category": "武器",
+    "weaponClass": "手枪",
+    "expansion": "",
+    "name": "PEACEKEEPER",
+    "header": "Peacekeeper",
+    "subHeader": "",
+    "unlock": "用 Peacekeeper 进行 10 次击杀"
+  },
+  {
+    "code": "cxp504",
+    "category": "武器",
+    "weaponClass": "手枪卡宾枪",
+    "expansion": "",
+    "name": "MLE 1903（加长）",
+    "header": "MLE 1903（加长）",
+    "subHeader": "",
+    "unlock": "用 MLE 1903（加长）进行 5 次击杀"
+  },
+  {
+    "code": "cxp505",
+    "category": "武器",
+    "weaponClass": "近战",
+    "expansion": "",
+    "name": "威尔士刀",
+    "header": "威尔士刀",
+    "subHeader": "",
+    "unlock": "用威尔士刀进行 10 次击杀"
+  },
+  {
+    "code": "cxp506",
+    "category": "武器",
+    "weaponClass": "近战",
+    "expansion": "",
+    "name": "镰刀",
+    "header": "镰刀",
+    "subHeader": "",
+    "unlock": "用镰刀进行 10 次击杀"
+  },
+  {
+    "code": "c053",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "A7V 坦克",
+    "header": "首款德式坦克",
+    "subHeader": "绰号“移动堡垒”",
+    "unlock": "用 A7V 重型坦克进行 10 次击杀"
+  },
+  {
+    "code": "c052",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "MARK V 坦克",
+    "header": "首款巡航坦克",
+    "subHeader": "你能想像 300 台一次大战的坦克同时进攻的画面吗？",
+    "unlock": "用 Mark V 巡航坦克进行 10 次击杀"
+  },
+  {
+    "code": "c054",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "FT 坦克",
+    "header": "首款现代化的坦克设计",
+    "subHeader": "也许是战时最优秀的坦克",
+    "unlock": "用 FT 轻型坦克进行 10 次击杀"
+  },
+  {
+    "code": "c055",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "火炮装甲车",
+    "header": "火炮装甲车",
+    "subHeader": "",
+    "unlock": "用火炮装甲车进行 10 次击杀"
+  },
+  {
+    "code": "c193",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "卡普罗尼 CA.5",
+    "header": "卡普罗尼 CA.5",
+    "subHeader": "",
+    "unlock": "用轰炸机进行 5 次击杀"
+  },
+  {
+    "code": "c060",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "装甲列车",
+    "header": "人称 ZAAMURETS 的传奇",
+    "subHeader": "",
+    "unlock": "用装甲列车进行 10 次击杀"
+  },
+  {
+    "code": "c059",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "L30 飞船",
+    "header": "L30 - 空中巨舰",
+    "subHeader": "",
+    "unlock": "用飞船进行 10 次击杀"
+  },
+  {
+    "code": "c195",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "索普威斯骆驼式战机",
+    "header": "索普威斯骆驼式战机",
+    "subHeader": "",
+    "unlock": "用战斗机进行 10 次击杀"
+  },
+  {
+    "code": "c190",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "RUMPLER C.I",
+    "header": "RUMPLER C.I",
+    "subHeader": "",
+    "unlock": "用攻击机进行 15 次击杀"
+  },
+  {
+    "code": "c061",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "无畏舰",
+    "header": "HMS 铁公爵号战舰",
+    "subHeader": "一夕之间颠覆海上霸权的机械巨兽",
+    "unlock": "用无畏舰进行 10 次击杀"
+  },
+  {
+    "code": "c090",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "炼狱铁轨",
+    "header": "一次大战中的装甲列车",
+    "subHeader": "",
+    "unlock": "集中火力摧毁敌方机械巨兽的一部分"
+  },
+  {
+    "code": "c091",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "海上巨兽",
+    "header": "一次大战中的战舰",
+    "subHeader": "",
+    "unlock": "集中火力摧毁敌方机械巨兽的一个炮塔"
+  },
+  {
+    "code": "c092",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "海战",
+    "header": "一次大战中的海战",
+    "subHeader": "",
+    "unlock": "摧毁敌军机械巨兽"
+  },
+  {
+    "code": "c194",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "戈塔 G 轰炸机",
+    "header": "戈塔 G 轰炸机",
+    "subHeader": "",
+    "unlock": "用轰炸机进行 10 次击杀"
+  },
+  {
+    "code": "c057",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "哈尔伯施塔特 CL.II",
+    "header": "哈尔伯施塔特 CL.II",
+    "subHeader": "",
+    "unlock": "用攻击机进行 5 次击杀"
+  },
+  {
+    "code": "c189",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "“BRISFIT”",
+    "header": "布里斯托 F2.B 战斗机",
+    "subHeader": "",
+    "unlock": "用攻击机进行 10 次击杀"
+  },
+  {
+    "code": "c191",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "SALMSON 2",
+    "header": "SALMSON 2",
+    "subHeader": "",
+    "unlock": "用攻击机进行 20 次击杀"
+  },
+  {
+    "code": "c196",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "SPAD S XIII",
+    "header": "SPAD S XIII",
+    "subHeader": "",
+    "unlock": "用战斗机进行 15 次击杀"
+  },
+  {
+    "code": "c058",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "信天翁 D-III 战斗机",
+    "header": "信天翁 D-III 战斗机",
+    "subHeader": "",
+    "unlock": "用战斗机进行 5 次击杀"
+  },
+  {
+    "code": "c197",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "DR. 1",
+    "header": "DR. 1 - 三翼统治全世界",
+    "subHeader": "在空中做出平螺旋滑翔特技",
+    "unlock": "用战斗机进行 20 次击杀"
+  },
+  {
+    "code": "c183",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "MC 3.5HP 附边车摩托车",
+    "header": "MC 3.5HP 附边车摩托车",
+    "subHeader": "",
+    "unlock": "搭乘装有边车的摩托车 1 分钟"
+  },
+  {
+    "code": "c180",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "KFT 侦察车",
+    "header": "KFT 侦察车",
+    "subHeader": "",
+    "unlock": "搭乘车辆 1 分钟"
+  },
+  {
+    "code": "c182",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "37/95 侦察车",
+    "header": "37/95 侦察车",
+    "subHeader": "",
+    "unlock": "搭乘车辆 5 分钟"
+  },
+  {
+    "code": "c186",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "RNAS 装甲车",
+    "header": "RNAS 装甲车",
+    "subHeader": "",
+    "unlock": "用装甲车进行 10 次击杀"
+  },
+  {
+    "code": "c188",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "TERNI 装甲车",
+    "header": "TERNI 装甲车",
+    "subHeader": "",
+    "unlock": "用装甲车进行 20 次击杀"
+  },
+  {
+    "code": "c198",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "M.A.S. 鱼雷快艇",
+    "header": "M.A.S. 鱼雷快艇",
+    "subHeader": "以小搏大的真实故事。",
+    "unlock": "用 M.A.S. 鱼雷快艇进行 5 次击杀"
+  },
+  {
+    "code": "c181",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "M30 侦察车",
+    "header": "M30 侦察车",
+    "subHeader": "",
+    "unlock": "搭乘车辆 3 分钟"
+  },
+  {
+    "code": "c184",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "MC 18J 附边车摩托车",
+    "header": "MC 18J 附边车摩托车",
+    "subHeader": "",
+    "unlock": "搭乘装有边车的摩托车 3 分钟"
+  },
+  {
+    "code": "c187",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "RAC 装甲车",
+    "header": "RAC 装甲车",
+    "subHeader": "",
+    "unlock": "用装甲车进行 15 次击杀"
+  },
+  {
+    "code": "c185",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "EV4 装甲车",
+    "header": "EV4 装甲车",
+    "subHeader": "",
+    "unlock": "用装甲车进行 5 次击杀"
+  },
+  {
+    "code": "cxp106",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "XPACK1",
+    "name": "圣沙蒙突击坦克",
+    "header": "圣沙蒙突击坦克",
+    "subHeader": "",
+    "unlock": "用圣沙蒙突击坦克进行 10 次击杀"
+  },
+  {
+    "code": "cxp117",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "XPACK1",
+    "name": "CHAR 2C",
+    "header": "CHAR 2C 超级重型坦克",
+    "subHeader": "",
+    "unlock": "用 Char 2C 机械巨兽进行 10 次击杀"
+  },
+  {
+    "code": "cxp216",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "XPACK2",
+    "name": "朴帝洛夫·加福德装甲车",
+    "header": "朴帝洛夫·加福德突击装甲车",
+    "subHeader": "",
+    "unlock": "用朴帝洛夫·加福德装甲车进行 10 次击杀"
+  },
+  {
+    "code": "cxp217",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "XPACK2",
+    "name": "伊利亚·穆罗梅茨大型轰炸机",
+    "header": "伊利亚·穆罗梅茨重型轰炸机",
+    "subHeader": "",
+    "unlock": "用西科斯基·伊利亚·穆罗梅茨轰炸机进行 10 次击杀"
+  },
+  {
+    "code": "cxp215",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "XPACK2",
+    "name": "改装版装甲列车",
+    "header": "改装版冬季列车",
+    "subHeader": "",
+    "unlock": "用改装版装甲列车进行 10 次击杀"
+  },
+  {
+    "code": "cxp214",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "XPACK2",
+    "name": "Y-LIGHTER",
+    "header": "Y-LIGHTER 登陆舰",
+    "subHeader": "",
+    "unlock": "用 Y-lighter 进行 10 次击杀"
+  },
+  {
+    "code": "cxp310",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "XPACK3",
+    "name": "L 级驱逐舰",
+    "header": "L 级驱逐舰",
+    "subHeader": "",
+    "unlock": "用 L 级驱逐舰进行 10 次击杀"
+  },
+  {
+    "code": "cxp317",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "XPACK3",
+    "name": "C 级飞船",
+    "header": "C 级飞船",
+    "subHeader": "",
+    "unlock": "用 C 级飞船击杀 10 人"
+  },
+  {
+    "code": "cxp408",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "XPACK4",
+    "name": "AIRCO DH.10 轰炸机",
+    "header": "AIRCO DH.10 轰炸机",
+    "subHeader": "",
+    "unlock": "用 Airco DH.10 轰炸机进行 10 次击杀"
+  },
+  {
+    "code": "cxp409",
+    "category": "载具",
+    "weaponClass": "",
+    "expansion": "XPACK4",
+    "name": "汉莎·勃兰登堡 G.I 轰炸机",
+    "header": "汉莎·勃兰登堡 G.I 轰炸机",
+    "subHeader": "",
+    "unlock": "用汉莎·勃兰登堡 G.I 轰炸机进行 10 次击杀"
+  },
+  {
+    "code": "c070",
+    "category": "战略",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "狙击手",
+    "header": "一次大战中的狙击手",
+    "subHeader": "",
+    "unlock": "以侦察兵身份游玩 30 分钟"
+  },
+  {
+    "code": "c067",
+    "category": "战略",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "无处可躲",
+    "header": "一次大战中使用的信号枪",
+    "subHeader": "",
+    "unlock": "利用索敌信号弹来取得 10 次索敌助攻"
+  },
+  {
+    "code": "c066",
+    "category": "战略",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "针筒",
+    "header": "医药的演变",
+    "subHeader": "",
+    "unlock": "用医疗用针筒进行 5 次急救"
+  },
+  {
+    "code": "c071",
+    "category": "战略",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "火力压制",
+    "header": "轻机枪",
+    "subHeader": "",
+    "unlock": "以支援兵身份游玩 30 分钟"
+  },
+  {
+    "code": "c068",
+    "category": "战略",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "突击部队",
+    "header": "一次大战中的突击部队",
+    "subHeader": "",
+    "unlock": "以突击兵身份游玩 30 分钟"
+  },
+  {
+    "code": "c082",
+    "category": "战略",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "爆破兵",
+    "header": "掘地三尺 - 大战带来的破坏",
+    "subHeader": "史上最大的非核武器爆炸。",
+    "unlock": "进行 1 次碎片残砾击杀"
+  },
+  {
+    "code": "c083",
+    "category": "战略",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "迷彩",
+    "header": "一次大战中的迷彩",
+    "subHeader": "",
+    "unlock": "以侦察兵身份使用步枪击杀另一名侦察兵"
+  },
+  {
+    "code": "c085",
+    "category": "战略",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "一次大战中的诱饵",
+    "header": "一次大战中的诱饵",
+    "subHeader": "仿造的巴黎",
+    "unlock": "以侦察兵身份，让你的其中一个诱饵遭到摧毁"
+  },
+  {
+    "code": "c088",
+    "category": "战略",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "步兵的战略",
+    "header": "步兵战术的演化",
+    "subHeader": "",
+    "unlock": "完成 3 次小队指令"
+  },
+  {
+    "code": "c089",
+    "category": "战略",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "扳倒巨兽",
+    "header": "一次大战中的战斗飞船",
+    "subHeader": "",
+    "unlock": "破坏敌方机械巨兽的引擎"
+  },
+  {
+    "code": "c093",
+    "category": "战略",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "排除万难终将突破",
+    "header": "打破西线僵局",
+    "subHeader": "",
+    "unlock": "在行动模式中赢得 1 场游戏"
+  },
+  {
+    "code": "c098",
+    "category": "战略",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "战壕突袭",
+    "header": "战壕突袭 - 从后方创造混乱",
+    "subHeader": "",
+    "unlock": "在突袭模式中赢得 1 场游戏"
+  },
+  {
+    "code": "c099",
+    "category": "战略",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "壕沟战",
+    "header": "壕沟战",
+    "subHeader": "",
+    "unlock": "在团队死斗中赢得 1 场游戏"
+  },
+  {
+    "code": "c120",
+    "category": "战略",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "暗渡陈仓",
+    "header": "一次大战中的地道战",
+    "subHeader": "",
+    "unlock": "用短管霰弹枪进行 5 次击杀"
+  },
+  {
+    "code": "cxp111",
+    "category": "战略",
+    "weaponClass": "",
+    "expansion": "XPACK1",
+    "name": "前线模式",
+    "header": "前线模式",
+    "subHeader": "",
+    "unlock": "在前线模式中赢得 1 场游戏"
+  },
+  {
+    "code": "cxp226",
+    "category": "战略",
+    "weaponClass": "",
+    "expansion": "XPACK2",
+    "name": "空降补给",
+    "header": "天降补给",
+    "subHeader": "",
+    "unlock": "在空降补给中赢得 1 场游戏"
+  },
+  {
+    "code": "cxp311",
+    "category": "战略",
+    "weaponClass": "",
+    "expansion": "XPACK3",
+    "name": "精英入侵者",
+    "header": "精英入侵者",
+    "subHeader": "",
+    "unlock": "以入侵者精英兵种身份进行 10 次击杀"
+  },
+  {
+    "code": "cxp318",
+    "category": "战略",
+    "weaponClass": "",
+    "expansion": "XPACK3",
+    "name": "山坡争夺战",
+    "header": "山坡争夺战",
+    "subHeader": "",
+    "unlock": "在格拉巴山游玩 1 回合"
+  },
+  {
+    "code": "cxp507",
+    "category": "战略",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "闪击行动",
+    "header": "闪击行动",
+    "subHeader": "",
+    "unlock": "赢得 10 场行动"
+  },
+  {
+    "code": "c162",
+    "category": "战略",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "游击战",
+    "header": "迫切需要的介入 - T.E. 劳伦斯的游击战",
+    "subHeader": "",
+    "unlock": "在“沙漠之声”中找到所有野战手册"
+  },
+  {
+    "code": "c163",
+    "category": "战略",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "坦克震撼弹",
+    "header": "一次大战中的坦克战",
+    "subHeader": "",
+    "unlock": "在“绝顶表现”中找到所有野战手册"
+  },
+  {
+    "code": "c164",
+    "category": "战略",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "化学效应",
+    "header": "一次大战中的化学战",
+    "subHeader": "",
+    "unlock": "在“战争迷雾”中找到所有野战手册"
+  },
+  {
+    "code": "c166",
+    "category": "战略",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "凡事总有第一次",
+    "header": "史上首场坦克大战",
+    "subHeader": "未逢敌手",
+    "unlock": "在“钢铁对决”中找到所有野战手册"
+  },
+  {
+    "code": "c168",
+    "category": "战略",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "高山之战",
+    "header": "在欧洲之巅的战斗 - 高山之战",
+    "subHeader": "",
+    "unlock": "在“宁死不屈”中找到所有野战手册"
+  },
+  {
+    "code": "c169",
+    "category": "战略",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "超水准炮击",
+    "header": "加里波利半岛的炮火",
+    "subHeader": "",
+    "unlock": "在“海丽丝岬”中找到所有野战手册"
+  },
+  {
+    "code": "c051",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "钢铁风暴",
+    "header": "钢铁风暴 - 一次大战中的火炮",
+    "subHeader": "一次大战是首次也是最重要的一次火炮战争",
+    "unlock": "用定点武器进行 10 次击杀"
+  },
+  {
+    "code": "c065",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "急救处置",
+    "header": "大战中的急救措施",
+    "subHeader": "",
+    "unlock": "进行 10 次治疗"
+  },
+  {
+    "code": "c062",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "今夕是何年？",
+    "header": "一次大战中的骑兵",
+    "subHeader": "",
+    "unlock": "用骑兵武器进行 10 次击杀"
+  },
+  {
+    "code": "c064",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "万能水电工",
+    "header": "大战中的工兵",
+    "subHeader": "",
+    "unlock": "用维修工具进行 10 次修理"
+  },
+  {
+    "code": "c069",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "军医",
+    "header": "一次大战中的医护兵",
+    "subHeader": "",
+    "unlock": "以医护兵身份游玩 30 分钟"
+  },
+  {
+    "code": "c072",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "坦克乘员",
+    "header": "一次大战中的坦克乘员",
+    "subHeader": "",
+    "unlock": "搭乘坦克 30 分钟"
+  },
+  {
+    "code": "c073",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "真正的骑士",
+    "header": "空中骑士",
+    "subHeader": "",
+    "unlock": "在飞机中飞行 30 分钟"
+  },
+  {
+    "code": "c077",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "殖民军队",
+    "header": "一次大战中的殖民军队",
+    "subHeader": "",
+    "unlock": "进行 3 次协助击杀"
+  },
+  {
+    "code": "c079",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "现代奇迹",
+    "header": "1914 年至 1918 年间的技术革命",
+    "subHeader": "",
+    "unlock": "进行 1 次复仇击杀"
+  },
+  {
+    "code": "c078",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "护甲",
+    "header": "一次大战中的护甲",
+    "subHeader": "",
+    "unlock": "进行 3 次爆头"
+  },
+  {
+    "code": "c087",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "马匹与信鸽",
+    "header": "一次大战中的动物",
+    "subHeader": "",
+    "unlock": "透过击杀攻击者来救援小队成员"
+  },
+  {
+    "code": "c097",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "无名英雄",
+    "header": "信鸽",
+    "subHeader": "",
+    "unlock": "在战争信鸽中赢得 1 场游戏"
+  },
+  {
+    "code": "c095",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "八月炮火",
+    "header": "八月炮火 - 一次大战的开端",
+    "subHeader": "",
+    "unlock": "在征服模式中赢得 1 场游戏"
+  },
+  {
+    "code": "c106",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "维莱布勒托纳战役",
+    "header": "1918 年第二次维莱布勒托纳战役",
+    "subHeader": "",
+    "unlock": "在亚眠赢得 1 场游戏"
+  },
+  {
+    "code": "c107",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "勒卡托战役",
+    "header": "西线法国庄园 - 是总部还是地狱",
+    "subHeader": "",
+    "unlock": "在流血宴厅中赢得 1 场游戏"
+  },
+  {
+    "code": "c108",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "被遗忘的沙漠",
+    "header": "西奈与巴勒斯坦战役",
+    "subHeader": "",
+    "unlock": "在西奈沙漠赢得 1 场游戏"
+  },
+  {
+    "code": "c109",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "法奥半岛战役",
+    "header": "1914 年法奥登陆战 - 保卫石油",
+    "subHeader": "",
+    "unlock": "在法欧堡赢得 1 场游戏"
+  },
+  {
+    "code": "c110",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "进入阿尔贡森林",
+    "header": "1918 年谬斯 - 阿尔贡攻势",
+    "subHeader": "",
+    "unlock": "在阿尔贡森林赢得 1 场游戏"
+  },
+  {
+    "code": "c111",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "亚得里亚海",
+    "header": "亚得里亚海岸行动",
+    "subHeader": "",
+    "unlock": "在帝国边境赢得 1 场游戏"
+  },
+  {
+    "code": "c112",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "维托里奥维内托战役",
+    "header": "1918 年的维托里奥维内托战役",
+    "subHeader": "",
+    "unlock": "在格拉巴山赢得 1 场游戏"
+  },
+  {
+    "code": "c113",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "圣康坦的伤痕",
+    "header": "1918 年的迈克尔作战行动",
+    "subHeader": "",
+    "unlock": "在圣康坦的伤痕赢得 1 场游戏"
+  },
+  {
+    "code": "c114",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "帝国的命脉",
+    "header": "1915-16 年间的苏伊士运河",
+    "subHeader": "",
+    "unlock": "在苏伊士赢得 1 场游戏"
+  },
+  {
+    "code": "c116",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "石油帝国",
+    "header": "石油帝国",
+    "subHeader": "",
+    "unlock": "完成“石油帝国”行动"
+  },
+  {
+    "code": "c123",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "堡垒",
+    "header": "一次大战中的堡垒",
+    "subHeader": "",
+    "unlock": "用堡垒火炮进行 10 次击杀"
+  },
+  {
+    "code": "c201",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "铜墙铁壁",
+    "header": "铜墙铁壁",
+    "subHeader": "",
+    "unlock": "完成“铜墙铁壁”行动"
+  },
+  {
+    "code": "c202",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "征服地狱",
+    "header": "征服地狱",
+    "subHeader": "",
+    "unlock": "完成“征服地狱”行动"
+  },
+  {
+    "code": "c203",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "皇帝会战",
+    "header": "德军春季攻势",
+    "subHeader": "",
+    "unlock": "完成“皇帝会战”行动"
+  },
+  {
+    "code": "cxp113",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "XPACK1",
+    "name": "凡尔登高地",
+    "header": "凡尔登高地",
+    "subHeader": "",
+    "unlock": "在凡尔登高地赢得 1 场游戏"
+  },
+  {
+    "code": "cxp114",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "XPACK1",
+    "name": "法乌克斯要塞",
+    "header": "法乌克斯要塞",
+    "subHeader": "",
+    "unlock": "在法乌克斯要塞赢得 1 场游戏"
+  },
+  {
+    "code": "cxp115",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "XPACK1",
+    "name": "苏瓦松",
+    "header": "苏瓦松",
+    "subHeader": "",
+    "unlock": "在苏瓦松赢得 1 场游戏"
+  },
+  {
+    "code": "cxp116",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "XPACK1",
+    "name": "决裂",
+    "header": "决裂",
+    "subHeader": "",
+    "unlock": "在决裂赢得 1 场游戏"
+  },
+  {
+    "code": "cxp120",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "马尔梅松之役",
+    "header": "马尔梅松之役",
+    "subHeader": "",
+    "unlock": "在尼维尔之夜赢得 1 场游戏"
+  },
+  {
+    "code": "cxp121",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "香槟-阿登",
+    "header": "香槟-阿登地区的荒芜城镇",
+    "subHeader": "",
+    "unlock": "在攻占托尔赢得 1 场游戏"
+  },
+  {
+    "code": "cxp119",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "赛勒河之役",
+    "header": "赛勒河之役",
+    "subHeader": "",
+    "unlock": "在庞然暗影赢得 1 场游戏"
+  },
+  {
+    "code": "cxp224",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "XPACK2",
+    "name": "东线前线",
+    "header": "东线前线",
+    "subHeader": "",
+    "unlock": "在加利西亚赢得 1 场游戏"
+  },
+  {
+    "code": "cxp221",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "XPACK2",
+    "name": "女子死亡兵团",
+    "header": "女子死亡兵团",
+    "subHeader": "",
+    "unlock": "在窝瓦河赢得 1 场游戏"
+  },
+  {
+    "code": "cxp222",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "XPACK2",
+    "name": "阿尔比恩行动",
+    "header": "阿尔比恩行动",
+    "subHeader": "",
+    "unlock": "在阿尔比恩赢得 1 场游戏"
+  },
+  {
+    "code": "cxp223",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "XPACK2",
+    "name": "严寒气候",
+    "header": "大雪纷飞的严寒气候",
+    "subHeader": "",
+    "unlock": "在武普库夫山口赢得 1 场游戏"
+  },
+  {
+    "code": "cxp220",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "XPACK2",
+    "name": "布尔什维克革命",
+    "header": "布尔什维克革命与其革命斗士",
+    "subHeader": "",
+    "unlock": "在察里津赢得 1 场游戏"
+  },
+  {
+    "code": "cxp229",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "XPACK2",
+    "name": "勃鲁西洛夫攻势",
+    "header": "勃鲁西洛夫攻势",
+    "subHeader": "",
+    "unlock": "完成勃鲁西洛夫攻势行动"
+  },
+  {
+    "code": "cxp225",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "XPACK2",
+    "name": "俄军加入战斗",
+    "header": "俄军加入战斗",
+    "subHeader": "",
+    "unlock": "在勃鲁西洛夫关口赢得 1 场游戏"
+  },
+  {
+    "code": "cxp230",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "XPACK2",
+    "name": "赤潮行动",
+    "header": "赤潮行动",
+    "subHeader": "",
+    "unlock": "完成赤潮行动"
+  },
+  {
+    "code": "cxp232",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "东线风暴",
+    "header": "东线风暴",
+    "subHeader": "",
+    "unlock": "完成东线风暴行动战役"
+  },
+  {
+    "code": "cxp233",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "帝国陨落",
+    "header": "帝国陨落",
+    "subHeader": "",
+    "unlock": "完成帝国陨落行动战役"
+  },
+  {
+    "code": "cxp234",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "火与冰",
+    "header": "火与冰",
+    "subHeader": "",
+    "unlock": "完成火与冰行动战役"
+  },
+  {
+    "code": "cxp319",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "鲜血沙场",
+    "header": "鲜血沙场",
+    "subHeader": "",
+    "unlock": "完成鲜血沙场行动战役"
+  },
+  {
+    "code": "cxp313",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "XPACK3",
+    "name": "海丽丝岬",
+    "header": "海丽丝岬",
+    "subHeader": "",
+    "unlock": "在海丽丝岬赢得 1 场游戏"
+  },
+  {
+    "code": "cxp314",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "XPACK3",
+    "name": "阿奇巴巴",
+    "header": "阿奇巴巴",
+    "subHeader": "",
+    "unlock": "在阿奇巴巴赢得 1 场游戏"
+  },
+  {
+    "code": "cxp320",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "XPACK3",
+    "name": "加里波利行动",
+    "header": "加里波利行动",
+    "subHeader": "",
+    "unlock": "完成加里波利行动"
+  },
+  {
+    "code": "cxp315",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "XPACK3",
+    "name": "黑尔戈兰湾",
+    "header": "黑尔戈兰湾",
+    "subHeader": "",
+    "unlock": "在黑尔戈兰湾赢得 1 场游戏"
+  },
+  {
+    "code": "cxp316",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "XPACK3",
+    "name": "泽布吕赫",
+    "header": "泽布吕赫",
+    "subHeader": "",
+    "unlock": "在泽布吕赫赢得 1 场游戏"
+  },
+  {
+    "code": "cxp235",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "结束即是开始",
+    "header": "结束即是开始",
+    "subHeader": "",
+    "unlock": "完成结束即是开始行动战役"
+  },
+  {
+    "code": "cxp407",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "XPACK4",
+    "name": "战壕佳酿",
+    "header": "战壕佳酿",
+    "subHeader": "",
+    "unlock": "用酒瓶进行 1 次击杀"
+  },
+  {
+    "code": "cxp412",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "XPACK4",
+    "name": "剃刀边缘",
+    "header": "剃刀边缘",
+    "subHeader": "",
+    "unlock": "在剃刀边缘赢得 1 场游戏"
+  },
+  {
+    "code": "cxp414",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "XPACK4",
+    "name": "帕斯尚尔",
+    "header": "帕斯尚尔",
+    "subHeader": "",
+    "unlock": "在帕斯尚尔赢得 1 场游戏"
+  },
+  {
+    "code": "cxp415",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "XPACK4",
+    "name": "卡波雷托",
+    "header": "卡波雷托",
+    "subHeader": "",
+    "unlock": "在卡波雷托赢得 1 场游戏"
+  },
+  {
+    "code": "cxp416",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "XPACK4",
+    "name": "索姆河",
+    "header": "索姆河",
+    "subHeader": "",
+    "unlock": "在索姆河赢得 1 场游戏"
+  },
+  {
+    "code": "cxp413",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "XPACK4",
+    "name": "伦敦的呼唤：灾祸",
+    "header": "伦敦的呼唤：灾祸",
+    "subHeader": "",
+    "unlock": "在伦敦的呼唤：灾祸赢得 1 场游戏"
+  },
+  {
+    "code": "cxp417",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "XPACK4",
+    "name": "伦敦的呼唤：夜袭",
+    "header": "伦敦的呼唤：夜袭",
+    "subHeader": "",
+    "unlock": "在伦敦的呼唤：夜袭赢得 1 场游戏"
+  },
+  {
+    "code": "c159",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "与龙共舞",
+    "header": "击落飞船的最佳利器",
+    "subHeader": "“飞船比一般人所想的更为坚固”",
+    "unlock": "在“力量与忠诚”中找到野战手册"
+  },
+  {
+    "code": "c165",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "飞机支援",
+    "header": "飞机支援坦克",
+    "subHeader": "战机的轰鸣声掩护了坦克的行进",
+    "unlock": "在“临崩之际”中找到所有野战手册"
+  },
+  {
+    "code": "c167",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "协同作战",
+    "header": "山地中的协约国联合作战",
+    "subHeader": "“若不是你和你的军队，维托里奥维内托便会不复存在。”此言为奥斯塔公爵为了感谢协约国军队协助意大利取得最终胜利所说。",
+    "unlock": "在“为了胜利”中找到所有野战手册"
+  },
+  {
+    "code": "c170",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "战壕传令兵",
+    "header": "战壕传令兵",
+    "subHeader": "",
+    "unlock": "在“传令兵”中找到所有野战手册"
+  },
+  {
+    "code": "c171",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "加里波利的迷思",
+    "header": "加里波利的迷思",
+    "subHeader": "",
+    "unlock": "在“愿你平安”中找到所有野战手册"
+  },
+  {
+    "code": "c143",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "窃取坦克",
+    "header": "德军坦克工作坊",
+    "subHeader": "",
+    "unlock": "在“临崩之际”中不被任何敌人发现并取回所有引擎组件"
+  },
+  {
+    "code": "c124",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "成为王牌飞行员",
+    "header": "一次大战中的飞行员培训",
+    "subHeader": "",
+    "unlock": "在“试飞任务”中完成打靶练习"
+  },
+  {
+    "code": "c137",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "沙漠中的车辆",
+    "header": "沙漠中的装甲车辆",
+    "subHeader": "",
+    "unlock": "在“沙漠之声”中不被任何敌军发现并摧毁三台载具"
+  },
+  {
+    "code": "c131",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "空中家农炮",
+    "header": "空中的加农炮",
+    "subHeader": "",
+    "unlock": "在“力量与忠诚”中用定点武器在 30 秒内摧毁 10 架飞机"
+  },
+  {
+    "code": "c153",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "滴漏式步枪机关",
+    "header": "滴漏式步枪机关 - 撤退时的疑兵之计",
+    "subHeader": "",
+    "unlock": "在“传令兵”中用佩枪击败 10 个敌人"
+  },
+  {
+    "code": "c126",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "血腥四月",
+    "header": "1917 年的血腥四月",
+    "subHeader": "天空中的屠杀",
+    "unlock": "至少有四架轰炸机在“全面战争”的轰炸任务中存活"
+  },
+  {
+    "code": "c138",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "翱翔于沙洲上方的飞机",
+    "header": "沙漠战中的航空器",
+    "subHeader": "",
+    "unlock": "在“沙漠之声”中维持至少 2 门野战炮运作"
+  },
+  {
+    "code": "c130",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "戈塔 G 轰炸机空袭伦敦",
+    "header": "戈塔 G 轰炸机空袭伦敦",
+    "subHeader": "",
+    "unlock": "在“力量与忠诚”中击落轰炸机"
+  },
+  {
+    "code": "c141",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "引导贝丝",
+    "header": "步行引导坦克",
+    "subHeader": "",
+    "unlock": "在“战争迷雾”中不被任何敌军发现并成功通过森林"
+  },
+  {
+    "code": "c146",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "被俘坦克",
+    "header": "被俘坦克 - 德军对于俘获坦克的使用",
+    "subHeader": "",
+    "unlock": "在“钢铁对决”中摧毁其中一台被俘的 Mark V 坦克"
+  },
+  {
+    "code": "c142",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "森林战",
+    "header": "一次大战中的森林战",
+    "subHeader": "",
+    "unlock": "在“战争迷雾”中不进行任何近战击杀并成功通过森林"
+  },
+  {
+    "code": "c145",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "布尔隆森林",
+    "header": "穿过布尔隆森林深处",
+    "subHeader": "",
+    "unlock": "在“钢铁对决”中清除完小镇前不让坦克受到任何损伤"
+  },
+  {
+    "code": "c132",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "汉志铁路",
+    "header": "汉志铁路",
+    "subHeader": "",
+    "unlock": "在“大隐隐于市”中侦察坠机地点"
+  },
+  {
+    "code": "c127",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "战略轰炸",
+    "header": "战略轰炸",
+    "subHeader": "",
+    "unlock": "在“全面战争”中摧毁堡垒"
+  },
+  {
+    "code": "c155",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "克莱德河",
+    "header": "加里波利战役中的木马屠城",
+    "subHeader": "克莱德河号传奇流芳百世",
+    "unlock": "在“愿你平安”中使用手榴弹来击败 5 个敌人"
+  },
+  {
+    "code": "c144",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "坦克猎手",
+    "header": "一次大战中德军坦克的修复工作",
+    "subHeader": "",
+    "unlock": "在“临崩之际”中取得第一个引擎组件"
+  },
+  {
+    "code": "c150",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "超越想像",
+    "header": "超越想像的爆炸 - 被遗忘的巨响",
+    "subHeader": "对自由女神像造成的损伤",
+    "unlock": "在“宁死不屈”中目睹山侧的爆炸"
+  },
+  {
+    "code": "c149",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "傲气雄鹰",
+    "header": "阿尔卑斯山区的空战",
+    "subHeader": "",
+    "unlock": "在“宁死不屈”中使用佩枪来击败 10 个敌人"
+  },
+  {
+    "code": "c152",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "鱼雷的使用",
+    "header": "达达尼尔海战中的鱼雷",
+    "subHeader": "",
+    "unlock": "在“海丽丝岬”中取得 10 次爆头击杀"
+  },
+  {
+    "code": "c151",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "巨炮",
+    "header": "一次大战中的海军火力支援",
+    "subHeader": "",
+    "unlock": "在“海丽丝岬”中呼叫离岸弹幕攻击"
+  },
+  {
+    "code": "c133",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "贝都因人",
+    "header": "贝都因人",
+    "subHeader": "",
+    "unlock": "在“大隐隐于市”中不被任何敌军发现并成功找出密码本"
+  },
+  {
+    "code": "c136",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "沙漠中的坦克",
+    "header": "沙漠战中的坦克",
+    "subHeader": "",
+    "unlock": "在“青年使命”中用坦克击杀其中一位军官"
+  },
+  {
+    "code": "c129",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "诱杀装置",
+    "header": "诱杀装置",
+    "subHeader": "藏着秘密的钢琴",
+    "unlock": "在“荣耀堕狱”中用绊索炸弹击杀 2 个敌人"
+  },
+  {
+    "code": "c148",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "悍不畏死",
+    "header": "精英部队 - 敢死队 （ARDITI）",
+    "subHeader": "",
+    "unlock": "在“为了胜利”中以敢死队精英部队身份加入战局"
+  },
+  {
+    "code": "c156",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "塞代巴赫尔",
+    "header": "加里波利的堡垒",
+    "subHeader": "加里波利的城镇战",
+    "unlock": "在“愿你平安”中使用近战来击败 10 个敌人"
+  },
+  {
+    "code": "c154",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "地质学",
+    "header": "战时的地质学家",
+    "subHeader": "",
+    "unlock": "在“传令兵”中使用步枪手榴弹来击败 5 个敌人"
+  },
+  {
+    "code": "c134",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "格特鲁德·贝尔",
+    "header": "格特鲁德·贝尔",
+    "subHeader": "",
+    "unlock": "在“青年使命”中用手动式步枪击杀其中一位军官"
+  },
+  {
+    "code": "c128",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "无人区",
+    "header": "无人区",
+    "subHeader": "",
+    "unlock": "在“荣耀堕狱”中不被任何人发现并抵达无人区"
+  },
+  {
+    "code": "c139",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "德国反坦克战术",
+    "header": "德国反坦克战术",
+    "subHeader": "为对付坦克所造成的威胁，各国组成了特殊反坦克单位",
+    "unlock": "在“绝顶表现”中摧毁所有野战炮"
+  },
+  {
+    "code": "c135",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "T.E. 劳伦斯",
+    "header": "阿拉伯的劳伦斯",
+    "subHeader": "",
+    "unlock": "在“青年使命”中用近战击杀其中一位军官"
+  },
+  {
+    "code": "c140",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "侦察热气球",
+    "header": "侦察热气球",
+    "subHeader": "",
+    "unlock": "在“绝顶表现”中徒步击败 5 个敌人"
+  },
+  {
+    "code": "c125",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "波尔克战术守则",
+    "header": "波尔克战术守则",
+    "subHeader": "波尔克战术守则摘录：",
+    "unlock": "在“试飞任务”的追逐中不被甩开"
+  },
+  {
+    "code": "c147",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "FARINA 盔甲",
+    "header": "FARINA 盔甲",
+    "subHeader": "",
+    "unlock": "在“为了胜利”中使用手榴弹来击败 5 个敌人"
+  },
+  {
+    "code": "c172",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "空战的起始",
+    "header": "空战的诞生",
+    "subHeader": "",
+    "unlock": "完成“至上权威”"
+  },
+  {
+    "code": "c173",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "阿拉伯起义",
+    "header": "1916 年到 1918 年间的阿拉伯起义",
+    "subHeader": "",
+    "unlock": "完成“事在人为”"
+  },
+  {
+    "code": "c174",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "前往康布雷",
+    "header": "1918 年的第二次康布雷战役",
+    "subHeader": "",
+    "unlock": "完成“浴血之战”"
+  },
+  {
+    "code": "c175",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "诸王峰之中",
+    "header": "一次大战中的意大利战线",
+    "subHeader": "",
+    "unlock": "完成“萨伏依万岁！”"
+  },
+  {
+    "code": "c176",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "达达尼尔海峡",
+    "header": "达达尼尔海峡行动与加里波利",
+    "subHeader": "",
+    "unlock": "完成“传令兵”"
+  },
+  {
+    "code": "c177",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "誓死坚守（THEY SHALL NOT PASS）",
+    "header": "一次大战中的法军",
+    "subHeader": "",
+    "unlock": "完成战役"
+  },
+  {
+    "code": "c200",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "欧洲火药库",
+    "header": "帝国与同盟 - 欧洲的火药库",
+    "subHeader": "",
+    "unlock": "开始战役"
+  },
+  {
+    "code": "c157",
+    "category": "战争",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "非裔美国人军队",
+    "header": "一次大战中的非裔美国人军队",
+    "subHeader": "",
+    "unlock": "完成“破晓”"
+  },
+  {
+    "code": "c080",
+    "category": "全世界",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "改变中的世界",
+    "header": "世界大战对世界的影响",
+    "subHeader": "",
+    "unlock": "进行 1 次多重击杀"
+  },
+  {
+    "code": "c081",
+    "category": "全世界",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "全面战争",
+    "header": "全球大战 - 全面战争",
+    "subHeader": "",
+    "unlock": "进行 3 次火力压制助攻"
+  },
+  {
+    "code": "c086",
+    "category": "全世界",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "玛塔·哈里",
+    "header": "一次大战中的间谍",
+    "subHeader": "玛塔·哈里：“我承认我是花魁，但绝不是间谍！”",
+    "unlock": "击杀小队中的最后一个成员"
+  },
+  {
+    "code": "c096",
+    "category": "全世界",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "战争时人人平等",
+    "header": "一次大战中的种族歧视",
+    "subHeader": "",
+    "unlock": "在抢攻模式中赢得 1 场游戏"
+  },
+  {
+    "code": "c100",
+    "category": "全世界",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "奥匈帝国",
+    "header": "奥匈帝国",
+    "subHeader": "",
+    "unlock": "扮演奥匈帝国赢得 1 场游戏"
+  },
+  {
+    "code": "c101",
+    "category": "全世界",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "德意志帝国",
+    "header": "德意志帝国",
+    "subHeader": "",
+    "unlock": "扮演德意志帝国赢得 1 场游戏"
+  },
+  {
+    "code": "c103",
+    "category": "全世界",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "鄂图曼帝国",
+    "header": "鄂图曼帝国",
+    "subHeader": "",
+    "unlock": "扮演鄂图曼帝国赢得 1 场游戏"
+  },
+  {
+    "code": "c102",
+    "category": "全世界",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "意大利王国",
+    "header": "意大利王国",
+    "subHeader": "",
+    "unlock": "扮演意大利王国赢得 1 场游戏"
+  },
+  {
+    "code": "c104",
+    "category": "全世界",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "大英帝国",
+    "header": "大英帝国",
+    "subHeader": "",
+    "unlock": "扮演大英帝国赢得 1 场游戏"
+  },
+  {
+    "code": "c105",
+    "category": "全世界",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "美国",
+    "header": "美国",
+    "subHeader": "",
+    "unlock": "扮演美利坚合众国赢得 1 场游戏"
+  },
+  {
+    "code": "cxp112",
+    "category": "全世界",
+    "weaponClass": "",
+    "expansion": "XPACK1",
+    "name": "法国",
+    "header": "法国",
+    "subHeader": "",
+    "unlock": "扮演法国赢得 1 场游戏"
+  },
+  {
+    "code": "cxp231",
+    "category": "全世界",
+    "weaponClass": "",
+    "expansion": "XPACK2",
+    "name": "拉斯普丁",
+    "header": "妖僧",
+    "subHeader": "",
+    "unlock": "进行 5 次多重击杀"
+  },
+  {
+    "code": "cxp312",
+    "category": "全世界",
+    "weaponClass": "",
+    "expansion": "XPACK3",
+    "name": "皇家海军陆战队",
+    "header": "皇家海军陆战队",
+    "subHeader": "",
+    "unlock": "以皇家海军陆战队身份游玩"
+  },
+  {
+    "code": "cxp227",
+    "category": "全世界",
+    "weaponClass": "",
+    "expansion": "XPACK2",
+    "name": "俄罗斯帝国军队",
+    "header": "俄罗斯帝国军队",
+    "subHeader": "",
+    "unlock": "扮演俄罗斯帝国赢得 1 场游戏"
+  },
+  {
+    "code": "c158",
+    "category": "全世界",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "法国境内的战争",
+    "header": "法国 - 守护家园",
+    "subHeader": "",
+    "unlock": "在“荣耀堕狱”中找到所有野战手册"
+  },
+  {
+    "code": "c160",
+    "category": "全世界",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "名人",
+    "header": "一次大战中的名人",
+    "subHeader": "",
+    "unlock": "在“大隐隐于市”中找到所有野战手册"
+  },
+  {
+    "code": "c161",
+    "category": "全世界",
+    "weaponClass": "",
+    "expansion": "",
+    "name": "女权崛起",
+    "header": "一次大战中的女性角色",
+    "subHeader": "",
+    "unlock": "在“青年使命”中找到所有野战手册"
+  }
+]

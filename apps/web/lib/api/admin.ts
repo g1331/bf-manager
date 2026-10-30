@@ -76,9 +76,49 @@ export interface RegistrationSetting {
   updated_by_name: string | null;
 }
 
+/** 后台用户列表的一行 */
+export interface AdminUser {
+  id: number;
+  username: string;
+  email: string | null;
+  role: "user" | "admin";
+  /** active / pending_binding / legacy */
+  status: string;
+  persona_id: number | null;
+  display_name: string | null;
+  created_at: string;
+  last_login_at: string | null;
+  active_api_keys: number;
+  is_frozen: boolean;
+  frozen_at: string | null;
+  frozen_reason: string | null;
+  frozen_by_name: string | null;
+}
+
+export interface AdminUserPage {
+  items: AdminUser[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export type AdminUserFilter = "all" | "frozen" | "admin";
+
 export const adminApi = {
   getMetrics: () => api.get<AdminMetrics>("/admin/metrics"),
   getRegistration: () => api.get<RegistrationSetting>("/admin/settings/registration"),
   setRegistration: (mode: RegistrationMode) =>
     api.put<RegistrationSetting>("/admin/settings/registration", { mode }),
+  listUsers: (params: { q?: string; only?: AdminUserFilter; page: number; pageSize: number }) => {
+    const sp = new URLSearchParams({
+      page: String(params.page),
+      page_size: String(params.pageSize),
+    });
+    if (params.q) sp.set("q", params.q);
+    if (params.only && params.only !== "all") sp.set("only", params.only);
+    return api.get<AdminUserPage>(`/admin/users?${sp.toString()}`);
+  },
+  freezeUser: (id: number, reason: string) =>
+    api.post<AdminUser>(`/admin/users/${id}/freeze`, { reason }),
+  unfreezeUser: (id: number) => api.post<AdminUser>(`/admin/users/${id}/unfreeze`),
 };

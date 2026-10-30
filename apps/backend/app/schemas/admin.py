@@ -96,3 +96,32 @@ class RegistrationSettingResponse(BaseModel):
 
 class RegistrationSettingRequest(BaseModel):
     mode: Literal["open", "invite", "closed"]
+
+
+class AdminUserItem(BaseModel):
+    id: int
+    username: str
+    email: str | None
+    role: Literal["user", "admin"]
+    # active / pending_binding / legacy
+    status: str
+    persona_id: int | None
+    display_name: str | None
+    created_at: datetime
+    last_login_at: datetime | None
+    active_api_keys: int
+    is_frozen: bool
+    frozen_at: datetime | None
+    frozen_reason: str | None
+    frozen_by_name: str | None
+
+
+class AdminUserPage(BaseModel):
+    items: list[AdminUserItem]
+    total: int
+    page: int
+    page_size: int
+
+
+class UserFreezeRequest(BaseModel):
+    reason: str = Field(..., min_length=1, max_length=200)

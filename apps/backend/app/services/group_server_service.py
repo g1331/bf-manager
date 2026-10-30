@@ -40,6 +40,7 @@ from app.services.bf1.server_service import BF1ServerService, current_game_ids
 from app.services.group_service import GroupError, _audit, _lock_group, require_member
 from app.services.mail import templates
 from app.services.mail.sender import get_mail_sender
+from app.services.user_service import lock_user
 
 GAME = "bf1"
 # 服务账号连续登录失败这么多次标为失效
@@ -55,6 +56,7 @@ PROBLEM_EXECUTOR_NOT_ADMIN = "服务账号已不是这台服的服主或管理�
 PROBLEM_EXECUTOR_INVALID = "服务账号登录失败，需要群主重新提交凭据"
 REASON_BINDER_LOST = "绑定人已不是这台服的服主或管理员"
 REASON_BINDER_GONE = "绑定人的账号已不存在"
+REASON_BINDER_FROZEN = "挂服人的账号已被冻结"
 
 
 def _now() -> datetime:
@@ -389,6 +391,10 @@ async def bind_server(
         )
     await _lock_group(db, group_id)
     await require_member(db, group_id, actor, "owner")
+    # 群锁之后再锁挂服人，和冻结同一顺序：请求进来后账号才被冻结的，这里读到的是冻结后的状态
+    binder = await lock_user(db, actor.id)
+    if binder is None or binder.is_frozen:
+        raise GroupError("ACCOUNT_FROZEN", "账号已被冻结", 403)
     executor = await _pick_executor(db, group_id, account_id, identity)
     server = await _upsert_server(db, game_id, identity)
     gs = await db.scalar(
@@ -583,7 +589,9 @@ async def remove_group_from_server(
 
 
 def _counts_for_groups(user: User) -> bool:
-    """还没绑 EA（或主绑定解绑了）的账号，群成员身份保留，但不参与权限计算"""
+    """还没绑 EA（或主绑定解绑了）、被冻结的账号，群成员身份保留，但不参与权限计算"""
+    if getattr(user, "is_frozen", False):
+        return False
     return user.role == "admin" or getattr(user, "status", "active") == "active"
 
 
@@ -683,9 +691,21 @@ async def _check_account(db: AsyncSession, account: GroupEaAccount) -> bool:
 async def _binder_status(
     db: AsyncSession, gs: GroupServer, identity: ServerIdentity
 ) -> tuple[str, str | None]:
-    binder = await db.get(User, gs.bound_by_user_id) if gs.bound_by_user_id is not None else None
+    # 共享锁读挂服人：正在冻结他的事务提交前这里会等着，不会拿冻结前的状态把挂服写回有效
+    binder = (
+        await db.get(
+            User,
+            gs.bound_by_user_id,
+            populate_existing=True,
+            with_for_update={"read": True},
+        )
+        if gs.bound_by_user_id is not None
+        else None
+    )
     if binder is None:
         return "revoked", REASON_BINDER_GONE
+    if binder.is_frozen:
+        return "revoked", REASON_BINDER_FROZEN
     if identity.manages(await _personas_of(db, binder.id)) is None:
         return "revoked", REASON_BINDER_LOST
     return "active", None

@@ -42,6 +42,8 @@ export const SITE_AUDIT_GAME = "site";
 
 export const SITE_ACTION_LABEL: Record<string, string> = {
   site_registration_mode: "切换注册方式",
+  user_freeze: "冻结账号",
+  user_unfreeze: "解冻账号",
 };
 
 /** 审计列表“游戏”一列：群组、站点操作不属于某个游戏 */

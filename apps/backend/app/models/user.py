@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, Index, Integer, String, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin
@@ -39,6 +39,12 @@ class User(Base, TimestampMixin):
     role: Mapped[str] = mapped_column(String(16), default="user", nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_frozen: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    # 平台管理员在后台冻结时记下，解冻时清空
+    frozen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    frozen_reason: Mapped[str | None] = mapped_column(String(200))
+    frozen_by: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL", name="fk_users_frozen_by_users")
+    )
 
     # 会话版本：JWT 带 sv，和这里不一致就失效。改密码、登出所有设备、冻结时 +1
     token_version: Mapped[int] = mapped_column(

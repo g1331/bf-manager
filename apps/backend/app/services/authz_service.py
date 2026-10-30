@@ -157,7 +157,10 @@ class ServerAuthzService:
         形参 server_id 实为 URL 的 game_id（历史命名保持兼容）。返回 (role, is_platform_admin)：
         - 平台 admin：(None, True)，前端据此放开全部操作；
         - 其余：(role, False)，role 为 None 表示无任何服管权限。
+        冻结的账号一律没有权限：后台任务（自动换图、计时 VIP 下 V）靠这里停下。
         """
+        if user.is_frozen:
+            return None, False
         if user.role == "admin":
             return None, True
 
@@ -200,7 +203,7 @@ class ServerAuthzService:
 
         平台 admin 绕过所有服务器权限校验。
         """
-        if user.role == "admin":
+        if user.role == "admin" and not user.is_frozen:
             return
 
         role, is_platform_admin = await self.resolve_role(user=user, game=game, server_id=server_id)

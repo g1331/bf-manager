@@ -824,10 +824,15 @@ async def _finish_claim(db: AsyncSession, row: EmailVerification, password: str)
     """claim（EA 邮箱认领旧账号）和 set_email（旧账号登录后补邮箱）都落在这里。"""
     # 锁住旧账号再检查：同一个旧账号可能同时有认领信和补邮箱信（发到不同邮箱），
     # 或者正被另一个账号用 remid 认领，只能有一个成功
+    payload = row.payload or {}
+    if payload.get("group_invite_id"):
+        # 要顺便进群的，先锁群再锁用户：和冻结、挂服的加锁顺序一致，避免互等死锁
+        invite = await db.get(GroupInvite, int(payload["group_invite_id"]))
+        if invite is not None:
+            await group_service._lock_group(db, invite.group_id)
     user = await lock_user(db, row.user_id) if row.user_id is not None else None
     if user is None or user.status != "legacy":
         raise AccountError("LINK_INVALID", "这个账号已经设置过邮箱，请直接登录", 404)
-    payload = row.payload or {}
     if row.kind == "claim":
         binding = await _active_binding(db, int(payload["persona_id"]))
         if binding is None or binding.user_id != user.id:

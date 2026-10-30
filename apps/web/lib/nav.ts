@@ -142,12 +142,13 @@ export const MODULES: RailModule[] = [
     adminOnly: true,
     icon: Gauge,
     tabs: [
-      { label: "运维概览", code: "Ops", href: "/admin", exact: true },
+      { label: "概览", code: "Ops", href: "/admin", exact: true },
       { label: "EA 账号池", code: "Accounts", href: "/admin/ea-accounts" },
+      { label: "用户", code: "Users", href: "/admin/users" },
       { label: "服管权限", code: "Roles", href: "/admin/memberships" },
       { label: "API Key", code: "Keys", href: "/admin/api-keys" },
       { label: "设置", code: "Settings", href: "/admin/settings" },
-      { label: "审计日志", code: "Audit", href: "/admin/audit" },
+      { label: "审计", code: "Audit", href: "/admin/audit" },
     ],
   },
 ];

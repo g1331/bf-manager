@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import JSON, BigInteger, Boolean, DateTime, ForeignKey
+from sqlalchemy import JSON, BigInteger, Boolean, DateTime, ForeignKey, false
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base, TimestampMixin
@@ -16,7 +16,9 @@ class Bf1AutoSwitch(Base, TimestampMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     game_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True, nullable=False)
-    enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    enabled: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=false(), nullable=False
+    )
     # {"items": [{"map": "MP_Verdun", "scope": "operation" | "map", "repeat": 1}], "loops": 0}
     plan: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
     # 引擎状态（auto_switch_engine.initial_state），开启时重置

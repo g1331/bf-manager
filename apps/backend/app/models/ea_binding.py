@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Index, String, Text, text
+from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Index, String, Text, false, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin
@@ -46,8 +46,12 @@ class EaBinding(Base, TimestampMixin):
     encrypted_session: Mapped[str | None] = mapped_column(Text)
     encrypted_access_token: Mapped[str | None] = mapped_column(Text)
 
-    is_primary: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    is_frozen: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_primary: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=false(), nullable=False
+    )
+    is_frozen: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=false(), nullable=False
+    )
 
     last_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 

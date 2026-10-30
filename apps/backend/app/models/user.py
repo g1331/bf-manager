@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String, false, func, true
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin
@@ -26,7 +26,7 @@ class User(Base, TimestampMixin):
     id: Mapped[int] = mapped_column(primary_key=True)
 
     # 身份
-    username: Mapped[str] = mapped_column(String(64), unique=True, index=True, nullable=False)
+    username: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
     local_password_hash: Mapped[str | None] = mapped_column(String(255))
     # 只存验证过的邮箱。本地管理员和待认领的老账号没有邮箱
     email: Mapped[str | None] = mapped_column(String(255))
@@ -36,9 +36,15 @@ class User(Base, TimestampMixin):
     )
 
     # 平台角色
-    role: Mapped[str] = mapped_column(String(16), default="user", nullable=False)
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    is_frozen: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    role: Mapped[str] = mapped_column(
+        String(16), default="user", server_default="user", nullable=False
+    )
+    is_active: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default=true(), nullable=False
+    )
+    is_frozen: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=false(), nullable=False
+    )
     # 平台管理员在后台冻结时记下，解冻时清空
     frozen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     frozen_reason: Mapped[str | None] = mapped_column(String(200))
@@ -65,6 +71,8 @@ class User(Base, TimestampMixin):
     )
 
     __table_args__ = (
+        # 迁移建的是唯一约束外加一个普通索引，模型照实声明，alembic check 才对得上
+        Index("ix_users_username", "username"),
         # 邮箱不区分大小写唯一；没有邮箱的账号不参与
         Index(
             "uq_users_email_lower",

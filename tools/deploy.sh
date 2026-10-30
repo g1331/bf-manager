@@ -5,7 +5,7 @@
 #           job 自动跑 alembic upgrade head）、检测到无管理员时交互创建第一个管理员。
 # 后续运行：拉新镜像、滚动更新、自动迁移。幂等，可重复执行。
 #
-# 镜像由 CI（release.yml）在 push main / 打 tag 时构建推送到 GHCR，本机只 pull，不 build。
+# 镜像由 CI 构建推送到 GHCR：push main 时 ci.yml 检查全过后调用 release.yml，打 tag 时 release.yml 直接跑。本机只 pull，不 build。
 #
 # 用法：
 #   bash tools/deploy.sh                 # 部署 / 更新到当前 IMAGE_TAG（默认 latest）

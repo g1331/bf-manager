@@ -8,15 +8,15 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     UV_COMPILE_BYTECODE=1
 
 # 安装 uv
-COPY --from=ghcr.io/astral-sh/uv:0.5 /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.12.6 /uv /usr/local/bin/uv
 
 WORKDIR /app
 
 # 先只拷依赖文件，最大化层缓存
-COPY pyproject.toml uv.lock* /app/
+COPY pyproject.toml uv.lock /app/
 
-# 同步依赖（不装项目本身）
-RUN uv sync --frozen --no-dev --no-install-project || uv sync --no-dev --no-install-project
+# 同步依赖（不装项目本身）；--locked 让过期的 uv.lock 直接构建失败，而不是重新解析
+RUN uv sync --locked --no-dev --no-install-project
 
 # 拷源码
 COPY app /app/app

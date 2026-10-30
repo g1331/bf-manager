@@ -18,7 +18,9 @@ class Bf1MatchIdCache(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     persona_id: Mapped[int] = mapped_column(BigInteger, index=True, nullable=False)
-    match_ids: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    match_ids: Mapped[list[str]] = mapped_column(
+        JSON, nullable=False, default=list, server_default="[]"
+    )
 
     fetched_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -31,18 +33,22 @@ class Bf1Match(Base):
     """对局详细数据缓存（JSON 全量字段）"""
 
     __tablename__ = "bf1_matches"
+    # 迁移建的是唯一约束外加一个普通索引，模型照实声明，alembic check 才对得上
+    __table_args__ = (Index("ix_bf1_matches_match_id", "match_id"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    match_id: Mapped[str] = mapped_column(String(64), unique=True, index=True, nullable=False)
+    match_id: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
 
     played_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
-    duration_seconds: Mapped[int] = mapped_column(default=0, nullable=False)
+    duration_seconds: Mapped[int] = mapped_column(default=0, server_default="0", nullable=False)
 
     map_name: Mapped[str | None] = mapped_column(String(64))
     game_mode: Mapped[str | None] = mapped_column(String(64))
     server_name: Mapped[str | None] = mapped_column(String(255))
 
-    raw_data: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    raw_data: Mapped[dict[str, Any]] = mapped_column(
+        JSON, default=dict, server_default="{}", nullable=False
+    )
 
     fetched_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

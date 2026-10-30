@@ -625,6 +625,8 @@ export interface MyServerItem {
   game_id: number | null;
   name: string | null;
   role: "viewer" | "moderator" | "admin" | "owner";
+  /** 经由群组获得的权限：群名；EA 识别或人工授权的为 null */
+  via_group?: string | null;
 }
 
 export interface MyServersResponse {

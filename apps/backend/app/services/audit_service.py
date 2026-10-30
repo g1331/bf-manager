@@ -29,10 +29,12 @@ class AuditService:
         error_message: str | None = None,
         ip: str | None = None,
         user_agent: str | None = None,
+        executor_persona_id: int | None = None,
     ) -> AuditLog:
         log = AuditLog(
             user_id=user_id,
             acting_persona_id=acting_persona_id,
+            executor_persona_id=executor_persona_id,
             game=game,
             action=action,
             server_id=server_id,

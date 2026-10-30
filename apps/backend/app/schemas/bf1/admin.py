@@ -127,6 +127,8 @@ class MyServerItem(BaseModel):
     game_id: int | None = None
     name: str | None = None
     role: str
+    # 经由群组获得的权限：群名（同一台服挂在多个群里时取第一个）；EA 识别或人工授权的为空
+    via_group: str | None = None
 
 
 class MyServersResponse(BaseModel):

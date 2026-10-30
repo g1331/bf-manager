@@ -473,12 +473,16 @@ export function EaLoginDialog({ open, onOpenChange, ...panelProps }: DialogProps
               ? `重新登录 ${target.label}`
               : actor === "user"
                 ? "用 EA 账号密码绑定"
-                : "邮箱密码新增 EA 账号"}
+                : actor === "admin"
+                  ? "邮箱密码新增 EA 账号"
+                  : "用 EA 账号密码添加服务账号"}
           </DialogTitle>
           <DialogDescription>
             {target
               ? `用该账号（persona ${target.personaId}）的 EA 邮箱密码登录以刷新凭据；登录到其它 persona 时不会写入任何账号。`
-              : "用 EA 账号的邮箱和密码登录，成功后自动完成绑定。"}
+              : actor === "user" || actor === "admin"
+                ? "用 EA 账号的邮箱和密码登录，成功后自动完成绑定。"
+                : "用服务账号的 EA 邮箱和密码登录，成功后凭据加密保存到群里。"}
           </DialogDescription>
         </DialogHeader>
         <EaLoginPanel {...panelProps} onDone={() => onOpenChange(false)} />
@@ -586,7 +590,7 @@ function TaskProgress({
               {task.result.display_name ? ` · ${task.result.display_name}` : ""}
             </p>
           ) : null}
-          {actor === "admin" ? (
+          {actor !== "user" ? (
             <p className="text-muted-foreground text-xs">凭据已加密保存。</p>
           ) : null}
           {onDone ? (

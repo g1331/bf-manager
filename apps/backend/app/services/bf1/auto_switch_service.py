@@ -22,12 +22,16 @@ from sqlalchemy.orm import selectinload
 from app.api.errors import EAApiError, ForbiddenError, ValidationError
 from app.core import ea_metrics
 from app.db.session import get_sessionmaker
-from app.domain.games.bf1.client_provider import BindingFirstBF1ClientProvider
+from app.domain.games.bf1.client_provider import (
+    ExecutorUnavailableError,
+    GroupFirstBF1ClientProvider,
+)
 from app.domain.games.bf1.maps import operation_maps, translate_map_name
 from app.models import AuditLog, User
 from app.models.bf1 import Bf1AutoSwitch
 from app.schemas.bf1.auto_switch import AutoSwitchEvent, AutoSwitchPlan, AutoSwitchView
 from app.services.audit_service import AuditService
+from app.services.authz_service import ROLE_LEVEL, ServerAuthzService
 from app.services.bf1 import auto_switch_engine as engine
 from app.services.bf1.blaze_service import get_operation_states
 from app.services.bf1.card_service import active_game_ids
@@ -110,8 +114,8 @@ class AutoSwitchService:
         _validate_plan(
             AutoSwitchPlan.model_validate(row.plan), await _rotation(self.db, game_id, force=True)
         )
-        # 换图要用 RSP 管理员凭据：开启时就确认开启人的绑定（或兜底的账号池）有权限
-        provider = BindingFirstBF1ClientProvider(self.db, user=user, game_id=game_id)
+        # 换图要用 RSP 管理员凭据：开启时就确认开启人能用的服务账号（或自己的老凭据）有权限
+        provider = GroupFirstBF1ClientProvider(self.db, user=user, game_id=game_id)
         async with provider.acquire() as client:
             res = await client.getFullServerDetails(game_id)
         rsp_server = (
@@ -120,7 +124,7 @@ class AutoSwitchService:
             else None
         )
         if not (rsp_server or {}).get("serverId"):
-            raise ForbiddenError("你绑定的 EA 账号不是这台服的 RSP 管理员，无法自动换图")
+            raise ForbiddenError("能用的 EA 账号都不是这台服的 RSP 管理员，无法自动换图")
         now = time.time()
         row.enabled = True
         row.enabled_by_user_id = user.id
@@ -183,7 +187,13 @@ async def _choose(db: AsyncSession, row: Bf1AutoSwitch, choose: engine.Choose) -
     )
     if user is None:
         raise EAApiError(code="AUTO_SWITCH_NO_USER", message="开启人账号已不存在")
-    provider = BindingFirstBF1ClientProvider(db, user=user, game_id=row.game_id)
+    # 开启人可能已经退群、服被移出群，或者在 EA 上被撤了管理员：每次换图前按现状重算
+    role, is_platform_admin = await ServerAuthzService(db).resolve_role(
+        user=user, game="bf1", server_id=row.game_id
+    )
+    if not is_platform_admin and ROLE_LEVEL.get(role or "", 0) < ROLE_LEVEL["admin"]:
+        raise EAApiError(code="AUTO_SWITCH_NO_PERMISSION", message="开启人已经没有这台服的管理权限")
+    provider = GroupFirstBF1ClientProvider(db, user=user, game_id=row.game_id)
     payload: dict[str, Any] = {
         "level_index": choose.level_index,
         "map": choose.map,
@@ -192,14 +202,19 @@ async def _choose(db: AsyncSession, row: Bf1AutoSwitch, choose: engine.Choose) -
     }
     audit = AuditService(db)
     try:
-        async with provider.acquire() as client:
-            payload["credential_source"] = provider.credential_source
-            _, persisted_game_id = await resolve_ea_ids(client, row.game_id)
-            if not persisted_game_id:
-                raise EAApiError(code="EA_SERVER_NOT_INITIALIZED", message="服务器尚未完成初始化")
-            res = await client.chooseLevel(persisted_game_id, choose.level_index)
-            if not isinstance(res, dict):
-                raise EAApiError(code="EA_CHOOSE_LEVEL_FAILED", message=str(res)[:256])
+        try:
+            async with provider.acquire() as client:
+                payload["credential_source"] = provider.credential_source
+                _, persisted_game_id = await resolve_ea_ids(client, row.game_id)
+                if not persisted_game_id:
+                    raise EAApiError(
+                        code="EA_SERVER_NOT_INITIALIZED", message="服务器尚未完成初始化"
+                    )
+                res = await client.chooseLevel(persisted_game_id, choose.level_index)
+                if not isinstance(res, dict):
+                    raise EAApiError(code="EA_CHOOSE_LEVEL_FAILED", message=str(res)[:256])
+        except ExecutorUnavailableError as e:
+            raise EAApiError(code="AUTO_SWITCH_NO_EXECUTOR", message=e.message) from e
     except EAApiError as err:
         await audit.record(
             user_id=None,
@@ -211,6 +226,7 @@ async def _choose(db: AsyncSession, row: Bf1AutoSwitch, choose: engine.Choose) -
             result="failure",
             error_code=err.code,
             error_message=err.message,
+            executor_persona_id=provider.executor_persona_id,
         )
         raise
     await audit.record(
@@ -220,6 +236,7 @@ async def _choose(db: AsyncSession, row: Bf1AutoSwitch, choose: engine.Choose) -
         action="choose_level",
         server_id=row.game_id,
         payload=payload,
+        executor_persona_id=provider.executor_persona_id,
     )
 
 

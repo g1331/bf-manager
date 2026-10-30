@@ -1,15 +1,21 @@
 /**
  * EA 邮箱密码 + 2FA 登录任务的 API 客户端。
  *
- * 后端有两套对称端点：
- *   user  -> /me/ea-bindings/login-tasks/*
- *   admin -> /ea-accounts/login-tasks/*
+ * 后端有三套对称端点：
+ *   user      -> /me/ea-bindings/login-tasks/*
+ *   admin     -> /ea-accounts/login-tasks/*
+ *   group:<id> -> /groups/<id>/accounts/login-tasks/*（群主给群添加服务账号）
  *
- * 用 ``actor`` 参数区分前缀；类型完全一致。
+ * 用 ``actor`` 参数区分前缀；类型完全一致。actor 用字符串而不是对象，
+ * 组件里把它放进 hooks 依赖时引用才稳定。
  */
 import { api } from "@/lib/api-client";
 
-export type EALoginTaskActor = "user" | "admin";
+export type EALoginTaskActor = "user" | "admin" | `group:${number}`;
+
+export function groupLoginActor(groupId: number): EALoginTaskActor {
+  return `group:${groupId}`;
+}
 
 export type EALoginTaskStatus =
   | "pending"
@@ -62,7 +68,9 @@ export function isTerminalStatus(status: EALoginTaskStatus): boolean {
 }
 
 function basePath(actor: EALoginTaskActor): string {
-  return actor === "user" ? "/me/ea-bindings/login-tasks" : "/ea-accounts/login-tasks";
+  if (actor === "user") return "/me/ea-bindings/login-tasks";
+  if (actor === "admin") return "/ea-accounts/login-tasks";
+  return `/groups/${actor.slice("group:".length)}/accounts/login-tasks`;
 }
 
 // 登录任务的长轮询会被服务端 hold 住最多 25 秒，各步骤也可能等 EA 较久，

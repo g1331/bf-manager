@@ -1,4 +1,4 @@
-/** 群组：成员与角色、邀请链接、群组记录 */
+/** 群组：成员与角色、邀请链接、服务账号与绑服、群组记录 */
 import { api } from "@/lib/api-client";
 
 /** 群主 / 管理员两级，和 tenko v3 的服主 / 管理员一致 */
@@ -12,7 +12,7 @@ export const ROLE_LABEL: Record<GroupRole, string> = {
 };
 
 export const ROLE_HINT: Record<GroupRole, string> = {
-  owner: "发邀请链接、管理成员、改群名和删群",
+  owner: "添加服务账号、挂服务器、发邀请链接、管理成员",
   admin: "群绑定的服务器上能踢人、换边、封禁、加 V、换图",
 };
 
@@ -100,6 +100,58 @@ export interface GroupAuditPage {
   page_size: number;
 }
 
+export type GroupAccountStatus = "ok" | "invalid";
+
+/** 群组服务账号：群里绑定的服用它执行服管操作 */
+export interface GroupAccount {
+  id: number;
+  persona_id: number;
+  display_name: string | null;
+  is_default: boolean;
+  /** invalid：连续登录失败，要重新提交凭据 */
+  status: GroupAccountStatus;
+  last_error: string | null;
+  last_verified_at: string | null;
+  created_at: string;
+}
+
+export interface GroupServer {
+  id: number;
+  server_id: number;
+  /** 末次见到的 gameId，用来跳到服务器页 */
+  game_id: number | null;
+  name: string | null;
+  bound_by_name: string | null;
+  bound_via: "owner" | "admin";
+  executor: {
+    id: number;
+    persona_id: number;
+    display_name: string | null;
+    status: GroupAccountStatus;
+  } | null;
+  /** revoked：绑定人已不是服主或管理员，群成员在这台服上的权限失效 */
+  status: "active" | "revoked";
+  status_reason: string | null;
+  /** 执行账号的问题：不影响权限，但服管操作会失败 */
+  executor_problem: string | null;
+  last_verified_at: string | null;
+  created_at: string;
+}
+
+/** 服主视图：挂着这台服的群 */
+export interface ServerGroup {
+  group_id: number;
+  group_name: string;
+  bound_by_name: string | null;
+  bound_via: "owner" | "admin";
+  status: "active" | "revoked";
+  created_at: string;
+}
+
+export function accountLabel(a: { display_name: string | null; persona_id: number }): string {
+  return a.display_name ?? String(a.persona_id);
+}
+
 /** 邀请链接有效期可选值（小时） */
 export const INVITE_TTL_OPTIONS = [
   { hours: 1, label: "1 小时" },
@@ -132,6 +184,29 @@ export const groupsApi = {
     api.post<void>(`/groups/${id}/invites/${inviteId}/revoke`),
   audit: (id: number, page: number) =>
     api.get<GroupAuditPage>(`/groups/${id}/audit?page=${page}&page_size=15`),
+  accounts: (id: number) => api.get<{ items: GroupAccount[] }>(`/groups/${id}/accounts`),
+  addAccountWithCookie: (id: number, body: { remid: string; sid: string }) =>
+    api.post<GroupAccount>(`/groups/${id}/accounts/cookie`, body),
+  setDefaultAccount: (id: number, accountId: number) =>
+    api.post<void>(`/groups/${id}/accounts/${accountId}/default`),
+  removeAccount: (id: number, accountId: number) =>
+    api.delete<void>(`/groups/${id}/accounts/${accountId}`),
+  servers: (id: number) => api.get<{ items: GroupServer[] }>(`/groups/${id}/servers`),
+  bindServer: (id: number, body: { game_id: number; account_id?: number }) =>
+    api.post<GroupServer>(`/groups/${id}/servers`, body),
+  setExecutor: (id: number, bindingId: number, accountId: number) =>
+    api.put<GroupServer>(`/groups/${id}/servers/${bindingId}/executor`, {
+      account_id: accountId,
+    }),
+  unbindServer: (id: number, bindingId: number) =>
+    api.delete<void>(`/groups/${id}/servers/${bindingId}`),
+  recheckServers: (id: number) =>
+    api.post<{ items: GroupServer[] }>(`/groups/${id}/servers/recheck`),
+  /** 服主视图（BF1）：挂着这台服的群 */
+  serverGroups: (gameId: number) =>
+    api.get<{ items: ServerGroup[] }>(`/bf1/server-admin/${gameId}/groups`),
+  removeServerFromGroup: (gameId: number, groupId: number) =>
+    api.delete<void>(`/bf1/server-admin/${gameId}/groups/${groupId}`),
   lookupInvite: (token: string) => api.post<InviteLookup>("/group-invites/lookup", { token }),
   acceptInvite: (token: string) => api.post<InviteAccepted>("/group-invites/accept", { token }),
 };

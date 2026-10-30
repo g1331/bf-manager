@@ -14,7 +14,7 @@ from app.api.errors import AppError
 from app.core import ea_budget
 from app.core.security import get_cipher
 from app.domain.games.bf1.gateway import BF1GatewayClient
-from app.models import EaBinding
+from app.models import EaBinding, GroupEaAccount
 from app.services.ea_account_service import EAAccountService
 from app.services.ea_binding_service import EaBindingService
 
@@ -150,6 +150,47 @@ async def get_bf1_client_for_binding(
         yield client
     finally:
         _save_login_state(client, binding.persona_id, remid)
+        with contextlib.suppress(Exception):
+            http_session = getattr(client, "http_session", None)
+            if http_session is not None:
+                await http_session.close()
+
+
+@asynccontextmanager
+async def get_bf1_client_for_group_account(
+    db: AsyncSession, account: GroupEaAccount
+) -> AsyncIterator[BF1GatewayClient]:
+    """异步上下文：用群组服务账号的凭据构造 client。
+
+    和 binding 版一样不在这里记失败：登录失败要不要计数、计到多少标失效，由调用方决定。
+    刷新出来的 sid / session 加密写回这一行（只 flush，随调用方的事务提交）。
+    """
+    cipher = get_cipher()
+    remid = cipher.decrypt(account.encrypted_remid)
+    sid = cipher.decrypt(account.encrypted_sid)
+    session = cipher.decrypt(account.encrypted_session) if account.encrypted_session else None
+
+    async def _on_refresh(pid: int, new_sid: str | None, new_session: str | None) -> None:
+        if new_sid:
+            account.encrypted_sid = cipher.encrypt(new_sid)
+        if new_session:
+            account.encrypted_session = cipher.encrypt(new_session)
+        await db.flush()
+
+    client = BF1GatewayClient(
+        pid=account.persona_id,
+        remid=remid,
+        sid=sid,
+        session=session,
+        on_session_refreshed=_on_refresh,
+    )
+    _restore_login_state(client, account.persona_id, remid)
+    try:
+        if not client.access_token and remid and sid:
+            await client.login(remid, sid)
+        yield client
+    finally:
+        _save_login_state(client, account.persona_id, remid)
         with contextlib.suppress(Exception):
             http_session = getattr(client, "http_session", None)
             if http_session is not None:

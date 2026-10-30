@@ -133,8 +133,14 @@ function MyServerCard({ item, onOpen }: { item: MyServerItem; onOpen: () => void
               {ROLE_LABEL[item.role]}
             </span>
           </div>
-          <div className="mt-1 flex items-center gap-1.5 text-xs text-white/45 tabular-nums">
-            <span>ServerID {item.server_id}</span>
+          <div className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-white/45 tabular-nums">
+            <span className="shrink-0">ServerID {item.server_id}</span>
+            {item.via_group ? (
+              <>
+                <span className="text-white/25">·</span>
+                <span className="truncate">经群组「{item.via_group}」</span>
+              </>
+            ) : null}
             {!clickable ? (
               <>
                 <span className="text-white/25">·</span>

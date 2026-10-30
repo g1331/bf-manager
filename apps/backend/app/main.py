@@ -36,6 +36,7 @@ from app.services.bf1.overview_service import overview_poller
 from app.services.bf1.round_service import restore_tracker_state, save_tracker_state
 from app.services.bf1.timed_vip_service import timed_vip_poller
 from app.services.ea_login_finalizer import EALoginFinalizer
+from app.services.group_server_service import group_server_poller
 from app.services.metrics_service import classify_path, record_request, user_id_from_token
 
 
@@ -78,6 +79,8 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
             asyncio.create_task(exchange_poller()),
             asyncio.create_task(auto_switch_poller()),
             asyncio.create_task(timed_vip_poller()),
+            # 每天复核群组绑服：绑定人还是不是服主或管理员、服务账号还能不能用
+            asyncio.create_task(group_server_poller(get_sessionmaker())),
         ]
 
     yield

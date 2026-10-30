@@ -28,12 +28,12 @@ from app.api.errors import AppError, EAApiError
 from app.core import ea_metrics
 from app.db.session import get_sessionmaker
 from app.domain.games.bf1.client_provider import (
-    BindingFirstBF1ClientProvider,
-    BindingUnavailableError,
+    ExecutorUnavailableError,
+    GroupFirstBF1ClientProvider,
 )
 from app.domain.games.bf1.maps import operation_maps
 from app.models import Server, ServerMembership, User
-from app.models.bf1 import Bf1GameInstance, Bf1ServerVip
+from app.models.bf1 import Bf1ServerVip
 from app.schemas.bf1.admin import (
     TimedVipItem,
     TimedVipView,
@@ -41,11 +41,13 @@ from app.schemas.bf1.admin import (
     VipApplyResult,
 )
 from app.services.audit_service import AuditService
+from app.services.authz_service import ROLE_LEVEL, ServerAuthzService
 from app.services.bf1 import vip_engine as engine
 from app.services.bf1.blaze_service import get_operation_states
 from app.services.bf1.card_engine import parse_state
 from app.services.bf1.card_service import active_game_ids
 from app.services.bf1.server_admin_service import BF1ServerAdminService
+from app.services.bf1.server_service import current_game_ids
 
 CN_TZ = ZoneInfo("Asia/Shanghai")
 OPERATIONS_MODE = "BreakthroughLarge"
@@ -567,24 +569,6 @@ def _mark_failed(rows: list[Bf1ServerVip], message: str, now: datetime) -> None:
         row.last_attempt_at = now
 
 
-async def _current_game_ids(db: AsyncSession, servers: list[Server]) -> dict[int, int]:
-    """每台服最近一次出现的 gameId（实例表按 last_seen 取最新，没有就用 servers 表记的）"""
-    latest: dict[int, int] = {}
-    rows = await db.execute(
-        select(Bf1GameInstance.server_id, Bf1GameInstance.game_id)
-        .where(Bf1GameInstance.server_id.in_([s.server_id for s in servers]))
-        .order_by(Bf1GameInstance.last_seen.desc())
-    )
-    for sid, gid in rows.tuples():
-        latest.setdefault(sid, gid)
-    out: dict[int, int] = {}
-    for s in servers:
-        gid = latest.get(s.server_id) or s.game_id
-        if gid:
-            out[s.id] = gid
-    return out
-
-
 async def _executors(db: AsyncSession, server: Server, rows: list[Bf1ServerVip]) -> list[User]:
     """代为下 V 的候选人：授予人优先（最近改过的在前），再是本服其他服主 / 管理员。"""
     ids: list[int] = []
@@ -610,7 +594,13 @@ async def _executors(db: AsyncSession, server: Server, rows: list[Bf1ServerVip])
 
 
 async def _expire_with(
-    db: AsyncSession, client: Any, server: Server, game_id: int, user: User, now: datetime
+    db: AsyncSession,
+    client: Any,
+    server: Server,
+    game_id: int,
+    user: User,
+    now: datetime,
+    provider: GroupFirstBF1ClientProvider,
 ) -> None:
     ctx = await fetch_context(client, game_id)
     if ctx.server_id != server.server_id:
@@ -631,7 +621,7 @@ async def _expire_with(
                 "server_id": ctx.server_id,
                 "timed_vip": True,
                 "executor_user_id": user.id,
-                "credential_source": "binding",
+                "credential_source": provider.credential_source,
             }
             res = await client.removeServerVip(pid, ctx.server_id)
             if isinstance(res, dict):
@@ -645,6 +635,7 @@ async def _expire_with(
                     server_id=game_id,
                     target_persona_id=pid,
                     payload=payload,
+                    executor_persona_id=provider.executor_persona_id,
                 )
             else:
                 _mark_failed([row], f"到期自动下 V 失败：{str(res)[:200]}", now)
@@ -659,6 +650,7 @@ async def _expire_with(
                     result="failure",
                     error_code="EA_REMOVE_VIP_FAILED",
                     error_message=str(res)[:256],
+                    executor_persona_id=provider.executor_persona_id,
                 )
             await asyncio.sleep(EA_WRITE_INTERVAL)
         await ledger.flush()
@@ -668,15 +660,18 @@ async def _expire_with(
 async def _expire_server(
     db: AsyncSession, server: Server, game_id: int, rows: list[Bf1ServerVip], now: datetime
 ) -> None:
+    authz = ServerAuthzService(db)
     for user in await _executors(db, server, rows):
-        provider = BindingFirstBF1ClientProvider(
-            db, user=user, game_id=game_id, pool_fallback=False
-        )
+        # 候选人可能已经退群、服被移出群，或者在 EA 上被撤了管理员：按现状重算
+        role, is_platform_admin = await authz.resolve_role(user=user, game="bf1", server_id=game_id)
+        if not is_platform_admin and ROLE_LEVEL.get(role or "", 0) < ROLE_LEVEL["admin"]:
+            continue
+        provider = GroupFirstBF1ClientProvider(db, user=user, game_id=game_id, server_pk=server.id)
         try:
             async with provider.acquire() as client:
-                await _expire_with(db, client, server, game_id, user, now)
+                await _expire_with(db, client, server, game_id, user, now, provider)
             return
-        except BindingUnavailableError:
+        except ExecutorUnavailableError:
             continue
         except EAApiError as err:
             _mark_failed(rows, f"到期自动下 V 失败：{err.message}", now)
@@ -684,7 +679,7 @@ async def _expire_server(
             return
     _mark_failed(
         rows,
-        "授予人和本服其他管理员都没有可用的绑定账号（或已不是本服管理员），没法自动下 V",
+        "授予人和本服其他管理员都没有能用的服务账号（或已不是本服管理员），没法自动下 V",
         now,
     )
     await db.commit()
@@ -709,7 +704,7 @@ async def _tick(db: AsyncSession) -> None:
     for row in due:
         by_server[row.server_pk].append(row)
     servers = list(await db.scalars(select(Server).where(Server.id.in_(by_server))))
-    game_ids = await _current_game_ids(db, servers)
+    game_ids = await current_game_ids(db, servers)
     # 先用生产已登录的 Blaze 连接看模式：行动服整台跳过，不必为它们动用任何人的凭据
     states = await get_operation_states(db, list(game_ids.values()))
     carding = active_game_ids()

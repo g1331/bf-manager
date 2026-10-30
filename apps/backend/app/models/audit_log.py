@@ -20,6 +20,8 @@ class AuditLog(Base):
         ForeignKey("users.id", ondelete="SET NULL"), index=True, nullable=True
     )
     acting_persona_id: Mapped[int] = mapped_column(BigInteger, index=True, nullable=False)
+    # EA 侧实际执行操作的账号（群服务账号或个人留存的凭据），和 EA 那边的记录对得上
+    executor_persona_id: Mapped[int | None] = mapped_column(BigInteger)
 
     game: Mapped[str] = mapped_column(String(16), index=True, nullable=False)
     server_id: Mapped[int | None] = mapped_column(BigInteger, index=True)

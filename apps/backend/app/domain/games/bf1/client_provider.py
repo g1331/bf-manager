@@ -1,5 +1,8 @@
 """BF1 客户端获取策略（凭据来源抽象）
 
+服管操作统一用 GroupFirstBF1ClientProvider：群组服务账号 → 发起者 binding 里留存的老凭据 →
+都不行就报错。号池账号不是用户服务器的管理员，不再给服管操作兜底。
+
 封装「按何种策略选择 EA 凭据」的决策。BindingFirstBF1ClientProvider 优先用发起者
 自己的 EA binding 凭据（EA 后端看到的操作者即 admin 本人），不可用时降级到全局
 ea_accounts 后台账号池；PooledBF1ClientProvider 始终走账号池。未来引入群组绑定
@@ -10,7 +13,7 @@ provider.acquire() 返回一个 async context manager，进入时构造已登录
 退出时清理资源（http session、池标记等）。若 provider 判断无可用凭据源，
 应在 acquire 进入阶段抛出 EaBindingRequiredError。
 
-provider 可选暴露 ``credential_source`` 属性（"binding" / "pool"），在 acquire
+provider 可选暴露 ``credential_source`` 属性（"group_account" / "binding" / "pool"），在 acquire
 进入阶段写入本次实际使用的凭据来源，供 service 层写进审计 payload 排查降级。
 该属性不属于 Protocol 约定，消费方必须用 getattr 软读取。
 """
@@ -25,9 +28,15 @@ from typing import Protocol, runtime_checkable
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.errors import ForbiddenError
 from app.domain.games.bf1.gateway import BF1GatewayClient
 from app.models import User
-from app.services.bf1.gateway_factory import get_bf1_client, get_bf1_client_for_binding
+from app.services import group_server_service
+from app.services.bf1.gateway_factory import (
+    get_bf1_client,
+    get_bf1_client_for_binding,
+    get_bf1_client_for_group_account,
+)
 from app.services.ea_binding_service import EaBindingService
 
 
@@ -174,3 +183,127 @@ class BindingFirstBF1ClientProvider:
         raw = res.get("result") or {}
         rsp_server = (raw.get("rspInfo") or {}).get("server") or {}
         return bool(rsp_server.get("serverId"))
+
+
+class ExecutorUnavailableError(ForbiddenError):
+    """群组服务账号和发起者自己的凭据都用不了（不是这台服的管理员、登录失败或根本没有）"""
+
+    def __init__(self) -> None:
+        super().__init__(
+            "没有能执行服管操作的 EA 账号：请群主把这台服挂到群上并指定一个是本服管理员的服务账号"
+        )
+
+
+async def _probe_rsp(client: BF1GatewayClient, game_id: int) -> bool:
+    """rspInfo.server.serverId 存在才算这个凭据是本服 RSP 管理员（serverInfo 里的非管理员也能看到）"""
+    try:
+        res = await client.getFullServerDetails(game_id)
+    except Exception as exc:
+        logger.warning("探测服务器详情异常 game_id={}: {}", game_id, exc)
+        return False
+    if not isinstance(res, dict):
+        return False
+    raw = res.get("result") or {}
+    rsp_server = (raw.get("rspInfo") or {}).get("server") or {}
+    return bool(rsp_server.get("serverId"))
+
+
+class GroupFirstBF1ClientProvider:
+    """服管操作的凭据：群组服务账号优先，其次发起者 binding 留存的老凭据。
+
+    1. 发起者所在、且挂着这台服的群给这台服指定的服务账号（可能有多个群，正常的排前面），
+       逐个登录并探测是不是本服 RSP 管理员；
+    2. 发起者自己的 binding 凭据（只有 remid 时代留下来的老凭据才有）；
+    3. pool_fallback=True 时走号池（只给不需要管理员身份的调用方留着），否则抛
+       ExecutorUnavailableError。
+
+    挑选全部发生在 acquire 进入阶段；client 交给调用方之后出的错原样抛出，不换账号重试
+    （踢人、封禁不是幂等操作）。用了哪个账号记在 credential_source / executor_persona_id，
+    写进审计。服务账号登录失败会累计失败次数，连续失败到阈值标失效（随调用方的事务提交）。
+    """
+
+    def __init__(
+        self,
+        db: AsyncSession,
+        *,
+        user: User,
+        game_id: int,
+        server_pk: int | None = None,
+        pool_fallback: bool = False,
+    ) -> None:
+        self.db = db
+        self.user = user
+        self.game_id = game_id
+        self.server_pk = server_pk
+        self.pool_fallback = pool_fallback
+        self.credential_source: str | None = None
+        self.executor_persona_id: int | None = None
+
+    @asynccontextmanager
+    async def acquire(self) -> AsyncIterator[BF1GatewayClient]:
+        entered = await self._try_group_accounts()
+        if entered is not None:
+            self.credential_source = "group_account"
+        else:
+            binding_provider = BindingFirstBF1ClientProvider(
+                self.db, user=self.user, game_id=self.game_id, pool_fallback=False
+            )
+            via_binding = await binding_provider._try_enter_binding()
+            if via_binding is not None:
+                cm, client = via_binding
+                entered = (cm, client, int(client.pid or 0))
+                self.credential_source = "binding"
+        if entered is not None:
+            cm, client, persona_id = entered
+            self.executor_persona_id = persona_id or None
+            try:
+                yield client
+            except BaseException:
+                await cm.__aexit__(*sys.exc_info())
+                raise
+            else:
+                await cm.__aexit__(None, None, None)
+            return
+        if not self.pool_fallback:
+            raise ExecutorUnavailableError()
+        self.credential_source = "pool"
+        async with get_bf1_client(self.db) as client:
+            yield client
+
+    async def _try_group_accounts(
+        self,
+    ) -> tuple[AbstractAsyncContextManager[BF1GatewayClient], BF1GatewayClient, int] | None:
+        accounts = await group_server_service.executor_accounts_for(
+            self.db, self.user, game_id=self.game_id, server_pk=self.server_pk
+        )
+        for account in accounts:
+            cm = get_bf1_client_for_group_account(self.db, account)
+            try:
+                client = await cm.__aenter__()
+            except Exception as exc:
+                logger.warning("服务账号 {} 登录异常: {!r}", account.persona_id, exc)
+                await group_server_service.record_account_result(
+                    self.db, account, False, "登录异常"
+                )
+                continue
+            try:
+                if not client.access_token:
+                    await group_server_service.record_account_result(
+                        self.db, account, False, "登录失败"
+                    )
+                    await cm.__aexit__(None, None, None)
+                    continue
+                await group_server_service.record_account_result(self.db, account, True)
+                if not await _probe_rsp(client, self.game_id):
+                    logger.info(
+                        "服务账号 {} 不是服务器 game_id={} 的 RSP 管理员，换下一个",
+                        account.persona_id,
+                        self.game_id,
+                    )
+                    await cm.__aexit__(None, None, None)
+                    continue
+            except BaseException:
+                await cm.__aexit__(*sys.exc_info())
+                raise
+            return cm, client, account.persona_id
+        return None

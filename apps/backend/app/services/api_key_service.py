@@ -1,7 +1,8 @@
 """开放 API Key：签发、吊销、校验与用量统计。
 
 key 形如 ``bfm_`` 加 43 位随机串，库里只存 sha256（key 本身是高熵随机串，不需要慢哈希）。
-校验结果在 Redis 里缓存 60 秒，吊销时同时删缓存，不用每个请求都查库。
+校验结果在 Redis 里缓存 60 秒，不用每个请求都查库。查库后回填缓存用 NX，吊销时直接写“无效”：
+吊销前就查过库、晚一步才回填的请求覆盖不掉它，吊销提交后 Key 立即失效。
 用量按天计在 Redis，留 8 天；``last_used_at`` 最多每 5 分钟写一次库。
 """
 
@@ -17,10 +18,11 @@ from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.api.errors import NotFoundError, ValidationError
+from app.api.errors import AppError, NotFoundError, ValidationError
 from app.core.cache import get_redis
 from app.core.config import get_settings
 from app.models import ApiKey, User
+from app.services.user_service import lock_user
 
 KEY_PREFIX = "bfm_"
 _CACHE_TTL_SECONDS = 60
@@ -82,7 +84,7 @@ async def resolve(db: AsyncSession, raw: str) -> ResolvedKey | None:
     if r is not None:
         value = f"{resolved.id}:{resolved.multiplier}" if resolved else _INVALID
         try:
-            await r.set(_cache_key(key_hash), value, ex=_CACHE_TTL_SECONDS)
+            await r.set(_cache_key(key_hash), value, ex=_CACHE_TTL_SECONDS, nx=True)
         except Exception as e:
             logger.debug("API Key 缓存写入失败: {!r}", e)
     return resolved
@@ -144,6 +146,10 @@ class ApiKeyService:
         return key
 
     async def create(self, user: User, name: str) -> tuple[ApiKey, str]:
+        # 锁住用户到提交：和冻结串行，冻结时漏收、解冻后又自动生效的 Key 不会出现
+        locked = await lock_user(self.db, user.id)
+        if locked is None or locked.is_frozen:
+            raise AppError(403, "ACCOUNT_FROZEN", "账号已被冻结")
         limit = get_settings().api_key_max_per_user
         active = await self.db.scalar(
             select(func.count())
@@ -164,17 +170,26 @@ class ApiKeyService:
             key.revoked_at = datetime.now(UTC)
             await self.db.commit()
             await self.db.refresh(key)
-            await self.drop_cache(key)
+            await self.deny_cache(key)
         return key
 
     async def set_multiplier(self, key: ApiKey, multiplier: int | None) -> ApiKey:
         key.rate_multiplier = multiplier
         await self.db.commit()
         await self.db.refresh(key)
-        await self.drop_cache(key)
+        await self._drop_cache(key)
         return key
 
-    async def drop_cache(self, key: ApiKey) -> None:
+    async def deny_cache(self, key: ApiKey) -> None:
+        """吊销后调用：缓存直接写成无效，不是删掉"""
+        try:
+            r = await get_redis()
+            await r.set(_cache_key(key.key_hash), _INVALID, ex=_CACHE_TTL_SECONDS)
+        except Exception as e:
+            # 写不进也只是最多 60 秒后才生效
+            logger.warning("API Key 缓存写入失败: {!r}", e)
+
+    async def _drop_cache(self, key: ApiKey) -> None:
         try:
             r = await get_redis()
             await r.delete(_cache_key(key.key_hash))

@@ -78,6 +78,10 @@ export default function UsersAdminPage() {
     placeholderData: keepPreviousData,
   });
 
+  // 解冻、冻结后总数变少，当前页可能超出末页：退回最后一页
+  const lastPage = list.data ? Math.max(1, Math.ceil(list.data.total / list.data.page_size)) : null;
+  if (lastPage !== null && page > lastPage) setPage(lastPage);
+
   const done = (msg: string) => {
     toast.success(msg);
     qc.invalidateQueries({ queryKey: ["admin-users"] });
@@ -126,7 +130,7 @@ export default function UsersAdminPage() {
 
   const data = list.data;
   const items = data?.items ?? [];
-  const totalPages = data ? Math.max(1, Math.ceil(data.total / data.page_size)) : 1;
+  const totalPages = lastPage ?? 1;
   const myId = session.data.id;
   const reasonText = reason.trim();
 
@@ -275,7 +279,7 @@ export default function UsersAdminPage() {
           />
         )}
 
-        {totalPages > 1 ? (
+        {totalPages > 1 || page > 1 ? (
           <Card>
             <CardContent className="flex items-center justify-between p-4 text-sm">
               <span className="text-muted-foreground tabular-nums">

@@ -29,6 +29,8 @@ from app.services.site_settings_service import AUDIT_GAME
 from app.services.user_service import bump_token_version, lock_user
 
 REASON_MAX = 200
+_INT_MAX = 2**31 - 1
+_BIGINT_MAX = 2**63 - 1
 
 
 @dataclass
@@ -61,10 +63,14 @@ async def list_users(
             User.id.in_(select(EaBinding.user_id).where(EaBinding.display_name.ilike(like))),
         ]
         if text.isdigit():
-            conds.append(
-                User.id.in_(select(EaBinding.user_id).where(EaBinding.persona_id == int(text)))
-            )
-            conds.append(User.id == int(text))
+            # 超出列范围的数字传给 PG 会编码失败（persona ID 通常超出 INTEGER），只在范围内才比
+            number = int(text)
+            if number <= _BIGINT_MAX:
+                conds.append(
+                    User.id.in_(select(EaBinding.user_id).where(EaBinding.persona_id == number))
+                )
+            if number <= _INT_MAX:
+                conds.append(User.id == number)
         stmt = stmt.where(or_(*conds))
     if only == "frozen":
         stmt = stmt.where(User.is_frozen.is_(True))
@@ -198,10 +204,10 @@ async def freeze(
         ip,
     )
     await db.commit()
-    # 提交后再清 Key 缓存：先清的话，提交前进来的请求会把“有效”又写回缓存
+    # 提交成功后再把缓存写成无效，提交失败时不误伤有效的 Key
     service = ApiKeyService(db)
     for key in keys:
-        await service.drop_cache(key)
+        await service.deny_cache(key)
     return UserRow(user=target, active_keys=0, frozen_by_name=display_name(actor))
 
 

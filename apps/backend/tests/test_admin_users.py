@@ -2,15 +2,21 @@
 
 from __future__ import annotations
 
+import pytest
+from app.api.errors import AppError
 from app.domain.games.bf1 import client_provider as cp
-from app.models import AuditLog, GroupServer, User
+from app.models import ApiKey, AuditLog, GroupServer, User
 from app.services import api_key_service
+from app.services import group_server_service as gss
 from app.services.api_key_service import ApiKeyService
 from app.services.authz_service import ServerAuthzService
 from app.services.group_server_service import REASON_BINDER_FROZEN, recheck_all
+from app.services.group_service import GroupError
 from sqlalchemy import select
+from sqlalchemy.orm.attributes import set_committed_value
 
 from tests.test_accounts import _active_user, _login_cookie
+from tests.test_api_keys import fake_redis  # noqa: F401  fixture
 from tests.test_group_servers import (  # noqa: F401  ea 是 fixture
     GAME_ID,
     _add_account,
@@ -45,6 +51,9 @@ async def test_list_and_search_users(env, test_session) -> None:
     assert [i["id"] for i in hit] == [32]
     admins = (await ac.get(f"{API}/admin/users", params={"only": "admin"})).json()["items"]
     assert [i["id"] for i in admins] == [90]
+    # 超出整数列范围的数字照样能搜（只按文本匹配），不报错
+    resp = await ac.get(f"{API}/admin/users", params={"q": "9" * 20})
+    assert resp.status_code == 200 and resp.json()["total"] == 0
 
     # 普通用户进不来
     carol = await test_session.get(User, 31)
@@ -159,3 +168,65 @@ async def test_frozen_user_has_no_server_role_for_background_jobs(
         await cp.group_server_service.executor_accounts_for(test_session, user, game_id=GAME_ID)
         == []
     )
+
+
+async def test_stale_cache_refill_cannot_revive_revoked_key(
+    env,
+    test_session,
+    fake_redis,  # noqa: F811
+) -> None:
+    """吊销前就查过库的校验请求晚一步回填缓存，也盖不掉吊销写下的“无效”"""
+    carol = await _active_user(test_session, user_id=31, email="carol@example.com", persona_id=3131)
+    key, raw = await ApiKeyService(test_session).create(carol, "bot")
+    real_set = fake_redis.set
+    fired = False
+
+    async def set_after_revoke(name, value, ex=None, nx=False):
+        nonlocal fired
+        if not fired:
+            fired = True
+            # 校验请求已经查完库（有效），还没写缓存时 Key 被吊销
+            await ApiKeyService(test_session).revoke(key)
+        return await real_set(name, value, ex=ex, nx=nx)
+
+    fake_redis.set = set_after_revoke
+    assert await api_key_service.resolve(test_session, raw) is not None
+    assert await api_key_service.resolve(test_session, raw) is None
+
+
+async def test_inflight_key_create_after_freeze_is_rejected(env, test_session) -> None:
+    """冻结前进来的新建 Key 请求，冻结提交后才走到写库：锁住用户重读，拒绝"""
+    ac, _, _ = env
+    admin = await _admin(test_session)
+    carol = await _active_user(test_session, user_id=31, email="carol@example.com", persona_id=3131)
+    _login_cookie(ac, admin)
+    assert (await ac.post(f"{API}/admin/users/31/freeze", json={"reason": "x"})).status_code == 200
+
+    stale = await _load(test_session, carol.id)
+    set_committed_value(stale, "is_frozen", False)  # 请求入口读到的还是冻结前
+    with pytest.raises(AppError) as exc:
+        await ApiKeyService(test_session).create(stale, "bot")
+    assert exc.value.code == "ACCOUNT_FROZEN"
+    await test_session.rollback()
+    assert await test_session.scalar(select(ApiKey.id).where(ApiKey.user_id == 31)) is None
+
+
+async def test_inflight_bind_after_freeze_is_rejected(env, test_session, ea) -> None:  # noqa: F811
+    """挂服请求查完 EA 后等群锁，期间挂服人被冻结：拿到锁后重读挂服人，拒绝，挂服保持失效"""
+    ac, _, owner, _, _, gid = await _group_with_alice(env, test_session)
+    await _add_account(ac, gid)
+    await _bind(ac, gid)
+    admin = await _admin(test_session)
+    _login_cookie(ac, admin)
+    resp = await ac.post(f"{API}/admin/users/{owner.id}/freeze", json={"reason": "x"})
+    assert resp.status_code == 200
+
+    stale = await _load(test_session, owner.id)
+    set_committed_value(stale, "is_frozen", False)
+    with pytest.raises(GroupError) as exc:
+        await gss.bind_server(test_session, gid, stale, game_id=GAME_ID)
+    assert exc.value.code == "ACCOUNT_FROZEN"
+    await test_session.rollback()
+    gs = await test_session.scalar(select(GroupServer))
+    await test_session.refresh(gs)
+    assert gs.status == "revoked"

@@ -7,11 +7,43 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+from sqlalchemy.orm.attributes import set_committed_value
 
-from app.core.passwords import hash_password, verify_password
+from app.core.passwords import hash_password, verify_password_timing_safe
 from app.models import EaBinding, User
+
+
+async def lock_user(db: AsyncSession, user_id: int) -> User | None:
+    """在当前事务里锁住用户行（SELECT … FOR UPDATE）并读最新值，连同 EA 绑定一起加载。
+
+    认领、改密码、生成邀请码这类「先检查再写」的操作都要先锁：两个请求并发时，
+    后到的一个等前一个提交后，读到的是更新过的状态，再检查一次。
+    """
+    return await db.scalar(
+        select(User)
+        .options(selectinload(User.ea_bindings))
+        .where(User.id == user_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+
+
+async def bump_token_version(db: AsyncSession, user: User) -> None:
+    """让这个账号的所有会话失效：在数据库里原子地 +1，而不是读出来在 Python 里加。
+
+    改密码和「退出所有设备」并发时，两次递增都会生效，不会互相覆盖成同一个版本号。
+    """
+    new_version = await db.scalar(
+        update(User)
+        .where(User.id == user.id)
+        .values(token_version=User.token_version + 1)
+        .returning(User.token_version)
+        .execution_options(synchronize_session=False)
+    )
+    set_committed_value(user, "token_version", new_version)
 
 
 class UserService:
@@ -63,9 +95,8 @@ class UserService:
     async def verify_local_password(self, username: str, password: str) -> User | None:
         """本地登录校验。username 不存在或密码错误或无本地密码时返回 None。"""
         user = await self.get_by_username(username)
-        if user is None or user.local_password_hash is None:
-            return None
-        if not verify_password(password, user.local_password_hash):
+        # 用户名不存在时也做一次同等成本的比对，响应时间不泄露用户名是否存在
+        if not verify_password_timing_safe(password, user.local_password_hash if user else None):
             return None
         return user
 

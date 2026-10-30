@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import hashlib
+from functools import cache
 
 import bcrypt
 
@@ -32,3 +33,17 @@ def verify_password(plain: str, hashed: str | None) -> bool:
         return bcrypt.checkpw(_preprocess(plain), hashed.encode("ascii"))
     except (ValueError, TypeError):
         return False
+
+
+@cache
+def _dummy_hash() -> str:
+    return hash_password("bf-manager-timing-dummy")
+
+
+def verify_password_timing_safe(plain: str, hashed: str | None) -> bool:
+    """账号不存在或没设密码时，也拿一个假哈希做一次同等成本的比对再返回 False，
+    免得别人凭登录接口的响应时间判断某个邮箱 / 用户名是否注册过。"""
+    if not hashed:
+        verify_password(plain or "-", _dummy_hash())
+        return False
+    return verify_password(plain, hashed)

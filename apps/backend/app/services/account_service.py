@@ -29,11 +29,12 @@ from sqlalchemy.orm import selectinload
 from app.api.errors import AppError, NotFoundError, UnauthorizedError, ValidationError
 from app.core.cache import get_redis
 from app.core.config import get_settings
-from app.core.passwords import hash_password, verify_password
+from app.core.passwords import hash_password, verify_password, verify_password_timing_safe
 from app.models import EaBinding, EmailVerification, InviteCode, User
 from app.services.bf1.gateway_factory import get_bf1_client
 from app.services.mail import MailMessage, get_mail_sender, templates
 from app.services.mail.templates import RequestMeta
+from app.services.user_service import bump_token_version, lock_user
 
 SessionFactory = Callable[[], AbstractAsyncContextManager[AsyncSession]]
 
@@ -301,26 +302,32 @@ async def invite_quota_left(db: AsyncSession, user: User) -> int | None:
 async def create_invite_code(db: AsyncSession, user: User) -> InviteCode:
     if user.role != "admin" and primary_binding(user) is None:
         raise AccountError("INVITE_FORBIDDEN", "绑定 EA 账号后才能生成邀请码", 403)
+    # 锁住自己的用户行再数名额：同一个人并发点「生成」时排队，名额不会被多算
+    await lock_user(db, user.id)
     left = await invite_quota_left(db, user)
     if left is not None and left <= 0:
         raise AccountError("INVITE_QUOTA", "邀请码名额已用完")
+    # 32^8 种组合，撞码几乎不可能；先查一下，提交时真撞了再让用户重试
     for _ in range(5):
         raw = "".join(secrets.choice(_INVITE_ALPHABET) for _ in range(8))
         code = f"{raw[:4]}-{raw[4:]}"
-        row = InviteCode(
-            code=code,
-            created_by=user.id,
-            expires_at=_now() + timedelta(days=get_settings().invite_ttl_days),
-        )
-        db.add(row)
-        try:
-            await db.commit()
-        except IntegrityError:
-            await db.rollback()
-            continue
-        await db.refresh(row)
-        return row
-    raise AccountError("INVITE_RETRY", "生成失败，请重试", 500)
+        if await db.scalar(select(InviteCode.id).where(InviteCode.code == code)) is None:
+            break
+    else:
+        raise AccountError("INVITE_RETRY", "生成失败，请重试", 500)
+    row = InviteCode(
+        code=code,
+        created_by=user.id,
+        expires_at=_now() + timedelta(days=get_settings().invite_ttl_days),
+    )
+    db.add(row)
+    try:
+        await db.commit()
+    except IntegrityError as e:
+        await db.rollback()
+        raise AccountError("INVITE_RETRY", "生成失败，请重试", 500) from e
+    await db.refresh(row)
+    return row
 
 
 async def revoke_invite_code(db: AsyncSession, user: User, invite_id: int) -> None:
@@ -655,9 +662,9 @@ async def _finish_register(db: AsyncSession, row: EmailVerification, password: s
 
 async def _finish_claim(db: AsyncSession, row: EmailVerification, password: str) -> User:
     """claim（EA 邮箱认领旧账号）和 set_email（旧账号登录后补邮箱）都落在这里。"""
-    user = await db.scalar(
-        select(User).options(selectinload(User.ea_bindings)).where(User.id == row.user_id)
-    )
+    # 锁住旧账号再检查：同一个旧账号可能同时有认领信和补邮箱信（发到不同邮箱），
+    # 或者正被另一个账号用 remid 认领，只能有一个成功
+    user = await lock_user(db, row.user_id) if row.user_id is not None else None
     if user is None or user.status != "legacy":
         raise AccountError("LINK_INVALID", "这个账号已经设置过邮箱，请直接登录", 404)
     payload = row.payload or {}
@@ -672,21 +679,21 @@ async def _finish_claim(db: AsyncSession, row: EmailVerification, password: str)
     user.email_verified_at = now
     user.local_password_hash = hash_password(password)
     user.status = "active"
-    # 旧会话可能是别人拿 remid 登的，认领后全部作废
-    user.token_version += 1
     user.last_login_at = now
     await db.flush()
+    # 旧会话可能是别人拿 remid 登的，认领后全部作废
+    await bump_token_version(db, user)
     return user
 
 
 async def _finish_reset(db: AsyncSession, row: EmailVerification, password: str) -> User:
-    user = await db.get(User, row.user_id)
+    user = await lock_user(db, row.user_id) if row.user_id is not None else None
     if user is None or user.status != "active" or user.is_frozen or not user.is_active:
         raise AccountError("LINK_INVALID", "链接无效或已过期，请重新申请", 404)
     user.local_password_hash = hash_password(password)
-    user.token_version += 1
     user.last_login_at = _now()
     await db.flush()
+    await bump_token_version(db, user)
     return user
 
 
@@ -697,10 +704,12 @@ async def login_with_email(db: AsyncSession, email: str, password: str) -> User:
     user = await db.scalar(
         select(User).options(selectinload(User.ea_bindings)).where(func.lower(User.email) == email)
     )
+    # 不管账号在不在都做一次 bcrypt，响应时间不泄露邮箱是否注册过
+    password_ok = verify_password_timing_safe(password, user.local_password_hash if user else None)
     if (
         user is None
+        or not password_ok
         or user.status not in ("active", "pending_binding")
-        or not verify_password(password, user.local_password_hash)
         or not user.is_active
         or user.is_frozen
     ):
@@ -711,16 +720,19 @@ async def login_with_email(db: AsyncSession, email: str, password: str) -> User:
 
 
 async def change_password(db: AsyncSession, user: User, current: str, new: str) -> None:
-    if not verify_password(current, user.local_password_hash):
-        raise AccountError("PASSWORD_WRONG", "当前密码不正确")
     validate_password(new)
-    user.local_password_hash = hash_password(new)
-    user.token_version += 1
+    # 锁住再校验当前密码：两个改密码请求并发时，后一个要用前一个改完的密码校验
+    locked = await lock_user(db, user.id)
+    if locked is None or not verify_password(current, locked.local_password_hash):
+        raise AccountError("PASSWORD_WRONG", "当前密码不正确")
+    locked.local_password_hash = hash_password(new)
+    await db.flush()
+    await bump_token_version(db, locked)
     await db.commit()
 
 
 async def revoke_sessions(db: AsyncSession, user: User) -> None:
-    user.token_version += 1
+    await bump_token_version(db, user)
     await db.commit()
 
 

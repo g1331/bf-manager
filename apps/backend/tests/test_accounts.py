@@ -640,3 +640,22 @@ async def test_turnstile_needs_both_keys_and_checks_header(env, monkeypatch) -> 
     )
     assert resp.status_code == 202
     assert seen == ["bad", "good"]
+
+
+async def test_login_costs_one_bcrypt_even_for_unknown_email(env, monkeypatch) -> None:
+    import bcrypt
+
+    client, _, _ = env
+    calls: list[int] = []
+    real = bcrypt.checkpw
+
+    def counting(pw, hashed):
+        calls.append(1)
+        return real(pw, hashed)
+
+    monkeypatch.setattr(bcrypt, "checkpw", counting)
+    resp = await client.post(
+        "/api/v1/auth/email-login", json={"email": "nobody@example.com", "password": "whatever1"}
+    )
+    assert resp.status_code == 401
+    assert len(calls) == 1

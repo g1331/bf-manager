@@ -38,6 +38,16 @@ def upgrade() -> None:
     # 旧版本没有邮箱验证流程，已有的 email（CLI 建管理员时可选填）不算验证过；
     # 统一转小写，免得和新的部分唯一索引冲突
     op.execute("UPDATE users SET email = lower(email) WHERE email IS NOT NULL")
+    # 只差大小写的重复邮箱（只可能出自 CLI 手填）保留 id 最小的那个，其余清空，
+    # 否则建唯一索引会失败、整个迁移卡住
+    op.execute(
+        "UPDATE users SET email = NULL WHERE id IN ("
+        "  SELECT id FROM ("
+        "    SELECT id, row_number() OVER (PARTITION BY email ORDER BY id) AS rn"
+        "    FROM users WHERE email IS NOT NULL"
+        "  ) dup WHERE dup.rn > 1"
+        ")"
+    )
     op.execute("UPDATE users SET status = 'legacy' WHERE local_password_hash IS NULL")
     op.create_index(
         "uq_users_email_lower",
@@ -122,11 +132,12 @@ def downgrade() -> None:
     op.drop_index("ix_email_verifications_email", table_name="email_verifications")
     op.drop_table("email_verifications")
 
-    # 降级前同一 persona 若有多行（解绑后又被别人绑上），只保留未冻结的那行，
-    # 否则恢复全表唯一约束会失败
+    # 降级前每个 persona 只能剩一行，否则恢复全表唯一约束会失败：
+    # 有未冻结的行就留它；全是冻结的历史行（绑了又解绑多次）就留 id 最大的那行
     op.execute(
         "DELETE FROM ea_bindings b USING ea_bindings a "
-        "WHERE b.persona_id = a.persona_id AND b.is_frozen = true AND a.is_frozen = false"
+        "WHERE b.persona_id = a.persona_id AND b.id <> a.id AND b.is_frozen = true "
+        "AND (a.is_frozen = false OR a.id > b.id)"
     )
     op.drop_index("uq_ea_bindings_persona_active", table_name="ea_bindings")
     op.create_unique_constraint("uq_ea_bindings_persona_id", "ea_bindings", ["persona_id"])

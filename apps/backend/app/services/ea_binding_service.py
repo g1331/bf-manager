@@ -13,6 +13,7 @@ from sqlalchemy.orm import selectinload
 from app.api.errors import AppError
 from app.core.security import get_cipher
 from app.models import EaBinding, User
+from app.services.user_service import bump_token_version, lock_user
 
 
 class BindingConflictError(AppError):
@@ -100,8 +101,14 @@ class EaBindingService:
                 existing.last_verified_at = now
                 await self.db.commit()
                 return BindOutcome(binding=existing)
-            owner = existing.user
-            if owner.status == "legacy" and user.status == "pending_binding" and user.email:
+            # 锁住旧账号再检查：它可能正被认领信、补邮箱信或另一个账号同时认领
+            owner = await lock_user(self.db, existing.user_id)
+            if (
+                owner is not None
+                and owner.status == "legacy"
+                and user.status == "pending_binding"
+                and user.email
+            ):
                 email, verified_at, pw = (
                     user.email,
                     user.email_verified_at,
@@ -113,7 +120,8 @@ class EaBindingService:
                 owner.email_verified_at = verified_at
                 owner.local_password_hash = pw
                 owner.status = "active"
-                owner.token_version += 1
+                await self.db.flush()
+                await bump_token_version(self.db, owner)
                 existing.verified_via = verified_via
                 existing.ea_user_id = ea_user_id or existing.ea_user_id
                 existing.display_name = display_name or existing.display_name

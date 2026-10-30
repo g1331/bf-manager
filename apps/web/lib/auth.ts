@@ -184,6 +184,20 @@ export async function bindWithCookie(payload: CookieBindRequest): Promise<Cookie
   return api.post<CookieBindResponse>("/me/ea-bindings/cookie", payload);
 }
 
+/** 申请注销：账号立即冻结并退出登录，冷静期后删除 */
+export async function requestAccountDeletion(
+  password: string,
+  confirm: string,
+): Promise<{ delete_at: string }> {
+  return api.post<{ delete_at: string }>("/me/delete-account", { password, confirm });
+}
+
+/** 冷静期内撤销注销并登录 */
+export async function cancelAccountDeletion(payload: EmailLoginRequest): Promise<SessionUser> {
+  const res = await api.post<LoginResponse>("/auth/cancel-deletion", payload);
+  return res.user;
+}
+
 export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
   await api.post("/me/password", {
     current_password: currentPassword,

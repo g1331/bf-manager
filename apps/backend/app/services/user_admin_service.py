@@ -20,7 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.api.errors import AppError, NotFoundError
-from app.models import ApiKey, AuditLog, EaBinding, GroupServer, User
+from app.models import ApiKey, AuditLog, EaBinding, GroupMember, GroupServer, User
 from app.services.account_service import primary_binding
 from app.services.api_key_service import ApiKeyService
 from app.services.group_server_service import REASON_BINDER_FROZEN
@@ -136,40 +136,38 @@ async def _audit(
     )
 
 
-async def freeze(
-    db: AsyncSession, actor: User, user_id: int, reason: str, ip: str | None = None
-) -> UserRow:
-    reason = reason.strip()
-    if not reason:
-        raise AppError(422, "USER_FREEZE_REASON", "写一下冻结原因")
-    if len(reason) > REASON_MAX:
-        raise AppError(422, "USER_FREEZE_REASON", f"冻结原因最多 {REASON_MAX} 个字")
-    if user_id == actor.id:
-        raise AppError(409, "USER_FREEZE_SELF", "不能冻结自己")
+async def lock_with_groups(
+    db: AsyncSession, user_id: int, *, member_groups: bool = False
+) -> User | None:
+    """先按 id 顺序锁住和这个用户有关的群，再锁用户。
 
-    # 先锁目标涉及的群（按 id 顺序），再锁用户：和挂服、复核用同一把群锁，次序固定不会互等
-    group_ids = sorted(
-        set(
-            await db.scalars(
-                select(GroupServer.group_id).where(GroupServer.bound_by_user_id == user_id)
-            )
+    和挂服、复核、带群邀请的认领同一次序（先群后用户），不会互等。默认只锁他挂过服的群；
+    member_groups=True 时把他所在的群也锁上（删除账号要改群主、解散群）。"""
+    group_ids = set(
+        await db.scalars(
+            select(GroupServer.group_id).where(GroupServer.bound_by_user_id == user_id)
         )
     )
-    for gid in group_ids:
+    if member_groups:
+        group_ids |= set(
+            await db.scalars(select(GroupMember.group_id).where(GroupMember.user_id == user_id))
+        )
+    for gid in sorted(group_ids):
         await _lock_group(db, gid)
-    target = await lock_user(db, user_id)
-    if target is None:
-        raise NotFoundError("用户")
-    if target.role == "admin":
-        raise AppError(409, "USER_FREEZE_ADMIN", "平台管理员不能在这里冻结，先用命令行撤销管理员")
-    if target.is_frozen:
-        raise AppError(409, "USER_ALREADY_FROZEN", "这个账号已经冻结了")
+    return await lock_user(db, user_id)
 
+
+async def lock_down(
+    db: AsyncSession, target: User, *, by: int, reason: str, binding_reason: str
+) -> tuple[list[ApiKey], int]:
+    """冻结的实际动作，不提交：登出全部会话、吊销全部有效 Key、他挂的服置为失效。
+
+    返回吊销的 Key（提交后要调 deny_cache）和失效的挂服数。调用方要先用 lock_with_groups 加锁"""
     now = datetime.now(UTC)
     target.is_frozen = True
     target.frozen_at = now
     target.frozen_reason = reason
-    target.frozen_by = actor.id
+    target.frozen_by = by
     await bump_token_version(db, target)
 
     keys = list(
@@ -193,14 +191,38 @@ async def freeze(
     )
     for gs in bindings:
         gs.status = "revoked"
-        gs.status_reason = REASON_BINDER_FROZEN
+        gs.status_reason = binding_reason
+    return keys, len(bindings)
 
+
+async def freeze(
+    db: AsyncSession, actor: User, user_id: int, reason: str, ip: str | None = None
+) -> UserRow:
+    reason = reason.strip()
+    if not reason:
+        raise AppError(422, "USER_FREEZE_REASON", "写一下冻结原因")
+    if len(reason) > REASON_MAX:
+        raise AppError(422, "USER_FREEZE_REASON", f"冻结原因最多 {REASON_MAX} 个字")
+    if user_id == actor.id:
+        raise AppError(409, "USER_FREEZE_SELF", "不能冻结自己")
+
+    target = await lock_with_groups(db, user_id)
+    if target is None:
+        raise NotFoundError("用户")
+    if target.role == "admin":
+        raise AppError(409, "USER_FREEZE_ADMIN", "平台管理员不能在这里冻结，先用命令行撤销管理员")
+    if target.is_frozen:
+        raise AppError(409, "USER_ALREADY_FROZEN", "这个账号已经冻结了")
+
+    keys, bindings = await lock_down(
+        db, target, by=actor.id, reason=reason, binding_reason=REASON_BINDER_FROZEN
+    )
     await _audit(
         db,
         actor,
         target,
         "user_freeze",
-        {"reason": reason, "revoked_keys": len(keys), "revoked_group_servers": len(bindings)},
+        {"reason": reason, "revoked_keys": len(keys), "revoked_group_servers": bindings},
         ip,
     )
     await db.commit()
@@ -217,6 +239,12 @@ async def unfreeze(db: AsyncSession, actor: User, user_id: int, ip: str | None =
         raise NotFoundError("用户")
     if not target.is_frozen:
         raise AppError(409, "USER_NOT_FROZEN", "这个账号没有冻结")
+    if target.deletion_scheduled_at is not None:
+        raise AppError(
+            409,
+            "USER_DELETION_PENDING",
+            "这个账号是本人申请注销，冷静期内由本人登录时撤销；要立即清掉可以直接删除",
+        )
     reason = target.frozen_reason
     target.is_frozen = False
     target.frozen_at = None

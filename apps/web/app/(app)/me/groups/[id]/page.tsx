@@ -339,6 +339,9 @@ const ACTION_TEXT: Record<string, (i: GroupAuditItem) => string> = {
     `${i.actor_name} 把 ${i.target_name} 从${ROLE_LABEL[i.payload.from as GroupRole] ?? ""}调成${ROLE_LABEL[i.payload.to as GroupRole] ?? ""}`,
   group_member_remove: (i) => `${i.actor_name} 把 ${i.target_name} 移出了群`,
   group_leave: (i) => `${i.actor_name} 退出了群`,
+  group_owner_inherit: (i) => `原群主注销了账号，${i.target_name} 自动接任群主`,
+  group_member_account_deleted: (i) =>
+    `${String(i.payload.name ?? "一位成员")} 注销了账号，已离开群`,
   group_invite_create: (i) =>
     `${i.actor_name} 发了一条邀请链接（可用 ${String(i.payload.max_uses ?? "")} 次）`,
   group_invite_revoke: (i) => `${i.actor_name} 作废了一条邀请链接`,

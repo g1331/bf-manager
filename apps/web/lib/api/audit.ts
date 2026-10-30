@@ -32,6 +32,8 @@ export const GROUP_ACTION_LABEL: Record<string, string> = {
   group_member_join: "加入群",
   group_member_role: "调整群角色",
   group_member_remove: "移出群成员",
+  group_owner_inherit: "接任群主",
+  group_member_account_deleted: "成员注销账号",
   group_leave: "退出群",
   group_invite_create: "发群邀请链接",
   group_invite_revoke: "作废群邀请链接",
@@ -44,6 +46,9 @@ export const SITE_ACTION_LABEL: Record<string, string> = {
   site_registration_mode: "切换注册方式",
   user_freeze: "冻结账号",
   user_unfreeze: "解冻账号",
+  account_delete_request: "申请注销",
+  account_delete_cancel: "撤销注销",
+  account_delete: "删除账号",
 };
 
 /** 审计列表“游戏”一列：群组、站点操作不属于某个游戏 */

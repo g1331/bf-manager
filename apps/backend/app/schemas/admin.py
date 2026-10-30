@@ -114,6 +114,8 @@ class AdminUserItem(BaseModel):
     frozen_at: datetime | None
     frozen_reason: str | None
     frozen_by_name: str | None
+    # 本人申请注销时的计划删除时间
+    deletion_scheduled_at: datetime | None
 
 
 class AdminUserPage(BaseModel):

@@ -19,7 +19,7 @@ from app.schemas.admin import (
     RegistrationSettingResponse,
     UserFreezeRequest,
 )
-from app.services import site_settings_service, user_admin_service
+from app.services import account_deletion_service, site_settings_service, user_admin_service
 from app.services.account_service import primary_binding
 from app.services.metrics_service import read_metrics
 
@@ -88,6 +88,7 @@ def _user_item(row: user_admin_service.UserRow) -> AdminUserItem:
         frozen_at=user.frozen_at,
         frozen_reason=user.frozen_reason,
         frozen_by_name=row.frozen_by_name,
+        deletion_scheduled_at=user.deletion_scheduled_at,
     )
 
 
@@ -122,3 +123,9 @@ async def unfreeze_user(
 ) -> AdminUserItem:
     row = await user_admin_service.unfreeze(db, user, user_id, ip=client_ip(request))
     return _user_item(row)
+
+
+@router.post("/users/{user_id}/delete", status_code=204)
+async def delete_user(user_id: int, user: CurrentAdmin, db: DbDep, request: Request) -> None:
+    """删除已冻结的账号，立即生效、不可恢复"""
+    await account_deletion_service.admin_delete(db, user, user_id, ip=client_ip(request))

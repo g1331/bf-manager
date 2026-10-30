@@ -69,6 +69,16 @@ class ChangePasswordRequest(BaseModel):
     new_password: str = Field(..., min_length=1, max_length=256)
 
 
+class DeleteAccountRequest(BaseModel):
+    password: str = Field(..., min_length=1, max_length=256)
+    # 要手动输入“注销”两个字
+    confirm: str = Field(..., max_length=16)
+
+
+class DeleteAccountResponse(BaseModel):
+    delete_at: datetime
+
+
 class CookieBindResponse(BaseModel):
     # true：这个 EA 号原来挂在旧账号上，已经把邮箱和密码挪过去，需要重新登录
     claimed: bool = False

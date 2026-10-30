@@ -622,7 +622,7 @@ async def process_reset_request(
             if (
                 user is None
                 or user.status != "active"
-                or user.is_frozen
+                or _frozen_by_admin(user)
                 or not user.is_active
                 or primary_binding(user) is None
             ):
@@ -855,7 +855,7 @@ async def _finish_claim(db: AsyncSession, row: EmailVerification, password: str)
 
 async def _finish_reset(db: AsyncSession, row: EmailVerification, password: str) -> User:
     user = await lock_user(db, row.user_id) if row.user_id is not None else None
-    if user is None or user.status != "active" or user.is_frozen or not user.is_active:
+    if user is None or user.status != "active" or _frozen_by_admin(user) or not user.is_active:
         raise AccountError("LINK_INVALID", "链接无效或已过期，请重新申请", 404)
     user.local_password_hash = hash_password(password)
     user.last_login_at = _now()
@@ -867,12 +867,34 @@ async def _finish_reset(db: AsyncSession, row: EmailVerification, password: str)
 # ===== 登录、改密码、登出所有设备 =====
 
 
+def _frozen_by_admin(user: User) -> bool:
+    """注销冷静期也是冻结状态，但允许找回密码：忘了密码也能登录撤销注销"""
+    return user.is_frozen and user.deletion_scheduled_at is None
+
+
+def pending_deletion_error(user: User) -> AppError:
+    """冷静期内用正确的密码登录：告诉他什么时候删、可以撤销"""
+    assert user.deletion_scheduled_at is not None
+    delete_at = user.deletion_scheduled_at
+    if delete_at.tzinfo is None:
+        delete_at = delete_at.replace(tzinfo=UTC)
+    return AppError(
+        403,
+        "ACCOUNT_DELETION_PENDING",
+        f"这个账号已申请注销，将在 {templates.format_time(delete_at)}（北京时间）删除",
+        details={"delete_at": delete_at.isoformat()},
+    )
+
+
 async def login_with_email(db: AsyncSession, email: str, password: str) -> User:
     user = await db.scalar(
         select(User).options(selectinload(User.ea_bindings)).where(func.lower(User.email) == email)
     )
     # 不管账号在不在都做一次 bcrypt，响应时间不泄露邮箱是否注册过
     password_ok = verify_password_timing_safe(password, user.local_password_hash if user else None)
+    if user is not None and password_ok and user.deletion_scheduled_at is not None:
+        # 密码对了才告诉他账号在注销冷静期，登录页据此提供“撤销注销”
+        raise pending_deletion_error(user)
     if (
         user is None
         or not password_ok

@@ -16,13 +16,15 @@ from httpx import ASGITransport, AsyncClient
 # 不需要通用限流的公开接口：
 # - healthz、games 不碰 EA 也不读业务数据
 # - session 只解当前 cookie，每个页面都会调
-# - local-login、email-login 有按账号和 IP 的失败锁定（login_throttle），比固定窗口更合适
+# - local-login、email-login、cancel-deletion 有按账号和 IP 的失败锁定（login_throttle），
+#   比固定窗口更合适
 _EXEMPT = {
     health.healthz,
     games.get_games,
     auth.session,
     auth.local_login,
     auth.email_login,
+    auth.cancel_deletion,
 }
 
 

@@ -118,9 +118,7 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        {/* 右侧好友 / 派对侧栏：恒定占据展开宽度，主内容据此收窄、为右侧留白；
-            悬浮后在这片预留区内原地铺出面板，不挤压也不覆盖主内容；
-            社交数据待桌面端客户端接口接入。 */}
+        {/* 右侧好友 / 派对侧栏：默认收起成一条窄边，点开后面板浮在主内容之上 */}
         <FriendsRail />
       </div>
 

@@ -30,7 +30,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.errors import ForbiddenError
 from app.domain.games.bf1.gateway import BF1GatewayClient
-from app.models import User
+from app.models import GroupEaAccount, User
 from app.services import group_server_service
 from app.services.bf1.gateway_factory import (
     get_bf1_client,
@@ -282,16 +282,12 @@ class GroupFirstBF1ClientProvider:
                 client = await cm.__aenter__()
             except Exception as exc:
                 logger.warning("服务账号 {} 登录异常: {!r}", account.persona_id, exc)
-                await group_server_service.record_account_result(
-                    self.db, account, False, "登录异常"
-                )
+                await self._record_failure(account, "登录异常")
                 continue
             try:
                 if not client.access_token:
-                    await group_server_service.record_account_result(
-                        self.db, account, False, "登录失败"
-                    )
                     await cm.__aexit__(None, None, None)
+                    await self._record_failure(account, "登录失败")
                     continue
                 await group_server_service.record_account_result(self.db, account, True)
                 if not await _probe_rsp(client, self.game_id):
@@ -307,3 +303,9 @@ class GroupFirstBF1ClientProvider:
                 raise
             return cm, client, account.persona_id
         return None
+
+    async def _record_failure(self, account: GroupEaAccount, error: str) -> None:
+        """登录失败计数马上提交：这次请求多半以 403 收场，跟着请求回滚的话永远攒不到失效阈值。
+        取执行账号发生在服管操作之前，此时会话里只有鉴权顺手写的数据，一并提交无妨"""
+        await group_server_service.record_account_result(self.db, account, False, error)
+        await self.db.commit()

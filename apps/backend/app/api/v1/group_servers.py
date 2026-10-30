@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import Annotated
 
 from fastapi import APIRouter, Query, Request
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.client_ip import client_ip
 from app.api.deps import CurrentUser, DbDep
@@ -19,7 +20,7 @@ from app.domain.ea.login.schemas import (
     EALoginTaskSelectMethodRequest,
     EALoginTaskSubmitCodeRequest,
 )
-from app.models import GroupEaAccount
+from app.models import GroupEaAccount, User
 from app.schemas.group import (
     GroupAccountCookieRequest,
     GroupAccountItem,
@@ -140,13 +141,26 @@ async def create_account_login_task(
     )
 
 
+async def _guard_task(db: AsyncSession, group_id: int, task_id: str, user: User) -> None:
+    """后续每一步都重新确认：还是这个群的群主，任务也是给这个群开的"""
+    await require_member(db, group_id, user, "owner")
+    login_tasks.require_target(
+        task_id, actor_kind="group", actor_id=user.id, target_account_id=group_id
+    )
+    # 马上结束事务把连接还回池里：查询任务可能长轮询几十秒。用 commit 而不是 rollback，
+    # rollback 会让 user 等已加载对象过期，后面再读属性就要在异步上下文外查库
+    await db.commit()
+
+
 @router.get("/{group_id}/accounts/login-tasks/{task_id}", response_model=EALoginTaskResponse)
 async def get_account_login_task(
     group_id: int,
     task_id: str,
     user: CurrentUser,
+    db: DbDep,
     since_version: Annotated[int | None, Query(ge=0)] = None,
 ) -> EALoginTaskResponse:
+    await _guard_task(db, group_id, task_id, user)
     return await login_tasks.get_state(
         task_id, actor_kind="group", actor_id=user.id, since_version=since_version
     )
@@ -156,8 +170,13 @@ async def get_account_login_task(
     "/{group_id}/accounts/login-tasks/{task_id}/2fa-method", response_model=EALoginTaskResponse
 )
 async def submit_account_login_method(
-    group_id: int, task_id: str, payload: EALoginTaskSelectMethodRequest, user: CurrentUser
+    group_id: int,
+    task_id: str,
+    payload: EALoginTaskSelectMethodRequest,
+    user: CurrentUser,
+    db: DbDep,
 ) -> EALoginTaskResponse:
+    await _guard_task(db, group_id, task_id, user)
     return await login_tasks.submit_method(
         task_id, actor_kind="group", actor_id=user.id, payload=payload
     )
@@ -167,8 +186,13 @@ async def submit_account_login_method(
     "/{group_id}/accounts/login-tasks/{task_id}/2fa-code", response_model=EALoginTaskResponse
 )
 async def submit_account_login_code(
-    group_id: int, task_id: str, payload: EALoginTaskSubmitCodeRequest, user: CurrentUser
+    group_id: int,
+    task_id: str,
+    payload: EALoginTaskSubmitCodeRequest,
+    user: CurrentUser,
+    db: DbDep,
 ) -> EALoginTaskResponse:
+    await _guard_task(db, group_id, task_id, user)
     return await login_tasks.submit_code(
         task_id, actor_kind="group", actor_id=user.id, payload=payload
     )
@@ -178,8 +202,9 @@ async def submit_account_login_code(
     "/{group_id}/accounts/login-tasks/{task_id}/cancel", response_model=EALoginTaskResponse
 )
 async def cancel_account_login_task(
-    group_id: int, task_id: str, user: CurrentUser
+    group_id: int, task_id: str, user: CurrentUser, db: DbDep
 ) -> EALoginTaskResponse:
+    await _guard_task(db, group_id, task_id, user)
     return await login_tasks.cancel_task(task_id, actor_kind="group", actor_id=user.id)
 
 

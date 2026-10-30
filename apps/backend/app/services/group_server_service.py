@@ -744,18 +744,27 @@ async def _recheck_rows(
     return problems
 
 
-async def _recheck_groups(db: AsyncSession, group_ids: list[int]) -> dict[int, list[str]]:
-    problems: dict[int, list[str]] = {}
+async def _recheck_group(db: AsyncSession, group_id: int) -> list[str]:
+    """复核一个群，返回新出现的问题。
+
+    全程持有群锁，和挂服、换执行账号、改凭据串行：否则复核拿着旧的挂服人算出的结果，
+    会把群主刚重新挂上的服又标成失效。锁住后重新读取，不用会话里缓存的旧对象"""
+    await _lock_group(db, group_id)
+    problems: list[str] = []
     accounts = list(
         (
-            await db.scalars(select(GroupEaAccount).where(GroupEaAccount.group_id.in_(group_ids)))
+            await db.scalars(
+                select(GroupEaAccount)
+                .where(GroupEaAccount.group_id == group_id)
+                .execution_options(populate_existing=True)
+            )
         ).all()
     )
     for account in accounts:
         was = account.status
         await _check_account(db, account)
         if was == "ok" and account.status == "invalid":
-            problems.setdefault(account.group_id, []).append(
+            problems.append(
                 f"服务账号 {account.display_name or account.persona_id} 连续登录失败，"
                 "需要重新提交凭据"
             )
@@ -763,18 +772,18 @@ async def _recheck_groups(db: AsyncSession, group_ids: list[int]) -> dict[int, l
         await db.execute(
             select(GroupServer, Server)
             .join(Server, Server.id == GroupServer.server_pk)
-            .where(GroupServer.group_id.in_(group_ids))
+            .where(GroupServer.group_id == group_id)
+            .execution_options(populate_existing=True)
         )
     ).all()
-    for gid, lines in (await _recheck_rows(db, [(gs, s) for gs, s in rows])).items():
-        problems.setdefault(gid, []).extend(lines)
+    problems += (await _recheck_rows(db, [(gs, s) for gs, s in rows])).get(group_id, [])
     return problems
 
 
 async def recheck_group(db: AsyncSession, group_id: int, actor: User) -> list[GroupServerView]:
     """群主手动复核：结果直接显示在页面上，不另发邮件"""
     await require_member(db, group_id, actor, "owner")
-    await _recheck_groups(db, [group_id])
+    await _recheck_group(db, group_id)
     await db.commit()
     return await list_servers(db, group_id, actor)
 
@@ -818,13 +827,12 @@ async def recheck_all(db: AsyncSession) -> None:
     )
     for gid in group_ids:
         try:
-            problems = await _recheck_groups(db, [gid])
+            lines = await _recheck_group(db, gid)
             await db.commit()
         except Exception as e:
             await db.rollback()
             logger.warning("群 {} 复核失败: {!r}", gid, e)
             continue
-        lines = problems.get(gid)
         if lines:
             await _notify(db, gid, lines)
 

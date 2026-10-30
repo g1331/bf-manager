@@ -10,14 +10,27 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 import pytest
+from app.core.security import get_cipher
 from app.domain.ea.login.exceptions import EALoginError
+from app.domain.ea.login.task_manager import EALoginTaskManager, _TaskState
 from app.domain.games.bf1 import client_provider as cp
-from app.models import AuditLog, GroupEaAccount, GroupServer, User
+from app.models import (
+    AuditLog,
+    GroupEaAccount,
+    GroupMember,
+    GroupServer,
+    Server,
+    ServerMembership,
+    User,
+)
+from app.services import ea_login_task_service as login_task_service
 from app.services import group_server_service as gss
 from app.services.auth_service import AuthService, EaIdentity
+from app.services.bf1 import gateway_factory
 from app.services.bf1 import server_service as ss_module
+from app.services.bf1 import timed_vip_service as tvs
 from app.services.ea_login_finalizer import EALoginFinalizer
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import selectinload
 
 from tests.test_accounts import _active_user, _login_cookie
@@ -196,19 +209,23 @@ async def test_provider_counts_login_failures_and_has_no_pool_fallback(
     await _add_account(ac, gid)
     await _bind(ac, gid)
     ea.broken = {SERVICE_PID}
+    bob_id = bob.id
 
-    user = await _load(test_session, alice.id)
+    alice_id = alice.id
     for _ in range(gss.ACCOUNT_FAILURE_LIMIT):
+        user = await _load(test_session, alice_id)
         provider = cp.GroupFirstBF1ClientProvider(test_session, user=user, game_id=GAME_ID)
         with pytest.raises(cp.ExecutorUnavailableError):
             async with provider.acquire():
                 pass
+        # 请求以 403 收场，get_db 会回滚：失败计数不能跟着丢
+        await test_session.rollback()
     account = await test_session.scalar(select(GroupEaAccount))
     await test_session.refresh(account)
     assert account.status == "invalid" and account.failure_count == gss.ACCOUNT_FAILURE_LIMIT
 
     # 不在群里的人借不到群的账号
-    outsider = await _load(test_session, bob.id)
+    outsider = await _load(test_session, bob_id)
     assert await gss.executor_accounts_for(test_session, outsider, game_id=GAME_ID) == []
 
 
@@ -332,3 +349,93 @@ async def test_non_member_gets_404_on_group_server_routes(env, test_session, ea)
         _login_cookie(ac, user)
         assert (await ac.get(f"{API}/groups/{gid}/servers")).status_code == 404
         assert (await ac.get(f"{API}/groups/{gid}/accounts")).status_code == 404
+
+
+async def test_recheck_uses_current_binder_not_stale_session_copy(env, test_session, ea) -> None:
+    ac, _, _, alice, _, gid = await _group_with_alice(env, test_session)
+    await _add_account(ac, gid)
+    await _bind(ac, gid)
+    stale = await test_session.scalar(select(GroupServer))
+    assert stale.bound_by_user_id != alice.id
+
+    # 复核期间绑定被别人改挂（这里直接改库，会话里的对象还是旧的挂服人）
+    await test_session.execute(
+        update(GroupServer)
+        .where(GroupServer.id == stale.id)
+        .values(bound_by_user_id=alice.id)
+        .execution_options(synchronize_session=False)
+    )
+    await test_session.commit()
+    ea.admins = {ALICE_PID, SERVICE_PID}
+    await gss.recheck_all(test_session)
+    gs = await test_session.scalar(select(GroupServer))
+    await test_session.refresh(gs)
+    assert gs.bound_by_user_id == alice.id and gs.status == "active"
+
+
+async def test_timed_vip_candidates_include_group_members(env, test_session, ea) -> None:
+    ac, _, owner, alice, _, gid = await _group_with_alice(env, test_session)
+    await _add_account(ac, gid)
+    await _bind(ac, gid)
+    server = await test_session.scalar(select(Server))
+    users = await tvs._executors(test_session, server, [])
+    # 群成员没有 ServerMembership，也要能接手下 V；群主在前
+    assert [u.id for u in users] == [owner.id, alice.id]
+
+
+async def test_group_account_with_empty_sid_still_logs_in(test_session, monkeypatch) -> None:
+    calls: list[tuple[str, str]] = []
+
+    async def fake_login(self, remid, sid):
+        calls.append((remid, sid))
+        self.access_token = "token"
+        return "session"
+
+    monkeypatch.setattr(gateway_factory.BF1GatewayClient, "login", fake_login)
+    cipher = get_cipher()
+    account = GroupEaAccount(
+        group_id=1,
+        persona_id=8008,
+        encrypted_remid=cipher.encrypt("remid-only"),
+        encrypted_sid=cipher.encrypt(""),
+    )
+    async with gateway_factory.get_bf1_client_for_group_account(test_session, account) as client:
+        assert client.access_token == "token"
+    assert calls == [("remid-only", "")]
+
+
+async def test_login_task_routes_check_group_and_owner(env, test_session, ea, monkeypatch) -> None:
+    ac, _, owner, _, _, gid = await _group_with_alice(env, test_session)
+    other_gid = (await ac.post(f"{API}/groups", json={"name": "另一个群"})).json()["id"]
+    mgr = EALoginTaskManager(finalizer=None, ttl_seconds=60, wait_seconds=1, long_poll_seconds=1)
+    monkeypatch.setattr(login_task_service, "get_task_manager", lambda: mgr)
+    mgr._tasks["t-1"] = _TaskState(
+        task_id="t-1", actor_kind="group", actor_id=owner.id, engine=None, target_account_id=gid
+    )
+    assert (await ac.get(f"{API}/groups/{gid}/accounts/login-tasks/t-1")).status_code == 200
+    # 换成自己的另一个群：任务不是给它开的
+    url = f"{API}/groups/{other_gid}/accounts/login-tasks/t-1"
+    assert (await ac.get(url)).status_code == 404
+    assert (await ac.post(f"{url}/cancel")).status_code == 404
+
+    # 不再是群主就不能继续推进
+    await test_session.execute(
+        update(GroupMember)
+        .where(GroupMember.group_id == gid, GroupMember.user_id == owner.id)
+        .values(role="admin")
+    )
+    await test_session.commit()
+    assert (await ac.get(f"{API}/groups/{gid}/accounts/login-tasks/t-1")).status_code == 403
+
+
+async def test_my_servers_raises_lower_role_to_group_admin(env, test_session, ea) -> None:
+    ac, _, _, alice, _, gid = await _group_with_alice(env, test_session)
+    await _add_account(ac, gid)
+    await _bind(ac, gid)
+    server = await test_session.scalar(select(Server))
+    test_session.add(ServerMembership(user_id=alice.id, server_pk=server.id, role="moderator"))
+    await test_session.commit()
+
+    _login_cookie(ac, alice)
+    mine = (await ac.get(f"{API}/bf1/server-admin/mine")).json()["items"]
+    assert [(i["role"], i["via_group"]) for i in mine] == [("admin", "测试 群")]

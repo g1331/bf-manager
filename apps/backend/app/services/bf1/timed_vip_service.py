@@ -32,7 +32,7 @@ from app.domain.games.bf1.client_provider import (
     GroupFirstBF1ClientProvider,
 )
 from app.domain.games.bf1.maps import operation_maps
-from app.models import Server, ServerMembership, User
+from app.models import GroupMember, GroupServer, Server, ServerMembership, User
 from app.models.bf1 import Bf1ServerVip
 from app.schemas.bf1.admin import (
     TimedVipItem,
@@ -570,7 +570,7 @@ def _mark_failed(rows: list[Bf1ServerVip], message: str, now: datetime) -> None:
 
 
 async def _executors(db: AsyncSession, server: Server, rows: list[Bf1ServerVip]) -> list[User]:
-    """代为下 V 的候选人：授予人优先（最近改过的在前），再是本服其他服主 / 管理员。"""
+    """代为下 V 的候选人：授予人优先（最近改过的在前），再是本服其他服主 / 管理员、挂着本服的群的成员。"""
     ids: list[int] = []
     for row in sorted(rows, key=lambda r: _aware(r.updated_at) or _now(), reverse=True):
         if row.granted_by_user_id and row.granted_by_user_id not in ids:
@@ -582,6 +582,14 @@ async def _executors(db: AsyncSession, server: Server, rows: list[Bf1ServerVip])
         )
     )
     ids += [uid for uid in members if uid not in ids]
+    # 群成员在挂上的服上是管理员，但不写 ServerMembership：授予人退群后要靠他们接手，群主在前
+    group_members = await db.scalars(
+        select(GroupMember.user_id)
+        .join(GroupServer, GroupServer.group_id == GroupMember.group_id)
+        .where(GroupServer.server_pk == server.id, GroupServer.status == "active")
+        .order_by((GroupMember.role == "owner").desc(), GroupMember.id)
+    )
+    ids += [uid for uid in group_members if uid not in ids]
     if not ids:
         return []
     users = {

@@ -186,7 +186,8 @@ async def get_bf1_client_for_group_account(
     )
     _restore_login_state(client, account.persona_id, remid)
     try:
-        if not client.access_token and remid and sid:
+        # sid 可以为空：添加时允许只填 remid，EA 登录后会下发新的 sid，经 _on_refresh 写回
+        if not client.access_token and remid:
             await client.login(remid, sid)
         yield client
     finally:

@@ -18,6 +18,7 @@ from app.models import (
 )
 from app.schemas.bf1.admin import MyServerItem
 from app.schemas.membership import MembershipItem
+from app.services.authz_service import ROLE_LEVEL
 
 _ALLOWED_ROLES = {"viewer", "moderator", "admin", "owner"}
 
@@ -98,8 +99,8 @@ class MembershipService:
             )
             for m, s in rows
         ]
-        # 挂在自己所在群上的服：群里的人在上面是管理员
-        seen = {i.server_pk for i in items}
+        # 挂在自己所在群上的服：群里的人在上面是管理员，和已有角色取高的
+        by_pk = {i.server_pk: i for i in items}
         user = await self.db.get(User, user_id)
         if user is None or (user.role != "admin" and user.status != "active"):
             return items
@@ -118,20 +119,22 @@ class MembershipService:
             )
         ).all()
         for s, group_name in group_rows:
-            if s.id in seen:
+            existing = by_pk.get(s.id)
+            if existing is not None:
+                if ROLE_LEVEL.get(existing.role, 0) < ROLE_LEVEL["admin"]:
+                    existing.role = "admin"
+                    existing.via_group = group_name
                 continue
-            seen.add(s.id)
-            items.append(
-                MyServerItem(
-                    server_pk=s.id,
-                    game=s.game,
-                    server_id=s.server_id,
-                    game_id=s.game_id,
-                    name=s.name,
-                    role="admin",
-                    via_group=group_name,
-                )
+            by_pk[s.id] = item = MyServerItem(
+                server_pk=s.id,
+                game=s.game,
+                server_id=s.server_id,
+                game_id=s.game_id,
+                name=s.name,
+                role="admin",
+                via_group=group_name,
             )
+            items.append(item)
         return items
 
     async def upsert(

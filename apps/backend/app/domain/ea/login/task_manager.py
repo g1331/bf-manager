@@ -256,6 +256,14 @@ class EALoginTaskManager:
                     await state.cleanup_handle
         self._tasks.clear()
 
+    def require_target(
+        self, task_id: str, *, actor_kind: ActorKind, actor_id: int, target_account_id: int
+    ) -> None:
+        """任务属于该 actor，且目标就是 target_account_id（group 任务里是群 id）"""
+        state = self._require_owned(task_id, actor_kind, actor_id)
+        if state.target_account_id != target_account_id:
+            raise _MissingTaskError()
+
     # ===== 内部：owner 校验 =====
 
     def _require_owned(self, task_id: str, actor_kind: ActorKind, actor_id: int) -> _TaskState:

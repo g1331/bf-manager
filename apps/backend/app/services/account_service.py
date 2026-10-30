@@ -313,8 +313,27 @@ async def _consume_group_invite_quota(db: AsyncSession, invite_id: int, user: Us
     await db.flush()
 
 
+async def _join_group_for_register(db: AsyncSession, invite_id: int, user: User) -> None:
+    """靠群邀请注册的新账号必须进得了群：链接的次数、有效期、作废状态在这里和建号同一个事务里
+    原子地扣、查。进不了就抛错，整个注册回滚（验证链接也不算用掉），不会出现
+    「一次性链接发出多封验证信、每封都能建号」或者「链接作废后还能靠旧验证信建号」。
+    """
+    invite = await db.get(GroupInvite, invite_id)
+    if invite is None:
+        raise AccountError("INVITE_INVALID", "群邀请链接已失效，请向群管理要新链接后重新注册")
+    try:
+        await group_service.join_with_invite(db, invite, user, commit=False)
+    except group_service.GroupError as e:
+        if e.code == "GROUP_FULL":
+            raise AccountError("INVITE_INVALID", "这个群人数已满，不能用这个链接注册") from e
+        raise AccountError(
+            "INVITE_INVALID",
+            "群邀请链接已经用完、过期或被作废，请向群管理要新链接后重新注册",
+        ) from e
+
+
 async def _join_group_quietly(db: AsyncSession, invite_id: int, user: User) -> None:
-    """注册 / 认领完成时顺便进群。链接这时已经用完或过期就不进，不影响账号本身"""
+    """认领旧账号完成时顺便进群。旧账号本来就在，链接这时已经用完或过期就只是不进群，不影响认领"""
     invite = await db.get(GroupInvite, invite_id)
     if invite is None:
         return
@@ -769,8 +788,9 @@ async def _finish_register(db: AsyncSession, row: EmailVerification, password: s
             )
         )
     if payload.get("group_invite_id"):
+        # 先进群（锁群行、扣链接次数），再扣发链接人的名额（锁发链接人）；任一步失败整体回滚
+        await _join_group_for_register(db, int(payload["group_invite_id"]), user)
         await _consume_group_invite_quota(db, int(payload["group_invite_id"]), user)
-        await _join_group_quietly(db, int(payload["group_invite_id"]), user)
     elif payload.get("invite_id"):
         await _consume_invite(db, int(payload["invite_id"]), user.id)
     await db.flush()

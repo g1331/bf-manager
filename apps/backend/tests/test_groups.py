@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 
-from app.models import GroupMember, InviteCode
+from app.models import GroupMember, InviteCode, User
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from tests.test_accounts import _active_user, _login_cookie, _token_from
 
@@ -165,6 +166,74 @@ async def test_register_through_group_invite_joins_and_uses_quota(env, test_sess
     _login_cookie(ac, owner)
     items = (await ac.get(f"{API}/me/invite-codes")).json()["items"]
     assert [i["via_group_link"] for i in items if i["code"] == quota_row.code] == [True]
+
+
+async def _register_mail(ac, outbox, email: str, token: str) -> str:
+    resp = await ac.post(
+        f"{API}/auth/register",
+        json={"email": email, "mode": "plain", "group_invite_token": token},
+    )
+    assert resp.status_code == 202
+    return _token_from(outbox)
+
+
+async def test_one_use_link_cannot_register_two_accounts(env, test_session) -> None:
+    """一次性链接在有人完成注册前发出了两封验证信：只有先完成的能建号，后一个整体回滚"""
+    ac, outbox, owner, _, _, gid = await _setup(env, test_session)
+    token = await _invite(ac, gid, max_uses=1)
+    ac.cookies.clear()
+    first = await _register_mail(ac, outbox, "first@example.com", token)
+    second = await _register_mail(ac, outbox, "second@example.com", token)
+
+    resp = await ac.post(
+        f"{API}/auth/verifications/confirm", json={"token": first, "password": "first-pass1"}
+    )
+    assert resp.status_code == 200, resp.text
+    ac.cookies.clear()
+    resp = await ac.post(
+        f"{API}/auth/verifications/confirm", json={"token": second, "password": "second-pass1"}
+    )
+    assert resp.status_code == 400
+    assert resp.json()["error"]["code"] == "INVITE_INVALID"
+
+    emails = {
+        m.user.email
+        for m in (
+            await test_session.scalars(
+                select(GroupMember)
+                .options(selectinload(GroupMember.user))
+                .where(GroupMember.group_id == gid)
+            )
+        ).all()
+    }
+    assert emails == {"owner@example.com", "first@example.com"}
+    assert (
+        await test_session.scalar(select(User.id).where(User.email == "second@example.com")) is None
+    )
+    # 只记了一次名额
+    used = await test_session.scalars(select(InviteCode).where(InviteCode.created_by == owner.id))
+    assert len(used.all()) == 1
+
+
+async def test_revoked_link_blocks_pending_registration(env, test_session) -> None:
+    """验证信发出后链接被作废：旧验证信不能再建号"""
+    ac, outbox, owner, _, _, gid = await _setup(env, test_session)
+    token = await _invite(ac, gid, max_uses=3)
+    invite_id = (await ac.get(f"{API}/groups/{gid}/invites")).json()["items"][0]["id"]
+    ac.cookies.clear()
+    mail_token = await _register_mail(ac, outbox, "late@example.com", token)
+
+    _login_cookie(ac, owner)
+    assert (await ac.post(f"{API}/groups/{gid}/invites/{invite_id}/revoke")).status_code == 204
+    ac.cookies.clear()
+    resp = await ac.post(
+        f"{API}/auth/verifications/confirm", json={"token": mail_token, "password": "late-pass12"}
+    )
+    assert resp.status_code == 400
+    assert resp.json()["error"]["code"] == "INVITE_INVALID"
+    assert (
+        await test_session.scalar(select(User.id).where(User.email == "late@example.com")) is None
+    )
 
 
 async def test_group_invite_cannot_register_when_creator_out_of_quota(env, test_session) -> None:

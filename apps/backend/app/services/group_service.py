@@ -29,6 +29,7 @@ from app.api.errors import AppError, NotFoundError
 from app.core.config import get_settings
 from app.models import AuditLog, EaBinding, Group, GroupInvite, GroupMember, User
 from app.services.authz_service import ROLE_LEVEL
+from app.services.user_service import lock_user
 
 AUDIT_GAME = "group"
 INVITE_TTL_HOURS = (1, 24, 72, 168)
@@ -185,6 +186,8 @@ def _clean_name(name: str) -> str:
 async def create_group(db: AsyncSession, user: User, name: str, ip: str | None = None) -> Group:
     name = _clean_name(name)
     if user.role != "admin":
+        # 锁住建群人再数：同一个人并发建群时排队，不会一起看到「还差一个」而超出上限
+        await lock_user(db, user.id)
         if await _persona_of(db, user.id) == 0:
             raise GroupError("GROUP_NEED_BINDING", "绑定 EA 账号后才能建群", 403)
         owned = await db.scalar(
@@ -209,8 +212,9 @@ async def create_group(db: AsyncSession, user: User, name: str, ip: str | None =
 async def rename_group(
     db: AsyncSession, group_id: int, user: User, name: str, ip: str | None = None
 ) -> Group:
-    await require_member(db, group_id, user, "owner")
+    # 先锁群再查身份：等锁期间被降级、移出的人，拿到锁后读到的是新身份
     group = await _lock_group(db, group_id)
+    await require_member(db, group_id, user, "owner")
     old, group.name = group.name, _clean_name(name)
     await _audit(
         db,
@@ -225,8 +229,8 @@ async def rename_group(
 
 
 async def delete_group(db: AsyncSession, group_id: int, user: User, ip: str | None = None) -> None:
-    await require_member(db, group_id, user, "owner")
     group = await _lock_group(db, group_id)
+    await require_member(db, group_id, user, "owner")
     await _audit(
         db,
         actor=user,
@@ -369,6 +373,7 @@ async def create_invite(
 ) -> tuple[GroupInvite, str]:
     """返回 (邀请行, 明文 token)。明文只在这一次返回给前端，库里只存哈希。"""
     settings = get_settings()
+    await _lock_group(db, group_id)
     me = await require_member(db, group_id, actor, "admin")
     if role not in ROLE_LEVEL or role == "owner" or _level(role) >= _level(me.role):
         raise GroupError("GROUP_ROLE_INVALID", "链接上的角色要低于你自己的角色")
@@ -376,7 +381,6 @@ async def create_invite(
         raise GroupError("GROUP_INVITE_USES", f"每条链接最多用 {settings.group_invite_max_uses} 次")
     if ttl_hours not in INVITE_TTL_HOURS:
         raise GroupError("GROUP_INVITE_TTL", "有效期无效")
-    await _lock_group(db, group_id)
     live = [i for i in await _invites(db, group_id) if invite_is_live(i)]
     if len(live) >= settings.group_invite_active_limit:
         raise GroupError(
@@ -431,6 +435,7 @@ async def list_live_invites(db: AsyncSession, group_id: int, actor: User) -> lis
 async def revoke_invite(
     db: AsyncSession, group_id: int, invite_id: int, actor: User, ip: str | None = None
 ) -> None:
+    await _lock_group(db, group_id)
     me = await require_member(db, group_id, actor, "admin")
     invite = await db.get(GroupInvite, invite_id)
     if invite is None or invite.group_id != group_id:

@@ -124,6 +124,8 @@ async def assert_upgraded() -> None:
             "group_members",
             "group_invites",
             "site_settings",
+            "group_ea_accounts",
+            "group_servers",
         ):
             reg = (await conn.execute(text(f"SELECT to_regclass('public.{table}')"))).scalar_one()
             assert reg is not None, f"{table} missing"
@@ -138,6 +140,17 @@ async def assert_upgraded() -> None:
             )
         ).scalar_one_or_none()
         assert group_idx is not None, "audit_logs.group_id index missing"
+
+        # 10. 0021：审计记 EA 侧实际执行的账号
+        executor_col = (
+            await conn.execute(
+                text(
+                    "SELECT 1 FROM information_schema.columns "
+                    "WHERE table_name='audit_logs' AND column_name='executor_persona_id'"
+                )
+            )
+        ).scalar_one_or_none()
+        assert executor_col is not None, "audit_logs.executor_persona_id missing"
 
     await engine.dispose()
     print("assert_upgraded: all checks passed")

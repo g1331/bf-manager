@@ -61,6 +61,17 @@ async def create_task(
         )
 
 
+def require_target(
+    task_id: str, *, actor_kind: ActorKind, actor_id: int, target_account_id: int
+) -> None:
+    """任务不属于该 actor 或目标不符时按任务不存在处理（404）"""
+    mgr = get_task_manager()
+    with _map_errors():
+        mgr.require_target(
+            task_id, actor_kind=actor_kind, actor_id=actor_id, target_account_id=target_account_id
+        )
+
+
 async def get_state(
     task_id: str,
     *,

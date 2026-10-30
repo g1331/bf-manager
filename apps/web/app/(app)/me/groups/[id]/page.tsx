@@ -34,6 +34,7 @@ import {
 } from "@/lib/api/groups";
 import { ApiException } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
+import { AccountsSection, ServersSection } from "./ServerSections";
 
 const ALL_ROLES: GroupRole[] = ["owner", "admin"];
 
@@ -341,7 +342,25 @@ const ACTION_TEXT: Record<string, (i: GroupAuditItem) => string> = {
   group_invite_create: (i) =>
     `${i.actor_name} 发了一条邀请链接（可用 ${String(i.payload.max_uses ?? "")} 次）`,
   group_invite_revoke: (i) => `${i.actor_name} 作废了一条邀请链接`,
+  group_account_add: (i) => `${i.actor_name} 添加了服务账号 ${personaText(i)}`,
+  group_account_update: (i) => `${i.actor_name} 更新了服务账号 ${personaText(i)} 的凭据`,
+  group_account_default: (i) => `${i.actor_name} 把 ${personaText(i)} 设为默认服务账号`,
+  group_account_remove: (i) => `${i.actor_name} 删除了服务账号 ${personaText(i)}`,
+  group_server_bind: (i) => `${i.actor_name} 把「${serverText(i)}」挂到群上`,
+  group_server_rebind: (i) => `${i.actor_name} 重新挂上「${serverText(i)}」`,
+  group_server_executor: (i) =>
+    `${i.actor_name} 把「${serverText(i)}」的执行账号换成 ${String(i.payload.executor_name ?? i.payload.executor_persona_id ?? "")}`,
+  group_server_unbind: (i) => `${i.actor_name} 把「${serverText(i)}」从群里移出`,
+  group_server_removed_by_owner: (i) => `服主 ${i.actor_name} 把「${serverText(i)}」从群里移出`,
 };
+
+function personaText(i: GroupAuditItem): string {
+  return String(i.payload.display_name ?? i.payload.persona_id ?? "");
+}
+
+function serverText(i: GroupAuditItem): string {
+  return String(i.payload.server_name ?? `服务器 #${String(i.payload.server_id ?? "")}`);
+}
 
 function AuditSection({ groupId }: { groupId: number }) {
   const [page, setPage] = useState(1);
@@ -548,6 +567,8 @@ export default function GroupDetailPage() {
         </ul>
       </section>
 
+      <ServersSection group={g} />
+      <AccountsSection group={g} />
       {isOwner ? <InviteSection group={g} /> : null}
       <AuditSection groupId={g.id} />
 

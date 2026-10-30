@@ -24,6 +24,7 @@ from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
+from app.api.errors import AppError
 from app.db.session import get_sessionmaker
 from app.domain.ea.login.exceptions import EALoginError, UpstreamError
 from app.domain.ea.login.login_engine import LoginCookies
@@ -31,6 +32,7 @@ from app.domain.ea.login.schemas import EALoginTaskResultData
 from app.domain.ea.login.task_manager import ActorKind
 from app.domain.games.bf1.gateway import BF1GatewayClient
 from app.models import User
+from app.services import group_server_service
 from app.services.ea_account_service import EAAccountService
 from app.services.ea_binding_service import BindingConflictError, EaBindingService
 
@@ -127,6 +129,19 @@ class EALoginFinalizer:
                 claimed=outcome.claimed_user_id is not None,
             )
 
+        if actor_kind == "group":
+            return await self._save_group_account(
+                db,
+                actor_id,
+                target_account_id,
+                persona_id=persona_id,
+                display_name=display_name,
+                avatar_url=avatar_url,
+                remid=refreshed_remid,
+                sid=refreshed_sid,
+                session=session,
+            )
+
         # actor_kind == "admin"
         account = await EAAccountService(db).upsert_after_ea_login(
             persona_id=persona_id,
@@ -137,6 +152,45 @@ class EALoginFinalizer:
             access_token=access_token,
             expected_account_id=target_account_id,
         )
+        return EALoginTaskResultData(
+            persona_id=persona_id,
+            display_name=display_name,
+            avatar_url=avatar_url,
+            account_id=account.id,
+        )
+
+    async def _save_group_account(
+        self,
+        db,
+        actor_id: int,
+        group_id: int | None,
+        *,
+        persona_id: int,
+        display_name: str | None,
+        avatar_url: str | None,
+        remid: str,
+        sid: str,
+        session: str | None,
+    ) -> EALoginTaskResultData:
+        """群主走 EA 账号密码登录添加服务账号：凭据加密存进 group_ea_accounts"""
+        user = await db.scalar(
+            select(User).options(selectinload(User.ea_bindings)).where(User.id == actor_id)
+        )
+        if user is None or group_id is None:
+            raise UpstreamError("发起添加的账号或群组已不存在", stage="finalize")
+        try:
+            account = await group_server_service.save_account(
+                db,
+                group_id,
+                user,
+                persona_id=persona_id,
+                display_name=display_name,
+                remid=remid,
+                sid=sid,
+                session=session,
+            )
+        except AppError as e:
+            raise EALoginError(e.message, stage="finalize", code=e.code) from e
         return EALoginTaskResultData(
             persona_id=persona_id,
             display_name=display_name,

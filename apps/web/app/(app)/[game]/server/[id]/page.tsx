@@ -32,6 +32,7 @@ import {
 } from "@/components/bf1/server-admin/InlineServerAdmin";
 import { SectionNav, useTabHash } from "@/components/bf1/SectionNav";
 import { MembersPanel } from "@/components/bf1/server-admin/MembersPanel";
+import { ServerGroupsPanel } from "@/components/bf1/server-admin/ServerGroupsPanel";
 import { AutoSwitchPanel } from "@/components/bf1/server-detail/AutoSwitchPanel";
 import { LeaderboardPanel } from "@/components/bf1/server-detail/LeaderboardPanel";
 import { RoundsPanel } from "@/components/bf1/server-detail/RoundsPanel";
@@ -332,6 +333,7 @@ function ServerDetailView({
             {tab === "members" && (
               <Panel>
                 <MembersPanel game={game} gameId={gameId} extras={extras} />
+                {isLoggedIn ? <ServerGroupsPanel gameId={gameId} /> : null}
               </Panel>
             )}
             {tab === "audit" && isLoggedIn && (

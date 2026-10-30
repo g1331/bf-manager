@@ -66,8 +66,8 @@ class BF1ServerAdminService:
         self.game_id = game_id
         self.audit = AuditService(db)
         self.authz = ServerAuthzService(db)
-        # 默认走后台账号池；服管路由层注入 BindingFirstBF1ClientProvider 实现
-        # 「发起者 binding 优先、账号池兜底」（https://github.com/g1331/bf-manager/issues/1）。
+        # 默认走后台账号池；服管路由层注入 GroupFirstBF1ClientProvider：
+        # 群组服务账号优先，其次发起者 binding 留存的老凭据，不再拿号池兜底。
         self.client_provider: BF1ClientProvider = client_provider or PooledBF1ClientProvider(db)
         meta = request_meta or {}
         self.ip = meta.get("ip")
@@ -104,6 +104,7 @@ class BF1ServerAdminService:
             result="success",
             ip=self.ip,
             user_agent=self.user_agent,
+            executor_persona_id=getattr(self.client_provider, "executor_persona_id", None),
         )
 
     async def _audit_failure(
@@ -126,6 +127,7 @@ class BF1ServerAdminService:
             error_message=error.message,
             ip=self.ip,
             user_agent=self.user_agent,
+            executor_persona_id=getattr(self.client_provider, "executor_persona_id", None),
         )
 
     async def _resolve_ea_ids(self, client: Any) -> tuple[int | None, str | None]:

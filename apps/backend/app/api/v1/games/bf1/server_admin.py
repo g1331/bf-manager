@@ -6,7 +6,7 @@ from fastapi import APIRouter, Request
 
 from app.api.client_ip import client_ip
 from app.api.deps import CurrentUser, DbDep
-from app.domain.games.bf1.client_provider import BindingFirstBF1ClientProvider
+from app.domain.games.bf1.client_provider import GroupFirstBF1ClientProvider
 from app.schemas.bf1.admin import (
     AdminActionResult,
     BanPlayerRequest,
@@ -22,6 +22,8 @@ from app.schemas.bf1.admin import (
     VipGrantRequest,
 )
 from app.schemas.bf1.auto_switch import AutoSwitchPlan, AutoSwitchView
+from app.schemas.group import ServerGroupItem, ServerGroupListResponse
+from app.services import group_server_service
 from app.services.authz_service import ServerAuthzService
 from app.services.bf1.auto_switch_service import AutoSwitchService
 from app.services.bf1.server_admin_service import BF1ServerAdminService
@@ -63,8 +65,8 @@ def _admin_service(
         user=user,
         game_id=game_id,
         request_meta=_request_meta(request),
-        # 发起者 binding 凭据优先（EA 侧操作者即 admin 本人），不可用时降级账号池
-        client_provider=BindingFirstBF1ClientProvider(db, user=user, game_id=game_id),
+        # 群组服务账号优先，其次发起者 binding 留存的老凭据
+        client_provider=GroupFirstBF1ClientProvider(db, user=user, game_id=game_id),
     )
 
 
@@ -73,13 +75,17 @@ def _vip_service(
     request: Request,
     user: CurrentUser,
     game_id: int,
+    *,
+    pool_fallback: bool = False,
 ) -> TimedVipService:
     return TimedVipService(
         db,
         user=user,
         game_id=game_id,
         request_meta=_request_meta(request),
-        client_provider=BindingFirstBF1ClientProvider(db, user=user, game_id=game_id),
+        client_provider=GroupFirstBF1ClientProvider(
+            db, user=user, game_id=game_id, pool_fallback=pool_fallback
+        ),
     )
 
 
@@ -206,7 +212,8 @@ async def get_timed_vips(
     await ServerAuthzService(db).require_role(
         user=user, game="bf1", server_id=game_id, min_role="moderator"
     )
-    return await _vip_service(db, request, user, game_id).view()
+    # 只读服务器详情，没有群服务账号时用号池也看得到
+    return await _vip_service(db, request, user, game_id, pool_fallback=True).view()
 
 
 @router.post("/{game_id}/vip/apply", response_model=VipApplyResult)
@@ -308,3 +315,41 @@ async def disable_auto_switch(game_id: int, db: DbDep, user: CurrentUser) -> Aut
         user=user, game="bf1", server_id=game_id, min_role="admin"
     )
     return await AutoSwitchService(db).disable(game_id, user)
+
+
+# ===== 服主视图：挂着这台服的群 =====
+
+
+@router.get("/{game_id}/groups", response_model=ServerGroupListResponse)
+async def list_server_groups(game_id: int, db: DbDep, user: CurrentUser) -> ServerGroupListResponse:
+    """服主能看到这台服挂在哪些群上（群名、谁绑的、什么时候）"""
+    await ServerAuthzService(db).require_role(
+        user=user, game="bf1", server_id=game_id, min_role="owner"
+    )
+    views = await group_server_service.list_groups_for_server(db, game_id)
+    return ServerGroupListResponse(
+        items=[
+            ServerGroupItem(
+                group_id=v.group_id,
+                group_name=v.group_name,
+                bound_by_name=v.bound_by_name,
+                bound_via=v.bound_via,  # type: ignore[arg-type]
+                status=v.status,  # type: ignore[arg-type]
+                created_at=v.created_at,
+            )
+            for v in views
+        ]
+    )
+
+
+@router.delete("/{game_id}/groups/{group_id}", status_code=204)
+async def remove_server_from_group(
+    game_id: int, group_id: int, db: DbDep, user: CurrentUser, request: Request
+) -> None:
+    """服主把自己的服从某个群里移出，群成员在这台服上的权限随之失效"""
+    await ServerAuthzService(db).require_role(
+        user=user, game="bf1", server_id=game_id, min_role="owner"
+    )
+    await group_server_service.remove_group_from_server(
+        db, game_id, group_id, user, ip=client_ip(request)
+    )

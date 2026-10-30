@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.errors import EAApiError, NotFoundError
@@ -19,6 +20,8 @@ from app.domain.games.bf1.maps import (
     translate_region,
 )
 from app.domain.games.bf1.server_settings import localize_settings
+from app.models import Server
+from app.models.bf1 import Bf1GameInstance
 from app.schemas.bf1.server import (
     MapRotationItem,
     OperationMap,
@@ -434,3 +437,21 @@ class BF1ServerService:
                 extras=extras,
                 raw=raw,
             )
+
+
+async def current_game_ids(db: AsyncSession, servers: list[Server]) -> dict[int, int]:
+    """每台服最近一次出现的 gameId（实例表按 last_seen 取最新，没有就用 servers 表记的）"""
+    latest: dict[int, int] = {}
+    rows = await db.execute(
+        select(Bf1GameInstance.server_id, Bf1GameInstance.game_id)
+        .where(Bf1GameInstance.server_id.in_([s.server_id for s in servers]))
+        .order_by(Bf1GameInstance.last_seen.desc())
+    )
+    for sid, gid in rows.tuples():
+        latest.setdefault(sid, gid)
+    out: dict[int, int] = {}
+    for s in servers:
+        gid = latest.get(s.server_id) or s.game_id
+        if gid:
+            out[s.id] = gid
+    return out

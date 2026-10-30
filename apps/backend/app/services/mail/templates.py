@@ -305,3 +305,23 @@ def password_changed(*, to: str, forgot_url: str, meta: RequestMeta) -> MailMess
         meta=meta,
         footer="是你本人修改的话，不用理会这封信。",
     )
+
+
+def group_problems(*, to: str, group_name: str, lines: list[str], url: str) -> MailMessage:
+    """群组每日复核发现新问题时发给群主。lines 由调用方 escape"""
+    return _render(
+        to=to,
+        kind="group_problems",
+        subject=f"【{SITE_NAME}】群组「{group_name}」的服务器需要处理",
+        title=f"群组「{group_name}」的服务器需要处理",
+        paragraphs=[
+            "今天的例行检查发现了下面这些问题：",
+            *(f"· {line}" for line in lines),
+            "服务账号登录失败的，重新提交一次凭据；服务账号不再是管理员的，在游戏里把它加回来，"
+            "或者给这台服换一个执行账号。",
+        ],
+        button=("打开群组", url),
+        note=None,
+        meta=RequestMeta.now(None),
+        footer="你是这个群的群主，所以收到这封信。",
+    )

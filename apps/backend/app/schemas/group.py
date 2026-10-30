@@ -120,3 +120,80 @@ class GroupAuditPage(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+# ===== 服务账号与绑服 =====
+
+AccountStatus = Literal["ok", "invalid"]
+
+
+class GroupAccountItem(BaseModel):
+    id: int
+    persona_id: int
+    display_name: str | None
+    is_default: bool
+    status: AccountStatus
+    last_error: str | None
+    last_verified_at: datetime | None
+    created_at: datetime
+
+
+class GroupAccountListResponse(BaseModel):
+    items: list[GroupAccountItem]
+
+
+class GroupAccountCookieRequest(BaseModel):
+    remid: str = Field(..., min_length=10, max_length=4096)
+    sid: str = Field(default="", max_length=4096)
+
+
+class GroupServerExecutor(BaseModel):
+    id: int
+    persona_id: int
+    display_name: str | None
+    status: AccountStatus
+
+
+class GroupServerItem(BaseModel):
+    id: int
+    server_id: int
+    # 末次见到的 gameId，用来跳到服务器页；服务器没在线过时为空
+    game_id: int | None
+    name: str | None
+    bound_by_name: str | None
+    bound_via: Literal["owner", "admin"]
+    executor: GroupServerExecutor | None
+    # active：群成员在这台服上有权限；revoked：绑定人已不是服主或管理员，权限失效
+    status: Literal["active", "revoked"]
+    status_reason: str | None
+    # 执行账号的问题（没指定、登录失败、不是管理员），不影响权限，但服管操作会失败
+    executor_problem: str | None
+    last_verified_at: datetime | None
+    created_at: datetime
+
+
+class GroupServerListResponse(BaseModel):
+    items: list[GroupServerItem]
+
+
+class GroupServerBindRequest(BaseModel):
+    game_id: int = Field(..., gt=0)
+    # 不填就按默认账号优先，挑第一个是这台服服主或管理员的
+    account_id: int | None = None
+
+
+class GroupServerExecutorRequest(BaseModel):
+    account_id: int
+
+
+class ServerGroupItem(BaseModel):
+    group_id: int
+    group_name: str
+    bound_by_name: str | None
+    bound_via: Literal["owner", "admin"]
+    status: Literal["active", "revoked"]
+    created_at: datetime
+
+
+class ServerGroupListResponse(BaseModel):
+    items: list[ServerGroupItem]

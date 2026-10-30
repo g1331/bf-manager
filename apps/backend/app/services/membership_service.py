@@ -7,9 +7,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.api.errors import NotFoundError, ValidationError
-from app.models import EaBinding, Server, ServerMembership, User
+from app.models import (
+    EaBinding,
+    Group,
+    GroupMember,
+    GroupServer,
+    Server,
+    ServerMembership,
+    User,
+)
 from app.schemas.bf1.admin import MyServerItem
 from app.schemas.membership import MembershipItem
+from app.services.authz_service import ROLE_LEVEL
 
 _ALLOWED_ROLES = {"viewer", "moderator", "admin", "owner"}
 
@@ -79,7 +88,7 @@ class MembershipService:
                 .order_by(ServerMembership.created_at.desc())
             )
         ).all()
-        return [
+        items = [
             MyServerItem(
                 server_pk=s.id,
                 game=s.game,
@@ -90,6 +99,43 @@ class MembershipService:
             )
             for m, s in rows
         ]
+        # 挂在自己所在群上的服：群里的人在上面是管理员，和已有角色取高的
+        by_pk = {i.server_pk: i for i in items}
+        user = await self.db.get(User, user_id)
+        if user is None or (user.role != "admin" and user.status != "active"):
+            return items
+        group_rows = (
+            await self.db.execute(
+                select(Server, Group.name)
+                .join(GroupServer, GroupServer.server_pk == Server.id)
+                .join(Group, Group.id == GroupServer.group_id)
+                .join(GroupMember, GroupMember.group_id == GroupServer.group_id)
+                .where(
+                    GroupMember.user_id == user_id,
+                    GroupServer.status == "active",
+                    Server.game == game,
+                )
+                .order_by(GroupServer.created_at.desc())
+            )
+        ).all()
+        for s, group_name in group_rows:
+            existing = by_pk.get(s.id)
+            if existing is not None:
+                if ROLE_LEVEL.get(existing.role, 0) < ROLE_LEVEL["admin"]:
+                    existing.role = "admin"
+                    existing.via_group = group_name
+                continue
+            by_pk[s.id] = item = MyServerItem(
+                server_pk=s.id,
+                game=s.game,
+                server_id=s.server_id,
+                game_id=s.game_id,
+                name=s.name,
+                role="admin",
+                via_group=group_name,
+            )
+            items.append(item)
+        return items
 
     async def upsert(
         self,

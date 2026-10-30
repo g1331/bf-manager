@@ -14,7 +14,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 from app.api.errors import AppError, EAApiError
-from app.domain.games.bf1.client_provider import BindingUnavailableError
+from app.domain.games.bf1.client_provider import ExecutorUnavailableError
 from app.models import AuditLog, Server, ServerMembership
 from app.models.bf1 import Bf1GameInstance, Bf1ServerVip
 from app.services.bf1 import timed_vip_service as svc
@@ -292,26 +292,46 @@ async def _seed_expired(db, admin, ea: FakeEA, *, game_id: int = GAME_ID) -> Ser
     return server
 
 
-def _patch_tick(monkeypatch, ea: FakeEA, *, mode: str = "Conquest", usable: set[int] | None = None):
+def _patch_tick(
+    monkeypatch,
+    ea: FakeEA,
+    *,
+    mode: str = "Conquest",
+    usable: set[int] | None = None,
+    demoted: set[int] | None = None,
+):
+    """usable：哪些人拿得到能用的凭据（None 表示都能）；demoted：哪些人已经没有本服管理权限"""
+
     async def states(db, game_ids):
         return {g: {"mode": mode, "map": ea.map_name} for g in game_ids}
 
     tried: list[int] = []
 
     class Provider:
-        def __init__(self, db, *, user, game_id, pool_fallback=True):
+        def __init__(self, db, *, user, game_id, server_pk=None, pool_fallback=False):
             assert pool_fallback is False
+            assert server_pk is not None
             self.user = user
+            self.credential_source = "group_account"
+            self.executor_persona_id = 4242
 
         @asynccontextmanager
         async def acquire(self):
             tried.append(self.user.id)
             if usable is not None and self.user.id not in usable:
-                raise BindingUnavailableError("no binding")
+                raise ExecutorUnavailableError()
             yield FakeClient(ea)
 
+    class Authz:
+        def __init__(self, db):
+            pass
+
+        async def resolve_role(self, *, user, game, server_id):
+            return (None if demoted and user.id in demoted else "admin"), False
+
     monkeypatch.setattr(svc, "get_operation_states", states)
-    monkeypatch.setattr(svc, "BindingFirstBF1ClientProvider", Provider)
+    monkeypatch.setattr(svc, "GroupFirstBF1ClientProvider", Provider)
+    monkeypatch.setattr(svc, "ServerAuthzService", Authz)
     return tried
 
 
@@ -330,6 +350,8 @@ async def test_tick_removes_expired_vip_with_granter_credentials(
     assert await _rows(test_session) == {}
     log = await test_session.scalar(select(AuditLog).where(AuditLog.action == "vip_expire"))
     assert log is not None and log.user_id is None and log.payload["executor_user_id"] == admin.id
+    assert log.payload["credential_source"] == "group_account"
+    assert log.executor_persona_id == 4242
 
 
 async def test_tick_skips_operation_servers(admin_client, test_session, monkeypatch):
@@ -357,6 +379,22 @@ async def test_tick_falls_back_to_other_admins_then_records_error(
     tried = _patch_tick(monkeypatch, ea, usable={other.id})
     await svc._tick(test_session)
     assert tried == [admin.id, other.id] and 111 not in ea.vips
+
+
+async def test_tick_skips_candidates_without_current_permission(
+    admin_client, user_client, test_session, monkeypatch
+):
+    """授予人已经没有本服管理权限（退群、服被移出群）：不用他的身份，换下一个"""
+    _, admin = admin_client
+    _, other = user_client
+    ea = FakeEA()
+    server = await _seed_expired(test_session, admin, ea)
+    test_session.add(ServerMembership(user_id=other.id, server_pk=server.id, role="admin"))
+    await test_session.commit()
+
+    tried = _patch_tick(monkeypatch, ea, demoted={admin.id})
+    await svc._tick(test_session)
+    assert tried == [other.id] and 111 not in ea.vips
 
 
 async def test_tick_without_usable_credentials_backs_off(admin_client, test_session, monkeypatch):

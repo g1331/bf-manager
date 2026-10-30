@@ -5,7 +5,10 @@
 2. EA 服主 / 管理员自动识别：用户绑定的 persona 命中该服 EA 侧 owner → owner、
    命中 adminList → admin。识别成功即把该服登记为 Server（稳定 server_id + 末次 game_id）
    并 upsert 一条自动 ServerMembership（granted_by 为空），供「我的服务器」枚举；
-3. 人工授权：平台 admin 经成员管理手动授予的 ServerMembership，作为委派 / 兜底。
+3. 群组：用户所在的群挂着这台服（group_servers.status=active）时，在这台服上是 admin；
+4. 人工授权：平台 admin 经成员管理手动授予的 ServerMembership，作为兜底，不再扩展。
+
+2–4 取最高的一个。
 
 注意：前端鉴权端点按 URL 的 game_id 寻址，而成员关系绑定在稳定的 server_id 上。
 本服务统一在识别时经 EA 把 game_id 翻译成 server_id 再落库 / 查询，避免二者错配。
@@ -19,6 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.errors import EAApiError, ForbiddenError
 from app.models import Server, ServerMembership, User
+from app.services import group_server_service
 from app.services.bf1.server_service import BF1ServerService
 
 # 角色等级映射（数值越大权限越高）
@@ -28,6 +32,10 @@ ROLE_LEVEL = {
     "admin": 3,
     "owner": 4,
 }
+
+
+def _higher(a: str | None, b: str | None) -> str | None:
+    return a if ROLE_LEVEL.get(a or "", 0) >= ROLE_LEVEL.get(b or "", 0) else b
 
 
 class ServerAuthzService:
@@ -117,9 +125,10 @@ class ServerAuthzService:
         else:
             role = None
 
+        group_role = await group_server_service.group_role_for_server(self.db, user, server.id)
         if role is not None:
             await self._upsert_auto_membership(user_id=user.id, server_pk=server.id, role=role)
-            return role, True
+            return _higher(role, group_role), True
 
         # 未命中 EA 名单：自动授予的记录（granted_by 为空）是 EA 状态的缓存，此刻应失效——
         # 用户已非该服 EA 服主 / 管理员，删除以保证撤权及「我的服务器」与 EA 现状一致
@@ -134,7 +143,7 @@ class ServerAuthzService:
             await self.db.delete(membership)
             await self.db.commit()
             membership = None
-        return (membership.role if membership else None), True
+        return _higher(membership.role if membership else None, group_role), True
 
     async def resolve_role(
         self,
@@ -157,19 +166,27 @@ class ServerAuthzService:
         if handled:
             return role, False
 
-        # EA 不可用时的 legacy 回退：按 game_id 当 server_id 查人工授权（多半不命中，等价旧行为）
+        # EA 不可用时的回退：群组按库里记的末次 gameId 找服；人工授权沿用旧行为，
+        # 按 game_id 当 server_id 查（多半不命中）
+        group_role = None
+        for pk in await self.db.scalars(
+            select(Server.id).where(Server.game == game, Server.game_id == game_id)
+        ):
+            group_role = _higher(
+                group_role, await group_server_service.group_role_for_server(self.db, user, pk)
+            )
         server = await self.db.scalar(
             select(Server).where(Server.game == game, Server.server_id == game_id)
         )
         if server is None:
-            return None, False
+            return group_role, False
         membership = await self.db.scalar(
             select(ServerMembership).where(
                 ServerMembership.user_id == user.id,
                 ServerMembership.server_pk == server.id,
             )
         )
-        return (membership.role if membership else None), False
+        return _higher(membership.role if membership else None, group_role), False
 
     async def require_role(
         self,

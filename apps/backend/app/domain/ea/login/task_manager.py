@@ -44,7 +44,8 @@ from app.domain.ea.login.schemas import (
     EALoginTaskStatus,
 )
 
-ActorKind = Literal["user", "admin"]
+# group：群主给群添加服务账号，actor_id 是群主的 users.id，target_account_id 放群 id
+ActorKind = Literal["user", "admin", "group"]
 
 # finalize（写库）失败的统一错误码。具体异常细节走 logger，不透传给前端。
 _FINALIZE_FAILED_CODE = "EA_LOGIN_FINALIZE_FAILED"
@@ -254,6 +255,14 @@ class EALoginTaskManager:
                 with contextlib.suppress(asyncio.CancelledError, Exception):
                     await state.cleanup_handle
         self._tasks.clear()
+
+    def require_target(
+        self, task_id: str, *, actor_kind: ActorKind, actor_id: int, target_account_id: int
+    ) -> None:
+        """任务属于该 actor，且目标就是 target_account_id（group 任务里是群 id）"""
+        state = self._require_owned(task_id, actor_kind, actor_id)
+        if state.target_account_id != target_account_id:
+            raise _MissingTaskError()
 
     # ===== 内部：owner 校验 =====
 

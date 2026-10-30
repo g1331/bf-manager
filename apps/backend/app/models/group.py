@@ -1,6 +1,7 @@
 """群组：成员、角色、邀请链接
 
-群组是服管的协作单位：成员按角色在群绑定的服上获得权限（绑服和服务账号见后续迁移）。
+群组是服管的协作单位：群主给群添加服务账号（EA 凭据，执行服管操作用），再把服挂到群上，
+群里的成员就能在这台服上做服管操作。
 """
 
 from __future__ import annotations
@@ -8,7 +9,17 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, UniqueConstraint, func
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -76,6 +87,75 @@ class GroupInvite(Base):
     uses: Mapped[int] = mapped_column(Integer, server_default="0", default=0, nullable=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
+class GroupEaAccount(Base):
+    """群组服务账号：群主提交的 EA 凭据（AES-GCM 加密），群里绑定的服用它执行服管操作。
+
+    不并进 ea_accounts：号池挑号时不能挑到群的号。
+    """
+
+    __tablename__ = "group_ea_accounts"
+    __table_args__ = (
+        UniqueConstraint("group_id", "persona_id", name="uq_group_ea_accounts_group_persona"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    group_id: Mapped[int] = mapped_column(
+        ForeignKey("groups.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    persona_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    display_name: Mapped[str | None] = mapped_column(String(64))
+    encrypted_remid: Mapped[str] = mapped_column(Text, nullable=False)
+    encrypted_sid: Mapped[str] = mapped_column(Text, nullable=False)
+    encrypted_session: Mapped[str | None] = mapped_column(Text)
+    is_default: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    # ok / invalid：连续登录失败到阈值标 invalid，群主重新提交凭据后恢复
+    status: Mapped[str] = mapped_column(String(16), default="ok", nullable=False)
+    failure_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    last_error: Mapped[str | None] = mapped_column(String(255))
+    last_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
+class GroupServer(Base):
+    """挂在群上的服。同一台服可以挂在多个群里。
+
+    status=active 时群成员在这台服上有管理员权限；绑定人不再是这台服的服主或管理员时
+    复核会把它标成 revoked，权限随之失效。executor_problem 记执行账号的问题（没指定、
+    已不是这台服的管理员），不影响权限，只是服管操作会失败。
+    """
+
+    __tablename__ = "group_servers"
+    __table_args__ = (
+        UniqueConstraint("group_id", "server_pk", name="uq_group_servers_group_server"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    group_id: Mapped[int] = mapped_column(
+        ForeignKey("groups.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    server_pk: Mapped[int] = mapped_column(
+        ForeignKey("servers.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    bound_by_user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL")
+    )
+    # 绑定人当时在 EA 上的身份：owner / admin。只记录，不限制权限
+    bound_via: Mapped[str] = mapped_column(String(16), nullable=False)
+    executor_account_id: Mapped[int | None] = mapped_column(
+        ForeignKey("group_ea_accounts.id", ondelete="SET NULL")
+    )
+    status: Mapped[str] = mapped_column(String(16), default="active", nullable=False)
+    status_reason: Mapped[str | None] = mapped_column(String(255))
+    executor_problem: Mapped[str | None] = mapped_column(String(255))
+    last_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

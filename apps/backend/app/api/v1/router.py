@@ -12,6 +12,7 @@ from app.api.v1 import (
     ea_accounts,
     ea_login_tasks,
     games,
+    group_servers,
     groups,
     health,
     me,
@@ -27,6 +28,7 @@ api_router.include_router(public_docs.router)
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(me.router, prefix="/me", tags=["me"])
 api_router.include_router(groups.router, prefix="/groups", tags=["groups"])
+api_router.include_router(group_servers.router, prefix="/groups", tags=["groups"])
 api_router.include_router(groups.invite_router, prefix="/group-invites", tags=["groups"])
 api_router.include_router(games.router, prefix="/games", tags=["games"])
 api_router.include_router(audit.router, prefix="/audit-logs", tags=["audit"])

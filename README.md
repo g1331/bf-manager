@@ -1,454 +1,185 @@
-<a id="top"></a>
+<img src="docs/images/banner.webp" alt="BF-Manager" width="100%" />
 
-<div align="center">
+# BF-Manager
 
-<img src="docs/images/banner.webp" alt="BF-Manager — Battlefield 系列战绩查询与服务器管理平台" width="880" />
+Battlefield 1 的战绩查询与私服管理平台。玩家查生涯、武器和每一局的表现，服主在网页上看实时名单、踢人封禁、换图、发计时 VIP，所有管理操作都留审计记录。桌面和手机共用一套界面，也可以装到桌面当 App 用。
 
-<p><strong>Battlefield 系列战绩查询与服务器管理 Web 全栈平台</strong></p>
-<p><sub>开放注册 · 战绩查询 · 服务器管理 · 操作审计 · 移动优先响应式</sub></p>
+[![CI](https://img.shields.io/github/actions/workflow/status/g1331/bf-manager/ci.yml?branch=main&style=flat-square&label=CI&color=333)](https://github.com/g1331/bf-manager/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/g1331/bf-manager?style=flat-square&color=333)](https://github.com/g1331/bf-manager/releases)
+[![License](https://img.shields.io/badge/license-MIT-333?style=flat-square)](LICENSE)
 
-<p>
-  <a href="https://github.com/g1331/bf-manager/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/g1331/bf-manager/ci.yml?branch=main&style=flat-square&logo=githubactions&logoColor=white&label=CI&color=7a3a12"></a>
-  <a href="https://github.com/g1331/bf-manager/releases"><img alt="Release" src="https://img.shields.io/github/v/release/g1331/bf-manager?style=flat-square&logo=github&color=7a3a12"></a>
-  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/License-MIT-7a3a12?style=flat-square"></a>
-</p>
-<p>
-  <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-0.115-009688?style=flat-square&logo=fastapi&logoColor=white">
-  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-000000?style=flat-square&logo=nextdotjs&logoColor=white">
-  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white">
-  <img alt="Tailwind CSS" src="https://img.shields.io/badge/Tailwind-v4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white">
-  <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat-square&logo=postgresql&logoColor=white">
-  <img alt="Redis" src="https://img.shields.io/badge/Redis-7-DC382D?style=flat-square&logo=redis&logoColor=white">
-  <img alt="Docker" src="https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white">
-  <img alt="PWA" src="https://img.shields.io/badge/PWA-installable-5A0FC8?style=flat-square&logo=pwa&logoColor=white">
-  <img alt="pnpm" src="https://img.shields.io/badge/pnpm-9-F69220?style=flat-square&logo=pnpm&logoColor=white">
-  <img alt="uv" src="https://img.shields.io/badge/uv-managed-DE5FE9?style=flat-square&logo=astral&logoColor=white">
-</p>
-
-<p>
-  <a href="#screenshots">界面预览</a> ·
-  <a href="#features">功能范围</a> ·
-  <a href="#quick-start">快速开始</a> ·
-  <a href="#deploy">生产部署</a> ·
-  <a href="#release">发版</a> ·
-  <a href="#contributing">贡献</a>
-</p>
-
-</div>
-
----
-
-<a id="toc"></a>
-
-## 📖 目录
-
-- [✨ 简介](#intro)
-- [🖼️ 界面预览](#screenshots)
-- [🎮 功能范围](#features)
-- [🧱 技术栈](#tech-stack)
-- [🗂️ 目录结构](#structure)
-- [🚀 快速开始](#quick-start)
-- [🔐 身份模型](#identity)
-- [👑 初始管理员配置](#admin-setup)
-- [🏷️ 发版（Release）](#release)
-- [🛰️ 生产部署](#deploy)
-- [🧩 游戏分层架构](#multi-game)
-- [🔁 类型生成](#type-gen)
-- [🤝 贡献](#contributing)
-- [📄 License](#license)
-
-<a id="intro"></a>
-
-## ✨ 简介
-
-面向开放注册的 Battlefield 玩家与服主平台，当前聚焦 **Battlefield 1**。共享的 EA 身份层让账号体系独立于具体游戏，业务逻辑按游戏分层实现。前端移动优先响应式设计，桌面与手机浏览器均获得良好体验。
-
-<a id="screenshots"></a>
-
-## 🖼️ 界面预览
-
-<div align="center">
-
-<img src="docs/images/preview-features.webp" width="780" alt="平台能力：战绩查询 / 服务器管理 / 操作审计 / 权限管控" />
-
-**⚡ 平台能力** — 战绩查询 · 服务器管理 · 操作审计 · 权限管控，四大模块覆盖服主从「查询」到「治理」的全链路日常。
+[功能](#功能) · [架构](#架构) · [本地开发](#本地开发) · [部署](#部署) · [发版](#发版) · [管理命令](#管理命令)
 
 <br/>
 
-<img src="docs/images/preview-mobile.webp" width="260" alt="移动端：hero 与能力卡纵向堆叠" />
+<img src="docs/images/server.webp" alt="服务器详情：在线人数、当前地图与行动进度" width="100%" />
 
-**📱 移动优先响应式** — 同一套界面，桌面横向铺排、手机纵向堆叠，均为原生体验；服管二次确认在移动端用 BottomSheet、桌面用 Dialog，按视口自动切换。
+<table>
+  <tr>
+    <td width="50%"><img src="docs/images/server-players.webp" alt="在线玩家名单，每人带胜率、K/D、KPM 与延迟" /></td>
+    <td width="50%"><img src="docs/images/server-rounds.webp" alt="对局：每局两队计分板" /></td>
+  </tr>
+  <tr>
+    <td>在线名单：两队玩家连同生涯胜率、K/D、KPM、延迟一起列出</td>
+    <td>对局：用进服与结算时的生涯差分算出每局战绩，保留 90 天</td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/servers.webp" alt="服务器浏览器" /></td>
+    <td><img src="docs/images/player.webp" alt="玩家战绩" /></td>
+  </tr>
+  <tr>
+    <td>服务器浏览器：按模式、地图、区域、空位筛选</td>
+    <td>玩家战绩：生涯、武器、载具和对局，附封禁记录</td>
+  </tr>
+</table>
 
-<br/>
+<p align="center">
+  <img src="docs/images/mobile-server.webp" alt="手机端服务器详情" width="260" />
+  &nbsp;&nbsp;
+  <img src="docs/images/mobile-player.webp" alt="手机端玩家战绩" width="260" />
+</p>
 
-<img src="docs/images/preview-login.webp" width="780" alt="登录入口：EA Cookie 与本地管理员" />
+## 功能
 
-**🔐 双登录入口** — EA Cookie 自动开户 / 本地管理员 CLI 创建；凭据经 AES-256-GCM 加密存储，永不出现在任何 API 响应里。
+**查询**，匿名可用：
 
-</div>
-
-<a id="features"></a>
-
-## 🎮 功能范围
-
-| 模块 | 功能 |
+| 模块 | 内容 |
 |---|---|
-| 用户认证 | 双登录入口：EA Cookie (remid / sid) 自动开户，本地账号 (username + password) 由 CLI 创建供平台 admin 使用；JWT 签发，AES-256-GCM 加密存储 EA 凭据，AppHeader 用户菜单 + 登出 |
-| 账号设置 | `/account` 查看当前账号信息与 EA 绑定列表，支持解绑（保留行作为历史记录，清空加密凭据） |
-| 游戏入口 | 首页游戏选择，GameSwitcher 切换器，per-game 主题切换 |
-| BF1 战绩查询 | 头像（SAL 反查，gametools 兜底）、生涯数据、武器统计、载具统计、最近对局 |
-| BF1 服务器列表 | 服务器搜索、客户端分批渲染（每批 50，最多拉 200）、详情页（地图轮换、当前对局、玩家列表） |
-| BF1 服管操作 | 踢人、VBAN 增删、换图，二次确认（移动 BottomSheet / 桌面 Dialog）+ 审计日志 |
-| 操作日志 | 跨游戏审计日志：普通用户只看自己，平台 admin 看全部，按 game / server / action 筛选 |
-| 服管权限授予 | `/admin/memberships`：仅平台 admin 可见，授予 / 撤销服管权限（viewer / moderator / admin / owner） |
+| 战绩 | 生涯数据、武器、载具、最近对局、在线状态；BFBAN 与 BFEAC 案件标记 |
+| 服务器 | 浏览与筛选；详情页有实时名单、24 小时人数曲线、热门地图、常客排行、规则、成员 |
+| 快照 | 每分钟记录私服名单，可回看任一时刻两队名单和进出 |
+| 对局 | 每局两队计分板、个人击杀死亡得分，以及这一局用过的武器载具 |
+| 战队、交换、行动 | 战队搜索与成员；交换含历史各期；行动战役进度 |
 
-<a id="tech-stack"></a>
+**服务器管理**，需要服管权限：
 
-## 🧱 技术栈
+| 模块 | 内容 |
+|---|---|
+| 玩家操作 | 踢人、换边、封禁与解封、上下 VIP、增删管理员 |
+| 地图 | 换图、重开当前图；行动服按编排自动换图 |
+| 计时 VIP | 普通服到期自动下 V，行动服排队等生效时机 |
+| 卡行动 | 服主提供自己的 EA 凭据，把私服卡成 24 图行动 |
+| 审计 | 每次操作记录发起人、目标和结果；服管权限分 viewer / moderator / admin / owner 四级 |
+
+**平台运维**，仅平台管理员：EA 查询号池（邮箱密码登录、失效检测）、发往 EA 的请求统计、开放 API Key 与额度、全站审计日志。
+
+## 架构
+
+```mermaid
+flowchart LR
+  client["浏览器 · PWA · 安卓壳"] --> web["web<br/>Next.js 16"]
+  web --> api["backend<br/>FastAPI"]
+  api --> store[("PostgreSQL 16<br/>Redis 7")]
+  api --> ea["EA<br/>Gateway · Blaze"]
+  api --> ext["BFBAN · BFEAC"]
+```
+
+后端进程里还跑着几项后台任务：全服扫描、私服快照与对局跟踪、交换换期、行动服自动换图、计时 VIP 到期处理。服务器名单和玩家战绩走 Blaze 长连接，服管命令和其余查询走 EA Gateway。EA 凭据用 AES-256-GCM 加密入库，不出现在任何接口响应里。
 
 | 层 | 选型 |
 |---|---|
-| 仓库形态 | Monorepo + pnpm workspaces |
-| 前端 | Next.js 16 + App Router + TypeScript + shadcn/ui + Tailwind v4 + TanStack Query + Zustand + RHF/Zod + ECharts |
-| 后端 | FastAPI + SQLAlchemy 2.0 async + Alembic + Pydantic v2 |
-| 数据库 | PostgreSQL 16 + Redis 7 |
-| 包管理 | 后端 uv，前端 pnpm |
-| 容器化 | Docker Compose + 多阶段 Dockerfile，TLS 与反代由 host 上的 openresty / nginx 处理 |
-| 镜像 | ghcr.io（GitHub Container Registry），由 `release.yml` workflow 自动构建并推送 |
-| PWA | manifest + SVG 图标 + apple-touch-icon meta，支持“添加到主屏幕”安装 |
+| 前端 | Next.js 16 App Router、React 19、TypeScript、Tailwind v4、shadcn/ui、TanStack Query、Zustand |
+| 后端 | FastAPI、SQLAlchemy 2.0 async、Alembic、Pydantic v2 |
+| 数据 | PostgreSQL 16、Redis 7 |
+| 工具链 | pnpm workspaces、uv、lefthook、git-cliff |
+| 交付 | 多阶段 Dockerfile，镜像推送到 ghcr.io，Docker Compose 部署 |
 
-<a id="structure"></a>
-
-## 🗂️ 目录结构
-
-<details>
-<summary><b>展开查看仓库与后端核心目录结构</b></summary>
-
-<br/>
-
-```
-bf-manager/
-├── apps/
-│   ├── web/                  # Next.js 前端
-│   └── backend/              # FastAPI 后端
-├── packages/
-│   ├── shared-types/         # 从 OpenAPI 生成的 TS 类型
-│   ├── eslint-config/        # 共享 ESLint 配置
-│   └── tsconfig/             # 共享 TS 配置
-├── tools/                    # 脚本工具（含 generate-types.sh）
-├── docker-compose.yml        # dev 环境
-├── docker-compose.prod.yml   # prod 环境（backend / web 仅监听 127.0.0.1，由 host openresty 反代）
-└── Makefile                  # 快捷命令
+```text
+apps/
+  web/        Next.js 前端
+  backend/    FastAPI 后端
+    app/domain/ea/           跨游戏共享：身份、persona、Blaze 协议
+    app/domain/games/bf1/    BF1 专属：profile、gateway、字段 schema
+    app/services/            业务编排
+    app/api/v1/              路由
+  android/    安卓壳 App（全屏 WebView）
+packages/
+  shared-types/   由后端 OpenAPI 生成的 TS 类型
+tools/        部署、备份、类型生成、安卓打包脚本
 ```
 
-后端核心目录约定：
+代码按游戏分层，EA 身份层与具体游戏解耦。目前只实现了 BF1，接入其他游戏的步骤见 [`apps/backend/app/domain/games/README.md`](apps/backend/app/domain/games/README.md)。
 
-```
-apps/backend/app/
-├── domain/
-│   ├── ea/              # 跨游戏共享：身份、persona、Blaze 协议
-│   └── games/
-│       └── bf1/         # BF1 特定：profile、gateway、字段 schema
-├── services/            # 业务编排（含 authz / membership / audit）
-├── models/              # SQLAlchemy 表（共享 + 游戏特定子目录）
-├── schemas/             # Pydantic 请求 / 响应
-└── api/v1/              # 路由（auth / memberships / audit-logs / games/<game_id>/）
-```
+## 本地开发
 
-接口级集成测试位于 `apps/backend/tests/`（health / auth / audit / memberships），运行于 in-memory sqlite，不依赖 postgres / redis。
-
-</details>
-
-<a id="quick-start"></a>
-
-## 🚀 快速开始
-
-### 前置依赖
-
-- Docker 与 Docker Compose
-- Node.js 20+ 与 pnpm 9+
-- Python 3.12+ 与 [uv](https://docs.astral.sh/uv/)
-- Make（Windows 用户：`choco install make`）
-
-### 启动开发环境
+需要 Docker、Node.js 20+、pnpm 9、Python 3.12+、[uv](https://docs.astral.sh/uv/) 和 Make。
 
 ```bash
-# 复制环境变量样例
 cp .env.example .env
+make install      # 安装前后端依赖
+make dev          # 起 postgres、redis、backend、web
+make migrate      # 数据库迁移到最新
+```
 
-# 安装依赖（首次）
-make install
+前端在 `http://localhost:3000`，后端在 `http://localhost:8000`，开发环境的接口文档在 `/docs`。
 
-# 一键起栈（postgres + redis + backend + web）
-make dev
+查询和服管功能要用 EA 账号去请求，开发时往号池里放一个：
 
-# 跑数据库迁移
-make migrate
-
-# Seed 一个 EA 代查询账号到 ea_accounts 表（玩家查询 / 服管功能需要）
-# remid / sid 从 accounts.ea.com 的浏览器 Cookies 拿到
+```bash
 docker compose exec backend uv run python tools/seed_ea_account.py \
     --persona-id <PERSONA_ID> --remid <REMID> --sid <SID>
 ```
 
-启动后访问：
+只想看界面，可以不起 Docker：后端在 `apps/backend` 下执行 `uv run uvicorn app.main:app --reload`，默认用 SQLite；前端在 `apps/web` 下执行 `pnpm dev`。没有 EA 凭据时，在 `apps/backend/.env` 里设 `BLAZE_MOCK_MODE=true`，服务器玩家名单会返回内置的假数据。
 
-| 服务 | 地址 |
-|---|---|
-| 前端 | http://localhost:3000 |
-| 后端 API | http://localhost:8000 |
-| API 文档 | http://localhost:8000/docs |
-| Postgres | localhost:5432 (bf / bf) |
-| Redis | localhost:6379 |
+后端 schema 改了之后，执行 `make gen-types` 重新生成前端类型（输出不进 git）。其他命令见 `make help`。
 
-<details>
-<summary><b>🧩 不想起 Docker？本地最小体验（SQLite / Mock，免 Postgres·Redis·EA 凭据）</b></summary>
+## 部署
 
-<br/>
-
-只想本地把界面跑起来看看，可以绕开 Docker、Postgres、Redis 与 EA 凭据：
+部署机只拉镜像、不本地构建。首次部署和日常更新都用同一个脚本：
 
 ```bash
-# 后端：默认用相对路径 SQLite（dev.db），必须从 apps/backend 目录启动
-cd apps/backend
-uv run uvicorn app.main:app --reload --port 8000
-
-# 前端（另开一个终端）
-cd apps/web
-pnpm dev
+git clone https://github.com/g1331/bf-manager.git && cd bf-manager
+bash tools/deploy.sh               # 或 make deploy
+bash tools/deploy.sh --tag v1.2.3  # 锁定版本
 ```
 
-想在**没有 EA 凭据**的情况下预览「服务器实时玩家名单」，在 `apps/backend/.env` 里打开 Blaze mock：
+首次运行会生成 secrets、交互填写域名生成 `.env.prod`、拉镜像、启动服务并自动迁移；检测到没有管理员时，会引导创建第一个本地管理员。之后再跑就是拉新镜像滚动更新，可以重复执行。
 
-```dotenv
-BLAZE_MOCK_MODE=true
-```
+backend 和 web 只监听 `127.0.0.1:8000` 与 `127.0.0.1:3000`，TLS 和反向代理交给宿主机上的 nginx 或 openresty。生产环境默认关闭接口文档，只对外提供 BF1 只读接口的 `/api/v1/openapi.public.json`。
 
-开启后服务器玩家列表接口直接返回内置 fixture（双阵营、战绩、admin / VIP 标记等假数据），不建立真实 Blaze 连接，专供本地预览前端效果；生产默认关闭。
-
-</details>
-
-<details>
-<summary><b>📱 移动端响应式测试视口</b></summary>
-
-<br/>
-
-DevTools 中切换到以下 viewport 验证响应式：
-
-- iPhone SE (375px) / iPhone 14 Pro (393px) / iPhone 14 Pro Max (430px)
-- Android 小屏 (360px) / 中屏 (412px)
-- 桌面 (1280px / 1920px)
-
-</details>
-
-<a id="identity"></a>
-
-## 🔐 身份模型
-
-<details>
-<summary><b>展开查看身份层设计：users / ea_bindings 双表与两类登录入口</b></summary>
-
-<br/>
-
-平台账号 (`users`) 与 EA 绑定 (`ea_bindings`) 是两张独立的表：
-
-- `users` 只承担身份层职责：`id / username / local_password_hash / email / role / is_active / is_frozen`。一个 user 是 bf-manager 内的稳定身份单元，其生命周期独立于任何 EA 账号的可用性。
-- `ea_bindings` 承担凭据层职责：N:1 关联到 `users`，存储 `persona_id` 与加密的 EA cookie 凭据，标记 `is_primary` / `is_frozen`。`persona_id` 全局唯一。
-
-两类身份来源：
-
-1. **EA Cookie 登录** (`POST /api/v1/auth/login`)：玩家用户主入口。首次登录自动开户（username 自动生成为 `persona_<persona_id>`），同时写入首条 binding 标为 primary。
-2. **本地账号登录** (`POST /api/v1/auth/local-login`)：仅供 CLI 创建的本地管理员使用。`username + password` 校验通过即颁发同名 cookie。前端登录页提供折叠入口。
-
-两条入口颁发的 JWT 结构完全一致，下游鉴权中间件不区分入口来源。
-
-本地 admin 可以执行任何不依赖发起者个人 EA 身份的操作（含 BF1 服管命令，凭据走全局后台账号池 `ea_accounts`），无需绑定 EA。需要以个人 EA 身份执行的操作（未来 change）则要求 binding 存在，否则返回 `EA_BINDING_REQUIRED`。
-
-</details>
-
-<a id="admin-setup"></a>
-
-## 👑 初始管理员配置
-
-<details>
-<summary><b>展开查看平台 admin 的 CLI 管理流程与服管授权</b></summary>
-
-<br/>
-
-平台 admin 名单不通过环境变量维护，改由 CLI 在 DB 中显式管理：
-
-```bash
-# 1. 首次部署：创建一个本地管理员账号（无需 EA 绑定即可登录后台）
-docker compose exec backend python -m app.cli create-admin --username root
-#    输入密码时不回显；不带 --password 推荐 prompt 模式以避免进入 shell history
-
-# 2. 把已存在的 EA 用户提权为 admin（该 persona 必须先在本平台登录过一次）
-docker compose exec backend python -m app.cli grant-admin --persona 1003517866915
-
-# 3. 查看当前所有 admin
-docker compose exec backend python -m app.cli list-admins
-
-# 4. 重置本地密码
-docker compose exec backend python -m app.cli reset-password --username root
-
-# 5. 撤销 admin
-docker compose exec backend python -m app.cli revoke-admin --persona 1003517866915
-```
-
-所有接受密码的子命令均支持三种密码输入：`--password <pw>`（不安全，便于自动化）、`--password-stdin`（推荐脚本场景）、不带参数时进入 `getpass` 交互式 prompt（推荐人工场景）。
-
-**从旧版升级**：原 `ADMIN_PERSONA_IDS` 环境变量已停用。升级时跑完 alembic 迁移后，把原名单内的 persona 一次性通过 `grant-admin` 写入 DB；env 中的 `ADMIN_PERSONA_IDS` 行可删除。
-
-> `grant-admin --persona <id>` 要求该 persona 已经在本平台至少登录过一次（即 `users` 表里有对应行）。旧版 `ADMIN_PERSONA_IDS` 允许预登记尚未登录过的 persona，本版本不再支持。若原名单中存在从未登录的预备管理员，请改用 `create-admin --username <name>` 先创建本地账号供其使用，或等其首次 EA 登录后再 `grant-admin`。
-
-服管授权流程：平台 admin 在 `/admin/memberships` 录入 `(persona_id, game, server_id, role)` 即可。被授权用户必须先在本平台登录过一次（users 表里有记录）。
-
-</details>
-
-<a id="release"></a>
-
-## 🏷️ 发版（Release）
-
-<details>
-<summary><b>展开查看发版流程：git tag 驱动、版本注入与回滚</b></summary>
-
-<br/>
-
-版本号的唯一真相源是 **git tag**。源码里所有 `version` 字段（根 / `apps/web` 的 `package.json`、`apps/backend/pyproject.toml`、`app/core/config.py` 的 `app_version`）永远保持 `0.0.0` 占位，发版**不改源码、不产生版本号提交**。真实版本号在 CI 构建时由 tag 派生并注入镜像。
-
-### 发布一个版本
-
-确认要发布的提交已合并进 `main` 且 CI 通过，然后打一个 annotated tag 并推送：
-
-```bash
-git checkout main && git pull origin main
-git tag -a v1.0.0 -m "Release v1.0.0"
-git push origin v1.0.0
-```
-
-打 tag 后由 `release.yml` 全自动完成：
-
-- 并行构建并推送 `ghcr.io/g1331/bf-manager-{backend,web}:v1.0.0` 镜像，版本号经 build-arg 注入（后端 `APP_VERSION`、前端 `NEXT_PUBLIC_APP_VERSION`），运行时 `/api/v1/healthz` 与门户页脚即显示该版本。
-- 自动创建对应的 **GitHub Release**：变更说明由 `git-cliff`（配置见根目录 `cliff.toml`）按 Conventional Commits 前缀分组生成（New Features / Bug Fixes / …），并附 Release Metadata（提交、镜像、digest、对比区间）。
-
-tag 必须打在 `main` 上的提交，否则 `release.yml` 的校验步骤会拒绝发布。版本号遵循 [SemVer](https://semver.org/)（`vMAJOR.MINOR.PATCH`，预发布可用 `-alpha.N` / `-beta.N`）。
-
-### 部署某个版本 / 回滚
-
-发布完成后，在部署机用 `--tag` 锁定版本部署（详见下方「生产部署」）：
-
-```bash
-bash tools/deploy.sh --tag v1.0.0
-```
-
-回滚到上一版本同理，把 `--tag` 指向旧版本即可（旧镜像在 GHCR 永久保留）。注意数据库迁移不会自动回退，回滚前需确认目标版本与当前 schema 兼容。
-
-完整变更记录见仓库 [Releases](https://github.com/g1331/bf-manager/releases) 页面（不单独维护 `CHANGELOG.md`）。
-
-</details>
-
-<a id="deploy"></a>
-
-## 🛰️ 生产部署
-
-<details>
-<summary><b>展开查看一键部署脚本、EA 账号录入与反代约定</b></summary>
-
-<br/>
-
-镜像由 GitHub Actions `release.yml` 在 push main 或打 tag（`v*`）时构建并推送到 GHCR，部署机只 `pull`，不本地 build。首次部署与日常更新都用同一个一键脚本：
-
-```bash
-# 在部署机器上克隆仓库（首次）
-git clone https://github.com/g1331/bf-manager.git
-cd bf-manager
-
-# 一键部署 / 更新（等价 make deploy）
-#   首次：自动备齐 secrets、交互填 DOMAIN 生成 .env.prod、拉镜像、起服务（自动迁移）、
-#         检测到无管理员时交互创建第一个本地管理员
-#   后续：拉新镜像、滚动更新、自动迁移；幂等可重复
-bash tools/deploy.sh
-# 锁定镜像版本：bash tools/deploy.sh --tag v1.2.3
-# 跳过管理员检测：bash tools/deploy.sh --skip-admin
-```
-
-更新一个已合并到 main 的改动：等 `release.yml` 把新镜像推到 GHCR 后，在部署机 `git pull` 拉取最新脚本与 compose，再跑一次 `bash tools/deploy.sh` 即可。
-
-脚本不覆盖 EA 代查询账号录入（玩家查询 / 服管所需，凭据敏感）。按需单独执行：
+EA 查询号池单独录入，凭据从标准输入读：
 
 ```bash
 docker compose --env-file .env.prod -f docker-compose.prod.yml exec backend \
     python -m app.cli upsert-ea-account --persona-id <PERSONA_ID> --stdin-json
 ```
 
-需要手动分步时，脚本内部等价于：`tools/init-prod-secrets.sh` 生成 secrets → `cp .env.example .env.prod` 并设置 `DOMAIN` → `docker compose --env-file .env.prod -f docker-compose.prod.yml pull && up -d`（`migrate` 服务自动跑 `alembic upgrade head`）→ `... exec backend python -m app.cli create-admin --username root`。
+## 发版
 
-TLS 与反代由 host 上的 openresty / nginx 处理，backend 与 web 容器只把 `127.0.0.1:8000` 与 `127.0.0.1:3000` 暴露给 host，杜绝外网直连绕过反代。
-
-镜像名为 `ghcr.io/g1331/bf-manager-{backend,web}`，`.env.prod` 里的 `IMAGE_TAG`（或 `deploy.sh --tag`）可锁定具体版本。
-
-</details>
-
-<a id="multi-game"></a>
-
-## 🧩 游戏分层架构
-
-<details>
-<summary><b>展开查看代码如何按游戏分层、扩展点预留在哪</b></summary>
-
-<br/>
-
-当前平台只实现了 **Battlefield 1**。代码按游戏分层，是为了把 BF1 特有的请求协议、字段 schema 与业务逻辑同通用的 EA 身份层隔离开，让账号体系不绑定具体游戏——这是一项架构约束，并非对新增游戏的承诺（BFV / BF2042 等暂无实现计划）。
-
-如果想 fork 后接入其它游戏，分层结构预留的扩展点如下：
-
-1. 创建 `apps/backend/app/domain/games/<game_id>/` 目录，复制 BF1 结构作为模板
-2. 编写 `profile.py`，填入新游戏的代号、请求头版本、Blaze 端点
-3. 在 `models/<game_id>/` 添加游戏特定表，写 Alembic migration
-4. 在 `services/<game_id>/` 实现业务逻辑
-5. 在 `api/v1/games/<game_id>/` 添加路由
-6. 前端 `app/(public)/[game]/` 动态段自动覆盖，仅需添加 `components/games/<game_id>/` 特定组件和 `styles/themes/<game_id>.css`
-7. `lib/game-registry.ts` 添加游戏元数据条目
-
-详见 `apps/backend/app/domain/games/README.md`。
-
-</details>
-
-<a id="type-gen"></a>
-
-## 🔁 类型生成（前后端 schema 一致性）
-
-<details>
-<summary><b>展开查看 OpenAPI → TypeScript 类型生成流程</b></summary>
-
-<br/>
-
-前端使用的类型来自后端 FastAPI 的 OpenAPI 定义，由 `tools/generate-types.sh` 通过 `openapi-typescript` 生成到 `packages/shared-types/src/api.d.ts`。
+版本号只来自 git tag。源码里的 `version` 字段一直是 `0.0.0`，CI 构建时按 tag 注入，发版不产生改版本号的提交。
 
 ```bash
-# 1. 起后端（dev 或本地）
-make dev
-
-# 2. 生成类型
-bash tools/generate-types.sh
+git checkout main && git pull
+git tag -a v1.2.3 -m "Release v1.2.3"
+git push origin v1.2.3
 ```
 
-生成结果不进 git（被 `.gitignore` 忽略），后端 schema 改动后前端需要重新生成。前端可通过 `@bf-manager/shared-types/api` 引用 `paths` / `components`，获得与后端 OpenAPI 一致的类型。
+`release.yml` 会构建并推送 `ghcr.io/g1331/bf-manager-{backend,web}:v1.2.3`，再用 git-cliff 按 Conventional Commits 生成 GitHub Release。tag 必须打在 main 的提交上。回滚就是用 `deploy.sh --tag` 部署旧版本；数据库迁移不会自动回退，回滚前先确认 schema 兼容。变更记录看 [Releases](https://github.com/g1331/bf-manager/releases)。
 
-</details>
+## 管理命令
 
-<a id="contributing"></a>
+平台管理员不走环境变量，用 CLI 写进数据库：
 
-## 🤝 贡献
+```bash
+docker compose exec backend python -m app.cli <command>
+```
 
-欢迎 Issue 与 Pull Request。提交规范遵循 [Conventional Commits](https://www.conventionalcommits.org/)。提交前会自动运行 `lefthook` 钩子（ruff + ESLint）。
+| 命令 | 作用 |
+|---|---|
+| `create-admin --username <name>` | 创建本地管理员，不需要绑定 EA |
+| `grant-admin --persona <id>` | 把登录过本站的 EA 用户提为管理员 |
+| `revoke-admin --persona <id>` | 撤销管理员 |
+| `list-admins` | 列出所有管理员 |
+| `reset-password --username <name>` | 重置本地密码 |
+| `upsert-ea-account --persona-id <id> --stdin-json` | 新增或更新号池账号 |
 
-<a id="license"></a>
+需要密码的命令默认交互输入，脚本里用 `--password-stdin`。服管权限在网页的 `/admin/memberships` 授予，被授权的人需要先登录过一次。
 
-## 📄 License
+## 贡献
+
+欢迎提 Issue 和 PR。提交信息遵循 [Conventional Commits](https://www.conventionalcommits.org/)，提交前 lefthook 会跑 ruff 和 ESLint。
+
+## License
 
 [MIT](LICENSE) © 2026 g1331
-
-<div align="center">
-<sub><a href="#top">回到顶部 ↑</a> · Made by <a href="https://github.com/g1331">g1331</a></sub>
-</div>

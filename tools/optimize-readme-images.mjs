@@ -28,11 +28,18 @@ if (!existsSync(OUT)) mkdirSync(OUT, { recursive: true });
 //   radius: 圆角半径
 //   pad:    投影留白（0 = 不加投影）
 //   shadow: 投影不透明度
+//   crop:   按像素裁出 [left, top, width, height]，桌面截图用它去掉左侧游戏栏和右侧空白
+// 桌面原图按 1440x900 截，手机原图按 390x844@2x 截，保留 2x 分辨率。
+const DESKTOP_CONTENT = [172, 0, 920, 900];
 const PLAN = [
-  { src: "landing-hero", out: "banner", maxWidth: 1456, radius: 18, pad: 18, shadow: 0.28, trim: false, vignette: true, border: false },
-  { src: "features", out: "preview-features", maxWidth: 1120, radius: 16, pad: 26, shadow: 0.42, trim: false, cropV: [0.12, 0.81] },
-  { src: "mobile", out: "preview-mobile", maxWidth: 480, radius: 22, pad: 16, shadow: 0.4, trim: false, cropV: [0, 0.512] },
-  { src: "login", out: "preview-login", maxWidth: 1120, radius: 16, pad: 26, shadow: 0.42, trim: false },
+  { src: "portal", out: "banner", maxWidth: 1600, radius: 14, pad: 0, shadow: 0, trim: false, border: false, crop: [0, 72, 1600, 656] },
+  { src: "server", out: "server", maxWidth: 920, radius: 12, pad: 0, shadow: 0, trim: false, crop: DESKTOP_CONTENT },
+  { src: "servers", out: "servers", maxWidth: 920, radius: 12, pad: 0, shadow: 0, trim: false, crop: DESKTOP_CONTENT },
+  { src: "server-players", out: "server-players", maxWidth: 920, radius: 12, pad: 0, shadow: 0, trim: false, crop: [172, 80, 920, 820] },
+  { src: "server-rounds", out: "server-rounds", maxWidth: 920, radius: 12, pad: 0, shadow: 0, trim: false, crop: [172, 80, 920, 820] },
+  { src: "player", out: "player", maxWidth: 920, radius: 12, pad: 0, shadow: 0, trim: false, crop: DESKTOP_CONTENT },
+  { src: "mobile-server", out: "mobile-server", maxWidth: 780, radius: 36, pad: 0, shadow: 0, trim: false },
+  { src: "mobile-player", out: "mobile-player", maxWidth: 780, radius: 36, pad: 0, shadow: 0, trim: false },
 ];
 
 function findRaw(src) {
@@ -40,7 +47,7 @@ function findRaw(src) {
 }
 
 async function processOne(cfg) {
-  const { src, out, maxWidth, radius, pad, shadow, trim, cropV, vignette, border = true } = cfg;
+  const { src, out, maxWidth, radius, pad, shadow, trim, crop, cropV, vignette, border = true } = cfg;
   const file = findRaw(src);
   if (!file) {
     console.log(`跳过 ${src}（_raw 下没有对应原图）`);
@@ -48,6 +55,10 @@ async function processOne(cfg) {
   }
   // 1) trim 去纯色边 / 按比例垂直裁剪（去掉渐变背景的大片留白）+ 限宽
   let base = sharp(join(RAW, file));
+  if (crop) {
+    const [left, top, width, height] = crop;
+    base = base.extract({ left, top, width, height });
+  }
   if (trim) base = base.trim({ threshold: 12 });
   if (cropV) {
     const m0 = await sharp(join(RAW, file)).metadata();

@@ -31,7 +31,9 @@ class AuditLog(Base):
     action: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
     target_persona_id: Mapped[int | None] = mapped_column(BigInteger, index=True)
 
-    payload: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(
+        JSON, default=dict, server_default="{}", nullable=False
+    )
 
     # success / failure
     result: Mapped[str] = mapped_column(String(16), nullable=False)

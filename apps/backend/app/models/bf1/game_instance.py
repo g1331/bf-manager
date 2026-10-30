@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import BigInteger, Boolean, DateTime, String
+from sqlalchemy import BigInteger, Boolean, DateTime, String, false
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
@@ -22,7 +22,9 @@ class Bf1GameInstance(Base):
     game_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     # RSP serverId，由 gameId 问 Gateway 解析，解析到之前为空；真官服恒为空
     server_id: Mapped[int | None] = mapped_column(BigInteger, index=True)
-    official: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    official: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=false(), nullable=False
+    )
     # 最近一次看到的服名
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     first_seen: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

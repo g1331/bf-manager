@@ -20,9 +20,9 @@ class Bf1ServerPlayerCount(Base):
     game_mode: Mapped[str | None] = mapped_column(String(32))
 
     player_count: Mapped[int] = mapped_column(nullable=False)
-    queue_count: Mapped[int] = mapped_column(default=0, nullable=False)
-    spectator_count: Mapped[int] = mapped_column(default=0, nullable=False)
-    max_player_count: Mapped[int] = mapped_column(default=0, nullable=False)
+    queue_count: Mapped[int] = mapped_column(default=0, server_default="0", nullable=False)
+    spectator_count: Mapped[int] = mapped_column(default=0, server_default="0", nullable=False)
+    max_player_count: Mapped[int] = mapped_column(default=0, server_default="0", nullable=False)
     # 本轮名单相对上一轮进入 / 退出的人数；为空表示这一轮没拿到名单（快照失败回退了 searchServers）
     joined_count: Mapped[int | None] = mapped_column(SmallInteger)
     left_count: Mapped[int | None] = mapped_column(SmallInteger)

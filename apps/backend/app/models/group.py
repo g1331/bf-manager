@@ -18,6 +18,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    false,
     func,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -112,10 +113,16 @@ class GroupEaAccount(Base):
     encrypted_remid: Mapped[str] = mapped_column(Text, nullable=False)
     encrypted_sid: Mapped[str] = mapped_column(Text, nullable=False)
     encrypted_session: Mapped[str | None] = mapped_column(Text)
-    is_default: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_default: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=false(), nullable=False
+    )
     # ok / invalid：连续登录失败到阈值标 invalid，群主重新提交凭据后恢复
-    status: Mapped[str] = mapped_column(String(16), default="ok", nullable=False)
-    failure_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(16), default="ok", server_default="ok", nullable=False
+    )
+    failure_count: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0", nullable=False
+    )
     last_error: Mapped[str | None] = mapped_column(String(255))
     last_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
@@ -152,7 +159,9 @@ class GroupServer(Base):
     executor_account_id: Mapped[int | None] = mapped_column(
         ForeignKey("group_ea_accounts.id", ondelete="SET NULL")
     )
-    status: Mapped[str] = mapped_column(String(16), default="active", nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(16), default="active", server_default="active", nullable=False
+    )
     status_reason: Mapped[str | None] = mapped_column(String(255))
     executor_problem: Mapped[str | None] = mapped_column(String(255))
     last_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

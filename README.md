@@ -155,7 +155,7 @@ git tag -a v1.2.3 -m "Release v1.2.3"
 git push origin v1.2.3
 ```
 
-`release.yml` 会构建并推送 `ghcr.io/g1331/bf-manager-{backend,web}:v1.2.3`，再用 git-cliff 按 Conventional Commits 生成 GitHub Release。tag 必须打在 main 的提交上。回滚就是用 `deploy.sh --tag` 部署旧版本；数据库迁移不会自动回退，回滚前先确认 schema 兼容。变更记录看 [Releases](https://github.com/g1331/bf-manager/releases)。
+`release.yml` 会构建并推送 `ghcr.io/g1331/bf-manager-{backend,web}:v1.2.3`，再用 git-cliff 按 Conventional Commits 生成 GitHub Release。tag 必须打在 main 的提交上。平时合并到 main 不用打 tag：CI 的检查全部通过后，才会构建 `main`、`latest` 和短 SHA 三个 tag 的镜像。回滚就是用 `deploy.sh --tag` 部署旧版本；数据库迁移不会自动回退，回滚前先确认 schema 兼容。变更记录看 [Releases](https://github.com/g1331/bf-manager/releases)。
 
 ## 管理命令
 

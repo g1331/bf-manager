@@ -28,33 +28,26 @@ import {
   groupsApi,
   INVITE_MAX_USES,
   INVITE_TTL_OPTIONS,
-  type InviteRole,
   inviteUrl,
   ROLE_HINT,
   ROLE_LABEL,
-  ROLE_LEVEL,
 } from "@/lib/api/groups";
 import { ApiException } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
-const ALL_ROLES: GroupRole[] = ["owner", "admin", "moderator", "viewer"];
+const ALL_ROLES: GroupRole[] = ["owner", "admin"];
 
 function errorText(err: unknown, fallback: string) {
   return err instanceof ApiException ? err.message : fallback;
 }
 
-/** 和后端 group_service._can_manage 一致：owner 管所有人；admin 只在协管、观察员之间调整 */
-function roleOptions(me: GroupRole, target: GroupMember): GroupRole[] {
-  if (me === "owner") return ALL_ROLES;
-  if (me === "admin" && (target.role === "moderator" || target.role === "viewer")) {
-    return ["moderator", "viewer"];
-  }
-  return [];
+/** 和后端一致：只有群主能调整、移出成员（包括调整自己）；管理员在群里只能看 */
+function roleOptions(me: GroupRole): GroupRole[] {
+  return me === "owner" ? ALL_ROLES : [];
 }
 
 function canRemove(me: GroupRole, target: GroupMember): boolean {
-  if (target.is_me) return false;
-  return me === "owner" || (me === "admin" && ROLE_LEVEL[target.role] < ROLE_LEVEL.admin);
+  return me === "owner" && !target.is_me;
 }
 
 async function copyText(text: string, done: string) {
@@ -135,11 +128,7 @@ function MemberRow({
   onSetRole: (role: GroupRole) => void;
   onRemove: () => void;
 }) {
-  const options = member.is_me
-    ? myRole === "owner"
-      ? ALL_ROLES
-      : []
-    : roleOptions(myRole, member);
+  const options = roleOptions(myRole);
   const removable = canRemove(myRole, member);
   const name = member.display_name ?? member.username;
   return (
@@ -213,11 +202,7 @@ function MemberRow({
 
 function InviteSection({ group }: { group: GroupDetail }) {
   const qc = useQueryClient();
-  const roles = (["admin", "moderator", "viewer"] as InviteRole[]).filter(
-    (r) => ROLE_LEVEL[r] < ROLE_LEVEL[group.my_role],
-  );
   const [open, setOpen] = useState(false);
-  const [role, setRole] = useState<InviteRole>("viewer");
   const [uses, setUses] = useState(1);
   const [ttl, setTtl] = useState(168);
   const [created, setCreated] = useState<string | null>(null);
@@ -226,7 +211,8 @@ function InviteSection({ group }: { group: GroupDetail }) {
     queryFn: () => groupsApi.invites(group.id),
   });
   const create = useMutation({
-    mutationFn: () => groupsApi.createInvite(group.id, { role, max_uses: uses, ttl_hours: ttl }),
+    mutationFn: () =>
+      groupsApi.createInvite(group.id, { role: "admin", max_uses: uses, ttl_hours: ttl }),
     onSuccess: (res) => {
       setOpen(false);
       setCreated(inviteUrl(res.token));
@@ -255,7 +241,7 @@ function InviteSection({ group }: { group: GroupDetail }) {
         </Button>
       </div>
       <p className="text-muted-foreground mb-3 text-sm leading-relaxed">
-        打开链接就能进群；没有账号的人可以直接用它注册，不用邀请码，但会占用你的邀请名额。链接只在生成时显示一次。
+        打开链接就能进群，进群后是管理员；没有账号的人可以直接用它注册，不用邀请码，但会占用你的邀请名额。链接只在生成时显示一次。
       </p>
       {invites.data && invites.data.items.length > 0 ? (
         <ul className="space-y-2">
@@ -265,11 +251,8 @@ function InviteSection({ group }: { group: GroupDetail }) {
               className="border-border flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-sm border p-3"
             >
               <div className="min-w-0">
-                <div className="flex items-center gap-2 text-sm">
-                  <RoleBadge role={inv.role} />
-                  <span className="tabular-nums">
-                    已用 {inv.uses} / {inv.max_uses}
-                  </span>
+                <div className="text-sm tabular-nums">
+                  已用 {inv.uses} / {inv.max_uses}
                 </div>
                 <div className="text-muted-foreground mt-0.5 text-xs">
                   {inv.created_by_name ?? "已注销的账号"} 发 ·{" "}
@@ -295,22 +278,12 @@ function InviteSection({ group }: { group: GroupDetail }) {
         open={open}
         onOpenChange={setOpen}
         title="发邀请链接"
-        description="链接上的角色要低于你自己的角色。"
+        description={`进群后是管理员：${ROLE_HINT.admin}。`}
         confirmText="生成链接"
         loading={create.isPending}
         onConfirm={() => create.mutate()}
       >
         <div className="space-y-4">
-          <div className="space-y-2">
-            <div className="text-sm font-medium">进群后的角色</div>
-            <Segmented
-              label="进群后的角色"
-              value={role}
-              onChange={setRole}
-              options={roles.map((r) => ({ value: r, label: ROLE_LABEL[r] }))}
-            />
-            <p className="text-muted-foreground text-xs">{ROLE_HINT[role]}</p>
-          </div>
           <div className="space-y-2">
             <div className="text-sm font-medium">能用几次</div>
             <Segmented
@@ -360,14 +333,13 @@ const ACTION_TEXT: Record<string, (i: GroupAuditItem) => string> = {
   group_create: (i) => `${i.actor_name} 建了群「${String(i.payload.name ?? "")}」`,
   group_rename: (i) =>
     `${i.actor_name} 把群名从「${String(i.payload.from ?? "")}」改成「${String(i.payload.to ?? "")}」`,
-  group_member_join: (i) =>
-    `${i.actor_name} 通过邀请链接加入，角色${ROLE_LABEL[i.payload.role as GroupRole] ?? ""}`,
+  group_member_join: (i) => `${i.actor_name} 通过邀请链接加入`,
   group_member_role: (i) =>
     `${i.actor_name} 把 ${i.target_name} 从${ROLE_LABEL[i.payload.from as GroupRole] ?? ""}调成${ROLE_LABEL[i.payload.to as GroupRole] ?? ""}`,
   group_member_remove: (i) => `${i.actor_name} 把 ${i.target_name} 移出了群`,
   group_leave: (i) => `${i.actor_name} 退出了群`,
   group_invite_create: (i) =>
-    `${i.actor_name} 发了一条邀请链接（${ROLE_LABEL[i.payload.role as GroupRole] ?? ""}，可用 ${String(i.payload.max_uses ?? "")} 次）`,
+    `${i.actor_name} 发了一条邀请链接（可用 ${String(i.payload.max_uses ?? "")} 次）`,
   group_invite_revoke: (i) => `${i.actor_name} 作废了一条邀请链接`,
 };
 
@@ -551,7 +523,6 @@ export default function GroupDetailPage() {
 
   const g = group.data;
   const isOwner = g.my_role === "owner";
-  const isAdmin = ROLE_LEVEL[g.my_role] >= ROLE_LEVEL.admin;
   const lastOwner = isOwner && g.members.filter((m) => m.role === "owner").length === 1;
 
   return (
@@ -577,8 +548,8 @@ export default function GroupDetailPage() {
         </ul>
       </section>
 
-      {isAdmin ? <InviteSection group={g} /> : null}
-      {isAdmin ? <AuditSection groupId={g.id} /> : null}
+      {isOwner ? <InviteSection group={g} /> : null}
+      <AuditSection groupId={g.id} />
 
       <section>
         <SectionHeading>群设置</SectionHeading>

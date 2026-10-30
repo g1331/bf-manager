@@ -16,8 +16,8 @@ from app.models.base import Base
 if TYPE_CHECKING:
     from app.models.user import User
 
-# 群内角色，等级沿用 authz_service.ROLE_LEVEL
-GROUP_ROLES = ("owner", "admin", "moderator", "viewer")
+# 群内角色：群主 / 管理员两级（同 tenko v3 的服主 / 管理员）
+GROUP_ROLES = ("owner", "admin")
 
 
 class Group(Base):

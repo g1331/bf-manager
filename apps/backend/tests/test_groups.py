@@ -27,7 +27,7 @@ async def _setup(env, db):
     return ac, outbox, owner, alice, bob, group["id"]
 
 
-async def _invite(ac, gid, role="viewer", max_uses=1) -> str:
+async def _invite(ac, gid, role="admin", max_uses=1) -> str:
     resp = await ac.post(
         f"{API}/groups/{gid}/invites", json={"role": role, "max_uses": max_uses, "ttl_hours": 24}
     )
@@ -77,32 +77,50 @@ async def test_already_member_does_not_consume_use(env, test_session) -> None:
 async def test_role_rules_for_admin_and_last_owner(env, test_session) -> None:
     ac, _, owner, alice, bob, gid = await _setup(env, test_session)
     await _join(ac, alice, await _invite_as(ac, owner, gid, "admin"))
-    await _join(ac, bob, await _invite_as(ac, owner, gid, "viewer"))
+    await _join(ac, bob, await _invite_as(ac, owner, gid, "admin"))
 
+    # 群里只有群主和管理员两级，旧的协管 / 观察员不再接受
+    _login_cookie(ac, owner)
+    for role in ("moderator", "viewer"):
+        resp = await ac.post(
+            f"{API}/groups/{gid}/invites", json={"role": role, "max_uses": 1, "ttl_hours": 24}
+        )
+        assert resp.status_code == 422
+        resp = await ac.patch(f"{API}/groups/{gid}/members/{bob.id}", json={"role": role})
+        assert resp.status_code == 422
+    # 链接不能直接给群主
+    resp = await ac.post(
+        f"{API}/groups/{gid}/invites", json={"role": "owner", "max_uses": 1, "ttl_hours": 24}
+    )
+    assert resp.status_code == 422
+
+    # 管理员：看得到成员和群组记录，发不了链接、管不了任何人
     _login_cookie(ac, alice)
-    # admin 发的链接最高 moderator
+    assert (await ac.get(f"{API}/groups/{gid}")).json()["my_role"] == "admin"
+    assert (await ac.get(f"{API}/groups/{gid}/audit")).status_code == 200
+    assert (await ac.get(f"{API}/groups/{gid}/invites")).status_code == 403
     resp = await ac.post(
         f"{API}/groups/{gid}/invites", json={"role": "admin", "max_uses": 1, "ttl_hours": 24}
     )
-    assert resp.json()["error"]["code"] == "GROUP_ROLE_INVALID"
-    # admin 能在 viewer / moderator 之间调整，不能提到 admin，也动不了 owner
-    assert (
-        await ac.patch(f"{API}/groups/{gid}/members/{bob.id}", json={"role": "moderator"})
-    ).status_code == 200
-    resp = await ac.patch(f"{API}/groups/{gid}/members/{bob.id}", json={"role": "admin"})
     assert resp.status_code == 403
+    assert (
+        await ac.patch(f"{API}/groups/{gid}/members/{bob.id}", json={"role": "owner"})
+    ).status_code == 403
+    assert (await ac.delete(f"{API}/groups/{gid}/members/{bob.id}")).status_code == 403
     assert (await ac.delete(f"{API}/groups/{gid}/members/{owner.id}")).status_code == 403
-    # 群组记录只给 admin 以上看
-    assert (await ac.get(f"{API}/groups/{gid}/audit")).status_code == 200
+    assert (await ac.patch(f"{API}/groups/{gid}", json={"name": "改名"})).status_code == 403
+    assert (await ac.delete(f"{API}/groups/{gid}")).status_code == 403
+
+    # 群主移出管理员
+    _login_cookie(ac, owner)
     assert (await ac.delete(f"{API}/groups/{gid}/members/{bob.id}")).status_code == 200
 
-    # 唯一的 owner 不能退群、不能把自己降级
-    _login_cookie(ac, owner)
+    # 唯一的群主不能退群、不能把自己降级
     resp = await ac.post(f"{API}/groups/{gid}/leave")
     assert resp.json()["error"]["code"] == "GROUP_LAST_OWNER"
     resp = await ac.patch(f"{API}/groups/{gid}/members/{owner.id}", json={"role": "admin"})
     assert resp.json()["error"]["code"] == "GROUP_LAST_OWNER"
-    # 先把 alice 设成 owner，再退
+    # 先把 alice 设成群主，再退
     assert (
         await ac.patch(f"{API}/groups/{gid}/members/{alice.id}", json={"role": "owner"})
     ).status_code == 200
@@ -125,19 +143,9 @@ async def _invite_as(ac, user, gid, role):
     return await _invite(ac, gid, role=role)
 
 
-async def test_viewer_cannot_see_invites_or_audit(env, test_session) -> None:
-    ac, _, owner, alice, _, gid = await _setup(env, test_session)
-    await _join(ac, alice, await _invite_as(ac, owner, gid, "viewer"))
-    _login_cookie(ac, alice)
-    assert (await ac.get(f"{API}/groups/{gid}")).json()["my_role"] == "viewer"
-    assert (await ac.get(f"{API}/groups/{gid}/invites")).status_code == 403
-    assert (await ac.get(f"{API}/groups/{gid}/audit")).status_code == 403
-    assert (await ac.delete(f"{API}/groups/{gid}")).status_code == 403
-
-
 async def test_register_through_group_invite_joins_and_uses_quota(env, test_session) -> None:
     ac, outbox, owner, _, _, gid = await _setup(env, test_session)
-    token = await _invite(ac, gid, role="moderator")
+    token = await _invite(ac, gid)
 
     ac.cookies.clear()
     resp = await ac.post(
@@ -156,7 +164,7 @@ async def test_register_through_group_invite_joins_and_uses_quota(env, test_sess
     member = await test_session.scalar(
         select(GroupMember).where(GroupMember.group_id == gid, GroupMember.user_id == new_id)
     )
-    assert member is not None and member.role == "moderator"
+    assert member is not None and member.role == "admin"
     quota_row = await test_session.scalar(
         select(InviteCode).where(InviteCode.created_by == owner.id, InviteCode.used_by == new_id)
     )

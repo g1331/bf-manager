@@ -1,11 +1,10 @@
 """群组：建群、成员与角色、邀请链接
 
-角色等级沿用 ROLE_LEVEL：owner > admin > moderator > viewer。
+角色只有两级，和 tenko v3 的服主 / 管理员一致：
 
-- owner 可以有多个：改群名、删群、设任何人的角色、移出任何人；群里至少要留一个 owner。
-- admin 只能管 moderator / viewer：在这两级之间调整、移出。
-- 邀请链接上的角色必须低于发链接人的角色：owner 最高发 admin，admin 最高发 moderator。
-  owner 只能由 owner 在成员列表里提升，不能通过链接给出。
+- owner（群主）可以有多个：发邀请链接、调整和移出成员、改群名、删群；群里至少要留一个 owner。
+- admin（管理员）在群里只能看成员和群组记录、退群；它的用处在绑定的服务器上（服管操作）。
+- 邀请链接只能由 owner 发，进群后是 admin；owner 只能由 owner 在成员列表里提升。
 - 不是群成员的人访问群接口一律 404，不暴露群是否存在。
 
 改成员、进群前先锁住 groups 行：两个 owner 同时把对方降级、或多人同时用最后一次
@@ -28,7 +27,7 @@ from sqlalchemy.orm import selectinload
 from app.api.errors import AppError, NotFoundError
 from app.core.config import get_settings
 from app.models import AuditLog, EaBinding, Group, GroupInvite, GroupMember, User
-from app.services.authz_service import ROLE_LEVEL
+from app.models.group import GROUP_ROLES
 from app.services.user_service import lock_user
 
 AUDIT_GAME = "group"
@@ -52,8 +51,11 @@ def hash_invite_token(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
+_GROUP_ROLE_LEVEL = {"admin": 1, "owner": 2}
+
+
 def _level(role: str | None) -> int:
-    return ROLE_LEVEL.get(role or "", 0)
+    return _GROUP_ROLE_LEVEL.get(role or "", 0)
 
 
 async def _persona_of(db: AsyncSession, user_id: int | None) -> int:
@@ -120,7 +122,7 @@ async def get_membership(db: AsyncSession, group_id: int, user_id: int) -> Group
 
 
 async def require_member(
-    db: AsyncSession, group_id: int, user: User, min_role: str = "viewer"
+    db: AsyncSession, group_id: int, user: User, min_role: str = "admin"
 ) -> GroupMember:
     """不是成员 → 404；角色不够 → 403"""
     member = await get_membership(db, group_id, user.id)
@@ -257,16 +259,6 @@ async def _owner_count(db: AsyncSession, group_id: int) -> int:
     )
 
 
-def _can_manage(actor_role: str, target_role: str, new_role: str | None = None) -> bool:
-    """actor 能否改动 target（new_role 为空表示移出）"""
-    if actor_role == "owner":
-        return True
-    if actor_role == "admin":
-        low = ("moderator", "viewer")
-        return target_role in low and (new_role is None or new_role in low)
-    return False
-
-
 async def _load_user(db: AsyncSession, user_id: int) -> User | None:
     return await db.scalar(
         select(User).options(selectinload(User.ea_bindings)).where(User.id == user_id)
@@ -281,17 +273,15 @@ async def set_member_role(
     new_role: str,
     ip: str | None = None,
 ) -> None:
-    if new_role not in ROLE_LEVEL:
+    if new_role not in GROUP_ROLES:
         raise GroupError("GROUP_ROLE_INVALID", "角色无效")
     await _lock_group(db, group_id)
-    me = await require_member(db, group_id, actor)
+    await require_member(db, group_id, actor, "owner")
     target = await get_membership(db, group_id, target_user_id)
     if target is None:
         raise NotFoundError("成员")
     if target.role == new_role:
         return
-    if not _can_manage(me.role, target.role, new_role):
-        raise GroupError("GROUP_FORBIDDEN", "你不能这样调整这个成员的角色", 403)
     if target.role == "owner" and await _owner_count(db, group_id) <= 1:
         raise GroupError("GROUP_LAST_OWNER", "群里至少要留一个群主，先把别人设成群主")
     old = target.role
@@ -316,12 +306,10 @@ async def remove_member(
         await leave_group(db, group_id, actor, ip=ip)
         return
     await _lock_group(db, group_id)
-    me = await require_member(db, group_id, actor)
+    await require_member(db, group_id, actor, "owner")
     target = await get_membership(db, group_id, target_user_id)
     if target is None:
         raise NotFoundError("成员")
-    if not _can_manage(me.role, target.role):
-        raise GroupError("GROUP_FORBIDDEN", "你不能移出这个成员", 403)
     if target.role == "owner" and await _owner_count(db, group_id) <= 1:
         raise GroupError("GROUP_LAST_OWNER", "群里至少要留一个群主")
     await _audit(
@@ -374,8 +362,8 @@ async def create_invite(
     """返回 (邀请行, 明文 token)。明文只在这一次返回给前端，库里只存哈希。"""
     settings = get_settings()
     await _lock_group(db, group_id)
-    me = await require_member(db, group_id, actor, "admin")
-    if role not in ROLE_LEVEL or role == "owner" or _level(role) >= _level(me.role):
+    me = await require_member(db, group_id, actor, "owner")
+    if role not in GROUP_ROLES or _level(role) >= _level(me.role):
         raise GroupError("GROUP_ROLE_INVALID", "链接上的角色要低于你自己的角色")
     if not 1 <= max_uses <= settings.group_invite_max_uses:
         raise GroupError("GROUP_INVITE_USES", f"每条链接最多用 {settings.group_invite_max_uses} 次")
@@ -427,7 +415,7 @@ async def _invites(db: AsyncSession, group_id: int) -> list[GroupInvite]:
 
 
 async def list_live_invites(db: AsyncSession, group_id: int, actor: User) -> list[GroupInvite]:
-    await require_member(db, group_id, actor, "admin")
+    await require_member(db, group_id, actor, "owner")
     now = _now()
     return [i for i in await _invites(db, group_id) if invite_is_live(i, now)]
 
@@ -436,12 +424,10 @@ async def revoke_invite(
     db: AsyncSession, group_id: int, invite_id: int, actor: User, ip: str | None = None
 ) -> None:
     await _lock_group(db, group_id)
-    me = await require_member(db, group_id, actor, "admin")
+    await require_member(db, group_id, actor, "owner")
     invite = await db.get(GroupInvite, invite_id)
     if invite is None or invite.group_id != group_id:
         raise NotFoundError("邀请链接")
-    if me.role != "owner" and invite.created_by != actor.id:
-        raise GroupError("GROUP_FORBIDDEN", "只能作废自己发的链接", 403)
     if invite.revoked_at is None:
         invite.revoked_at = _now()
         await _audit(

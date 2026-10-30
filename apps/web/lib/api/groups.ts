@@ -1,28 +1,19 @@
 /** 群组：成员与角色、邀请链接、群组记录 */
 import { api } from "@/lib/api-client";
 
-export type GroupRole = "owner" | "admin" | "moderator" | "viewer";
+/** 群主 / 管理员两级，和 tenko v3 的服主 / 管理员一致 */
+export type GroupRole = "owner" | "admin";
+/** 邀请链接只能由群主发，进群后是管理员 */
 export type InviteRole = Exclude<GroupRole, "owner">;
 
 export const ROLE_LABEL: Record<GroupRole, string> = {
   owner: "群主",
   admin: "管理员",
-  moderator: "协管",
-  viewer: "观察员",
 };
 
 export const ROLE_HINT: Record<GroupRole, string> = {
-  owner: "改群名、删群、设任何人的角色",
-  admin: "封禁、加 V、换图；管理协管和观察员",
-  moderator: "踢人、换边",
-  viewer: "只能查看",
-};
-
-export const ROLE_LEVEL: Record<GroupRole, number> = {
-  viewer: 1,
-  moderator: 2,
-  admin: 3,
-  owner: 4,
+  owner: "发邀请链接、管理成员、改群名和删群",
+  admin: "群绑定的服务器上能踢人、换边、封禁、加 V、换图",
 };
 
 export interface GroupSummary {

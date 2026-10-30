@@ -7,8 +7,9 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-GroupRole = Literal["owner", "admin", "moderator", "viewer"]
-InviteRole = Literal["admin", "moderator", "viewer"]
+GroupRole = Literal["owner", "admin"]
+# 链接上的角色要低于发链接的群主，所以只能是 admin；保留字段，以后加角色时接口不用改
+InviteRole = Literal["admin"]
 
 
 class GroupCreateRequest(BaseModel):
@@ -59,7 +60,7 @@ class MemberRoleRequest(BaseModel):
 
 
 class InviteCreateRequest(BaseModel):
-    role: InviteRole = "viewer"
+    role: InviteRole = "admin"
     max_uses: int = Field(1, ge=1, le=100)
     ttl_hours: int = 168
 

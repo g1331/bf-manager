@@ -63,7 +63,7 @@ export default function GroupsPage() {
       <PageHeader
         kicker="Groups"
         title="群组"
-        description="和一起管服的人组个群：按角色分工，用邀请链接拉人进来。"
+        description="和一起管服的人组个群：群主用邀请链接拉人进来，进群的都是管理员。"
         action={
           <Button size="sm" disabled={!canCreate} onClick={() => setCreateOpen(true)}>
             <Plus className="size-4" />

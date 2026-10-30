@@ -20,6 +20,9 @@ import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 20;
 const REASON_MAX = 200;
+const DELETE_CONFIRM = "删除";
+const ACTION_CLASS =
+  "-ml-2 h-11 px-2 hover:bg-transparent hover:underline lg:ml-0 lg:h-auto lg:min-h-0 lg:p-0";
 
 const FILTERS: { value: AdminUserFilter; label: string }[] = [
   { value: "all", label: "全部" },
@@ -60,6 +63,8 @@ export default function UsersAdminPage() {
   const [freezing, setFreezing] = useState<AdminUser | null>(null);
   const [reason, setReason] = useState("");
   const [unfreezing, setUnfreezing] = useState<AdminUser | null>(null);
+  const [deleting, setDeleting] = useState<AdminUser | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState("");
 
   // 输入停下 300ms 再查
   useEffect(() => {
@@ -103,6 +108,14 @@ export default function UsersAdminPage() {
       done(`已解冻 ${userName(u)}`);
     },
     onError: (err) => toast.error(err instanceof ApiException ? err.message : "解冻失败"),
+  });
+  const remove = useMutation({
+    mutationFn: (u: AdminUser) => adminApi.deleteUser(u.id),
+    onSuccess: (_, u) => {
+      setDeleting(null);
+      done(`已删除 ${userName(u)}`);
+    },
+    onError: (err) => toast.error(err instanceof ApiException ? err.message : "删除失败"),
   });
 
   if (session.isLoading) {
@@ -151,7 +164,7 @@ export default function UsersAdminPage() {
             ) : null}
             {u.is_frozen ? (
               <span className="bg-destructive/90 rounded px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                已冻结
+                {u.deletion_scheduled_at ? "注销中" : "已冻结"}
               </span>
             ) : null}
           </div>
@@ -173,7 +186,14 @@ export default function UsersAdminPage() {
       header: "状态",
       className: "min-w-36 whitespace-normal",
       cell: (u) =>
-        u.is_frozen ? (
+        u.deletion_scheduled_at ? (
+          <div className="max-w-72 text-sm">
+            <div className="text-destructive">本人申请注销</div>
+            <div className="text-muted-foreground text-xs">
+              {formatTime(u.deletion_scheduled_at)} 删除
+            </div>
+          </div>
+        ) : u.is_frozen ? (
           <div className="max-w-72 text-sm">
             <div className="text-destructive">冻结：{u.frozen_reason}</div>
             <div className="text-muted-foreground text-xs">
@@ -190,21 +210,36 @@ export default function UsersAdminPage() {
       className: "whitespace-nowrap",
       cell: (u) =>
         u.is_frozen ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="-ml-2 h-11 px-2 hover:bg-transparent hover:underline lg:ml-0 lg:h-auto lg:min-h-0 lg:p-0"
-            onClick={() => setUnfreezing(u)}
-          >
-            解冻
-          </Button>
+          <div className="flex gap-1 lg:gap-3">
+            {u.deletion_scheduled_at ? null : (
+              <Button
+                variant="ghost"
+                size="sm"
+                className={ACTION_CLASS}
+                onClick={() => setUnfreezing(u)}
+              >
+                解冻
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn("text-destructive", ACTION_CLASS)}
+              onClick={() => {
+                setDeleteConfirm("");
+                setDeleting(u);
+              }}
+            >
+              删除
+            </Button>
+          </div>
         ) : u.role === "admin" || u.id === myId ? (
           <span className="text-muted-foreground text-sm">—</span>
         ) : (
           <Button
             variant="ghost"
             size="sm"
-            className="text-destructive -ml-2 h-11 px-2 hover:bg-transparent hover:underline lg:ml-0 lg:h-auto lg:min-h-0 lg:p-0"
+            className={cn("text-destructive", ACTION_CLASS)}
             onClick={() => {
               setReason("");
               setFreezing(u);
@@ -221,7 +256,7 @@ export default function UsersAdminPage() {
       <PageHeader
         kicker="Admin"
         title="用户管理"
-        description="冻结账号会立刻让他所有登录失效、吊销他全部 API Key、挂到群上的服在群里失效，自动换图、计时 VIP 这类他发起的后台任务也会停下。平台管理员不能在这里冻结。"
+        description="冻结账号会立刻让他所有登录失效、吊销他全部 API Key、挂到群上的服在群里失效，自动换图、计时 VIP 这类他发起的后台任务也会停下。冻结后确认无误的可以删除。平台管理员不能在这里冻结。"
       />
 
       <section className="space-y-3">
@@ -353,6 +388,31 @@ export default function UsersAdminPage() {
           if (unfreezing) unfreeze.mutate(unfreezing.id);
         }}
       />
+
+      <ConfirmSheet
+        open={deleting !== null}
+        onOpenChange={(open) => !open && setDeleting(null)}
+        title={deleting ? `删除 ${userName(deleting)}？` : "删除账号"}
+        description="立即删除，不能恢复：EA 绑定、API Key、群成员身份和服管授权全部清除，邮箱和 EA 账号可以重新注册。他是唯一群主的群交给最早入群的管理员，群里没别人就解散。操作记录保留，但不再关联到这个账号。"
+        confirmText="删除"
+        variant="destructive"
+        loading={remove.isPending}
+        confirmDisabled={deleteConfirm.trim() !== DELETE_CONFIRM}
+        onConfirm={() => {
+          if (deleting) remove.mutate(deleting);
+        }}
+      >
+        <div className="space-y-1.5">
+          <div className="text-sm font-medium">输入「{DELETE_CONFIRM}」确认</div>
+          <Input
+            name="confirm"
+            value={deleteConfirm}
+            aria-label="输入删除确认"
+            autoComplete="off"
+            onChange={(e) => setDeleteConfirm(e.target.value)}
+          />
+        </div>
+      </ConfirmSheet>
     </main>
   );
 }

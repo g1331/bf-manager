@@ -20,11 +20,13 @@ from app.schemas.auth import (
     ChangePasswordRequest,
     CookieBindRequest,
     CookieBindResponse,
+    DeleteAccountRequest,
+    DeleteAccountResponse,
     EmailOnlyRequest,
     InviteCodeItem,
     InviteCodeListResponse,
 )
-from app.services import account_service, site_settings_service
+from app.services import account_deletion_service, account_service, site_settings_service
 from app.services.account_service import AccountError, normalize_email
 from app.services.auth_service import AuthService
 from app.services.ea_binding_service import EaBindingService
@@ -121,6 +123,28 @@ async def change_password(
     issue_session(response, user)
     if user.email:
         background.add_task(account_service.send_password_changed, user.email, client_ip(request))
+
+
+@router.post("/delete-account", response_model=DeleteAccountResponse)
+async def delete_account(
+    payload: DeleteAccountRequest,
+    user: CurrentUserAnyStatus,
+    db: DbDep,
+    request: Request,
+    response: Response,
+    background: BackgroundTasks,
+) -> DeleteAccountResponse:
+    """申请注销：账号立即冻结、退出登录，冷静期后删除；冷静期内用邮箱密码登录可以撤销"""
+    ip = client_ip(request)
+    delete_at = await account_deletion_service.request_deletion(
+        db, user, payload.password, payload.confirm, ip
+    )
+    clear_session(response)
+    if user.email:
+        background.add_task(
+            account_deletion_service.send_deletion_scheduled, user.email, delete_at, ip
+        )
+    return DeleteAccountResponse(delete_at=delete_at)
 
 
 @router.post(

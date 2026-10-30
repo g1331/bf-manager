@@ -93,6 +93,8 @@ export interface AdminUser {
   frozen_at: string | null;
   frozen_reason: string | null;
   frozen_by_name: string | null;
+  /** 本人申请注销时的计划删除时间 */
+  deletion_scheduled_at: string | null;
 }
 
 export interface AdminUserPage {
@@ -121,4 +123,5 @@ export const adminApi = {
   freezeUser: (id: number, reason: string) =>
     api.post<AdminUser>(`/admin/users/${id}/freeze`, { reason }),
   unfreezeUser: (id: number) => api.post<AdminUser>(`/admin/users/${id}/unfreeze`),
+  deleteUser: (id: number) => api.post<void>(`/admin/users/${id}/delete`),
 };

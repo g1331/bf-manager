@@ -45,6 +45,10 @@ class User(Base, TimestampMixin):
     frozen_by: Mapped[int | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL", name="fk_users_frozen_by_users")
     )
+    # 本人申请注销后到这个时间点删除；冷静期内账号按冻结处理，用密码登录时可以撤销
+    deletion_scheduled_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), index=True
+    )
 
     # 会话版本：JWT 带 sv，和这里不一致就失效。改密码、登出所有设备、冻结时 +1
     token_version: Mapped[int] = mapped_column(

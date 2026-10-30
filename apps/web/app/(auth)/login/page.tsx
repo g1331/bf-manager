@@ -20,7 +20,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AuthCard } from "@/components/auth/AuthCard";
-import { emailLogin, landingPath, localLogin, type SessionUser } from "@/lib/auth";
+import {
+  cancelAccountDeletion,
+  emailLogin,
+  landingPath,
+  localLogin,
+  type SessionUser,
+} from "@/lib/auth";
 import { ApiException } from "@/lib/api-client";
 import { safeNextPath } from "@/lib/utils";
 
@@ -37,6 +43,13 @@ const localLoginSchema = z.object({
 type LoginValues = z.infer<typeof loginSchema>;
 type LocalLoginValues = z.infer<typeof localLoginSchema>;
 
+function deletionTime(iso: string | null | undefined): string {
+  const at = iso ? new Date(iso) : null;
+  return at && !Number.isNaN(at.getTime())
+    ? at.toLocaleString("zh-CN", { dateStyle: "medium", timeStyle: "short" })
+    : "冷静期结束时";
+}
+
 export default function LoginPage() {
   return (
     <Suspense fallback={<div className="text-muted-foreground p-12 text-sm">加载中…</div>}>
@@ -52,8 +65,14 @@ function LoginForm() {
   const next = safeNextPath(searchParams.get("next"), "/stats");
   // 绑定 EA 时认领了旧账号：当前会话作废，回到这里用同样的邮箱密码重新登录
   const claimed = searchParams.get("claimed") === "1";
+  // 刚申请注销：从「我的主页」跳过来
+  const requestedDeletion = searchParams.get("deletion");
   const [submitting, setSubmitting] = useState(false);
   const [showLocal, setShowLocal] = useState(false);
+  // 冷静期内用正确的密码登录：提示什么时候删，可以撤销
+  const [pending, setPending] = useState<{ values: LoginValues; deleteAt: string | null } | null>(
+    null,
+  );
 
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
@@ -78,8 +97,26 @@ function LoginForm() {
     try {
       enter(await emailLogin(values));
     } catch (err) {
-      toast.error(err instanceof ApiException ? err.message : "登录失败，请稍后重试");
+      if (err instanceof ApiException && err.code === "ACCOUNT_DELETION_PENDING") {
+        const deleteAt = err.details?.delete_at;
+        setPending({ values, deleteAt: typeof deleteAt === "string" ? deleteAt : null });
+      } else {
+        toast.error(err instanceof ApiException ? err.message : "登录失败，请稍后重试");
+      }
     } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const onCancelDeletion = async () => {
+    if (!pending) return;
+    setSubmitting(true);
+    try {
+      const user = await cancelAccountDeletion(pending.values);
+      toast.success("已撤销注销");
+      enter(user);
+    } catch (err) {
+      toast.error(err instanceof ApiException ? err.message : "撤销失败，请稍后重试");
       setSubmitting(false);
     }
   };
@@ -111,6 +148,26 @@ function LoginForm() {
         </>
       }
     >
+      {pending ? (
+        <div
+          role="alert"
+          className="border-destructive/40 bg-destructive/10 mb-5 space-y-3 rounded-sm border p-3 text-sm leading-relaxed"
+        >
+          <p>
+            这个账号已申请注销，将在 <strong>{deletionTime(pending.deleteAt)}</strong>{" "}
+            删除。现在账号处于冻结状态，撤销后恢复登录；之前吊销的 API Key 不会恢复。
+          </p>
+          <Button className="w-full" disabled={submitting} onClick={onCancelDeletion}>
+            {submitting ? "处理中…" : "撤销注销并登录"}
+          </Button>
+        </div>
+      ) : requestedDeletion !== null ? (
+        <div className="mb-5 rounded-sm border border-white/15 bg-white/[0.04] p-3 text-sm leading-relaxed">
+          已申请注销，账号将在 <strong>{deletionTime(requestedDeletion)}</strong>{" "}
+          删除，确认邮件已发到你的邮箱。改主意的话，在这之前用邮箱和密码登录即可撤销。
+        </div>
+      ) : null}
+
       {claimed ? (
         <div className="mb-5 rounded-sm border border-amber-500/30 bg-amber-500/10 p-3 text-sm leading-relaxed text-amber-100">
           旧账号已经认领，原来的服务器权限和操作记录都在。请用刚才设置的邮箱和密码重新登录。

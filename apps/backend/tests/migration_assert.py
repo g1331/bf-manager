@@ -167,6 +167,17 @@ async def assert_upgraded() -> None:
         )
         assert set(frozen_cols) == {"frozen_at", "frozen_reason", "frozen_by"}, frozen_cols
 
+        # 12. 0023：申请注销的计划删除时间
+        deletion_col = (
+            await conn.execute(
+                text(
+                    "SELECT 1 FROM information_schema.columns "
+                    "WHERE table_name='users' AND column_name='deletion_scheduled_at'"
+                )
+            )
+        ).scalar_one_or_none()
+        assert deletion_col is not None, "users.deletion_scheduled_at missing"
+
     await engine.dispose()
     print("assert_upgraded: all checks passed")
 

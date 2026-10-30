@@ -233,6 +233,28 @@ async def _consume_verification(db: AsyncSession, token: str) -> EmailVerificati
     return row
 
 
+async def _lock_verification_target(db: AsyncSession, token: str) -> None:
+    """消耗链接（会锁住验证记录）之前，先按“群 → 用户”锁住它要改的账号。
+
+    删除账号是先锁用户、再删他的验证记录；这里反过来就会和它互等死锁。只读定位，
+    链接是否有效由随后的 _consume_verification 判断。"""
+    pre = (
+        await db.execute(
+            select(EmailVerification.user_id, EmailVerification.payload).where(
+                EmailVerification.token_hash == _hash_token(token)
+            )
+        )
+    ).first()
+    if pre is None or pre.user_id is None:
+        return
+    invite_id = (pre.payload or {}).get("group_invite_id")
+    if invite_id:
+        gid = await db.scalar(select(GroupInvite.group_id).where(GroupInvite.id == int(invite_id)))
+        if gid is not None:
+            await group_service._lock_group(db, gid)
+    await lock_user(db, pre.user_id)
+
+
 # ===== 查询辅助 =====
 
 
@@ -622,7 +644,7 @@ async def process_reset_request(
             if (
                 user is None
                 or user.status != "active"
-                or user.is_frozen
+                or _frozen_by_admin(user)
                 or not user.is_active
                 or primary_binding(user) is None
             ):
@@ -725,6 +747,7 @@ async def confirm_verification(db: AsyncSession, token: str, password: str) -> U
     """提交密码：消耗 token，并在同一事务里完成注册 / 认领 / 重置 / 补邮箱。返回要登录的账号。"""
     validate_password(password)
     try:
+        await _lock_verification_target(db, token)
         row = await _consume_verification(db, token)
         if row.kind == "register":
             user = await _finish_register(db, row, password)
@@ -855,7 +878,7 @@ async def _finish_claim(db: AsyncSession, row: EmailVerification, password: str)
 
 async def _finish_reset(db: AsyncSession, row: EmailVerification, password: str) -> User:
     user = await lock_user(db, row.user_id) if row.user_id is not None else None
-    if user is None or user.status != "active" or user.is_frozen or not user.is_active:
+    if user is None or user.status != "active" or _frozen_by_admin(user) or not user.is_active:
         raise AccountError("LINK_INVALID", "链接无效或已过期，请重新申请", 404)
     user.local_password_hash = hash_password(password)
     user.last_login_at = _now()
@@ -867,12 +890,34 @@ async def _finish_reset(db: AsyncSession, row: EmailVerification, password: str)
 # ===== 登录、改密码、登出所有设备 =====
 
 
+def _frozen_by_admin(user: User) -> bool:
+    """注销冷静期也是冻结状态，但允许找回密码：忘了密码也能登录撤销注销"""
+    return user.is_frozen and user.deletion_scheduled_at is None
+
+
+def pending_deletion_error(user: User) -> AppError:
+    """冷静期内用正确的密码登录：告诉他什么时候删、可以撤销"""
+    assert user.deletion_scheduled_at is not None
+    delete_at = user.deletion_scheduled_at
+    if delete_at.tzinfo is None:
+        delete_at = delete_at.replace(tzinfo=UTC)
+    return AppError(
+        403,
+        "ACCOUNT_DELETION_PENDING",
+        f"这个账号已申请注销，将在 {templates.format_time(delete_at)}（北京时间）删除",
+        details={"delete_at": delete_at.isoformat()},
+    )
+
+
 async def login_with_email(db: AsyncSession, email: str, password: str) -> User:
     user = await db.scalar(
         select(User).options(selectinload(User.ea_bindings)).where(func.lower(User.email) == email)
     )
     # 不管账号在不在都做一次 bcrypt，响应时间不泄露邮箱是否注册过
     password_ok = verify_password_timing_safe(password, user.local_password_hash if user else None)
+    if user is not None and password_ok and user.deletion_scheduled_at is not None:
+        # 密码对了才告诉他账号在注销冷静期，登录页据此提供“撤销注销”
+        raise pending_deletion_error(user)
     if (
         user is None
         or not password_ok
@@ -913,16 +958,17 @@ async def cleanup_once(db: AsyncSession) -> None:
     settings = get_settings()
     stale = now - timedelta(hours=settings.pending_binding_ttl_hours)
     # 只清理从没绑过 EA 的：绑过又解绑的老账号也会是 pending_binding，不能删
-    pending = await db.scalars(
-        select(User.id).where(
-            User.status == "pending_binding",
-            User.created_at < stale,
-            ~exists().where(EaBinding.user_id == User.id),
-        )
+    # 申请了注销的走冷静期，到期由注销流程删
+    conds = (
+        User.status == "pending_binding",
+        User.created_at < stale,
+        User.deletion_scheduled_at.is_(None),
+        ~exists().where(EaBinding.user_id == User.id),
     )
-    ids = list(pending)
+    ids = list(await db.scalars(select(User.id).where(*conds)))
     if ids:
-        await db.execute(delete(User).where(User.id.in_(ids)))
+        # 删除时再按同样的条件判断一次：查完到删之间可能有人申请了注销
+        await db.execute(delete(User).where(User.id.in_(ids), *conds))
         logger.info("清理超时未绑定 EA 的账号 {} 个", len(ids))
     await db.execute(
         delete(EmailVerification).where(EmailVerification.expires_at < now - timedelta(days=1))

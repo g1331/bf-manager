@@ -46,12 +46,12 @@ def mask_ip(ip: str | None) -> str | None:
     return None
 
 
-def _fmt_time(at: datetime) -> str:
+def format_time(at: datetime) -> str:
     return at.astimezone(_BEIJING).strftime("%Y-%m-%d %H:%M")
 
 
 def _meta_lines(meta: RequestMeta) -> list[str]:
-    lines = [f"请求时间：{_fmt_time(meta.at)}（北京时间）"]
+    lines = [f"请求时间：{format_time(meta.at)}（北京时间）"]
     masked = mask_ip(meta.ip)
     if masked:
         lines.append(f"请求来源 IP：{masked}")
@@ -324,4 +324,42 @@ def group_problems(*, to: str, group_name: str, lines: list[str], url: str) -> M
         note=None,
         meta=RequestMeta.now(None),
         footer="你是这个群的群主，所以收到这封信。",
+    )
+
+
+def account_deletion_scheduled(
+    *, to: str, delete_at: datetime, login_url: str, meta: RequestMeta
+) -> MailMessage:
+    return _render(
+        to=to,
+        kind="account_deletion_scheduled",
+        subject=f"【{SITE_NAME}】账号注销申请已提交",
+        title="账号注销申请已提交",
+        paragraphs=[
+            f"你的 {SITE_NAME} 账号已经申请注销，将在 <strong>{format_time(delete_at)}</strong>"
+            "（北京时间）删除。",
+            "在这之前账号处于冻结状态：所有设备已退出登录，API Key 已经吊销，你挂到群上的服在群里失效。",
+            "改主意的话，在删除前用邮箱和密码登录，按提示撤销注销即可。",
+        ],
+        button=("去登录页撤销", login_url),
+        note="删除后，EA 绑定、API Key、群成员身份和服管授权都会清除，邮箱和 EA 账号可以重新注册。",
+        meta=meta,
+        footer="如果不是你本人操作，请马上登录撤销，并修改密码。",
+    )
+
+
+def account_deleted(*, to: str, meta: RequestMeta) -> MailMessage:
+    return _render(
+        to=to,
+        kind="account_deleted",
+        subject=f"【{SITE_NAME}】账号已删除",
+        title="账号已删除",
+        paragraphs=[
+            f"你的 {SITE_NAME} 账号已经删除，EA 绑定、API Key、群成员身份和服管授权都已清除。",
+            "以后想再用，用邮箱重新注册即可。",
+        ],
+        button=None,
+        note=None,
+        meta=meta,
+        footer="这是删除账号后的最后一封信，之后不会再收到我们的邮件。",
     )

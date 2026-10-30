@@ -32,6 +32,7 @@ import { confirmMatches, confirmMismatch, newPasswordFields } from "@/components
 import {
   changePassword,
   createInviteCode,
+  requestAccountDeletion,
   type InviteCodeItem,
   type InviteStatus,
   listInviteCodes,
@@ -212,11 +213,105 @@ function ChangePasswordDialog({
   );
 }
 
-/** 账号与安全：登录邮箱、改密码、退出所有设备 */
+/** 和后端 account_deletion_cooldown_days 一致 */
+const DELETION_COOLDOWN_DAYS = 7;
+const DELETE_CONFIRM = "注销";
+
+function DeleteAccountDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const mutation = useMutation({
+    mutationFn: () => requestAccountDeletion(password, confirm.trim()),
+    onSuccess: ({ delete_at }) => {
+      // 整页跳转：会话缓存一并清掉；只清 session 缓存的话，本页“未登录就去登录页”的跳转会抢先
+      window.location.replace(`/login?deletion=${encodeURIComponent(delete_at)}`);
+    },
+    onError: (err) => toast.error(errorText(err, "提交失败，请稍后重试")),
+  });
+  const close = (next: boolean) => {
+    if (!next) {
+      setPassword("");
+      setConfirm("");
+    }
+    onOpenChange(next);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={close}>
+      <DialogContent className="dark text-foreground w-[calc(100%-2rem)] rounded-lg sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>注销账号</DialogTitle>
+          <DialogDescription>
+            提交后有 {DELETION_COOLDOWN_DAYS} 天冷静期，期间用邮箱和密码登录可以撤销。
+          </DialogDescription>
+        </DialogHeader>
+        <ul className="text-muted-foreground list-disc space-y-1.5 pl-5 text-sm leading-relaxed">
+          <li>提交后账号立即冻结：所有设备退出登录，API Key 吊销，你挂到群上的服在群里失效。</li>
+          <li>
+            冷静期结束后删除账号：EA 绑定、API Key、群成员身份和服管授权全部清除，邮箱和 EA
+            账号可以重新注册。
+          </li>
+          <li>
+            你是唯一群主、群里还有别人的，要先把群主交给别人或者解散群；只有你一个人的群会一起解散。
+          </li>
+          <li>操作记录会保留，但不再关联到你的账号。</li>
+        </ul>
+        <form
+          className="space-y-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            mutation.mutate();
+          }}
+        >
+          <div className="space-y-1.5">
+            <label htmlFor="delete-password" className="text-sm font-medium">
+              当前密码
+            </label>
+            <Input
+              id="delete-password"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label htmlFor="delete-confirm" className="text-sm font-medium">
+              输入「{DELETE_CONFIRM}」确认
+            </label>
+            <Input
+              id="delete-confirm"
+              autoComplete="off"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+            />
+          </div>
+          <Button
+            type="submit"
+            variant="destructive"
+            className="w-full"
+            disabled={mutation.isPending || !password || confirm.trim() !== DELETE_CONFIRM}
+          >
+            {mutation.isPending ? "提交中…" : "申请注销"}
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** 账号与安全：登录邮箱、改密码、退出所有设备、注销账号 */
 export function SecuritySection({ user }: { user: SessionUser }) {
   const router = useRouter();
   const qc = useQueryClient();
   const [pwOpen, setPwOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const logoutAllMutation = useMutation({
     mutationFn: logoutAll,
     onSuccess: () => {
@@ -270,8 +365,27 @@ export function SecuritySection({ user }: { user: SessionUser }) {
             全部退出
           </Button>
         </div>
+        {hasPassword && user.role !== "admin" ? (
+          <div className="flex items-center justify-between gap-3 p-3">
+            <div className="min-w-0">
+              <div className="text-sm">注销账号</div>
+              <div className="text-muted-foreground text-xs">
+                {DELETION_COOLDOWN_DAYS} 天冷静期后删除，期间登录可以撤销
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-destructive hover:text-destructive"
+              onClick={() => setDeleteOpen(true)}
+            >
+              注销
+            </Button>
+          </div>
+        ) : null}
       </div>
       <ChangePasswordDialog open={pwOpen} onOpenChange={setPwOpen} />
+      <DeleteAccountDialog open={deleteOpen} onOpenChange={setDeleteOpen} />
     </section>
   );
 }

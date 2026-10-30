@@ -128,6 +128,8 @@ class Settings(BaseSettings):
     reset_link_ttl_hours: int = 1
     # 用非 EA 邮箱注册、迟迟没绑 EA 的账号，多久后清理
     pending_binding_ttl_hours: int = 24
+    # 申请注销后的冷静期：期间用密码登录可以撤销，到期删除账号
+    account_deletion_cooldown_days: int = 7
     # 注册、找回密码、重发验证信：同一 IP 每小时、同一邮箱每天的请求上限，
     # 同一邮箱两封信之间至少隔多少秒
     rate_limit_account_mail_per_hour: int = 10

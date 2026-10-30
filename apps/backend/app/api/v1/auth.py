@@ -40,7 +40,12 @@ from app.schemas.auth import (
     VerificationInfoResponse,
     VerificationTokenRequest,
 )
-from app.services import account_service, login_throttle, site_settings_service
+from app.services import (
+    account_deletion_service,
+    account_service,
+    login_throttle,
+    site_settings_service,
+)
 from app.services.account_service import AccountError, normalize_email, primary_binding
 from app.services.auth_service import AuthService
 
@@ -152,6 +157,30 @@ async def email_login(
     await login_throttle.clear(email)
     issue_session(response, user)
     return LoginResponse(user=build_session_user(user))
+
+
+@router.post("/cancel-deletion", response_model=LoginResponse)
+async def cancel_deletion(
+    payload: EmailLoginRequest,
+    db: DbDep,
+    request: Request,
+    response: Response,
+) -> LoginResponse:
+    """注销冷静期内撤销注销并登录。和邮箱登录共用失败计数"""
+    email = normalize_email(payload.email)
+    ip = client_ip(request)
+    await login_throttle.ensure_not_locked(email, ip)
+    try:
+        user = await account_deletion_service.cancel_deletion(db, email, payload.password, ip)
+    except UnauthorizedError:
+        await login_throttle.record_failure(email, ip)
+        raise
+    await login_throttle.clear(email)
+    issue_session(response, user)
+    full_user = await _load_user_with_bindings(db, user.id)
+    if full_user is None:
+        raise UnauthorizedError("会话建立失败")
+    return LoginResponse(user=build_session_user(full_user))
 
 
 @router.post("/local-login", response_model=LoginResponse)
@@ -289,6 +318,12 @@ async def confirm_verification(
     """设置密码并完成注册 / 认领 / 重置 / 补邮箱，完成后直接登录。"""
     info = await account_service.get_verification_info(db, payload.token)
     user = await account_service.confirm_verification(db, payload.token, payload.password)
+    if user.deletion_scheduled_at is not None:
+        # 注销冷静期内找回了密码：密码已改好，不发会话，回登录页撤销注销后再进来。
+        # 接口以错误返回时后台任务不会跑，通知信直接发
+        if user.email:
+            await account_service.send_password_changed(user.email, client_ip(request))
+        raise account_service.pending_deletion_error(user)
     if info.kind == "reset" and user.email:
         background.add_task(account_service.send_password_changed, user.email, client_ip(request))
     issue_session(response, user)

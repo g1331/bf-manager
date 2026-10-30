@@ -133,6 +133,12 @@ function SetPasswordForm({ token, info }: { token: string; info: VerificationInf
       router.replace(landingPath(user, info.kind === "set_email" ? "/me" : "/stats"));
       router.refresh();
     } catch (err) {
+      if (err instanceof ApiException && err.code === "ACCOUNT_DELETION_PENDING") {
+        // 注销冷静期内找回密码：密码已改好，回登录页撤销注销
+        toast.success(`密码已重置。${err.message}，登录后可以撤销`);
+        router.replace("/login");
+        return;
+      }
       toast.error(err instanceof ApiException ? err.message : "提交失败，请稍后重试");
       setSubmitting(false);
     }

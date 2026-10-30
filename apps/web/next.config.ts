@@ -31,6 +31,12 @@ const nextConfig: NextConfig = {
         source: "/sw.js",
         headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }],
       },
+      {
+        // 图鉴图片是一次性导出的存档，内容不会再变；public 目录默认 max-age=0，每张都要回源确认。
+        // 只匹配两级路径下的 .webp，别把同一前缀下的图鉴页面 HTML 也缓存住
+        source: "/bf1/codex/:dir/:file(.+\\.webp)",
+        headers: [{ key: "Cache-Control", value: "public, max-age=2592000" }],
+      },
     ];
   },
   // 图片域白名单（如需加载 EA CDN 头像）

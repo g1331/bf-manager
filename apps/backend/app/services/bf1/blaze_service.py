@@ -384,6 +384,7 @@ def _build_player(
         latency=int(raw_player.get("latency") or 0),
         language=raw_player.get("language"),
         join_time=raw_player.get("join_time"),
+        loading=bool(raw_player.get("loading")),
         role=raw_player.get("role") or "normal",
         is_admin=pid in admin_ids,
         is_vip=pid in vip_ids,
@@ -586,6 +587,7 @@ async def get_server_players(
         online_vip_count=sum(1 for p in everyone if p.is_vip),
         online_registered_count=sum(1 for p in everyone if p.is_registered),
         rank_150_count=sum(1 for p in everyone if p.rank >= RANK_MAX),
+        loading_count=sum(1 for p in everyone if p.loading),
     )
 
     # 仅对战两队进入列表；过渡态 / 未定队位玩家不成列，在线人数按实际成列的两队统计，

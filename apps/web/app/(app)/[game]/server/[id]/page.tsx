@@ -483,7 +483,37 @@ function PlayersList({ gameId, game }: { gameId: number; game: string }) {
 /**
  * 玩家列表纯展示层（与数据获取解耦，便于用 mock 数据独立预览）。
  */
+/**
+ * 两队并排按玩家列表自身宽度（@container/players）判断：页面有侧栏，1024 视口下内容区只有约
+ * 44rem，按视口 lg 切成两列会让表格互相重叠。每列要放下 8 个数字列（约 18rem）和约 7.5rem 的
+ * 名字，服管多一列操作（4rem）。放不下时上下排列，表格可横滑。类名写全，Tailwind 才扫得到。
+ */
+const TEAM_SPLIT = {
+  view: {
+    grid: "@[56rem]/players:grid-cols-2",
+    second: "@[56rem]/players:border-l @[56rem]/players:border-white/15 @[56rem]/players:pl-8",
+    scroll: "@[56rem]/players:overflow-x-visible",
+    table: "@[56rem]/players:min-w-0",
+    name: "@[56rem]/players:max-w-0",
+    nameBars: "@[56rem]/players:hidden",
+  },
+  manage: {
+    grid: "@[64rem]/players:grid-cols-2",
+    second: "@[64rem]/players:border-l @[64rem]/players:border-white/15 @[64rem]/players:pl-8",
+    scroll: "@[64rem]/players:overflow-x-visible",
+    table: "@[64rem]/players:min-w-0",
+    name: "@[64rem]/players:max-w-0",
+    nameBars: "@[64rem]/players:hidden",
+  },
+} as const;
+
+function useTeamSplit() {
+  const { canManage } = useServerAdmin();
+  return TEAM_SPLIT[canManage ? "manage" : "view"];
+}
+
 export function ServerPlayersView({ data, game }: { data: ServerPlayersResponse; game: string }) {
+  const split = useTeamSplit();
   const teams = data.teams;
   const hasPlayers =
     teams.some((t) => t.players.length > 0) || data.queued.length > 0 || data.spectators.length > 0;
@@ -493,7 +523,7 @@ export function ServerPlayersView({ data, game }: { data: ServerPlayersResponse;
   }
 
   return (
-    <div className="text-white/90">
+    <div className="@container/players text-white/90">
       {data.is_mock ? (
         <div className="mb-3 inline-block rounded-sm border border-amber-400/30 bg-amber-500/10 px-2.5 py-1 text-[11px] text-amber-200/90">
           演示数据（BLAZE_MOCK_MODE 已开启），非真实房间名单
@@ -506,14 +536,14 @@ export function ServerPlayersView({ data, game }: { data: ServerPlayersResponse;
       />
 
       {/* 双阵营并排，中间以竖线分割，与群版整图风格一致 */}
-      <div className="grid grid-cols-1 gap-x-8 gap-y-8 lg:grid-cols-2">
+      <div className={cn("grid grid-cols-1 gap-x-8 gap-y-8", split.grid)}>
         {teams.map((team, idx) => (
           <TeamColumn
             key={team.team_id}
             team={team}
             index={idx}
             game={game}
-            className={idx > 0 ? "lg:border-l lg:border-white/15 lg:pl-8" : undefined}
+            className={idx > 0 ? split.second : undefined}
           />
         ))}
       </div>
@@ -580,6 +610,7 @@ function TeamColumn({
   className?: string;
 }) {
   const { canManage } = useServerAdmin();
+  const split = useTeamSplit();
   const title = team.faction ?? `队伍 ${index + 1}`;
   const slug = team.faction ? FACTION_SLUG[team.faction] : undefined;
   const avg = computeTeamAverage(team.players);
@@ -590,11 +621,16 @@ function TeamColumn({
     // 列容器在 grid 中等高（items-stretch），table 撑满高度后由占位空行把平均行顶到列底，
     // 使两列平均行对齐同一底线；不用 table-fixed，玩家名列才能自适应吃满剩余宽度。
     <div className={cn("h-full", className)}>
-      {/* 移动端(<lg)：密集战绩表宽于窄屏，裹 overflow-x-auto 让整表可左右滑动查看，
-          避免右侧「延迟/语言/操作」列被推出视口而看不见、点不到；桌面双列各有空间，
-          lg:overflow-x-visible + lg:min-w-0 完全保持原样不滚动。 */}
-      <div className="h-full overflow-x-auto lg:overflow-x-visible">
-        <table className="h-full w-full min-w-[26rem] border-collapse text-[12.5px] tabular-nums lg:min-w-0">
+      {/* 上下排列时：密集战绩表可能宽于窄屏，裹 overflow-x-auto 让整表可左右滑动查看，
+          避免右侧「延迟/语言/操作」列被推出视口而看不见、点不到；两队并排时每列宽度够用，
+          overflow-x-visible + min-w-0 不滚动。 */}
+      <div className={cn("@container/team h-full overflow-x-auto", split.scroll)}>
+        <table
+          className={cn(
+            "h-full w-full min-w-[26rem] border-collapse text-[12.5px] tabular-nums",
+            split.table,
+          )}
+        >
           {/* 自适应布局：数字列按 colgroup 宽取最小宽，名字列由 td 的 w-full+max-w-0 吃满剩余并截断长名 */}
           <colgroup>
             <col className="w-6" />
@@ -689,6 +725,7 @@ function ColHeader({ children, className }: { children: ReactNode; className?: s
 
 function PlayerRow({ player, seq, game }: { player: BlazePlayer; seq: number; game: string }) {
   const { canManage } = useServerAdmin();
+  const split = useTeamSplit();
   const stats = player.stats;
   const dot = roleDot(player);
   return (
@@ -697,9 +734,9 @@ function PlayerRow({ player, seq, game }: { player: BlazePlayer; seq: number; ga
       <td className="py-[5px] text-center">
         <RankBadge rank={player.rank} />
       </td>
-      {/* 名字列：移动端(<lg)限宽 9rem 截断，让胜率 / K/D / KPM 在一屏内露出来，其余列由外层
-          overflow-x-auto 横滑查看；桌面(lg)恢复 max-w-0 + truncate，让名字吃满剩余宽度。 */}
-      <td className="w-full max-w-[9rem] py-[5px] pr-2 pl-2 lg:max-w-0">
+      {/* 名字列：上下排列时限宽 9rem 截断，让胜率 / K/D / KPM 在一屏内露出来，其余列由外层
+          overflow-x-auto 横滑查看；两队并排时恢复 max-w-0 + truncate，让名字吃满剩余宽度。 */}
+      <td className={cn("w-full max-w-[9rem] py-[5px] pr-2 pl-2", split.name)}>
         <Link
           href={`/${game}/player/${player.persona_id}`}
           target="_blank"
@@ -708,9 +745,19 @@ function PlayerRow({ player, seq, game }: { player: BlazePlayer; seq: number; ga
           title={`${player.display_name}（在新标签查看战绩）`}
         >
           {dot ? <span className={cn("size-1.5 shrink-0 rounded-full", dot)} /> : null}
-          <span className={cn("min-w-0 truncate font-medium whitespace-nowrap", nameColor(player))}>
+          <span
+            className={cn(
+              "min-w-0 truncate font-medium whitespace-nowrap",
+              nameColor(player),
+              player.loading && "opacity-50",
+            )}
+          >
             {player.display_name}
           </span>
+          {/* 上下排列且列宽放不下整表（26rem）时，延迟列要横滑才看得到，名字后面再标一次 */}
+          {player.loading ? (
+            <ConnectingBars className={cn("shrink-0 @[26rem]/team:hidden", split.nameBars)} />
+          ) : null}
         </Link>
       </td>
       <td className="py-[5px] pl-3 text-right text-white/85">{formatPercent(stats?.win_rate)}</td>
@@ -718,7 +765,7 @@ function PlayerRow({ player, seq, game }: { player: BlazePlayer; seq: number; ga
       <td className="py-[5px] pl-3 text-right text-white/60">{formatRatio(stats?.kpm)}</td>
       <td className="py-[5px] pl-3 text-right text-white/60">{formatHours(stats?.time_hours)}</td>
       <td className="py-[5px] pl-2">
-        <LatencyCell latency={player.latency} />
+        <LatencyCell latency={player.latency} loading={player.loading} />
       </td>
       <td className="py-[5px] text-center text-white/65">{player.language || "—"}</td>
       {canManage ? (
@@ -763,8 +810,31 @@ function RankBadge({ rank }: { rank: number }) {
   );
 }
 
-/** 延迟以三格信号条 + 数值表示，按强度亮格并着色（低绿 / 中黄 / 高红） */
-function LatencyCell({ latency }: { latency: number }) {
+/** 三格信号依次点亮：载入中的玩家还没有延迟，用「正在连接」代替 */
+function ConnectingBars({ className }: { className?: string }) {
+  return (
+    <span className={cn("signal-connecting flex items-end gap-px", className)} aria-hidden>
+      {[1, 2, 3].map((n) => (
+        <span
+          key={n}
+          className="w-[3px] rounded-sm bg-white"
+          style={{ height: `${n * 3 + 1}px` }}
+        />
+      ))}
+    </span>
+  );
+}
+
+/** 延迟以三格信号条 + 数值表示，按强度亮格并着色（低绿 / 中黄 / 高红）；载入中显示连接动画 */
+function LatencyCell({ latency, loading }: { latency: number; loading?: boolean }) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center gap-1" title="正在载入">
+        <ConnectingBars />
+        <span className="text-[11px] whitespace-nowrap text-white/50">载入</span>
+      </div>
+    );
+  }
   if (!latency || latency <= 0) {
     return <div className="text-center text-white/25">—</div>;
   }
@@ -818,7 +888,15 @@ function SidePlayerGroup({
               )}
             >
               <RankBadge rank={p.rank} />
-              <span className="max-w-[140px] truncate">{p.display_name}</span>
+              <span className={cn("max-w-[140px] truncate", p.loading && "opacity-50")}>
+                {p.display_name}
+              </span>
+              {p.loading ? (
+                <>
+                  <ConnectingBars className="ml-0.5" />
+                  <span className="sr-only">（载入中）</span>
+                </>
+              ) : null}
             </Link>
             {canManage ? <PlayerRowActions player={p} /> : null}
           </span>
@@ -840,6 +918,7 @@ function PlayerLegend({
     online_vip_count: number;
     online_registered_count: number;
     rank_150_count: number;
+    loading_count?: number;
   };
   playerCount: number;
   maxPlayers: number;
@@ -857,6 +936,15 @@ function PlayerLegend({
       <LegendItem markClass="bg-red-400" label="在线VIP" value={summary.online_vip_count} />
       <LegendItem markClass="bg-sky-400" label="在线群友" value={summary.online_registered_count} />
       <LegendItem markClass="bg-[#ff8400]" label="满级150" value={summary.rank_150_count} />
+      <span className="inline-flex items-center gap-1.5">
+        <ConnectingBars />
+        <span>
+          载入中：
+          <span className="font-semibold text-white/90 tabular-nums">
+            {summary.loading_count ?? 0}
+          </span>
+        </span>
+      </span>
       <span className="ml-auto text-white/45 tabular-nums">
         在线 {playerCount}/{maxPlayers}
         {statsIncluded ? "" : " · 未加载战绩"}

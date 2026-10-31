@@ -355,3 +355,34 @@
     height: min(calc(100dvh - 7rem), 901px, calc((100vw - 42rem) * 901 / 640));
   }
 }
+
+/* 玩家列表「载入中」：延迟列的三格信号从低到高依次点亮，表示正在连接 */
+@keyframes signal-connecting {
+  0%,
+  100% {
+    opacity: 0.18;
+  }
+  35%,
+  60% {
+    opacity: 0.85;
+  }
+}
+
+.signal-connecting > span {
+  animation: signal-connecting 1.2s ease-in-out infinite;
+}
+
+.signal-connecting > span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.signal-connecting > span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signal-connecting > span {
+    animation: none;
+    opacity: 0.45;
+  }
+}

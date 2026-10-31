@@ -11,7 +11,8 @@
     "online_admin_count": 2,
     "online_vip_count": 3,
     "online_registered_count": 4,
-    "rank_150_count": 6
+    "rank_150_count": 6,
+    "loading_count": 2
   },
   "teams": [
     {
@@ -124,9 +125,10 @@
           "display_name": "MarcoPolo_IT",
           "rank": 49,
           "team": 0,
-          "latency": 74,
+          "latency": -1,
           "language": "意",
-          "join_time": 1717000700.0,
+          "join_time": null,
+          "loading": true,
           "role": "normal",
           "is_admin": false,
           "is_vip": false,
@@ -245,9 +247,10 @@
           "display_name": "Anders_SE",
           "rank": 11,
           "team": 1,
-          "latency": 199,
+          "latency": -1,
           "language": "瑞",
-          "join_time": 1717000750.0,
+          "join_time": null,
+          "loading": true,
           "role": "normal",
           "is_admin": false,
           "is_vip": false,

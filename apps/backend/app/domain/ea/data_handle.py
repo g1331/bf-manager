@@ -840,15 +840,20 @@ class BlazeData:
                     except KeyError:
                         logger.debug(player)
                         latency = 0
-                    join_time = player["JGTS"] / 1000000
+                    join_time = player["JGTS"] / 1000000 if player.get("JGTS") else None
                     display_name = player["NAME"]
                     pid = player["PID"]
                     uid = player["EXID"]
                     team = player["TIDX"]
                     language = player["LOC"].to_bytes(4, byteorder="big").decode("ascii")
                     language = BlazeData.language_dict.get(language[:2], language[:2])
-                    if team == 65535 and rank == 0:
+                    # 排队者 ROLE 为 soldier、TIDX 65535，观战者 ROLE 为空。部分排队者（STAT 1）
+                    # 已带等级，不能按「等级为 0」判断，否则会被当成未定队位、从名单里漏掉
+                    if team == 65535 and role != "spectator":
                         role = "queue"
+                    # STAT：0 预约 / 1 排队 / 2 载入中 / 4 在游戏。已占队伍或观战位、还没进到游戏的
+                    # 算载入中（2026-10-31 实测通常 1–16 秒），这时 JGTS 可能为 0、延迟为 -1
+                    loading = role != "queue" and player.get("STAT", 4) != 4
                     player_data = {
                         "display_name": display_name,
                         "pid": pid,
@@ -860,6 +865,7 @@ class BlazeData:
                         "join_time": join_time,
                         "platoon": {},
                         "language": language,
+                        "loading": loading,
                     }
                     if role == "queue":
                         queues.append(player_data)

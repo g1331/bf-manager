@@ -183,6 +183,8 @@ class BlazePlayer(BaseModel):
     latency: int = 0
     language: str | None = None
     join_time: float | None = None
+    # 已占队伍或观战位、还在载入（Blaze STAT 不是 4）
+    loading: bool = False
     role: str = "normal"
     is_admin: bool = False
     is_vip: bool = False
@@ -206,12 +208,13 @@ class BlazeTeamGroup(BaseModel):
 
 
 class ServerPlayersSummary(BaseModel):
-    """玩家列表底部图例的计数：在线管理 / 在线 VIP / 在线群友 / 满级（150）数量。"""
+    """玩家列表底部图例的计数：在线管理 / 在线 VIP / 在线群友 / 满级（150）/ 载入中数量。"""
 
     online_admin_count: int = 0
     online_vip_count: int = 0
     online_registered_count: int = 0
     rank_150_count: int = 0
+    loading_count: int = 0
 
 
 class OperationProgress(BaseModel):

@@ -218,7 +218,8 @@ export function careerCompare(p: RoundPlayer): Compare[] {
     { label: "KPM", value: p.kpm, career: c.kpm, after: a?.kpm, fmt: (v: number) => v.toFixed(2) },
     {
       label: "SPM",
-      value: p.spm,
+      // 旧对局的 SPM 含勋带和结算奖励，和生涯（不含）口径不同，不比
+      value: p.battle_score != null ? p.spm : null,
       career: c.spm,
       after: a?.spm,
       fmt: (v: number) => Math.round(v).toString(),

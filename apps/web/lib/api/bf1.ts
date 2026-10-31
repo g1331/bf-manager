@@ -407,9 +407,9 @@ export interface RoundPlayer {
   /** 次数多的在前；null 表示这一局没有勋带数据 */
   ribbons?: RoundRibbon[] | null;
   medals?: number;
-  /** 只有非零项；键见后端 RoundPlayer 注释 */
-  objective?: Record<string, number>;
-  combat?: Record<string, number>;
+  /** 只有非零项；键见后端 RoundPlayer 注释。null 表示这一局没有这些统计（旧对局） */
+  objective?: Record<string, number> | null;
+  combat?: Record<string, number> | null;
   rank_to?: number | null;
   kit_ranks?: string[];
   skill_delta?: number | null;

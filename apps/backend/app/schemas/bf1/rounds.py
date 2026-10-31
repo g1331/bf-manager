@@ -131,8 +131,9 @@ class RoundPlayer(BaseModel):
     # resupplies、spot_assists、suppression_assists、squad_spawns、orders_completed、
     # squad_kill_assists；combat 的键：headshots、shots、hits、soldier_damage、vehicle_damage、
     # avenger_kills、savior_kills、nemesis_kills、squad_wipes、vehicles_destroyed
-    objective: dict[str, int] = {}
-    combat: dict[str, int] = {}
+    # 为 None 表示这一局的条目没有这些统计（2026-10-31 之前的，或跨升级的那几局）
+    objective: dict[str, int] | None = None
+    combat: dict[str, int] | None = None
     rank_to: int | None = None  # 本局升级后的等级
     kit_ranks: list[str] = []  # 本局升级的兵种
     skill_delta: float | None = None  # 技巧值变化，没变或没有数据为空

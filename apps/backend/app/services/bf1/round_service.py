@@ -63,6 +63,7 @@ from app.domain.games.bf1.round_stats import (
     SCORE,
     SCORE_PARTS,
     SKILL,
+    SUSPECT,
     VEHICLE_KILLS,
     WINS,
     Entry,
@@ -429,6 +430,14 @@ def _score_parts(stats: dict[int, int], score: int) -> RoundScoreParts | None:
 
 
 _KIT_SECONDS = (*(KIT_BASE + 3 * i + 2 for i in range(len(KITS))), ELITE)
+# 2026-10-31 之前的条目只有前 34 项（到 ELITE 为止），之后追加的项都在这之后
+_EXTENDED_FROM = ELITE + 1
+
+
+def _extended(stats: dict[int, int]) -> bool:
+    """条目带不带 2026-10-31 追加的统计。稀疏编码不存 0，所以看有没有一项非零：
+    真打过的人总有开火、得分分项之类的值；跨升级的那几局追加项全是 0，同样算没有"""
+    return any(i >= _EXTENDED_FROM for i in stats)
 
 
 def _levels(v: Callable[[int], int | None]) -> RoundCareer:
@@ -449,25 +458,44 @@ def _levels(v: Callable[[int], int | None]) -> RoundCareer:
 
 
 def _career(
-    e: Entry, snap: Snapshot, ended_at: int
-) -> tuple[RoundCareer, RoundCareer, dict[str, dict[str, int]]]:
+    e: Entry, snap: Snapshot, started_at: int, ended_at: int
+) -> tuple[RoundCareer, RoundCareer, dict[str, dict[str, int]]] | None:
     """快照 → 这一局之前和加上这一局之后的生涯水平，以及这一局用过的各武器载具的（之前的）生涯值。
 
-    快照晚于这一局结束时已经含了这一局，先减掉；之后几局的影响相对生涯总量可以忽略。
-    「之后」按之前加这一局的增量算，不直接用快照，免得混进之后的对局。
-    2026-11 前存的快照核心向量较短，没有的项给空。
+    快照是这个人最近一次读到的生涯，先判断含不含这一局：结束之后读的含；开局之前读的不含；
+    局中读的看身份：中途退出的人退出后会读终值，最近一次就是它，含这一局；打到结算的人局中只读过
+    进服基线或复查，不含（结算后读的在结束之后）。存疑的条目分不清，不比。
+    含这一局的先减掉；之后几局的影响相对生涯总量可以忽略。「之后」按之前加这一局的增量算，
+    不直接用快照，免得混进之后的对局。
+
+    缺的项给空：2026-11 前存的快照核心向量较短；这一局的条目没有追加项（命中、爆头、得分分项）时，
+    这一局的这些增量未知，需要减掉或加上它们的值也给空，不能当 0。
     """
     vec, blob, at = snap
-    after = at >= ended_at
+    if at >= ended_at:
+        after = True
+    elif at <= started_at:
+        after = False
+    elif e.status == SUSPECT:
+        return None
+    else:
+        after = e.status == LEFT_EARLY
+    known = _extended(e.stats)
 
     def before(i: int) -> int | None:
         if i >= len(vec):
             return None
-        return vec[i] - (e.stats.get(i, 0) if after else 0)
+        if not after:
+            return vec[i]
+        if i >= _EXTENDED_FROM and not known:
+            return None
+        return vec[i] - e.stats.get(i, 0)
 
     def with_round(i: int) -> int | None:
         b = before(i)
-        return None if b is None else b + e.stats.get(i, 0)
+        if b is None or (i >= _EXTENDED_FROM and not known):
+            return None
+        return b + e.stats.get(i, 0)
 
     weapons: dict[str, dict[str, int]] = {}
     if e.weapons:
@@ -483,12 +511,17 @@ def _career(
 
 
 def _player(
-    pid: int, e: Entry, name: str | None, snap: Snapshot | None = None, ended_at: int = 0
+    pid: int,
+    e: Entry,
+    name: str | None,
+    snap: Snapshot | None = None,
+    span: tuple[int, int] = (0, 0),
 ) -> RoundPlayer:
+    """span 是这一局的 (开始, 结束)，有快照时用来判断快照含不含这一局"""
     team, status, stats = e.team, e.status, e.stats
-    career, career_after, career_w = (
-        _career(e, snap, ended_at) if snap is not None else (None, None, None)
-    )
+    compared = _career(e, snap, *span) if snap is not None else None
+    career, career_after, career_w = compared or (None, None, None)
+    extended = _extended(stats)
     kit_seconds = {kit: stats.get(KIT_BASE + 3 * i + 2, 0) for i, kit in enumerate(KITS)} | {
         "elite": stats.get(ELITE, 0)
     }
@@ -533,8 +566,10 @@ def _player(
             for n, c in sorted(e.awards.items(), key=lambda x: (-x[1], x[0]))
         ],
         medals=stats.get(MEDALS, 0),
-        objective={k: v for k, i in OBJECTIVE.items() if (v := stats.get(i, 0))},
-        combat={k: v for k, i in COMBAT.items() if (v := stats.get(i, 0))},
+        objective={k: v for k, i in OBJECTIVE.items() if (v := stats.get(i, 0))}
+        if extended
+        else None,
+        combat={k: v for k, i in COMBAT.items() if (v := stats.get(i, 0))} if extended else None,
         rank_to=stats.get(RANK) or None,
         kit_ranks=[kit for kit, i in KIT_RANKS.items() if stats.get(i)],
         skill_delta=stats[SKILL] / 10 if stats.get(SKILL) else None,
@@ -578,12 +613,12 @@ async def get_round(db: AsyncSession, round_id: int) -> RoundDetail:
     )
     names = await read_names(db, pids) if pids else {}
     snaps = await SnapshotStore(db).load(pids) if pids else {}
-    ended_at = _ts(r.ended_at)
+    span = (_ts(r.started_at), _ts(r.ended_at))
     players: list[RoundPlayer] = []
     for pid, data in rows.tuples():
         for e in decode_entries(data):
             if e.round_id == round_id:
-                players.append(_player(pid, e, names.get(pid), snaps.get(pid), ended_at))
+                players.append(_player(pid, e, names.get(pid), snaps.get(pid), span))
     players.sort(key=lambda p: (p.team, -(p.score if p.battle_score is None else p.battle_score)))
     mvps = [p.persona_id for p in players if p.mvp]
     return RoundDetail(

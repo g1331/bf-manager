@@ -14,9 +14,10 @@ from __future__ import annotations
 import asyncio
 import json
 from datetime import UTC, date, datetime, timedelta
+from typing import Any
 
 from loguru import logger
-from sqlalchemy import LargeBinary, cast, delete, select, tuple_
+from sqlalchemy import LargeBinary, Table, bindparam, cast, delete, select, tuple_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.errors import NotFoundError
@@ -24,6 +25,7 @@ from app.core import ea_metrics
 from app.core.cache import get_redis
 from app.core.config import get_settings
 from app.db.session import get_sessionmaker
+from app.domain.games.bf1 import round_awards as ra
 from app.domain.games.bf1 import round_weapons as rw
 from app.domain.games.bf1.blaze_catalog import catalog
 from app.domain.games.bf1.blaze_stats import KITS
@@ -34,7 +36,9 @@ from app.domain.games.bf1.maps import (
     translate_mode_name,
 )
 from app.domain.games.bf1.round_stats import (
+    ACE_SQUAD,
     ASSISTS,
+    COMBAT,
     DEATHS,
     DOGTAGS,
     ELITE,
@@ -42,13 +46,23 @@ from app.domain.games.bf1.round_stats import (
     HEALS,
     KILLS,
     KIT_BASE,
+    KIT_RANKS,
     LEFT_EARLY,
     LOSSES,
+    MEDALS,
+    MODE_SCORES,
+    MVP,
+    OBJECTIVE,
+    RANK,
+    RECORDS,
     REPAIRS,
     REVIVES,
     SCORE,
+    SCORE_PARTS,
+    SKILL,
     VEHICLE_KILLS,
     WINS,
+    Entry,
     decode_entries,
     encode_entry,
     pack_pids,
@@ -64,6 +78,9 @@ from app.schemas.bf1.rounds import (
     RoundDetail,
     RoundPage,
     RoundPlayer,
+    RoundRibbon,
+    RoundScoreParts,
+    RoundStar,
     RoundSummary,
     RoundWeapon,
 )
@@ -92,6 +109,17 @@ def _ts(dt: datetime) -> int:
     return int(dt.replace(tzinfo=dt.tzinfo or UTC).timestamp())
 
 
+def _count_honors(c: ClosedRound) -> None:
+    """核对游戏评的荣誉：实测每次结算 MVP 正好 1 人、王牌小队正好 5 人，对不上的局记下来。"""
+    done = [ln.delta for ln in c.lines if ln.status == FINISHED]
+    mvp = sum(1 for d in done if d[MVP])
+    ace = sum(1 for d in done if d[ACE_SQUAD])
+    ea_metrics.count_event(f"round_mvp_{min(mvp, 2)}")
+    ea_metrics.count_event(
+        "round_ace_5" if ace == 5 else f"round_ace_{'0' if not ace else 'other'}"
+    )
+
+
 async def save_rounds(db: AsyncSession, closed: list[ClosedRound]) -> int:
     """写入收尾的对局并提交，返回写入局数。"""
     entries: dict[tuple[int, date], bytes] = {}
@@ -110,11 +138,13 @@ async def save_rounds(db: AsyncSession, closed: list[ClosedRound]) -> int:
         )
         db.add(row)
         await db.flush()
+        if c.settled:
+            _count_honors(c)
         day = _day(c.ended_at)
         for ln in c.lines:
             key = (ln.pid, day)
             entries[key] = entries.get(key, b"") + encode_entry(
-                row.id, ln.team, ln.status, ln.delta, ln.weapons
+                row.id, ln.team, ln.status, ln.delta, ln.weapons, ln.awards, ln.stars
             )
     rows = [{"pid": p, "day": d, "data": data} for (p, d), data in entries.items()]
     for i in range(0, len(rows), WRITE_CHUNK):
@@ -181,6 +211,36 @@ class SnapshotStore:
                     },
                 )
             )
+        await self.db.commit()
+
+    async def load_awards(self, pids: list[int]) -> dict[int, tuple[bytes, int]]:
+        out: dict[int, tuple[bytes, int]] = {}
+        for i in range(0, len(pids), WRITE_CHUNK):
+            rows = await self.db.execute(
+                select(
+                    Bf1CareerSnapshot.pid, Bf1CareerSnapshot.awards, Bf1CareerSnapshot.updated_at
+                ).where(
+                    Bf1CareerSnapshot.pid.in_(pids[i : i + WRITE_CHUNK]),
+                    Bf1CareerSnapshot.awards.is_not(None),
+                )
+            )
+            for pid, awards, at in rows.tuples():
+                if awards is not None:
+                    out[pid] = (awards, _ts(at))
+        return out
+
+    async def save_awards(self, snapshots: dict[int, bytes]) -> None:
+        # 只更新已有的行：快照行要有核心和武器载具，没读到武器的人这次不存勋带
+        # 用表而不是 ORM 实体：ORM 的批量 UPDATE 只认按主键，不接受自定义 WHERE
+        table: Table = Bf1CareerSnapshot.__table__  # type: ignore[assignment]
+        stmt = (
+            update(table)
+            .where(table.c.pid == bindparam("b_pid"))
+            .values(awards=bindparam("b_awards"))
+        )
+        rows = [{"b_pid": pid, "b_awards": blob} for pid, blob in snapshots.items()]
+        for i in range(0, len(rows), WRITE_CHUNK):
+            await self.db.execute(stmt, rows[i : i + WRITE_CHUNK])
         await self.db.commit()
 
 
@@ -285,20 +345,24 @@ def _summary(r: Bf1Round, servers: dict[int, tuple[str, int]]) -> RoundSummary:
     )
 
 
+def _item(key: str) -> tuple[str, dict[str, Any]]:
+    """条目键（w:代号 / v:代号）→ (weapon / vehicle, 目录条目)"""
+    prefix, code = key.split(":", 1)
+    kind, name = ("weapon", "weapons") if prefix == "w" else ("vehicle", "vehicles")
+    return kind, catalog(name).get(code) or {}
+
+
 def _weapons(slots: dict[int, int] | None) -> list[RoundWeapon] | None:
     """武器载具槽位增量 → 按条目合并的列表，击杀多的在前、其次时长。"""
     if slots is None:
         return None
-    kinds = {"w": ("weapon", catalog("weapons")), "v": ("vehicle", catalog("vehicles"))}
     by_item: dict[str, dict[str, int]] = {}
     for slot, v in slots.items():
         key, metric = rw.slot_item(slot)
         by_item.setdefault(key, {})[metric] = v
     out: list[RoundWeapon] = []
     for key, metrics in by_item.items():
-        prefix, code = key.split(":", 1)
-        kind, entries = kinds[prefix]
-        entry = entries.get(code) or {}
+        kind, entry = _item(key)
         out.append(
             RoundWeapon(
                 kind=kind,  # type: ignore[arg-type]
@@ -313,14 +377,37 @@ def _weapons(slots: dict[int, int] | None) -> list[RoundWeapon] | None:
     return out
 
 
-def _player(
-    pid: int,
-    team: int,
-    status: int,
-    stats: dict[int, int],
-    name: str | None,
-    weapons: dict[int, int] | None = None,
-) -> RoundPlayer:
+def _stars(stars: dict[int, int]) -> list[RoundStar]:
+    out = []
+    for idx, n in stars.items():
+        kind, entry = _item(rw.items()[idx])
+        out.append(
+            RoundStar(
+                kind=kind,  # type: ignore[arg-type]
+                name=entry.get("name"),
+                image=normalize_map_image_url(entry.get("image")),
+                stars=n,
+            )
+        )
+    out.sort(key=lambda s: -s.stars)
+    return out
+
+
+def _score_parts(stats: dict[int, int], score: int) -> RoundScoreParts | None:
+    """得分构成；一项分项都没有说明是 2026-11 之前记的条目（或这局 0 分），给 None。"""
+    parts = {k: stats.get(i, 0) for k, i in SCORE_PARTS.items() if k != "xp"}
+    objective = sum(stats.get(i, 0) for i in MODE_SCORES)
+    if not objective and not any(parts.values()):
+        return None
+    return RoundScoreParts(
+        objective=objective,
+        other=score - objective - sum(parts.values()),
+        **parts,
+    )
+
+
+def _player(pid: int, e: Entry, name: str | None) -> RoundPlayer:
+    team, status, stats = e.team, e.status, e.stats
     kit_seconds = {kit: stats.get(KIT_BASE + 3 * i + 2, 0) for i, kit in enumerate(KITS)} | {
         "elite": stats.get(ELITE, 0)
     }
@@ -330,6 +417,9 @@ def _player(
     won = None
     if status == FINISHED:
         won = True if stats.get(WINS) else False if stats.get(LOSSES) else None
+    parts = _score_parts(stats, score)
+    battle = score - parts.award - parts.bonus if parts is not None else None
+    finished = status == FINISHED
     return RoundPlayer(
         persona_id=pid,
         name=name,
@@ -349,8 +439,26 @@ def _player(
         kit=kit,
         kd=round(kills / max(deaths, 1), 2),  # 没死过时 KD 记为击杀数
         kpm=round(kills / seconds * 60, 2) if seconds else None,
-        spm=round(score / seconds * 60) if seconds else None,
-        weapons=_weapons(weapons),
+        spm=round((score if battle is None else battle) / seconds * 60) if seconds else None,
+        weapons=_weapons(e.weapons),
+        battle_score=battle,
+        score_parts=parts,
+        mvp=finished and stats.get(MVP, 0) > 0,
+        ace_squad=finished and stats.get(ACE_SQUAD, 0) > 0,
+        ribbons=None
+        if e.awards is None
+        else [
+            RoundRibbon(code=ra.code(n), count=c)
+            for n, c in sorted(e.awards.items(), key=lambda x: (-x[1], x[0]))
+        ],
+        medals=stats.get(MEDALS, 0),
+        objective={k: v for k, i in OBJECTIVE.items() if (v := stats.get(i, 0))},
+        combat={k: v for k, i in COMBAT.items() if (v := stats.get(i, 0))},
+        rank_to=stats.get(RANK) or None,
+        kit_ranks=[kit for kit, i in KIT_RANKS.items() if stats.get(i)],
+        skill_delta=stats[SKILL] / 10 if stats.get(SKILL) else None,
+        records={k: v for k, i in RECORDS.items() if (v := stats.get(i, 0))},
+        stars=_stars(e.stars),
     )
 
 
@@ -388,13 +496,16 @@ async def get_round(db: AsyncSession, round_id: int) -> RoundDetail:
     names = await read_names(db, pids) if pids else {}
     players: list[RoundPlayer] = []
     for pid, data in rows.tuples():
-        for rid, team, status, stats, weapons in decode_entries(data):
-            if rid == round_id:
-                players.append(_player(pid, team, status, stats, names.get(pid), weapons))
-    players.sort(key=lambda p: (p.team, -p.score))
+        for e in decode_entries(data):
+            if e.round_id == round_id:
+                players.append(_player(pid, e, names.get(pid)))
+    players.sort(key=lambda p: (p.team, -(p.score if p.battle_score is None else p.battle_score)))
+    mvps = [p.persona_id for p in players if p.mvp]
     return RoundDetail(
         **_summary(r, await _servers(db, {r.game_id})).model_dump(),
         players=players,
+        mvp_pid=mvps[0] if len(mvps) == 1 else None,
+        ace_squad_pids=[p.persona_id for p in players if p.ace_squad],
     )
 
 
@@ -407,26 +518,27 @@ async def list_player_rounds(
     )
     entries = sorted(
         (e for (data,) in rows.tuples() for e in decode_entries(data)),
-        key=lambda e: -e[0],
+        key=lambda e: -e.round_id,
     )
     if before is not None:
-        entries = [e for e in entries if e[0] < before]
+        entries = [e for e in entries if e.round_id < before]
     page, more = entries[:limit], len(entries) > limit
     rounds = {
         r.id: r
-        for r in await db.scalars(select(Bf1Round).where(Bf1Round.id.in_([e[0] for e in page])))
+        for r in await db.scalars(
+            select(Bf1Round).where(Bf1Round.id.in_([e.round_id for e in page]))
+        )
     }
     servers = await _servers(db, {r.game_id for r in rounds.values()})
     name = (await read_names(db, [persona_id])).get(persona_id)
     items = [
         PlayerRound(
-            round=_summary(rounds[rid], servers),
-            player=_player(persona_id, team, status, stats, name, weapons),
+            round=_summary(rounds[e.round_id], servers), player=_player(persona_id, e, name)
         )
-        for rid, team, status, stats, weapons in page
-        if rid in rounds
+        for e in page
+        if e.round_id in rounds
     ]
-    return PlayerRoundPage(items=items, next_before=page[-1][0] if more and page else None)
+    return PlayerRoundPage(items=items, next_before=page[-1].round_id if more and page else None)
 
 
 async def save_tracker_state(*, tracker: MatchTracker | None = None) -> None:

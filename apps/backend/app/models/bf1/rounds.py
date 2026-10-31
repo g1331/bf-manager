@@ -52,7 +52,7 @@ class Bf1PlayerRoundDay(Base):
 
 
 class Bf1CareerSnapshot(Base):
-    """每人最近一次读到的完整生涯：核心向量（varint）和武器载具快照（round_weapons.pack）
+    """每人最近一次读到的完整生涯：核心向量（varint）、武器载具快照（round_weapons.pack）和勋带快照
 
     跟踪器进服时先查核心，和这里存的一样就沿用武器载具，不用再读 5 个武器类别。保留 14 天。
     """
@@ -62,6 +62,8 @@ class Bf1CareerSnapshot(Base):
     pid: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
     core: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
     weapons: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    # 勋带快照（round_awards），跟踪器读到勋带后单独更新；为空表示还没读过
+    awards: Mapped[bytes | None] = mapped_column(LargeBinary)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, index=True
     )

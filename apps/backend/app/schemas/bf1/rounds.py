@@ -49,6 +49,34 @@ class RoundWeapon(BaseModel):
     shared_kills: bool = False
 
 
+class RoundRibbon(BaseModel):
+    """本局拿到的一种勋带：code 即图鉴 ribbons 的 code（r01…r47）"""
+
+    code: str
+    count: int
+
+
+class RoundStar(BaseModel):
+    """本局击杀跨过整百、拿到新服役星的武器载具"""
+
+    kind: Literal["weapon", "vehicle"]
+    name: str | None = None
+    image: str | None = None
+    stars: int  # 新的星数
+
+
+class RoundScoreParts(BaseModel):
+    """得分构成，加起来是总分 score。前四项是游戏内计分板上的分数，后两项是结算时另给的经验"""
+
+    general: int  # 常规：击杀、伤害等
+    team: int  # 团队：复活、补给、修理等
+    squad: int  # 小队
+    objective: int  # 本局模式的目标得分（占点、炸弹、信鸽……）
+    other: int  # 总分减去各项后剩下的（载具、巨兽等），可能为负的零头
+    award: int  # 勋带勋章奖励
+    bonus: int  # 结算奖励，只有打到结算的人有
+
+
 class RoundPlayer(BaseModel):
     """一个人在一局里的战绩。秒数是各兵种在场秒数之和，kd / kpm / spm 都按它算"""
 
@@ -74,10 +102,35 @@ class RoundPlayer(BaseModel):
     spm: float | None = None
     # 按击杀、时长倒序；None 表示这一局没有武器载具数据（功能上线前，或当时没读到）
     weapons: list[RoundWeapon] | None = None
+    # 以下来自 2026-11 起记录的统计，之前的对局为空 / 默认值
+    # 和游戏内计分板同口径的分数：总分减去勋带勋章奖励和结算奖励；有它时 spm 按它算
+    battle_score: int | None = None
+    score_parts: RoundScoreParts | None = None
+    mvp: bool = False
+    ace_squad: bool = False
+    # 次数多的在前；None 表示这一局没有勋带数据
+    ribbons: list[RoundRibbon] | None = None
+    medals: int = 0  # 本局完成的勋章
+    # 只放非零项。objective 的键：flag_captures、flag_defends、bombs_placed、bombs_defused、
+    # artillery_defense_kills、pigeons_delivered、pigeons_written、pigeon_carriers_killed、
+    # resupplies、spot_assists、suppression_assists、squad_spawns、orders_completed、
+    # squad_kill_assists；combat 的键：headshots、shots、hits、soldier_damage、vehicle_damage、
+    # avenger_kills、savior_kills、nemesis_kills、squad_wipes、vehicles_destroyed
+    objective: dict[str, int] = {}
+    combat: dict[str, int] = {}
+    rank_to: int | None = None  # 本局升级后的等级
+    kit_ranks: list[str] = []  # 本局升级的兵种
+    skill_delta: float | None = None  # 技巧值变化，没变或没有数据为空
+    # 本局刷新的生涯纪录 → 新纪录：max_killstreak、longest_headshot（米）、max_nemesis_streak
+    records: dict[str, int] = {}
+    stars: list[RoundStar] = []
 
 
 class RoundDetail(RoundSummary):
     players: list[RoundPlayer]
+    # 游戏评出的本局 MVP 与王牌小队（只认打到结算的人），没有数据时为空
+    mvp_pid: int | None = None
+    ace_squad_pids: list[int] = []
 
 
 class RoundPage(BaseModel):

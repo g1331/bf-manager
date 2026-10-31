@@ -6,10 +6,10 @@ from pydantic import BaseModel, Field
 
 
 class CollectionMedal(BaseModel):
-    code: str = Field(description="勋章代号（m01…m60），与图鉴 medals 一致")
-    unlocked: bool
+    code: str = Field(description="勋章代号（如 m05、mxp107），与图鉴 medals 一致")
+    unlocked: bool = Field(description="是否已获得，先看这个")
     stages_done: int = Field(
-        description="未解锁时已完成的阶段数；解锁后 EA 会把阶段进度清零，按全部完成看"
+        description="已完成的阶段数，只在未解锁时有意义：解锁后 EA 会把阶段进度清零，可能为 0"
     )
     stages_total: int
 

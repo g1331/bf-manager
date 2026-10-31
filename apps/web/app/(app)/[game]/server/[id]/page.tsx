@@ -40,6 +40,7 @@ import { MapStatsPanel } from "@/components/bf1/server-detail/MapStatsPanel";
 import { ServerAboutPanel } from "@/components/bf1/server-detail/ServerAboutPanel";
 import { ServerProfilePanel } from "@/components/bf1/server-detail/ServerProfilePanel";
 import { ServerHeroBanner } from "@/components/bf1/server-detail/ServerHeroBanner";
+import { TipLine } from "@/components/bf1/codex/TipLine";
 import { ServerHistoryPanel } from "@/components/bf1/server-detail/ServerHistoryPanel";
 import { SnapshotPanel } from "@/components/bf1/server-detail/SnapshotPanel";
 import {
@@ -251,6 +252,12 @@ function ServerDetailView({
           rotation={map_rotation}
           elapsedMinutes={elapsedMinutes}
           operation={players.data?.operation ?? null}
+        />
+        {/* 像载入画面那样按当前地图放一行贴士，换图后跟着换 */}
+        <TipLine
+          context={{ map: summary.map_name, mode: summary.game_mode }}
+          rotate
+          className="mt-3 sm:mt-4"
         />
 
         <SectionNav tabs={tabs} tab={tab} onTab={setTab} />

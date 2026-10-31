@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { CODEX_ENTRIES } from "@/lib/bf1/codex/codex";
-import { MAPS } from "@/lib/bf1/codex/battlefield";
+import { MAPS, TIPS } from "@/lib/bf1/codex/battlefield";
 import { ASSIGNMENTS, DOGTAGS, MEDALS, RIBBONS } from "@/lib/bf1/codex/collection";
 import { cn } from "@/lib/utils";
 
@@ -13,6 +13,7 @@ const SECTIONS = [
   { key: "ribbons", label: "勋带", count: RIBBONS.length, href: "/bf1/codex/ribbons" },
   { key: "assignments", label: "勤务", count: ASSIGNMENTS.length, href: "/bf1/codex/assignments" },
   { key: "dogtags", label: "狗牌", count: DOGTAGS.length, href: "/bf1/codex/dogtags" },
+  { key: "tips", label: "小贴士", count: TIPS.length, href: "/bf1/codex/tips" },
 ] as const;
 
 export type CodexSection = (typeof SECTIONS)[number]["key"];

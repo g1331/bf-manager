@@ -56,3 +56,15 @@ def test_queued_player_with_rank_stays_in_queue() -> None:
     assert [p["pid"] for p in room["spectators"]] == [3]
     assert room["players"] == []
     assert not any(p["loading"] for p in room["queues"])
+
+
+def test_missing_stat_or_patt_falls_back() -> None:
+    # 没有 STAT 当作在游戏；没有 PATT 时等级、延迟回退为 0
+    no_stat = _player(1, stat=4, tidx=0)
+    del no_stat["STAT"]
+    no_patt = _player(2, stat=2, tidx=1)
+    del no_patt["PATT"]
+    room = _parse([no_stat, no_patt])
+    by_pid = {p["pid"]: p for p in room["players"]}
+    assert by_pid[1]["loading"] is False
+    assert (by_pid[2]["loading"], by_pid[2]["rank"], by_pid[2]["latency"]) == (True, 0, 0)

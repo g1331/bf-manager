@@ -852,7 +852,12 @@ function SidePlayerGroup({
               <span className={cn("max-w-[140px] truncate", p.loading && "opacity-50")}>
                 {p.display_name}
               </span>
-              {p.loading ? <ConnectingBars className="ml-0.5" /> : null}
+              {p.loading ? (
+                <>
+                  <ConnectingBars className="ml-0.5" />
+                  <span className="sr-only">（载入中）</span>
+                </>
+              ) : null}
             </Link>
             {canManage ? <PlayerRowActions player={p} /> : null}
           </span>

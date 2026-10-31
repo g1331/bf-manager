@@ -4,6 +4,12 @@
 CATEGORY_FIXES 校正。这里按 Blaze 英文标签推出每件武器该在哪一类，重新生成目录后能马上发现新的错分。
 """
 
+import importlib.util
+import json
+from pathlib import Path
+from typing import Any
+
+import pytest
 from app.domain.games.bf1.blaze_catalog import catalog
 
 # 精英兵（战场装备）的专属武器
@@ -82,3 +88,70 @@ def test_unlabeled_entries_are_gadgets_or_grenades() -> None:
     for e in catalog("weapons").values():
         if not e.get("label"):
             assert e["category"] in {"配备", "手榴弹"}, e["name"]
+
+
+def _load_export_tool() -> Any:
+    path = Path(__file__).resolve().parent.parent / "tools" / "export_bf1_blaze_catalog.py"
+    spec = importlib.util.spec_from_file_location("export_bf1_blaze_catalog", path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+# 三八式（巡逻），Gateway 把它放在「佩槍」
+_ARISAKA_GUID = "BB20B711-EF98-4708-998A-D78780B8B8C4"
+
+
+def _sample(tool: Any, kills: int) -> dict[str, Any]:
+    """一名玩家、只有三八式（巡逻）一件武器的合成样本；kills=0 时 Blaze 对不上，走无统计条目路径"""
+    pid = "1"
+    stats = {"kills": kills, "seconds": kills * 10, "shots": kills * 5}
+    cats = ["player_core", *tool.VEHICLE_CATEGORIES, *tool.WEAPON_CATEGORIES]
+    descs: dict[str, list[dict[str, str]]] = {c: [] for c in cats}
+    blaze: dict[str, dict[str, list[str]]] = {c: {pid: []} for c in cats}
+    label = "Rifle - Single - Type 38 Arisaka Patrol"
+    for template, value in (
+        ("c_{}__kw_g", stats["kills"]),
+        ("c_{}__sw_g", stats["seconds"]),
+        ("c_{}__sfw_g", stats["shots"]),
+    ):
+        descs["player_weapons1"].append(
+            {"name": template.format("wRSinAriP"), "desc": f"Global All Time, ParamX ({label}) "}
+        )
+        blaze["player_weapons1"][pid].append(str(value))
+    gateway_weapon = {
+        "guid": _ARISAKA_GUID,
+        "name": "三八式步槍（巡邏）",
+        "imageUrl": None,
+        "stats": {"values": stats},
+    }
+    return {
+        "pids": [int(pid)],
+        "descs": descs,
+        "blaze": blaze,
+        "gateway": {
+            pid: {
+                "weapons": [{"name": "佩槍", "sortOrder": 4, "weapons": [gateway_weapon]}],
+                "vehicles": [],
+            }
+        },
+    }
+
+
+@pytest.mark.parametrize("kills", [12, 0], ids=["matched", "no-stats"])
+def test_export_tool_applies_category_fixes_on_every_path(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, kills: int
+) -> None:
+    tool = _load_export_tool()
+    out = tmp_path / "catalog.json"
+    monkeypatch.setattr(tool, "DATA_PATH", out)
+    sample = tmp_path / "sample.json"
+    sample.write_text(json.dumps(_sample(tool, kills), ensure_ascii=False), encoding="utf-8")
+
+    tool.build(sample)
+
+    weapons = json.loads(out.read_text(encoding="utf-8"))["weapons"]
+    [entry] = [e for e in weapons.values() if e.get("guid") == _ARISAKA_GUID]
+    assert entry["category"] == "步槍"
+    assert (entry["label"] is None) is (kills == 0)

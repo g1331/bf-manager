@@ -99,16 +99,17 @@ EXTRA_NAMES: dict[str, dict[str, str]] = {
     },
     "Stationary Weapons - SK45 Coastal Cannon": {"name": "SK45 岸防砲", "category": "定點武器"},
 }  # fmt: skip
-# Gateway 自己分错类的条目：Blaze 标签 → 正确分类。2018 年 Weapons Crate 更新加的三把「巡逻」型
+# Gateway 自己分错类的条目：Gateway GUID → 正确分类。2018 年 Weapons Crate 更新加的三把「巡逻」型
 # 被 Gateway 挂到了别的兵种：三八式（巡逻）在「佩槍」、卡尔卡诺 M91 卡宾枪（巡逻）在「半自動步槍」，
 # 两把都是侦察兵的栓动步枪；M1917 卡宾枪（巡逻）是突击兵 M1917 战壕卡宾枪的瞄准镜型，Gateway 放进了
 # 「半自動步槍」。勒贝尔 M1886 是各兵种通用的制式步枪，Gateway 却放在「步槍」。
+# 按 GUID 而不是 Blaze 标签：样本里没人用过的武器走「无统计条目」路径，没有标签。
 # tests/test_bf1_blaze_catalog.py 按 Blaze 英文标签核对全部武器的分类，重新生成后跑一遍。
 CATEGORY_FIXES: dict[str, str] = {
-    "Rifle - Single - Type 38 Arisaka Patrol": "步槍",
-    "Rifle - Single - Carcano M91 Patrol Carbine": "步槍",
-    "MG - SMG - Mauser M1917 Patrol Carbine": "衝鋒槍",
-    "Rifle - Single - Lebel 1886 Standard Issue": "制式步槍",
+    "BB20B711-EF98-4708-998A-D78780B8B8C4": "步槍",  # 三八式步槍（巡邏）
+    "4E317627-F7F8-4014-BB22-B0ABEB7E9141": "步槍",  # 卡爾卡諾 M91 卡賓槍（巡邏）
+    "245A23B1-53BA-4AB2-A416-224794F15FCB": "衝鋒槍",  # M1917 卡賓槍（巡邏）
+    "E1B701B5-0E4B-40C3-A61B-CE639A4B18A0": "制式步槍",  # 勒貝爾 M1886
 }
 # 不是玩家能挑的武器：遥控类与突破模式的炮击支援
 IGNORED_LABELS = {"Remote", "Artillery - Rush Artillery"}
@@ -465,8 +466,6 @@ def build(sample_path: Path) -> None:
                 out[code]["guid"] = guid
         by_label = {e["label"]: e for e in out.values()}
         for e in out.values():
-            if e["label"] in CATEGORY_FIXES:
-                e["category"] = CATEGORY_FIXES[e["label"]]
             src = EXTRA_NAMES.get(e["label"], {}).get("image_from")
             if src and not e["image"]:
                 e["image"] = by_label[src]["image"]
@@ -487,6 +486,10 @@ def build(sample_path: Path) -> None:
                 if "/" not in k:
                     out[k]["guid"] = k
                 print(f"[{kind}] 无统计条目：", it["name"], it["category"])
+        # 三条路径（对上的、补名的、无统计的）都生成完再校正，哪条路径来的都不漏
+        for e in out.values():
+            if e.get("guid") in CATEGORY_FIXES:
+                e["category"] = CATEGORY_FIXES[e["guid"]]
         lost = [
             (it["name"], it["category"])
             for k, it in gw.items()

@@ -127,7 +127,7 @@ function PlayerDetailView({
   personaId: number;
   stats: PlayerStatsDetail;
 }) {
-  const { summary, soldiers } = stats;
+  const { summary } = stats;
   // 回到真正来的那一页（战队、服务器排行、带搜索词的战绩查询等），直接打开时退到战绩查询
   const back = useBack(`/${game}/players`);
 
@@ -216,6 +216,7 @@ function PlayerDetailView({
           displayName={displayName}
           avatarUrl={player?.avatar_url ?? null}
           summary={summary}
+          honors={stats.honors}
           online={onlineQ.data?.is_online ?? null}
           onlineServer={onlineQ.data?.server_name ?? null}
           onlineGameId={onlineQ.data?.game_id ?? null}
@@ -235,10 +236,10 @@ function PlayerDetailView({
         >
           {tab === "overview" && (
             <CareerOverview
-              summary={summary}
-              soldiers={soldiers}
+              stats={stats}
               weapons={weapons}
               vehicles={vehicles}
+              game={game}
               onShowAll={(t) => {
                 setTab(t);
                 window.scrollTo({ top: 0, behavior: "smooth" });

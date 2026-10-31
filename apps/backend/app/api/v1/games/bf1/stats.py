@@ -7,6 +7,7 @@ from fastapi import APIRouter, Query
 from app.api.deps import DbDep
 from app.api.rate_limit import rate_limit
 from app.schemas.bf1.ban import BanStatus
+from app.schemas.bf1.collection import PlayerCollection
 from app.schemas.bf1.rounds import PlayerRoundPage
 from app.schemas.bf1.server import PlayerRspServers
 from app.schemas.bf1.stats import (
@@ -18,6 +19,7 @@ from app.schemas.bf1.stats import (
     WeaponStats,
 )
 from app.services.bf1.ban_service import BF1BanService
+from app.services.bf1.collection_service import get_collection
 from app.services.bf1.round_service import list_player_rounds
 from app.services.bf1.rsp_list_service import list_player_servers
 from app.services.bf1.stats_service import BF1StatsService
@@ -43,6 +45,12 @@ async def get_weapons(persona_id: int, db: DbDep) -> WeaponStats:
 @router.get("/{persona_id}/vehicles", dependencies=[_lookup], response_model=VehicleStats)
 async def get_vehicles(persona_id: int, db: DbDep) -> VehicleStats:
     return await BF1StatsService(db).get_vehicles(persona_id)
+
+
+@router.get("/{persona_id}/collection", dependencies=[_lookup], response_model=PlayerCollection)
+async def get_player_collection(persona_id: int, db: DbDep) -> PlayerCollection:
+    # 勋章、狗牌解锁情况与佩戴的狗牌，3 个 Gateway 请求，缓存 1 天
+    return await get_collection(db, persona_id)
 
 
 @router.get("/{persona_id}/recent-servers", dependencies=[_lookup], response_model=RecentServers)

@@ -246,6 +246,32 @@ export interface RecentServer {
   persisted_game_id: string | null;
 }
 
+/** 战绩页「收藏」：勋章、狗牌解锁情况与佩戴的狗牌（Gateway，缓存 1 天） */
+export interface CollectionMedal {
+  /** 与图鉴 medals 的 code 一致 */
+  code: string;
+  unlocked: boolean;
+  stages_done: number;
+  stages_total: number;
+}
+
+export interface CollectionDogtag {
+  /** 与图鉴 dogtags 的 id 一致 */
+  id: string;
+  unlocked: boolean;
+  /** 未解锁且有进度时才有 */
+  acquired: number | null;
+  needed: number | null;
+}
+
+export interface PlayerCollection {
+  persona_id: number;
+  medals: CollectionMedal[];
+  dogtags: CollectionDogtag[];
+  /** 当前佩戴的狗牌 id，读不到为空 */
+  equipped: string[];
+}
+
 export interface RecentServers {
   persona_id: number;
   servers: RecentServer[];
@@ -822,6 +848,9 @@ export const bf1Api = {
 
   getRecentServers: (personaId: number) =>
     api.get<RecentServers>(`/bf1/stats/${personaId}/recent-servers`),
+
+  getCollection: (personaId: number) =>
+    api.get<PlayerCollection>(`/bf1/stats/${personaId}/collection`),
 
   getPlayerServers: (personaId: number) =>
     api.get<PlayerRspServers>(`/bf1/stats/${personaId}/servers`),

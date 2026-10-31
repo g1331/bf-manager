@@ -84,14 +84,17 @@ class CareerTeamwork(BaseModel):
 
 
 class CareerMode(BaseModel):
-    """一个模式的胜负与得分。mode：conquest / operations / rush / frontlines / domination /
-    war_pigeons / team_deathmatch / air_assault；空中突袭没有单独的得分（None）"""
+    """一个模式的胜负与目标得分。mode：conquest / operations / rush / frontlines / domination /
+    war_pigeons / team_deathmatch / air_assault"""
 
     mode: str
     wins: int = 0
     losses: int = 0
     win_rate: float | None = None  # 0-1
-    score: int | None = None
+    score: int | None = Field(
+        default=None,
+        description="这个模式里的目标得分（占点、炸弹、信鸽等），不含击杀、团队、小队分；空中突击为 null",
+    )
 
 
 class EliteKitStat(BaseModel):

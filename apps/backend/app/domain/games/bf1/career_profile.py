@@ -47,7 +47,7 @@ TEAMWORK: dict[str, str] = {
     "flag_captures": "c___ccp_g",
     "flag_defends": "c___cpd_g",
 }
-# 模式 → (胜负统计里的模式代号, 模式得分)；空中突袭没有单独的得分
+# 模式 → (胜负统计里的模式代号, 模式目标得分)；空中突袭没有
 MODES: dict[str, tuple[str, str | None]] = {
     "conquest": ("mgc", "sc_conquest"),
     "operations": ("mgb", "sc_operations"),

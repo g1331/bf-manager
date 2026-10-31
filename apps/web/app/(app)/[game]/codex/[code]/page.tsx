@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CodexArticle } from "@/components/bf1/codex/CodexArticle";
 import { CodexBack, CodexCopyActions } from "@/components/bf1/codex/CodexActions";
-import { CodexCard } from "@/components/bf1/codex/CodexCard";
+import { CodexCard, CodexPlate } from "@/components/bf1/codex/CodexCard";
 import { CodexFootnote } from "@/components/bf1/codex/CodexHeader";
 import {
   Breadcrumbs,
@@ -92,8 +92,10 @@ export default async function CodexEntryPage({ params }: Props) {
             width={CODEX_IMAGE_WIDTH}
             height={CODEX_IMAGE_HEIGHT}
             priority
-            className="mx-auto w-full max-w-[300px] rounded-[2px] shadow-[0_30px_60px_-24px_#000] ring-1 ring-white/15 sm:max-w-[400px]"
-          />
+            className="@container mx-auto w-full max-w-[300px] rounded-[6px] shadow-[0_30px_60px_-24px_#000] ring-1 ring-white/10 sm:max-w-[400px]"
+          >
+            <CodexPlate entry={entry} />
+          </ZoomableImage>
           <p className="mt-2 text-center text-[11px] text-white/40">
             <span className="hidden lg:inline">点击图片放大 2 倍，移动鼠标看细节</span>
             <span className="lg:hidden">点按图片放大，拖动看细节</span>

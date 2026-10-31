@@ -13,6 +13,7 @@ const TAP_SLOP = 6;
  *   - 鼠标：点击在点击处放大 2 倍，移动鼠标看不同位置，放大后滚轮可在 1–2.5 倍间微调；再点一次复原。
  *   - 触屏：点按放大，单指拖动平移，再点按复原。未放大时不拦截手势，页面照常滚动。
  * 换图（src 变化）时由调用方用 key 重新挂载来复位。
+ * children 是叠在图上的卡面文字，放大时淡出，免得挡住细节。
  */
 export function ZoomableImage({
   src,
@@ -23,6 +24,7 @@ export function ZoomableImage({
   height,
   className,
   priority,
+  children,
 }: {
   src: string;
   srcSet?: string;
@@ -32,6 +34,7 @@ export function ZoomableImage({
   height: number;
   className?: string;
   priority?: boolean;
+  children?: React.ReactNode;
 }) {
   const box = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
@@ -161,6 +164,16 @@ export function ZoomableImage({
           transformOrigin: `${origin.x}% ${origin.y}%`,
         }}
       />
+      {children ? (
+        <div
+          className={cn(
+            "transition-opacity duration-300",
+            zoom > 1 && "opacity-0 motion-reduce:transition-none",
+          )}
+        >
+          {children}
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, Quote } from "lucide-react";
+import { BookOpen, Quote, SquareCheck } from "lucide-react";
 import { type CodexEntry, codexImage } from "@/lib/bf1/codex/codex";
 import {
   type GameMode,
@@ -12,6 +12,7 @@ import {
   tipsFor,
 } from "@/lib/bf1/codex/battlefield";
 import { cn } from "@/lib/utils";
+import { CodexPlate } from "./CodexCard";
 
 /** 地图卡片：横幅大图，名字压在底部渐变上，悬停浮出金色角标 */
 export function MapCard({ map, showExpansion }: { map: MapInfo; showExpansion?: boolean }) {
@@ -141,40 +142,51 @@ export function SectionTitle({ title, count }: { title: string; count?: number }
   );
 }
 
-/** 「历史背景」：挂在地图、模式上的百科条目全文，配一张竖幅百科图 */
+/** 「历史背景」：挂在地图、模式上的百科条目全文，配一张游戏里那样的百科卡 */
 export function CodexStory({ entry, body }: { entry: CodexEntry; body: string }) {
   return (
     <section>
       <SectionTitle title="历史背景" />
-      <div className="mt-4 flex gap-4 sm:gap-5">
+      <div className="mt-4 flex gap-4 sm:gap-6">
         <Link
           href={`/bf1/codex/${entry.code}`}
           prefetch={false}
-          className="group compact-action hidden w-28 shrink-0 self-start sm:block"
+          className="group compact-action hidden w-36 shrink-0 self-start sm:block"
         >
           <div className="codex-frame relative">
-            {/* eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp */}
-            <img
-              src={codexImage(entry.code, 480)}
-              alt={entry.name}
-              loading="lazy"
-              className="block aspect-[640/901] w-full object-cover ring-1 ring-white/10"
-            />
+            <div className="group-hover:ring-codex/70 @container relative overflow-hidden rounded-[6px] ring-1 ring-white/10 transition-shadow">
+              {/* eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp */}
+              <img
+                src={codexImage(entry.code, 480)}
+                alt={entry.name}
+                loading="lazy"
+                className="block aspect-[640/901] w-full object-cover"
+              />
+              <CodexPlate entry={entry} />
+            </div>
           </div>
         </Link>
         <div className="min-w-0">
-          <div className="text-[15px] font-semibold text-white/95">{entry.header}</div>
+          <div className="text-xs tracking-[0.18em] text-white/55">{entry.category}</div>
+          <div className="mt-1 text-xl leading-snug font-normal text-white/95">{entry.header}</div>
           {entry.subHeader ? (
-            <div className="mt-0.5 text-xs text-white/45">{entry.subHeader}</div>
+            <div className="mt-1 text-xs text-white/45 italic">{entry.subHeader}</div>
           ) : null}
-          <p className="mt-3 text-[15px] leading-[1.9] whitespace-pre-line text-white/80">{body}</p>
+          <p className="text-codex-light mt-3 flex items-start gap-2 text-sm leading-relaxed">
+            <SquareCheck className="mt-[3px] size-4 shrink-0" aria-hidden />
+            <span title="解锁条件">
+              <span className="sr-only">解锁条件：</span>
+              {entry.unlock}
+            </span>
+          </p>
+          <p className="mt-4 text-[15px] leading-[1.9] whitespace-pre-line text-white/80">{body}</p>
           <Link
             href={`/bf1/codex/${entry.code}`}
             prefetch={false}
             className="inline-action mt-3 inline-flex items-center gap-1.5 text-xs text-amber-300/90 hover:text-amber-200"
           >
             <BookOpen className="size-3.5" />
-            百科条目「{entry.name}」· 解锁：{entry.unlock}
+            百科条目「{entry.name}」
           </Link>
         </div>
       </div>

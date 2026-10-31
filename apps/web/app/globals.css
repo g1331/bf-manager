@@ -126,6 +126,9 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --font-display: var(--font-display), var(--font-sans), system-ui, sans-serif;
+  /* 游戏内百科卡片的卡其色：卡面名字、底边条、解锁条件 */
+  --color-codex: #a49b6c;
+  --color-codex-light: #cfc59a;
 }
 
 @layer base {

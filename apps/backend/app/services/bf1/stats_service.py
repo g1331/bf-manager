@@ -174,7 +174,9 @@ def _build_detail(persona_id: int, p: BlazeProfile, raw: dict[str, Any]) -> Play
             for k in p.elite_kits
             if k.seconds or k.kills
         ],
-        maps=sorted(
+        maps=None
+        if p.maps is None
+        else sorted(
             (CareerMap(map=m, time_seconds=round(s)) for m, s in p.maps.items() if s >= 1),
             key=lambda m: -m.time_seconds,
         ),
@@ -395,8 +397,10 @@ class BF1StatsService:
                 # 条目结构对不上（如 schema 改过）：当作没命中，查到后覆盖它
                 logger.warning("BF1 生涯缓存条目无效 persona_id=%s: %s", persona_id, exc)
         values = await _fetch_one(self.db, persona_id, profile_stat_names())
-        detail = _build_detail(persona_id, parse_profile(values), values)
-        if cache is not None:
+        profile = parse_profile(values)
+        detail = _build_detail(persona_id, profile, values)
+        # 有类别没返回这个人：照常展示（缺的项为 null），但不缓存，下次重新查
+        if cache is not None and profile.complete:
             try:
                 await cache.set(key, detail.model_dump(mode="json"), ttl=CAREER_CACHE_TTL)
             except Exception as exc:

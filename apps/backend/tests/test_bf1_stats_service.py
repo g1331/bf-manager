@@ -104,6 +104,12 @@ def _profile_values() -> dict[str, float]:
     }
 
 
+def _full_values() -> dict[str, float]:
+    """EA 把请求的统计全都返回（没有的为 0），再盖上 _profile_values"""
+    zeros = {n: 0.0 for ns in profile_stat_names().values() for n in ns}
+    return zeros | _profile_values()
+
+
 def test_profile_stat_names_cover_every_parsed_stat() -> None:
     names = {n for ns in profile_stat_names().values() for n in ns}
     assert set(_profile_values()) <= names
@@ -115,7 +121,7 @@ def test_profile_stat_names_cover_every_parsed_stat() -> None:
 
 
 def test_build_detail_profile_sections() -> None:
-    values = _profile_values()
+    values = _full_values()
     d = _build_detail(7, parse_profile(values), values)
     assert d.summary.kills == 35_000
     assert d.honors is not None and (d.honors.mvp, d.honors.ace_squad, d.honors.medals) == (
@@ -164,16 +170,36 @@ def test_build_detail_ribbons_none_when_a_category_is_missing() -> None:
     d = _build_detail(7, parse_profile(values), values)
     assert d.ribbons is None
     empty = _build_detail(7, parse_profile({}), {})
-    assert (empty.modes, empty.elite_kits, empty.maps, empty.ribbons) == ([], [], [], None)
+    assert (empty.modes, empty.elite_kits, empty.maps, empty.ribbons) == ([], [], None, None)
     assert empty.combat is not None and empty.combat.accuracy is None
+
+
+def test_missing_category_is_unknown_not_zero() -> None:
+    # statcategory3 没返回这个人：入侵者击杀未知、地图不全，不能显示成 0 / 残缺排行
+    values = {
+        k: v
+        for k, v in _full_values().items()
+        if k not in profile_stat_names()["player_statcategory3"]
+    }
+    p = parse_profile(values)
+    assert not p.complete
+    d = _build_detail(7, p, values)
+    assert d.maps is None
+    assert [(k.kit, k.kills) for k in d.elite_kits] == [("sentry", 150), ("infiltrator", None)]
+    assert parse_profile(_full_values()).complete
 
 
 async def test_get_detailed_stats_uses_cache(monkeypatch) -> None:
     calls: list[int] = []
 
+    full = True
+
     async def fake_fetch(db, pids, names):
         calls.append(len(names))
-        return {pids[0]: _profile_values()}
+        values = _full_values()
+        if not full:
+            values = {k: v for k, v in values.items() if k not in names["player_statcategory4"]}
+        return {pids[0]: values}
 
     store: dict[str, object] = {}
 
@@ -200,6 +226,13 @@ async def test_get_detailed_stats_uses_cache(monkeypatch) -> None:
     assert await svc.get_detailed_stats(9) == first
     assert await svc.get_detailed_stats(9) == first
     assert calls == [7, 7]
+    # 有类别没返回：照常返回但不缓存，下一次重新查
+    store.clear()
+    full = False
+    assert (await svc.get_detailed_stats(9)).maps is None
+    assert (await svc.get_detailed_stats(9)).maps is None
+    assert calls == [7, 7, 7, 7]
+    assert not store
 
 
 def test_parse_career_rounds_int_fields_and_sums_time() -> None:

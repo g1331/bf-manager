@@ -122,7 +122,7 @@ class BlazeMode(BaseModel):
 
 class BlazeEliteKit(BaseModel):
     kit: str
-    kills: int = 0
+    kills: int | None = None  # None：所在类别没返回这个人
     seconds: float = 0.0
 
 
@@ -135,13 +135,16 @@ class BlazeProfile(BaseModel):
     teamwork: dict[str, int]
     modes: list[BlazeMode]
     elite_kits: list[BlazeEliteKit]
-    # 地图代号 → 在这张图上的秒数
-    maps: dict[str, float]
+    # 地图代号 → 在这张图上的秒数；None：有类别没返回这个人，不全的排行不如不给
+    maps: dict[str, float] | None
     # 勋带号 → 次数；None 表示勋带类别没返回这个人
     ribbons: dict[int, int] | None
     rounds_completed: int = 0
     rounds_played: int = 0
     spectator_seconds: float = 0.0
+    # 请求的统计全都返回了。Blaze 按类别分开请求，某一类没返回这个人时其余照常合并，
+    # 缺的项不能当 0，也不该进缓存
+    complete: bool = True
 
 
 def profile_stat_names() -> dict[str, list[str]]:
@@ -164,6 +167,9 @@ def parse_profile(values: dict[str, float]) -> BlazeProfile:
     def n(name: str) -> int:
         return round(values.get(name, 0.0))
 
+    def known(name: str) -> int | None:
+        return round(values[name]) if name in values else None
+
     return BlazeProfile(
         career=parse_career(values),
         honors={k: n(v) for k, v in HONORS.items()},
@@ -181,14 +187,17 @@ def parse_profile(values: dict[str, float]) -> BlazeProfile:
         elite_kits=[
             BlazeEliteKit(
                 kit=kit,
-                kills=n(f"c_{k}__ks_g"),
+                kills=known(f"c_{k}__ks_g"),
                 seconds=values.get(f"c_{k}__sa_g", 0.0),
             )
             for kit, k in ELITE_KITS.items()
         ],
-        maps={m: values.get(name, 0.0) for m, (_, name) in MAPS.items()},
+        maps={m: values[name] for m, (_, name) in MAPS.items()}
+        if all(name in values for _, name in MAPS.values())
+        else None,
         ribbons=round_awards.read(values),
         rounds_completed=n(ROUNDS_COMPLETED),
         rounds_played=n(ROUNDS_PLAYED),
         spectator_seconds=values.get(SPECTATOR_SECONDS, 0.0),
+        complete=all(name in values for ns in profile_stat_names().values() for name in ns),
     )

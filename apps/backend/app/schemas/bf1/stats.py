@@ -101,7 +101,7 @@ class EliteKitStat(BaseModel):
     """精英兵：sentry / flamethrower / trench_raider / tank_hunter / infiltrator"""
 
     kit: str
-    kills: int = 0
+    kills: int | None = Field(default=None, description="EA 这次没返回这项时为 null")
     time_seconds: int = 0
 
 
@@ -136,7 +136,9 @@ class PlayerStatsDetail(BaseModel):
     teamwork: CareerTeamwork | None = None
     modes: list[CareerMode] = []
     elite_kits: list[EliteKitStat] = []
-    maps: list[CareerMap] = []  # 玩过的地图，按时长倒序
+    maps: list[CareerMap] | None = Field(
+        default=None, description="玩过的地图，按时长倒序；EA 这次没返回全部地图统计时为 null"
+    )
     ribbons: list[CareerRibbon] | None = None
     misc: CareerMisc | None = None
     raw: dict[str, Any]

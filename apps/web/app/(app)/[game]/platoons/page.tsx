@@ -19,6 +19,7 @@ import { SectionHeading } from "@/components/layout/SectionHeading";
 import { ApiException } from "@/lib/api-client";
 import { bf1Api } from "@/lib/api/bf1";
 import { cn } from "@/lib/utils";
+import { TipLine } from "@/components/bf1/codex/TipLine";
 
 const MIN_QUERY = 3;
 
@@ -145,7 +146,10 @@ function PlatoonSearch() {
           tone="error"
         />
       ) : items.length === 0 ? (
-        <Notice text={`没有找到名字包含「${q}」的战队`} />
+        <>
+          <Notice text={`没有找到名字包含「${q}」的战队`} />
+          <TipLine className="mt-3" />
+        </>
       ) : (
         <section>
           <div className="mb-3 flex items-baseline justify-between">

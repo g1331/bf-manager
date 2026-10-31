@@ -6,7 +6,8 @@
  * 以后做推送时，push / notificationclick 处理也加在这个文件里。
  */
 
-const CACHE = "bfm-offline-v1";
+// 改了 offline.html 就把版本号加一：sw.js 有变化浏览器才会重新安装、缓存新的离线页
+const CACHE = "bfm-offline-v2";
 const OFFLINE_URL = "/offline.html";
 
 self.addEventListener("install", (event) => {

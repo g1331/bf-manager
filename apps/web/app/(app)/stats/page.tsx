@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { motion, type Variants } from "framer-motion";
 import { ArrowRight, Clock4, Eye, Server, TrendingDown, TrendingUp, Users } from "lucide-react";
+import { TipLine } from "@/components/bf1/codex/TipLine";
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
 import { CountUp } from "@/components/bf1/visual/CountUp";
 import { CountryFlag } from "@/components/common/CountryFlag";
@@ -83,6 +84,9 @@ function OverviewContent({ data, gameId }: { data: BF1Overview; gameId: string }
     <motion.div variants={staggerContainer} initial="hidden" animate="show" className="space-y-5">
       <motion.div variants={staggerItem}>
         <HeroBanner data={data} />
+      </motion.div>
+      <motion.div variants={staggerItem}>
+        <TipLine rotate />
       </motion.div>
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">

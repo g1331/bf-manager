@@ -37,6 +37,7 @@ import {
   regionLabel,
 } from "@/lib/bf1/catalog";
 import { bf1Api, type ServerSummary } from "@/lib/api/bf1";
+import { TipLine } from "@/components/bf1/codex/TipLine";
 
 const PAGE_SIZE = 50;
 
@@ -329,9 +330,12 @@ export default function ServerListPage() {
               </div>
             </>
           ) : (
-            <div className="rounded-sm border border-dashed border-white/15 py-16 text-center text-sm text-white/45">
-              {filtersActive ? "当前筛选条件下没有匹配的服务器" : "未找到匹配的服务器"}
-            </div>
+            <>
+              <div className="rounded-sm border border-dashed border-white/15 py-16 text-center text-sm text-white/45">
+                {filtersActive ? "当前筛选条件下没有匹配的服务器" : "未找到匹配的服务器"}
+              </div>
+              <TipLine className="mt-3" />
+            </>
           )}
         </section>
 

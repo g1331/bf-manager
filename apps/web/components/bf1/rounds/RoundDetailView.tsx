@@ -9,6 +9,7 @@ import { classLabel } from "@/components/bf1/player-detail/format";
 import { RoundPlayerBreakdown } from "@/components/bf1/rounds/RoundPlayerBreakdown";
 import { FACTION_SLUG } from "@/lib/bf1/factions";
 import { cn } from "@/lib/utils";
+import { TipLine } from "@/components/bf1/codex/TipLine";
 
 export function formatRoundTime(ts: number): string {
   return new Date(ts * 1000).toLocaleString("zh-CN", {
@@ -122,6 +123,7 @@ export function RoundDetailView({
   return (
     <section className="min-w-0">
       <RoundBanner r={r} teams={teams} game={game} />
+      <TipLine context={{ map: r.map_name, mode: r.game_mode }} className="mt-3" />
       <div className="mt-5 grid grid-cols-1 gap-x-8 gap-y-6 lg:grid-cols-2">
         {([1, 2] as const).map((t) => (
           <TeamBoard

@@ -6,6 +6,7 @@
  * 版式与服务器详情页一致：全屏模糊背景 + 首屏横幅 + 吸顶分区导航（状态记在 URL hash）。
  * 概览一屏看完生涯：战斗、团队贡献、兵种、常用装备；武器 / 载具分区是可排序的排行列表。
  * 武器 / 载具进页即在后台拉取（概览的常用装备要用），最近服务器切到该分区时再拉。
+ * 「收藏」分区是勋章、狗牌的解锁情况，切到该分区时再拉。
  * 「服务器」分区是天眼查：收录私服里这个人当服主 / 管理 / VIP 或被封禁的服。
  */
 
@@ -27,6 +28,7 @@ import {
   isUsed,
   type GearColumn,
 } from "@/components/bf1/player-detail/EquipmentTable";
+import { PlayerCollectionView } from "@/components/bf1/player-detail/PlayerCollection";
 import { PlayerHeroBanner } from "@/components/bf1/player-detail/PlayerHeroBanner";
 import { PlayerRounds } from "@/components/bf1/player-detail/PlayerRounds";
 import { PlayerServers, playerServerCount } from "@/components/bf1/player-detail/PlayerServers";
@@ -44,7 +46,15 @@ import { pushRecentPlayer } from "@/lib/bf1/recent-players";
 import { useBack } from "@/hooks/useNavigation";
 import { formatDuration } from "@/lib/utils";
 
-const TAB_KEYS = ["overview", "weapons", "vehicles", "rounds", "servers", "recent"] as const;
+const TAB_KEYS = [
+  "overview",
+  "weapons",
+  "vehicles",
+  "rounds",
+  "collection",
+  "servers",
+  "recent",
+] as const;
 
 const fmtPctValue = (v: number | null) => (v == null ? "—" : `${v.toFixed(1)}%`);
 const fmtTime = (v: number | null) => (v == null ? "—" : formatDuration(v));
@@ -172,6 +182,7 @@ function PlayerDetailView({
     { key: "weapons" as const, label: "武器", count: usedCount(weapons) },
     { key: "vehicles" as const, label: "载具", count: usedCount(vehicles) },
     { key: "rounds" as const, label: "对局" },
+    { key: "collection" as const, label: "收藏" },
     { key: "servers" as const, label: "服务器", count: playerServerCount(serversQ.data) },
     { key: "recent" as const, label: "最近" },
   ];
@@ -181,6 +192,14 @@ function PlayerDetailView({
     queryKey: ["bf1-recent", personaId],
     queryFn: () => bf1Api.getRecentServers(personaId),
     enabled: tab === "recent",
+  });
+
+  // 3 个 Gateway 请求，切到这个分区才查
+  const collectionQ = useQuery({
+    queryKey: ["bf1-collection", personaId],
+    queryFn: () => bf1Api.getCollection(personaId),
+    enabled: tab === "collection",
+    staleTime: 10 * 60_000,
   });
 
   const player = playerQ.data;
@@ -265,6 +284,13 @@ function PlayerDetailView({
             />
           )}
           {tab === "rounds" && <PlayerRounds personaId={personaId} game={game} />}
+          {tab === "collection" && (
+            <PlayerCollectionView
+              data={collectionQ.data}
+              loading={collectionQ.isLoading}
+              error={collectionQ.isError}
+            />
+          )}
           {tab === "servers" && (
             <PlayerServers
               game={game}

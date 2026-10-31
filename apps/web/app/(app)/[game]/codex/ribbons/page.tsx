@@ -33,7 +33,8 @@ export default function RibbonsPage() {
               {g.items.map((r) => (
                 <li
                   key={r.code}
-                  className="flex items-center gap-4 border border-white/[0.07] bg-black/35 p-3 backdrop-blur-sm"
+                  id={r.code}
+                  className="flex scroll-mt-24 items-center gap-4 border border-white/[0.07] bg-black/35 p-3 backdrop-blur-sm target:border-amber-400/70"
                 >
                   {/* 原图 256 见方，勋带只占中间一条（x 17–239，y 约 90–167），裁出这一条 */}
                   <div className="relative h-[42px] w-[122px] shrink-0 overflow-hidden">

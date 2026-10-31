@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
 import { BanBadge } from "@/components/bf1/visual/BanBadge";
 import { PlayerAvatar } from "@/components/common/PlayerAvatar";
-import type { BanStatus, PlayerPlatoon, PlayerStatsSummary } from "@/lib/api/bf1";
+import type { BanStatus, CareerHonors, PlayerPlatoon, PlayerStatsSummary } from "@/lib/api/bf1";
 import { rarityByRank, rarityHex } from "@/lib/bf1/rarity";
 import { cn } from "@/lib/utils";
 import { classLabel, fmtFixed, fmtFull, fmtHours, fmtPct, isKnownClass, winRate } from "./format";
@@ -22,6 +22,7 @@ export function PlayerHeroBanner({
   displayName,
   avatarUrl,
   summary,
+  honors,
   online,
   onlineServer,
   onlineGameId,
@@ -33,6 +34,7 @@ export function PlayerHeroBanner({
   displayName: string;
   avatarUrl: string | null;
   summary: PlayerStatsSummary;
+  honors?: CareerHonors | null;
   online: boolean | null;
   onlineServer: string | null;
   onlineGameId: number | null;
@@ -170,11 +172,22 @@ export function PlayerHeroBanner({
               {fmtFixed(summary.kd)}
             </div>
           </div>
-          <div className="grid grid-cols-4 gap-x-5 gap-y-4 pb-1 sm:gap-x-8">
+          <div
+            className={cn(
+              "grid grid-cols-4 gap-x-5 gap-y-4 pb-1 sm:gap-x-8",
+              honors && "@3xl:grid-cols-6",
+            )}
+          >
             <Kpi label="KPM" value={fmtFixed(summary.kpm)} />
             <Kpi label="SPM" value={summary.sps != null ? fmtFull(summary.sps * 60) : "—"} />
             <Kpi label="胜率" value={fmtPct(rate)} />
             <Kpi label="技巧值" value={fmtFull(summary.skill)} />
+            {honors ? (
+              <>
+                <Kpi label="MVP" value={fmtFull(honors.mvp)} />
+                <Kpi label="王牌小队" value={fmtFull(honors.ace_squad)} />
+              </>
+            ) : null}
           </div>
         </div>
 

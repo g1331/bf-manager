@@ -17,36 +17,72 @@ import {
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
 import { SectionHeading } from "@/components/layout/SectionHeading";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { PlayerStatsSummary, SoldierClassStat, VehicleStat, WeaponStat } from "@/lib/api/bf1";
+import type {
+  CareerCombat,
+  CareerTeamwork,
+  EliteKitStat,
+  PlayerStatsDetail,
+  PlayerStatsSummary,
+  SoldierClassStat,
+  VehicleStat,
+  WeaponStat,
+} from "@/lib/api/bf1";
 import { rarityHex } from "@/lib/bf1/rarity";
 import { cn, formatDuration } from "@/lib/utils";
+import { EliteKits, HonorsPanel, ModesPanel } from "./CareerHonors";
 import { classLabel, fmtFixed, fmtFull, fmtPct, perMinute, winRate } from "./format";
 
-/** 概览分区：战斗 + 团队贡献，兵种 + 常用装备，两行左宽右窄 */
+/** 概览分区：战斗 + 团队贡献，兵种 + 常用装备，荣誉 + 模式，三行左宽右窄 */
 export function CareerOverview({
-  summary,
-  soldiers,
+  stats,
   weapons,
   vehicles,
+  game,
   onShowAll,
 }: {
-  summary: PlayerStatsSummary;
-  soldiers: SoldierClassStat[];
+  stats: PlayerStatsDetail;
   weapons: WeaponStat[] | undefined;
   vehicles: VehicleStat[] | undefined;
+  game: string;
   onShowAll: (tab: "weapons" | "vehicles") => void;
 }) {
+  const { summary, soldiers } = stats;
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <CombatPanel s={summary} />
-        <TeamworkPanel s={summary} />
+        <CombatPanel s={summary} combat={stats.combat} />
+        <TeamworkPanel s={summary} teamwork={stats.teamwork} />
       </div>
       <div className="grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <ClassPanel soldiers={soldiers} best={summary.best_class} />
+        <ClassPanel soldiers={soldiers} best={summary.best_class} elite={stats.elite_kits ?? []} />
         <TopGearPanel weapons={weapons} vehicles={vehicles} onShowAll={onShowAll} />
       </div>
+      {stats.honors ? (
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+          <HonorsPanel
+            honors={stats.honors}
+            misc={stats.misc}
+            ribbons={stats.ribbons}
+            game={game}
+          />
+          <ModesPanel modes={stats.modes ?? []} />
+        </div>
+      ) : null}
     </div>
+  );
+}
+
+/** 小号数字列表：大数字下面补充的细项 */
+function MinorStats({ items, className }: { items: [string, string][]; className?: string }) {
+  return (
+    <dl className={cn("grid gap-x-6 gap-y-3 tabular-nums", className)}>
+      {items.map(([label, value]) => (
+        <div key={label}>
+          <dt className="text-[11px] tracking-wider text-white/45">{label}</dt>
+          <dd className="mt-0.5 text-base font-semibold text-white/90">{value}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 
@@ -65,7 +101,7 @@ export function Panel({ children, className }: { children: React.ReactNode; clas
 
 /* ----------------------------- 战斗 ----------------------------- */
 
-function CombatPanel({ s }: { s: PlayerStatsSummary }) {
+function CombatPanel({ s, combat }: { s: PlayerStatsSummary; combat?: CareerCombat | null }) {
   const rate = winRate(s.wins, s.losses);
   const tiles: ReadonlyArray<[string, string, LucideIcon, boolean?]> = [
     ["击杀", fmtFull(s.kills), Crosshair],
@@ -112,6 +148,21 @@ function CombatPanel({ s }: { s: PlayerStatsSummary }) {
           </div>
         ))}
       </div>
+      {combat ? (
+        <MinorStats
+          className="mt-5 grid-cols-2 border-t border-white/10 pt-4 sm:grid-cols-4"
+          items={[
+            ["爆头率", fmtPct(combat.headshot_rate)],
+            ["命中率", fmtPct(combat.accuracy)],
+            ["复仇击杀", fmtFull(combat.avenger_kills)],
+            ["救星击杀", fmtFull(combat.savior_kills)],
+            ["宿敌击杀", fmtFull(combat.nemesis_kills)],
+            ["最高宿敌连杀", fmtFull(combat.max_nemesis_streak)],
+            ["团灭", fmtFull(combat.squad_wipes)],
+            ["摧毁载具", fmtFull(combat.vehicles_destroyed)],
+          ]}
+        />
+      ) : null}
     </Panel>
   );
 }
@@ -161,7 +212,13 @@ function SplitBar({
 
 /* ----------------------------- 团队贡献 ----------------------------- */
 
-function TeamworkPanel({ s }: { s: PlayerStatsSummary }) {
+function TeamworkPanel({
+  s,
+  teamwork: t,
+}: {
+  s: PlayerStatsSummary;
+  teamwork?: CareerTeamwork | null;
+}) {
   const hours = (s.time_played_seconds ?? 0) / 3600;
   const items: ReadonlyArray<[string, number | null, LucideIcon]> = [
     ["复活", s.revives, HeartPulse],
@@ -189,13 +246,36 @@ function TeamworkPanel({ s }: { s: PlayerStatsSummary }) {
           </div>
         ))}
       </div>
+      {t ? (
+        <MinorStats
+          className="mt-5 grid-cols-2 border-t border-white/10 pt-4 sm:grid-cols-4 xl:grid-cols-2"
+          items={[
+            ["补给", fmtFull(t.resupplies)],
+            ["索敌助攻", fmtFull(t.spot_assists)],
+            ["压制助攻", fmtFull(t.suppression_assists)],
+            ["小队击杀助攻", fmtFull(t.squad_kill_assists)],
+            ["小队重生", fmtFull(t.squad_spawns)],
+            ["完成命令", fmtFull(t.orders_completed)],
+            ["占点", fmtFull(t.flag_captures)],
+            ["守点", fmtFull(t.flag_defends)],
+          ]}
+        />
+      ) : null}
     </Panel>
   );
 }
 
 /* ----------------------------- 兵种 ----------------------------- */
 
-function ClassPanel({ soldiers, best }: { soldiers: SoldierClassStat[]; best: string | null }) {
+function ClassPanel({
+  soldiers,
+  best,
+  elite,
+}: {
+  soldiers: SoldierClassStat[];
+  best: string | null;
+  elite: EliteKitStat[];
+}) {
   const rows = [...soldiers].sort((a, b) => b.time_seconds - a.time_seconds);
   const totalTime = rows.reduce((sum, r) => sum + r.time_seconds, 0) || 1;
   const topTime = Math.max(rows[0]?.time_seconds ?? 0, 1);
@@ -286,6 +366,7 @@ function ClassPanel({ soldiers, best }: { soldiers: SoldierClassStat[]; best: st
           </ol>
         </>
       )}
+      <EliteKits kits={elite} />
     </Panel>
   );
 }

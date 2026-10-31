@@ -53,9 +53,84 @@ export interface SoldierClassStat {
   time_seconds: number;
 }
 
+export interface CareerHonors {
+  mvp: number;
+  ace_squad: number;
+  ribbons: number;
+  medals: number;
+}
+
+export interface CareerCombat {
+  headshots: number;
+  shots: number;
+  hits: number;
+  /** 命中 ÷ 开火，0-1 */
+  accuracy: number | null;
+  /** 爆头 ÷ 击杀，0-1 */
+  headshot_rate: number | null;
+  avenger_kills: number;
+  savior_kills: number;
+  nemesis_kills: number;
+  max_nemesis_streak: number;
+  squad_wipes: number;
+  vehicles_destroyed: number;
+}
+
+export interface CareerTeamwork {
+  resupplies: number;
+  spot_assists: number;
+  suppression_assists: number;
+  squad_spawns: number;
+  orders_completed: number;
+  squad_kill_assists: number;
+  flag_captures: number;
+  flag_defends: number;
+}
+
+export interface CareerMode {
+  /** conquest / operations / rush / frontlines / domination / war_pigeons / team_deathmatch / air_assault */
+  mode: string;
+  wins: number;
+  losses: number;
+  /** 0-1 */
+  win_rate: number | null;
+  /** 空中突击没有单独的得分 */
+  score: number | null;
+}
+
+export interface EliteKitStat {
+  /** sentry / flamethrower / trench_raider / tank_hunter / infiltrator */
+  kit: string;
+  /** 入侵者的击杀还没接入，为 null */
+  kills: number | null;
+  time_seconds: number;
+}
+
+export interface CareerRibbon {
+  code: string;
+  count: number;
+}
+
+export interface CareerMisc {
+  rounds_completed: number;
+  rounds_played: number;
+  /** 0-1 */
+  completion_rate: number | null;
+  spectator_seconds: number;
+}
+
 export interface PlayerStatsDetail {
   summary: PlayerStatsSummary;
   soldiers: SoldierClassStat[];
+  // 以下是战绩页的扩展，旧缓存里可能没有
+  honors?: CareerHonors | null;
+  combat?: CareerCombat | null;
+  teamwork?: CareerTeamwork | null;
+  modes?: CareerMode[];
+  elite_kits?: EliteKitStat[];
+  /** 47 种全列，次数为 0 的也在；null 表示勋带没读到 */
+  ribbons?: CareerRibbon[] | null;
+  misc?: CareerMisc | null;
   raw: Record<string, unknown>;
 }
 

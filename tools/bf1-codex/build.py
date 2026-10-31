@@ -412,6 +412,27 @@ def save_image(job: tuple[str, str, str, list[int]]) -> int:
     return total
 
 
+def excerpt(text: str, limit: int = 90) -> str:
+    """正文开头的几句：按句号截，凑到 limit 字左右；第一句就太长时硬截加省略号"""
+    para = text.split("\n")[0].strip()
+    out = ""
+    for sentence in re.findall(r"[^。！？]+[。！？]?", para):
+        if out and len(out) + len(sentence) > limit:
+            break
+        out += sentence
+    return out if len(out) <= limit * 1.5 else out[:limit].rstrip("，、；") + "…"
+
+
+def build_map_intros(battlefield: dict, codex: list, texts: dict) -> dict:
+    """服务器页地图说明用的小摘要：百科标题 + 开头几句，避免为了一句简介加载整份百科正文"""
+    headers = {e["code"]: e["header"] for e in codex}
+    return {
+        m["id"]: {"header": headers[m["codex"]], "excerpt": excerpt(texts[m["codex"]])}
+        for m in battlefield["maps"]
+        if m["codex"]
+    }
+
+
 def write(name: str, data) -> None:
     DATA_OUT.mkdir(parents=True, exist_ok=True)
     path = DATA_OUT / name
@@ -436,6 +457,7 @@ def cmd_build(_: argparse.Namespace) -> None:
     write("assignments.json", assignments)
     write("battlefield.json", battlefield)
     write("tips.json", tips)
+    write("map-intros.json", build_map_intros(battlefield, codex, texts))
     # 前端 CI 会对 json 跑 prettier --check，写完按仓库的格式排一遍
     subprocess.run(
         ["pnpm", "exec", "prettier", "--write", "--log-level", "warn", str(DATA_OUT)],

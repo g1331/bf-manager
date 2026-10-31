@@ -1,6 +1,7 @@
 "use client";
 
 import { Bookmark, Clock4, Eye, Lock, SkipForward, UserRound } from "lucide-react";
+import { BattlefieldInfo } from "@/components/bf1/codex/BattlefieldInfo";
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
 import { CountUp } from "@/components/bf1/visual/CountUp";
 import { CountryFlag } from "@/components/common/CountryFlag";
@@ -180,11 +181,34 @@ export function ServerHeroBanner({
         {/* 正在进行 */}
         <div className="flex flex-col justify-end lg:items-end lg:text-right">
           <div className="text-[11px] tracking-[0.25em] text-white/50 uppercase">正在进行</div>
-          <div className="font-display mt-1 text-3xl leading-tight font-bold text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)] sm:text-5xl">
-            {mapLabel ?? "未知地图"}
+          <div className="mt-1 flex items-center gap-0.5 lg:justify-end">
+            <span className="font-display text-3xl leading-tight font-bold text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)] sm:text-5xl">
+              {mapLabel ?? "未知地图"}
+            </span>
+            {summary.map_name && mapLabel ? (
+              <BattlefieldInfo
+                kind="map"
+                id={summary.map_name}
+                label={mapLabel}
+                sideOffset={20}
+                className="-my-2"
+              />
+            ) : null}
           </div>
-          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-white/70 lg:justify-end">
-            {modeLabel ? <span className="text-amber-300">{modeLabel}</span> : null}
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-white/70 lg:mt-2 lg:justify-end">
+            {modeLabel ? (
+              <span className="inline-flex items-center text-amber-300">
+                {modeLabel}
+                {summary.game_mode ? (
+                  <BattlefieldInfo
+                    kind="mode"
+                    id={summary.game_mode}
+                    label={modeLabel}
+                    className="-my-3 -ml-1 lg:-my-1 lg:ml-0"
+                  />
+                ) : null}
+              </span>
+            ) : null}
             {elapsedMinutes != null && elapsedMinutes >= 0 ? (
               <span className="tabular-nums">已进行 {formatDuration(elapsedMinutes)}</span>
             ) : null}

@@ -40,6 +40,7 @@ import { MapStatsPanel } from "@/components/bf1/server-detail/MapStatsPanel";
 import { ServerAboutPanel } from "@/components/bf1/server-detail/ServerAboutPanel";
 import { ServerProfilePanel } from "@/components/bf1/server-detail/ServerProfilePanel";
 import { ServerHeroBanner } from "@/components/bf1/server-detail/ServerHeroBanner";
+import { BattlefieldInfo } from "@/components/bf1/codex/BattlefieldInfo";
 import { TipLine } from "@/components/bf1/codex/TipLine";
 import { ServerHistoryPanel } from "@/components/bf1/server-detail/ServerHistoryPanel";
 import { SnapshotPanel } from "@/components/bf1/server-detail/SnapshotPanel";
@@ -1123,8 +1124,18 @@ function RotationGrid({
               </span>
             ) : null}
             <div className="absolute inset-x-0 bottom-0 px-3 pb-2">
-              <div className="truncate text-[15px] font-bold text-white sm:text-base">
-                {mapLabel}
+              <div className="flex items-center">
+                <span className="truncate text-[15px] font-bold text-white sm:text-base">
+                  {mapLabel}
+                </span>
+                {m.map_name ? (
+                  <BattlefieldInfo
+                    kind="map"
+                    id={m.map_name}
+                    label={mapLabel}
+                    className="relative -my-3 -ml-1.5 lg:-my-1 lg:ml-0"
+                  />
+                ) : null}
               </div>
               <div className="flex items-center gap-2 overflow-hidden text-xs whitespace-nowrap">
                 {modeLabel ? <span className="text-amber-300/90">{modeLabel}</span> : null}

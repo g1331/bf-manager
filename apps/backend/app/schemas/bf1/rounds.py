@@ -139,8 +139,9 @@ class RoundPlayer(BaseModel):
     # 本局刷新的生涯纪录 → 新纪录：max_killstreak、longest_headshot（米）、max_nemesis_streak
     records: dict[str, int] = {}
     stars: list[RoundStar] = []
-    # 这一局之前的生涯水平，只在单局详情里有；14 天没被跟踪到的人没有快照，为空
+    # 这一局之前、加上这一局之后的生涯水平，只在单局详情里有；14 天没被跟踪到的人没有快照，为空
     career: RoundCareer | None = None
+    career_after: RoundCareer | None = None
 
 
 class RoundDetail(RoundSummary):

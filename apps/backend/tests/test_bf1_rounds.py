@@ -1014,15 +1014,25 @@ async def test_round_detail_honors_and_score_parts(test_session) -> None:
     await round_service.SnapshotStore(test_session).save({a: (snap_vec, blob, now + 60)})
     pa = {p.persona_id: p for p in (await round_service.get_round(test_session, rid)).players}[a]
     assert pa.career is not None
-    assert (pa.career.kd, pa.career.kpm, pa.career.spm) == (2.0, 1.67, 750)
+    assert (pa.career.kd, pa.career.kpm, pa.career.spm) == (2.0, 1.6667, 750)
     assert (pa.career.accuracy, pa.career.headshot_rate) == (0.25, 0.15)
+    # 加上这一局之后：1030 杀 / 505 死，37200 秒，计分板口径得分 450000 + 5500
+    after = pa.career_after
+    assert after is not None
+    assert (after.kd, after.kpm, after.spm) == (
+        round(1030 / 505, 4),
+        round(1030 * 60 / 37200, 4),
+        round(455500 * 60 / 37200, 2),
+    )
+    assert after.headshot_rate == round(157 / 1030, 6)
     [w] = pa.weapons or []
     assert (w.career_accuracy, w.career_kpm, w.career_headshot_rate) == (0.25, 2.0, 0.0)
     # 升级前存的短快照：没有的项给空
     await round_service.SnapshotStore(test_session).save({a: (snap_vec[:34], blob, now - 60)})
     pa = {p.persona_id: p for p in (await round_service.get_round(test_session, rid)).players}[a]
     assert pa.career is not None
-    assert (pa.career.kd, pa.career.spm, pa.career.accuracy) == (round(1030 / 505, 2), None, None)
+    assert (pa.career.kd, pa.career.spm, pa.career.accuracy) == (round(1030 / 505, 4), None, None)
+    assert pa.career_after is not None and pa.career_after.spm is None
 
     # 没有新统计的条目（上线前的）维持原口径
     assert (pb.battle_score, pb.score_parts, pb.ribbons, pb.mvp, pb.spm) == (

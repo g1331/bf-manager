@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowDown, ArrowUp, Star } from "lucide-react";
+import { ArrowDown, ArrowUp, Star, TrendingDown, TrendingUp } from "lucide-react";
 import type { RoundPlayer, RoundRibbon, RoundScoreParts } from "@/lib/api/bf1";
 import { classLabel } from "@/components/bf1/player-detail/format";
 import { RIBBONS, ribbonImage } from "@/lib/bf1/codex/collection";
@@ -196,6 +196,8 @@ export type Compare = {
   label: string;
   value: number;
   career: number;
+  /** 加上这一局之后的生涯值 */
+  after: number | null;
   fmt: (v: number) => string;
 };
 
@@ -207,17 +209,25 @@ const pct = (v: number) => `${(v * 100).toFixed(1)}%`;
  */
 export function careerCompare(p: RoundPlayer): Compare[] {
   const c = p.career;
+  const a = p.career_after;
   if (!c || p.seconds < MIN_COMPARE_SECONDS) return [];
   const shots = p.combat?.shots ?? 0;
   const infantryKills = p.kills - p.vehicle_kills;
   const items = [
-    { label: "K/D", value: p.kd, career: c.kd, fmt: (v: number) => v.toFixed(2) },
-    { label: "KPM", value: p.kpm, career: c.kpm, fmt: (v: number) => v.toFixed(2) },
-    { label: "SPM", value: p.spm, career: c.spm, fmt: (v: number) => Math.round(v).toString() },
+    { label: "K/D", value: p.kd, career: c.kd, after: a?.kd, fmt: (v: number) => v.toFixed(2) },
+    { label: "KPM", value: p.kpm, career: c.kpm, after: a?.kpm, fmt: (v: number) => v.toFixed(2) },
+    {
+      label: "SPM",
+      value: p.spm,
+      career: c.spm,
+      after: a?.spm,
+      fmt: (v: number) => Math.round(v).toString(),
+    },
     {
       label: "命中率",
       value: shots >= MIN_COMPARE_SHOTS ? (p.combat?.hits ?? 0) / shots : null,
       career: c.accuracy,
+      after: a?.accuracy,
       fmt: pct,
     },
     {
@@ -227,26 +237,52 @@ export function careerCompare(p: RoundPlayer): Compare[] {
           ? (p.combat.headshots ?? 0) / p.kills // 和生涯同口径：爆头 ÷ 全部击杀
           : null,
       career: c.headshot_rate,
+      after: a?.headshot_rate,
       fmt: pct,
     },
   ];
-  return items.filter((x): x is Compare => x.value != null && x.career != null);
+  return items
+    .filter((x) => x.value != null && x.career != null)
+    .map((x) => ({ ...x, after: x.after ?? null }) as Compare);
 }
 
 export function CareerCompare({ items }: { items: Compare[] }) {
   return (
-    <dl className="grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-x-3 gap-y-2 tabular-nums">
+    <dl className="grid grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))] gap-x-3 gap-y-2 tabular-nums">
       {items.map((x) => (
         <div key={x.label}>
           <dt className="text-[10.5px] text-white/40">{x.label}</dt>
-          <dd className="flex items-center gap-1 text-[14px] leading-tight font-semibold text-white">
-            {x.fmt(x.value)}
-            <Trend now={x.value} career={x.career} />
+          <dd className="text-[14px] leading-tight font-semibold text-white">{x.fmt(x.value)}</dd>
+          <dd className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[10.5px] text-white/40">
+            生涯 {x.fmt(x.career)}
+            {x.after != null ? <CareerShift before={x.career} after={x.after} /> : null}
           </dd>
-          <dd className="mt-0.5 text-[10.5px] text-white/40">生涯 {x.fmt(x.career)}</dd>
         </div>
       ))}
     </dl>
+  );
+}
+
+/** 这一局让生涯值变了多少（相对变化），和首页「较 24 小时前」一个样式 */
+function CareerShift({ before, after }: { before: number; after: number }) {
+  if (before <= 0) return null;
+  const change = (after / before - 1) * 100;
+  if (Math.abs(change) < 0.005) return <span className="text-white/35">持平</span>;
+  const up = change > 0;
+  const Icon = up ? TrendingUp : TrendingDown;
+  const size = Math.abs(change) < 0.01 ? "<0.01" : Math.abs(change).toFixed(2);
+  return (
+    <span
+      title="这一局让生涯值变化的幅度"
+      className={cn(
+        "flex items-center gap-0.5 font-semibold",
+        up ? "text-emerald-400" : "text-rose-400",
+      )}
+    >
+      <Icon className="size-3" />
+      {up ? "+" : "−"}
+      {size}%
+    </span>
   );
 }
 

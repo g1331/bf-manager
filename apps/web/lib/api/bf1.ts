@@ -416,8 +416,9 @@ export interface RoundPlayer {
   /** 本局刷新的生涯纪录：max_killstreak、longest_headshot（米）、max_nemesis_streak */
   records?: Record<string, number>;
   stars?: RoundStar[];
-  /** 这一局之前的生涯水平，只在单局详情里有 */
+  /** 这一局之前、加上这一局之后的生涯水平，只在单局详情里有 */
   career?: RoundCareer | null;
+  career_after?: RoundCareer | null;
 }
 
 export interface RoundDetail extends RoundSummary {

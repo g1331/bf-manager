@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from collections.abc import Callable
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
@@ -430,35 +431,44 @@ def _score_parts(stats: dict[int, int], score: int) -> RoundScoreParts | None:
 _KIT_SECONDS = (*(KIT_BASE + 3 * i + 2 for i in range(len(KITS))), ELITE)
 
 
+def _levels(v: Callable[[int], int | None]) -> RoundCareer:
+    """按生涯累计值算出 KD、KPM、SPM、命中率、爆头率；多留几位小数，前端要算一局带来的细微变化"""
+    kills, deaths, score = v(KILLS) or 0, v(DEATHS) or 0, v(SCORE) or 0
+    seconds = sum(v(i) or 0 for i in _KIT_SECONDS)
+    bonus, award = v(SC_BONUS), v(SC_AWARD)
+    hits, shots, heads = (v(COMBAT[k]) for k in ("hits", "shots", "headshots"))
+    return RoundCareer(
+        kd=round(kills / max(deaths, 1), 4),
+        kpm=_ratio(kills * 60, seconds, 4),
+        spm=_ratio((score - bonus - award) * 60, seconds, 2)
+        if bonus is not None and award is not None
+        else None,
+        accuracy=_ratio(hits, shots, 6) if hits is not None and shots is not None else None,
+        headshot_rate=_ratio(heads, kills, 6) if heads is not None else None,
+    )
+
+
 def _career(
     e: Entry, snap: Snapshot, ended_at: int
-) -> tuple[RoundCareer, dict[str, dict[str, int]]]:
-    """快照 → 这一局之前的生涯水平，以及这一局用过的各武器载具的生涯值。
+) -> tuple[RoundCareer, RoundCareer, dict[str, dict[str, int]]]:
+    """快照 → 这一局之前和加上这一局之后的生涯水平，以及这一局用过的各武器载具的（之前的）生涯值。
 
     快照晚于这一局结束时已经含了这一局，先减掉；之后几局的影响相对生涯总量可以忽略。
+    「之后」按之前加这一局的增量算，不直接用快照，免得混进之后的对局。
     2026-11 前存的快照核心向量较短，没有的项给空。
     """
     vec, blob, at = snap
     after = at >= ended_at
 
-    def v(i: int) -> int | None:
+    def before(i: int) -> int | None:
         if i >= len(vec):
             return None
         return vec[i] - (e.stats.get(i, 0) if after else 0)
 
-    kills, deaths, score = v(KILLS) or 0, v(DEATHS) or 0, v(SCORE) or 0
-    seconds = sum(v(i) or 0 for i in _KIT_SECONDS)
-    bonus, award = v(SC_BONUS), v(SC_AWARD)
-    hits, shots, heads = (v(COMBAT[k]) for k in ("hits", "shots", "headshots"))
-    core = RoundCareer(
-        kd=round(kills / max(deaths, 1), 2),
-        kpm=_ratio(kills * 60, seconds, 2),
-        spm=_ratio((score - bonus - award) * 60, seconds, 0)
-        if bonus is not None and award is not None
-        else None,
-        accuracy=_ratio(hits, shots) if hits is not None and shots is not None else None,
-        headshot_rate=_ratio(heads, kills) if heads is not None else None,
-    )
+    def with_round(i: int) -> int | None:
+        b = before(i)
+        return None if b is None else b + e.stats.get(i, 0)
+
     weapons: dict[str, dict[str, int]] = {}
     if e.weapons:
         _, values = rw.unpack(blob)
@@ -469,14 +479,16 @@ def _career(
             weapons[key] = {
                 m: n - (used[key].get(m, 0) if after else 0) for m, n in metrics.items()
             }
-    return core, weapons
+    return _levels(before), _levels(with_round), weapons
 
 
 def _player(
     pid: int, e: Entry, name: str | None, snap: Snapshot | None = None, ended_at: int = 0
 ) -> RoundPlayer:
     team, status, stats = e.team, e.status, e.stats
-    career, career_w = _career(e, snap, ended_at) if snap is not None else (None, None)
+    career, career_after, career_w = (
+        _career(e, snap, ended_at) if snap is not None else (None, None, None)
+    )
     kit_seconds = {kit: stats.get(KIT_BASE + 3 * i + 2, 0) for i, kit in enumerate(KITS)} | {
         "elite": stats.get(ELITE, 0)
     }
@@ -529,6 +541,7 @@ def _player(
         records={k: v for k, i in RECORDS.items() if (v := stats.get(i, 0))},
         stars=_stars(e.stars),
         career=career,
+        career_after=career_after,
     )
 
 

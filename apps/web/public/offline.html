@@ -39,6 +39,22 @@
         font-size: 14px;
         color: rgba(255, 247, 237, 0.6);
       }
+      .tip {
+        max-width: 28em;
+        margin-top: 20px;
+        padding-top: 14px;
+        border-top: 1px solid rgba(255, 247, 237, 0.12);
+        font-size: 13px;
+        line-height: 1.7;
+        color: rgba(255, 247, 237, 0.5);
+        transition: opacity 0.4s;
+      }
+      .tip b {
+        margin-right: 0.6em;
+        font-weight: 600;
+        letter-spacing: 0.2em;
+        color: rgba(251, 191, 36, 0.85);
+      }
       button {
         margin-top: 8px;
         padding: 10px 24px;
@@ -89,8 +105,47 @@
     <h1>网络已断开</h1>
     <p>恢复连接后会自动重新加载</p>
     <button type="button" onclick="location.reload()">重试</button>
+    <p class="tip" aria-live="off">
+      <b>贴士</b><span id="tip">使用近战武器击杀敌人来搜集其狗牌。</span>
+    </p>
     <script>
       window.addEventListener("online", () => location.reload());
+      // 断网时拿不到贴士数据，从游戏原版的通用贴士里挑了 20 条短的内嵌在这里，8 秒换一条
+      const tips = [
+        "使用近战武器击杀敌人来搜集其狗牌。",
+        "F2B，又被称作“BRISFIT”，是当时英国皇家飞行队的主要双人座侦察机。",
+        "许多战时在意大利山中的堡垒至今依然存在，并且被改建为博物馆。",
+        "一次大战早期的一些手榴弹不过是在木板上装上炸药而已。",
+        "你可以从马鞍袋中丢下弹药与绷带，用以协助你的队友。",
+        "徐进弹幕便是向前移动的炮击，用来掩护在炮火后方进军的士兵。",
+        "K 弹能对所有载具造成伤害。距离够近时还能对坦克造成伤害。但不建议用来对付步兵。",
+        "利用马匹的高速来攻敌不备，并将敌方士兵踩踏至死。",
+        "在加里波利，澳纽军团曾使用能在战壕当中瞄准的“潜望镜步枪”。",
+        "完成回合后会获得对战奖励积分。在特定游戏模式中，就算队伍落败也能获得小额奖励。",
+        "梅辛山脉上遗留的坑洞现在依然可见，而在比利时乡间也有类似的巨大坑洞。",
+        "印度有超过一百万军队在一次大战中服役。",
+        "原厂与步兵武器在后座力与偏移回复等未显示于武器比较的数值上有间接加成。",
+        "近战武器依攻击速度、伤害以及击杀范围大小不同，而分为不同类别。",
+        "你拿着装有刺刀的武器冲刺时，可以轻碰近战按键来进入强大的刺刀冲锋状态。",
+        "一次大战期间，人口动员比例最高的国家是保加利亚。",
+        "毛瑟 C96 手枪是星际大战中韩苏洛爆能枪的原型。",
+        "冲锋枪最好使用短促的点射。",
+        "原先大部分的陆军都是穿戴着软帽参战，钢盔在随后才使用在战争中。",
+        "在马背上使用骑兵军刀攻击来立刻击杀敌方士兵。",
+      ];
+      const el = document.getElementById("tip");
+      let i = Math.floor(Math.random() * tips.length);
+      el.textContent = tips[i];
+      if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        setInterval(() => {
+          el.parentElement.style.opacity = "0";
+          setTimeout(() => {
+            i = (i + 1) % tips.length;
+            el.textContent = tips[i];
+            el.parentElement.style.opacity = "1";
+          }, 400);
+        }, 8000);
+      }
     </script>
   </body>
 </html>

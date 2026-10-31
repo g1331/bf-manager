@@ -22,6 +22,7 @@ import { ApiException } from "@/lib/api-client";
 import { bf1Api, type PersonaBrief } from "@/lib/api/bf1";
 import { clearRecentPlayers, useRecentPlayers } from "@/lib/bf1/recent-players";
 import { cn } from "@/lib/utils";
+import { TipLine } from "@/components/bf1/codex/TipLine";
 
 const MIN_QUERY = 2;
 
@@ -180,7 +181,12 @@ function Results({
     );
   }
   if (!personas || personas.length === 0) {
-    return <Notice text={`没有找到昵称包含「${query}」的玩家`} />;
+    return (
+      <>
+        <Notice text={`没有找到昵称包含「${query}」的玩家`} />
+        <TipLine className="mt-3" />
+      </>
+    );
   }
 
   // 精确匹配（不区分大小写）排最前

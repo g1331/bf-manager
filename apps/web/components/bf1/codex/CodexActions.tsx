@@ -35,3 +35,22 @@ export function CodexBack({ fallback }: { fallback: string }) {
     </button>
   );
 }
+
+/**
+ * 通用的复制按钮组：text 里的 {link} 在点击时替换成当前域名下的 path，
+ * 这样服务端组件也能直接把整段文字传进来。
+ */
+export function ShareActions({ text, path }: { text: string; path: string }) {
+  const link = () => `${window.location.origin}${path}`;
+  return (
+    <div className="flex flex-wrap gap-2">
+      <CopyButton
+        kind="text"
+        label="复制文字"
+        text={() => text.replaceAll("{link}", link())}
+        className="flex-1 sm:flex-none"
+      />
+      <CopyButton kind="link" label="复制链接" text={link} className="flex-1 sm:flex-none" />
+    </div>
+  );
+}

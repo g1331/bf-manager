@@ -18,6 +18,8 @@ const DETAIL_ROUTES: Array<{ prefix: string | RegExp; title: string; fallback: s
   { prefix: "/me/groups/", title: "群组", fallback: "/me/groups" },
   // 图鉴下的分区列表（/bf1/codex/medals 等）不算详情页，只有百科条目 c003、cxp113 这类才是
   { prefix: /^\/bf1\/codex\/c[a-z]*\d/, title: "百科", fallback: "/bf1/codex" },
+  { prefix: "/bf1/codex/medals/", title: "勋章", fallback: "/bf1/codex/medals" },
+  { prefix: "/bf1/codex/dogtags/", title: "狗牌", fallback: "/bf1/codex/dogtags" },
 ];
 
 export function getDetailRoute(pathname: string) {

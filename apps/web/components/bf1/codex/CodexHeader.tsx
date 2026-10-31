@@ -1,8 +1,16 @@
 import Link from "next/link";
+import { CODEX_ENTRIES } from "@/lib/bf1/codex/codex";
+import { ASSIGNMENTS, DOGTAGS, MEDALS, RIBBONS } from "@/lib/bf1/codex/collection";
 import { cn } from "@/lib/utils";
 
-/** 图鉴的分区。新分区上线时在这里登记，只有一个分区时不显示分区导航 */
-const SECTIONS = [{ key: "entries", label: "百科", href: "/bf1/codex" }] as const;
+/** 图鉴的分区。新分区上线时在这里登记（服务端组件，计数直接取数据，不进客户端包） */
+const SECTIONS = [
+  { key: "entries", label: "百科", count: CODEX_ENTRIES.length, href: "/bf1/codex" },
+  { key: "medals", label: "勋章", count: MEDALS.length, href: "/bf1/codex/medals" },
+  { key: "ribbons", label: "勋带", count: RIBBONS.length, href: "/bf1/codex/ribbons" },
+  { key: "assignments", label: "勤务", count: ASSIGNMENTS.length, href: "/bf1/codex/assignments" },
+  { key: "dogtags", label: "狗牌", count: DOGTAGS.length, href: "/bf1/codex/dogtags" },
+] as const;
 
 export type CodexSection = (typeof SECTIONS)[number]["key"];
 
@@ -16,26 +24,35 @@ export function CodexHeader({ active, intro }: { active: CodexSection; intro: st
       </div>
       <h1 className="mt-1.5 text-2xl font-bold tracking-wide sm:text-3xl">图鉴</h1>
       <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/55">{intro}</p>
-      {SECTIONS.length > 1 ? (
-        <nav className="mt-4 flex gap-1 border-b border-white/10">
-          {SECTIONS.map((s) => (
-            <Link
-              key={s.key}
-              href={s.href}
-              aria-current={s.key === active ? "page" : undefined}
+      <nav
+        aria-label="图鉴分区"
+        className="-mx-4 mt-4 flex [scrollbar-width:none] gap-1 overflow-x-auto border-b border-white/10 px-4 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden"
+      >
+        {SECTIONS.map((s) => (
+          <Link
+            key={s.key}
+            href={s.href}
+            aria-current={s.key === active ? "page" : undefined}
+            className={cn(
+              "relative flex shrink-0 items-baseline gap-1.5 px-3 py-2.5 text-[15px] font-semibold tracking-[0.08em] transition-colors",
+              s.key === active ? "text-white" : "text-white/45 hover:text-white/80",
+            )}
+          >
+            {s.label}
+            <span
               className={cn(
-                "relative px-3 py-2.5 text-[15px] font-semibold tracking-[0.08em] transition-colors",
-                s.key === active ? "text-white" : "text-white/45 hover:text-white/80",
+                "text-[11px] font-medium tracking-normal tabular-nums",
+                s.key === active ? "text-amber-400" : "text-white/30",
               )}
             >
-              {s.label}
-              {s.key === active ? (
-                <span className="absolute inset-x-3 -bottom-px h-0.5 bg-amber-400" />
-              ) : null}
-            </Link>
-          ))}
-        </nav>
-      ) : null}
+              {s.count}
+            </span>
+            {s.key === active ? (
+              <span className="absolute inset-x-3 -bottom-px h-0.5 bg-amber-400" />
+            ) : null}
+          </Link>
+        ))}
+      </nav>
     </header>
   );
 }

@@ -2655,7 +2655,7 @@
   },
   "wRIRLebel": {
    "cat": "player_weapons2",
-   "category": "步槍",
+   "category": "制式步槍",
    "guid": "E1B701B5-0E4B-40C3-A61B-CE639A4B18A0",
    "image": "[BB_PREFIX]/gamedata/Tunguska/49/65/Lebel1886-31bf07f8.png",
    "label": "Rifle - Single - Lebel 1886 Standard Issue",
@@ -3230,7 +3230,7 @@
   },
   "wRSinAriP": {
    "cat": "player_weapons5",
-   "category": "佩槍",
+   "category": "步槍",
    "guid": "BB20B711-EF98-4708-998A-D78780B8B8C4",
    "image": "[BB_PREFIX]/gamedata/Tunguska/95/63/Type38Arisaka-a1c192e3.png",
    "label": "Rifle - Single - Type 38 Arisaka Patrol",
@@ -3246,7 +3246,7 @@
   },
   "wRSinCarP": {
    "cat": "player_weapons5",
-   "category": "半自動步槍",
+   "category": "步槍",
    "guid": "4E317627-F7F8-4014-BB22-B0ABEB7E9141",
    "image": "[BB_PREFIX]/gamedata/Tunguska/52/125/M1891CarcanoCarbine-cc7d34a1.png",
    "label": "Rifle - Single - Carcano M91 Patrol Carbine",
@@ -3870,7 +3870,7 @@
   },
   "wSMGMauP": {
    "cat": "player_weapons5",
-   "category": "半自動步槍",
+   "category": "衝鋒槍",
    "guid": "245A23B1-53BA-4AB2-A416-224794F15FCB",
    "image": "[BB_PREFIX]/gamedata/Tunguska/102/65/MauserM1917TrenchCarbine-9a4158a1.png",
    "label": "MG - SMG - Mauser M1917 Patrol Carbine",
@@ -4077,7 +4077,7 @@
   },
   "wSPFGA": {
    "cat": "player_weapons3",
-   "category": "配備",
+   "category": "戰場裝備",
    "guid": "9D1BEE08-C101-4FF3-8ECA-244240171801",
    "image": "[BB_PREFIX]/gamedata/tunguska/64/78/GadgetWebleyScottFlaregunFlash-40b27cca.png",
    "label": "Special - Flare Gun Signal",

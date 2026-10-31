@@ -12,6 +12,7 @@ import {
   codexPlainText,
 } from "@/lib/bf1/codex/codex";
 import { CodexArticle } from "./CodexArticle";
+import { CodexPlate } from "./CodexCard";
 import { CopyButton } from "./CopyButton";
 import { ZoomableImage } from "./ZoomableImage";
 
@@ -114,8 +115,10 @@ export function CodexReader({
                 width={CODEX_IMAGE_WIDTH}
                 height={CODEX_IMAGE_HEIGHT}
                 priority
-                className="codex-reader-image w-full max-w-[400px] rounded-[2px] shadow-[0_30px_60px_-24px_#000] ring-1 ring-white/15"
-              />
+                className="codex-reader-image @container w-full max-w-[400px] rounded-[6px] shadow-[0_30px_60px_-24px_#000] ring-1 ring-white/10"
+              >
+                <CodexPlate entry={entry} terms={terms} />
+              </ZoomableImage>
               <p className="text-[11px] text-white/40">
                 <span className="hidden lg:inline">点击放大 2 倍，移动鼠标看细节，滚轮微调</span>
                 <span className="lg:hidden">点按放大，拖动看细节</span>

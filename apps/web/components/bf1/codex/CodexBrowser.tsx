@@ -40,17 +40,17 @@ const NO_FILTERS: Filters = { cat: "", wc: "", xp: null, sort: "game" };
 const DENSITY: Record<Density, { label: string; grid: string; sizes: string }> = {
   s: {
     label: "小",
-    grid: "grid-cols-3 gap-x-2.5 gap-y-4 sm:grid-cols-[repeat(auto-fill,minmax(128px,1fr))] sm:gap-x-4 sm:gap-y-6",
+    grid: "grid-cols-3 gap-x-2.5 gap-y-3 sm:grid-cols-[repeat(auto-fill,minmax(128px,1fr))] sm:gap-x-4 sm:gap-y-5",
     sizes: "(min-width: 640px) 160px, 31vw",
   },
   m: {
     label: "中",
-    grid: "grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-[repeat(auto-fill,minmax(176px,1fr))] sm:gap-x-5 sm:gap-y-8",
+    grid: "grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-[repeat(auto-fill,minmax(176px,1fr))] sm:gap-x-5 sm:gap-y-6",
     sizes: "(min-width: 640px) 220px, 46vw",
   },
   l: {
     label: "大",
-    grid: "grid-cols-1 gap-y-8 min-[440px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(240px,1fr))] sm:gap-x-6 sm:gap-y-10",
+    grid: "grid-cols-1 gap-y-6 min-[440px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(240px,1fr))] sm:gap-x-6 sm:gap-y-8",
     sizes: "(min-width: 640px) 300px, 92vw",
   },
 };

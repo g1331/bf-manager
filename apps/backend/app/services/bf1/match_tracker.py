@@ -20,6 +20,13 @@
   按 AUDIT_EVERY 抽一部分跳过的人照读，核对哨兵；
 - 读失败、超出每轮上限的人这一局没有武器载具数据（条目上不打 WITH_WEAPONS 位），核心照常记。
 
+勋带（见 round_awards）是第三段，和武器载具一样跟着核心查询走，但互不牵连：核心里的「获得勋带数」
+和勋带勋章奖励分都没变就沿用上次的勋带，变了才读 3 个勋带类别，按 AWARDS_AUDIT_EVERY 抽查；
+读失败、超出 MAX_AWARDS_PER_TICK 的人这一局没有勋带数据（不打 WITH_AWARDS 位）。
+
+2026-10-31 核心向量追加了统计项。追加前查到的基线、快照比现在短，差分和「核心没变」的判断都只看
+共有的部分（round_stats.diff / same_core），新加的项在跨版本的那一局记 0。
+
 状态在内存里，停机时导出、启动时导入（见 round_service），重启间隔不超过 MAX_GAP 就接着跟；
 快照断档太久则从头开始，接手时已经开打的局标记为 observed_start=False。
 查询经注入的 fetch 发出，本模块不碰数据库与网络，便于测试。各环节查了多少人记在 ea_metrics 的
@@ -39,6 +46,7 @@ from typing import Any, Protocol
 from loguru import logger
 
 from app.core import ea_metrics
+from app.domain.games.bf1 import round_awards as ra
 from app.domain.games.bf1 import round_weapons as rw
 from app.domain.games.bf1.blaze_stats import STAT
 from app.domain.games.bf1.round_stats import (
@@ -55,6 +63,7 @@ from app.domain.games.bf1.round_stats import (
     WINS,
     diff,
     round_stat_names,
+    same_core,
     to_vector,
 )
 from app.services.bf1.server_roster_service import TEAM1, TEAM2, Rosters
@@ -70,6 +79,14 @@ class SnapshotStore(Protocol):
     async def load(self, pids: list[int]) -> dict[int, Snapshot]: ...
 
     async def save(self, snapshots: dict[int, Snapshot]) -> None: ...
+
+    async def load_awards(self, pids: list[int]) -> dict[int, tuple[bytes, int]]:
+        """每人最近一次的勋带快照和时刻"""
+        ...
+
+    async def save_awards(self, snapshots: dict[int, bytes]) -> None:
+        """只更新已有快照行的勋带；还没有快照行的人不存"""
+        ...
 
 
 # 进服后多久复查基线；实测别的服的结算最晚在进服 8 分钟后才写入
@@ -97,6 +114,10 @@ MAX_WEAPONS_PER_TICK = 768
 # 冷门类别哨兵没变时跳过不读，每这么多个跳过的人抽一个照读，核对哨兵有没有漏。轰炸机的哨兵
 # 是现成的分类合计，2026-10-28/29 抽查 2.7 万次零遗漏，抽得稀一些
 AUDIT_EVERY: dict[str, int] = {"player_statcategory3": 16, "player_statcategory4": 64}
+# 每轮最多给这么多人读勋带类别，优先级同武器
+MAX_AWARDS_PER_TICK = 768
+# 勋带门控没变时跳过不读，每这么多个跳过的人抽一个照读
+AWARDS_AUDIT_EVERY = 32
 
 # 本轮要查的人按原因计数时用的名字，下标即 _wanted 里的优先级
 _WANT_REASONS = ("want_settle", "want_leave", "want_recheck", "want_join")
@@ -118,6 +139,8 @@ class Seat:
     retry_at: int | None = None  # EA 没返回数据，到这个时刻才再查基线
     base_w: bytes | None = None  # 和 base 同一时刻的武器载具快照，None 表示没有
     end_w: bytes | None = None  # 和 end 同一时刻的武器载具快照
+    base_a: bytes | None = None  # 和 base 同一时刻的勋带快照，None 表示没有
+    end_a: bytes | None = None
 
 
 @dataclass
@@ -136,6 +159,8 @@ class RoundLine:
     status: int
     delta: list[int]
     weapons: dict[int, int] | None = None  # 武器载具槽位的非零增量；None 表示没有数据
+    awards: dict[int, int] | None = None  # 勋带号的非零增量；None 表示没有数据
+    stars: dict[int, int] = field(default_factory=dict)  # 本局拿到服役星的条目下标 → 新星数
 
 
 @dataclass
@@ -155,7 +180,20 @@ def _team(state: int) -> int:
     return {TEAM1: 1, TEAM2: 2}.get(state, 0)
 
 
-def _line(pid: int, seat: Seat, end: list[int], end_w: bytes | None) -> RoundLine | None:
+def _stars(end_w: bytes, base_w: bytes) -> dict[int, int]:
+    """击杀跨过整百的武器载具（每 100 杀一颗服役星，与前端 starsByKills 一致）→ 新的星数"""
+    _, end = rw.unpack(end_w)
+    _, base = rw.unpack(base_w)
+    return {
+        slot // len(rw.METRICS): k // 100
+        for slot, k in end.items()
+        if slot % len(rw.METRICS) == rw.KILLS_METRIC and k // 100 > base.get(slot, 0) // 100
+    }
+
+
+def _line(
+    pid: int, seat: Seat, end: list[int], end_w: bytes | None, end_a: bytes | None
+) -> RoundLine | None:
     if seat.base is None or seat.team == 0:
         return None
     delta = diff(end, seat.base)
@@ -170,7 +208,11 @@ def _line(pid: int, seat: Seat, end: list[int], end_w: bytes | None) -> RoundLin
             # 对账：各武器载具击杀之和应等于核心击杀增量（目录不含的击杀方式会让它对不上）
             same = rw.kills(weapons) == delta[KILLS]
             ea_metrics.count_event("weapons_kills_match" if same else "weapons_kills_diff")
-    return RoundLine(pid, seat.team, status, delta, weapons)
+    awards = None
+    if seat.base_a is not None and end_a is not None:
+        awards = rw.diff(end_a, seat.base_a)
+    stars = _stars(end_w, seat.base_w) if weapons is not None and end_w and seat.base_w else {}
+    return RoundLine(pid, seat.team, status, delta, weapons, awards, stars)
 
 
 def _winner(lines: list[RoundLine]) -> int | None:
@@ -263,14 +305,37 @@ def _merge(
     return rw.pack(rw.read_gates(values), merged)
 
 
+def _plan_awards(
+    vectors: dict[int, list[int]], priors: dict[int, tuple[bytes, int]], now: int
+) -> tuple[dict[int, bytes], list[int], set[int]]:
+    """门控没变的沿用上次的勋带（按 AWARDS_AUDIT_EVERY 抽一部分照读），其余要读。
+
+    返回 (沿用的快照, 要读的人, 其中抽查的人)。
+    """
+    out: dict[int, bytes] = {}
+    todo: list[int] = []
+    audits: set[int] = set()
+    for pid, vec in vectors.items():
+        prior = priors.get(pid)
+        if prior is None or rw.unpack(prior[0])[0] != ra.gates(vec):
+            todo.append(pid)
+        elif zlib.crc32(f"{pid}:{now}:awards".encode()) % AWARDS_AUDIT_EVERY == 0:
+            todo.append(pid)
+            audits.add(pid)
+        else:
+            out[pid] = prior[0]
+            ea_metrics.count_event("awards_reused")
+    return out, todo, audits
+
+
 class MatchTracker:
     def __init__(self) -> None:
         self.rounds: dict[int, OpenRound] = {}
         self.last_tick: int | None = None
         # 每个人最近一次出现在哪台服、什么时候（只留 HOP_WINDOW 内的），判断进服是不是换服
         self.seen: dict[int, tuple[int, int]] = {}
-        # 每个人最近查到的向量、时刻和武器载具快照（只留 VECTOR_KEEP 内的）
-        self.recent: dict[int, tuple[list[int], int, bytes | None]] = {}
+        # 每个人最近查到的向量、时刻、武器载具快照和勋带快照（只留 VECTOR_KEEP 内的）
+        self.recent: dict[int, tuple[list[int], int, bytes | None, bytes | None]] = {}
 
     async def tick(
         self,
@@ -301,6 +366,7 @@ class MatchTracker:
         }
         vectors: dict[int, list[int]] = {}
         weapons: dict[int, bytes] = {}
+        awards: dict[int, bytes] = {}
         if wanted := self._wanted(now, settling):
             names = rw.full_names() if store is not None else round_stat_names()
             try:
@@ -310,21 +376,26 @@ class MatchTracker:
                 return closed
             vectors = {pid: to_vector(v) for pid, v in values.items()}
             if store is not None and vectors:
+                urgent = self._urgent(vectors, settling)
                 try:
-                    weapons = await self._read_weapons(values, vectors, settling, now, fetch, store)
+                    weapons = await self._read_weapons(values, vectors, urgent, now, fetch, store)
                 except Exception as e:
                     # 武器载具出任何问题都不能拖住核心战绩：这一轮的人只是没有武器载具数据
                     logger.warning("BF1 match tracker weapons stage failed: {}", e)
-            self._apply(vectors, weapons, now)
+                try:
+                    awards = await self._read_awards(vectors, urgent, now, fetch, store)
+                except Exception as e:
+                    logger.warning("BF1 match tracker awards stage failed: {}", e)
+            self._apply(vectors, weapons, awards, now)
             self._back_off(wanted - vectors.keys(), now)
 
         for gid in list(self.rounds):
             rnd = self.rounds[gid]
             if gid in settling:
-                closed.append(self._close(gid, rnd, vectors, weapons, now, settled=True))
+                closed.append(self._close(gid, rnd, vectors, weapons, awards, now, settled=True))
             elif gid not in rosters and all(s.left for s in rnd.seats.values()):
                 # 服务器从快照里消失（关服、清空），没等到结算
-                closed.append(self._close(gid, rnd, vectors, weapons, now, settled=False))
+                closed.append(self._close(gid, rnd, vectors, weapons, awards, now, settled=False))
                 del self.rounds[gid]
         return [c for c in closed if c.lines]
 
@@ -370,7 +441,8 @@ class MatchTracker:
                 # 任何服里，生涯不会变，可以直接当基线；迟到的结算照常由复查兜住
                 recent = self.recent.get(pid)
                 if last is not None and recent is not None and recent[1] > last[1]:
-                    seat.base, seat.base_at, seat.base_w = list(recent[0]), recent[1], recent[2]
+                    seat.base, seat.base_at = list(recent[0]), recent[1]
+                    seat.base_w, seat.base_a = recent[2], recent[3]
                     ea_metrics.count_event("join_reused")
             elif seat.left:
                 # 离开后又回来：沿用原基线，两段的增量合在这一局里；离开时查到的终值作废
@@ -514,19 +586,28 @@ class MatchTracker:
         # 已探测到结算的服不复查：此时局数变了是这一局自己的结算，换基线就把这局丢了
         return rnd.settle_seen_at is None and s.recheck_at is not None and s.recheck_at <= now
 
-    def _apply(self, vectors: dict[int, list[int]], weapons: dict[int, bytes], now: int) -> None:
-        self.recent.update((pid, (vec, now, weapons.get(pid))) for pid, vec in vectors.items())
+    def _apply(
+        self,
+        vectors: dict[int, list[int]],
+        weapons: dict[int, bytes],
+        awards: dict[int, bytes],
+        now: int,
+    ) -> None:
+        self.recent.update(
+            (pid, (vec, now, weapons.get(pid), awards.get(pid))) for pid, vec in vectors.items()
+        )
         for rnd in self.rounds.values():
             for pid, s in rnd.seats.items():
                 vec = vectors.get(pid)
                 if vec is None:
                     continue
+                w, a = weapons.get(pid), awards.get(pid)
                 if s.base is None:
-                    s.base, s.base_at, s.base_w = vec, now, weapons.get(pid)
+                    s.base, s.base_at, s.base_w, s.base_a = vec, now, w, a
                 elif s.left and s.end is None:
-                    s.end, s.end_w = vec, weapons.get(pid)
+                    s.end, s.end_w, s.end_a = vec, w, a
                 elif s.rebase and rnd.settle_seen_at is None:
-                    s.base, s.base_at, s.base_w, s.rebase = vec, now, weapons.get(pid), False
+                    s.base, s.base_at, s.base_w, s.base_a, s.rebase = vec, now, w, a, False
 
     def _priors(self, pids: Iterable[int]) -> dict[int, Snapshot]:
         """内存里每人最近一次带武器载具的快照：10 分钟内查到的值，或在服席位的基线。"""
@@ -550,7 +631,7 @@ class MatchTracker:
         self,
         values: dict[int, dict[str, float]],
         vectors: dict[int, list[int]],
-        settling: set[int],
+        urgent: set[int],
         now: int,
         fetch: Fetch,
         store: SnapshotStore,
@@ -565,13 +646,13 @@ class MatchTracker:
                 stored = {}
             ea_metrics.count_event("weapons_store_hit", len(stored))
             priors.update(stored)
-        urgent = self._count_joins(vectors, priors, settling)
+        self._count_joins(vectors, priors)
 
         out: dict[int, bytes] = {}
         plans: dict[int, _Plan] = {}
         for pid, vec in vectors.items():
             prior = priors.get(pid)
-            if prior is not None and prior[0] == vec:
+            if prior is not None and same_core(prior[0], vec):
                 out[pid] = prior[1]
                 ea_metrics.count_event("weapons_reused")
             else:
@@ -600,28 +681,101 @@ class MatchTracker:
                 logger.warning("BF1 match tracker snapshot store save failed: {}", e)
         return out
 
-    def _count_joins(
-        self, vectors: dict[int, list[int]], priors: dict[int, Snapshot], settling: set[int]
-    ) -> set[int]:
-        """进服基线和最近一次快照比，按没变 / 变了 / 没见过计数；返回要算终值或重查基线的人。"""
-        joining: set[int] = set()
-        urgent: set[int] = set()
-        for gid, rnd in self.rounds.items():
+    def _urgent(self, vectors: dict[int, list[int]], settling: set[int]) -> set[int]:
+        """本轮查了核心的人里要算终值或重查基线的，读武器、勋带时优先。"""
+        return {
+            pid
+            for gid, rnd in self.rounds.items()
+            for pid, s in rnd.seats.items()
+            if pid in vectors
+            and s.base is not None
+            and ((not s.left and gid in settling) or (s.left and s.end is None) or s.rebase)
+        }
+
+    def _count_joins(self, vectors: dict[int, list[int]], priors: dict[int, Snapshot]) -> None:
+        """进服基线和最近一次快照比，按没变 / 变了 / 没见过计数。"""
+        for rnd in self.rounds.values():
             for pid, s in rnd.seats.items():
-                if pid not in vectors:
+                if pid not in vectors or s.base is not None:
                     continue
-                if s.base is None:
-                    joining.add(pid)
-                elif (not s.left and gid in settling) or (s.left and s.end is None) or s.rebase:
-                    urgent.add(pid)
-        for pid in joining:
-            prior = priors.get(pid)
-            if prior is None:
-                ea_metrics.count_event("join_core_unseen")
-            else:
-                same = prior[0] == vectors[pid]
-                ea_metrics.count_event("join_core_same" if same else "join_core_changed")
-        return urgent
+                prior = priors.get(pid)
+                if prior is None:
+                    ea_metrics.count_event("join_core_unseen")
+                else:
+                    same = same_core(prior[0], vectors[pid])
+                    ea_metrics.count_event("join_core_same" if same else "join_core_changed")
+
+    async def _read_awards(
+        self,
+        vectors: dict[int, list[int]],
+        urgent: set[int],
+        now: int,
+        fetch: Fetch,
+        store: SnapshotStore,
+    ) -> dict[int, bytes]:
+        """第三段：给本轮查了核心的人配上勋带快照。门控没变就沿用，读不到的人不在结果里。"""
+        priors = await self._award_priors(vectors, store)
+        out, todo, audits = _plan_awards(vectors, priors, now)
+        if len(todo) > MAX_AWARDS_PER_TICK:
+            todo.sort(key=lambda p: (p not in urgent, p in audits))
+            for pid in todo[MAX_AWARDS_PER_TICK:]:
+                if pid in audits:
+                    out[pid] = priors[pid][0]  # 抽查名额被挤掉的照常沿用
+            ea_metrics.count_event("awards_skipped", len(todo) - MAX_AWARDS_PER_TICK)
+            todo = todo[:MAX_AWARDS_PER_TICK]
+        if not todo:
+            return out
+        try:
+            with ea_metrics.ea_source("tracker_awards"):
+                rows = await fetch(sorted(todo), ra.names())
+        except Exception as e:
+            logger.warning("BF1 match tracker awards query failed: {}", e)
+            ea_metrics.count_event("awards_failed", len(todo))
+            return out
+        ea_metrics.count_event("awards_read", len(todo))
+        saved: dict[int, bytes] = {}
+        for pid in todo:
+            if pid not in rows:
+                ea_metrics.count_event("awards_failed")
+                continue
+            blob = rw.pack(ra.gates(vectors[pid]), ra.read(rows[pid]))
+            if pid in audits:
+                same = rw.unpack(blob)[1] == rw.unpack(priors[pid][0])[1]
+                ea_metrics.count_event(f"awards_audit_{'ok' if same else 'miss'}")
+            out[pid] = saved[pid] = blob
+        if saved:
+            try:
+                await store.save_awards(saved)
+            except Exception as e:
+                logger.warning("BF1 match tracker awards store save failed: {}", e)
+        return out
+
+    async def _award_priors(
+        self, vectors: dict[int, list[int]], store: SnapshotStore
+    ) -> dict[int, tuple[bytes, int]]:
+        """每人最近一次的勋带快照和时刻：内存里 10 分钟内查到的、在服席位的基线，没有再查存储。"""
+        priors: dict[int, tuple[bytes, int]] = {}
+
+        def offer(pid: int, blob: bytes | None, at: int) -> None:
+            if blob is not None and (pid not in priors or at > priors[pid][1]):
+                priors[pid] = (blob, at)
+
+        for pid in vectors:
+            if (r := self.recent.get(pid)) is not None:
+                offer(pid, r[3], r[1])
+        for rnd in self.rounds.values():
+            for pid, s in rnd.seats.items():
+                if pid in vectors:
+                    offer(pid, s.base_a, s.base_at)
+        if unknown := sorted(vectors.keys() - priors.keys()):
+            try:
+                stored = await store.load_awards(unknown)
+            except Exception as e:
+                logger.warning("BF1 match tracker awards store load failed: {}", e)
+                stored = {}
+            ea_metrics.count_event("awards_store_hit", len(stored))
+            priors.update(stored)
+        return priors
 
     def _back_off(self, missing: set[int], now: int) -> None:
         """EA 没返回这些人的数据：还缺基线的隔 MISSING_RETRY 再查，免得每轮都查一遍。"""
@@ -639,6 +793,7 @@ class MatchTracker:
         rnd: OpenRound,
         vectors: dict[int, list[int]],
         weapons: dict[int, bytes],
+        awards: dict[int, bytes],
         now: int,
         *,
         settled: bool,
@@ -655,11 +810,19 @@ class MatchTracker:
                 continue
             end = s.end if s.left else vectors.get(pid)
             end_w = s.end_w if s.left else weapons.get(pid)
-            if end is not None and (ln := _line(pid, s, end, end_w)) is not None:
+            end_a = s.end_a if s.left else awards.get(pid)
+            if end is not None and (ln := _line(pid, s, end, end_w, end_a)) is not None:
                 lines.append(ln)
             if not s.left:
                 carry[pid] = (
-                    Seat(since=boundary, team=s.team, base=end, base_at=now, base_w=end_w)
+                    Seat(
+                        since=boundary,
+                        team=s.team,
+                        base=end,
+                        base_at=now,
+                        base_w=end_w,
+                        base_a=end_a,
+                    )
                     if end is not None
                     else Seat(since=boundary, team=s.team, recheck_at=now + RECHECK_AFTER)
                 )
@@ -699,7 +862,10 @@ class MatchTracker:
                 for gid, r in self.rounds.items()
             },
             "seen": {str(pid): list(v) for pid, v in self.seen.items()},
-            "recent": {str(pid): [vec, at, _b64(w)] for pid, (vec, at, w) in self.recent.items()},
+            "recent": {
+                str(pid): [vec, at, _b64(w), _b64(a)]
+                for pid, (vec, at, w, a) in self.recent.items()
+            },
         }
 
     def load(self, data: dict[str, Any]) -> None:
@@ -715,9 +881,14 @@ class MatchTracker:
             for gid, r in data["rounds"].items()
         }
         seen = {int(pid): (v[0], v[1]) for pid, v in data["seen"].items()}
-        # 旧版本导出的 recent 没有武器载具快照
+        # 旧版本导出的 recent 没有武器载具、勋带快照
         recent = {
-            int(pid): (v[0], v[1], _unb64(v[2] if len(v) > 2 else None))
+            int(pid): (
+                v[0],
+                v[1],
+                _unb64(v[2] if len(v) > 2 else None),
+                _unb64(v[3] if len(v) > 3 else None),
+            )
             for pid, v in data["recent"].items()
         }
         self.last_tick, self.rounds, self.seen, self.recent = (
@@ -736,7 +907,7 @@ def _unb64(text: str | None) -> bytes | None:
     return base64.b64decode(text) if text is not None else None
 
 
-_SEAT_BLOBS = ("base_w", "end_w")
+_SEAT_BLOBS = ("base_w", "end_w", "base_a", "end_a")
 
 
 def _seat_out(seat: Seat) -> dict[str, Any]:

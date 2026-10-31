@@ -9,32 +9,48 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from app.api.errors import NotFoundError
 from app.core import ea_metrics
+from app.domain.games.bf1 import round_awards as ra
 from app.domain.games.bf1 import round_weapons as rw
 from app.domain.games.bf1.blaze_catalog import catalog
 from app.domain.games.bf1.blaze_stats import STAT
 from app.domain.games.bf1.round_stats import (
+    ACE_SQUAD,
+    COMBAT,
     DEATHS,
     FINISHED,
     KILLS,
     KIT_BASE,
+    KIT_RANKS,
     LEFT_EARLY,
     LOSSES,
+    MODE_SCORES,
+    MVP,
+    OBJECTIVE,
     PROBE_NAMES,
+    RANK,
     RECHECK_NAMES,
+    RECORDS,
+    RIBBONS,
     ROUND_STATS,
     ROUNDS,
+    SC_AWARD,
+    SCALE,
     SCORE,
+    SCORE_PARTS,
+    SKILL,
     SUSPECT,
     WINS,
+    Entry,
     decode_entries,
     diff,
     encode_entry,
     pack_pids,
+    same_core,
     to_vector,
     unpack_pids,
 )
 from app.models.bf1.game_instance import Bf1GameInstance
-from app.models.bf1.rounds import Bf1PlayerRoundDay
+from app.models.bf1.rounds import Bf1PlayerRoundDay, Bf1Round
 from app.services.bf1 import round_service
 from app.services.bf1.match_tracker import (
     MISSING_RETRY,
@@ -54,8 +70,8 @@ def test_entry_codec_roundtrip_and_sparse() -> None:
     delta[KILLS], delta[DEATHS], delta[SCORE], delta[N - 1] = 23, 17, 5840, 1620
     blob = encode_entry(123456, 2, SUSPECT, delta) + encode_entry(7, 1, FINISHED, [0] * N)
     assert decode_entries(blob) == [
-        (123456, 2, SUSPECT, {KILLS: 23, DEATHS: 17, SCORE: 5840, N - 1: 1620}, None),
-        (7, 1, FINISHED, {}, None),
+        (123456, 2, SUSPECT, {KILLS: 23, DEATHS: 17, SCORE: 5840, N - 1: 1620}, None, None, {}),
+        (7, 1, FINISHED, {}, None, None, {}),
     ]
     # 3 字节 id + 1 字节队伍状态 + 1 字节个数 + 4 项（间隔与值共 2–4 字节）
     assert len(encode_entry(123456, 2, SUSPECT, delta)) <= 20
@@ -64,8 +80,16 @@ def test_entry_codec_roundtrip_and_sparse() -> None:
         9, 1, FINISHED, [0] * N, {}
     )
     assert decode_entries(with_weapons) == [
-        (8, 2, LEFT_EARLY, {KILLS: 23, DEATHS: 17, SCORE: 5840, N - 1: 1620}, {0: 3, 1795: 600}),
-        (9, 1, FINISHED, {}, {}),
+        (
+            8,
+            2,
+            LEFT_EARLY,
+            {KILLS: 23, DEATHS: 17, SCORE: 5840, N - 1: 1620},
+            {0: 3, 1795: 600},
+            None,
+            {},
+        ),
+        (9, 1, FINISHED, {}, {}, None, {}),
     ]
 
 
@@ -77,6 +101,45 @@ def test_pids_pack_and_vector_diff() -> None:
     assert (v[KILLS], v[6], len(v)) == (3, 2, N)
     assert diff([1, 2], [1, 1]) == [0, 1]
     assert diff([1, 0], [1, 1]) is None
+
+
+def test_end_values_signed_skill_and_short_base() -> None:
+    base = [100] * N
+    end = list(base)
+    end[KILLS] += 5
+    end[SKILL] -= 37  # 技巧值降了 3.7
+    end[RANK] += 1
+    end[RECORDS["max_killstreak"]] += 4
+    d = diff(end, base)
+    assert d is not None
+    # 等级、纪录记新值；技巧值记负的增量，不当成坏数据
+    assert (d[KILLS], d[SKILL], d[RANK], d[RECORDS["max_killstreak"]]) == (5, -37, 101, 104)
+    assert d[RECORDS["longest_headshot"]] == 0
+    bad = list(end)
+    bad[DEATHS] -= 1
+    assert diff(bad, base) is None
+    # 追加统计项之前查到的基线只有前 34 项：只减共有部分，新加的项这一局记 0
+    short = base[:34]
+    d = diff(end, short)
+    assert d is not None and len(d) == N
+    assert (d[KILLS], d[SKILL], d[RANK]) == (5, 0, 0)
+    assert same_core(short, base) and not same_core(short, end)
+    assert to_vector({"skill": 312.47})[SKILL] == 3125
+
+    full = [0] * N
+    full[KILLS], full[SKILL] = 5, -37
+    [e] = decode_entries(encode_entry(9, 1, FINISHED, full, {3: 1}, {33: 1, 47: 2}, {12: 24}))
+    assert (e.stats, e.weapons, e.awards, e.stars) == (
+        {KILLS: 5, SKILL: -37},
+        {3: 1},
+        {33: 1, 47: 2},
+        {12: 24},
+    )
+    # 读到了勋带但一个没拿（空 dict）和没读到（None）要分得开
+    e1, e2 = decode_entries(
+        encode_entry(1, 1, FINISHED, [0] * N, None, {}) + encode_entry(2, 1, FINISHED, [0] * N)
+    )
+    assert (e1.awards, e1.weapons, e2.awards) == ({}, None, None)
 
 
 class Career:
@@ -115,7 +178,7 @@ class Career:
         core = {name: i for i, (_, name) in enumerate(ROUND_STATS)}
         return {
             p: {
-                name: float(self.vec[p][core[name]])
+                name: self.vec[p][core[name]] / SCALE.get(core[name], 1)
                 if name in core
                 else self.extra.get(p, {}).get(name, 0.0)
                 for name in wanted
@@ -304,8 +367,9 @@ async def test_save_and_query_rounds(test_session) -> None:
     )
     assert (pb.persona_id, pb.status, pb.won, pb.seconds, pb.spm) == (b, "left", None, 0, None)
     # 没死过时 KD 就是击杀数，不再是 None（前端曾显示成 ∞）
-    assert round_service._player(1, 1, FINISHED, {KILLS: 9}, None).kd == 9
-    assert round_service._player(1, 1, FINISHED, {}, None).kd == 0
+    entry = Entry(1, 1, FINISHED, {KILLS: 9}, None, None, {})
+    assert round_service._player(1, entry, None).kd == 9
+    assert round_service._player(1, entry._replace(stats={}), None).kd == 0
 
     mine = await round_service.list_player_rounds(test_session, a, limit=1)
     assert [i.player.kills for i in mine.items] == [30]
@@ -563,12 +627,19 @@ def _gate(cat: str, i: int = 0) -> str:
 class MemoryStore:
     def __init__(self) -> None:
         self.rows: dict[int, tuple[list[int], bytes, int]] = {}
+        self.awards: dict[int, bytes] = {}
 
     async def load(self, pids: list[int]) -> dict[int, tuple[list[int], bytes, int]]:
         return {p: self.rows[p] for p in pids if p in self.rows}
 
     async def save(self, snapshots: dict[int, tuple[list[int], bytes, int]]) -> None:
         self.rows.update(snapshots)
+
+    async def load_awards(self, pids: list[int]) -> dict[int, tuple[bytes, int]]:
+        return {p: (self.awards[p], self.rows[p][2]) for p in pids if p in self.awards}
+
+    async def save_awards(self, snapshots: dict[int, bytes]) -> None:
+        self.awards.update((p, b) for p, b in snapshots.items() if p in self.rows)
 
 
 def _weapon_reads(career: Career, since: int = 0) -> dict[str, list[int]]:
@@ -712,6 +783,9 @@ async def test_snapshot_store_and_weapon_entries(test_session) -> None:
         test_session, datetime.fromtimestamp(now, UTC) + round_service.SNAPSHOT_RETENTION
     )
     assert await store.load([1, 2]) == {1: ([2, 0, 300], b"\x03", now)}
+    # 勋带只更新已有的快照行
+    await store.save_awards({1: b"\x07", 99: b"\x08"})
+    assert await store.load_awards([1, 2, 99]) == {1: (b"\x07", now)}
 
     a, b = 1005811915302, 1003517866915
     mg, _ = _slot("player_weapons1")
@@ -727,8 +801,9 @@ async def test_snapshot_store_and_weapon_entries(test_session) -> None:
     ]
     await round_service.save_rounds(test_session, [_closed(10, now, lines)])
     row = await test_session.get(Bf1PlayerRoundDay, (a, datetime.fromtimestamp(now, UTC).date()))
-    [(rid, _, _, stats, weapons)] = decode_entries(row.data)
-    assert stats[KILLS] == 3 and weapons == {mg: 1, mg_seconds: 300, tank: 2}
+    [e] = decode_entries(row.data)
+    rid = e.round_id
+    assert e.stats[KILLS] == 3 and e.weapons == {mg: 1, mg_seconds: 300, tank: 2}
     # 接口按条目合并：载具击杀多排在前；没有数据的人是 None
     detail = await round_service.get_round(test_session, rid)
     players = {p.persona_id: p for p in detail.players}
@@ -737,3 +812,153 @@ async def test_snapshot_store_and_weapon_entries(test_session) -> None:
     assert (second.kind, second.kills, second.seconds) == ("weapon", 1, 300)
     assert second.image and second.image.startswith("http")
     assert players[b].weapons is None
+
+
+def _award_reads(career: Career, since: int = 0) -> list[int]:
+    """读过勋带类别的人"""
+    return sorted(
+        p for pids, names in career.calls[since:] if names.keys() == ra.names().keys() for p in pids
+    )
+
+
+async def test_tracker_records_awards_mvp_and_stars(monkeypatch) -> None:
+    from app.services.bf1 import match_tracker
+
+    monkeypatch.setattr(match_tracker, "AWARDS_AUDIT_EVERY", 10**12)  # 不抽查
+    events = _events(monkeypatch)
+    career, tr, store = Career(), MatchTracker(), MemoryStore()
+    for p in (1, 2):
+        career.add(p)
+    mg, mg_name = _slot("player_weapons1")
+    career.use(1, **{mg_name: 95, "r33_00": 4})
+    t0 = 1_800_000_000
+    roster = _roster(p1=TEAM1, p2=TEAM2)
+    await tr.tick(roster, MAP, t0, career.fetch, store)
+    # 没有旧快照：两人都读勋带，存进快照行
+    assert _award_reads(career) == [1, 2]
+    assert sorted(store.awards) == [1, 2]
+    assert rw.unpack(tr.rounds[1].seats[1].base_a)[1] == {33: 4}
+
+    # 结算：1 是 MVP、升了一级，拿了 2 次 r33 和 1 次 r01，机枪击杀跨过 100；
+    # 2 的勋带门控没变，沿用上次的勋带，不读
+    career.settle(winners=[1], losers=[2])
+    v = career.vec[1]
+    v[MVP] += 1
+    v[RIBBONS] += 3
+    v[SC_AWARD] += 1500
+    v[RANK] += 1
+    career.use(1, **{mg_name: 10, "r33_00": 2, "r01_00": 1})
+    calls = len(career.calls)
+    await tr.tick(roster, MAP, t0 + 60, career.fetch, store)
+    [closed] = await tr.tick(roster, MAP, t0 + 120, career.fetch, store)
+    assert _award_reads(career, calls) == [1]
+    assert events["awards_reused"] == 1
+    lines = {ln.pid: ln for ln in closed.lines}
+    assert (lines[1].awards, lines[2].awards) == ({33: 2, 1: 1}, {})
+    assert (lines[1].delta[MVP], lines[1].delta[RANK], lines[2].delta[RANK]) == (1, 101, 0)
+    assert lines[1].stars == {mg // len(rw.METRICS): 1} and lines[2].stars == {}
+    # 下一局的基线带着勋带快照，导出导入不丢
+    restored = MatchTracker()
+    restored.load(json.loads(json.dumps(tr.dump())))
+    assert restored.dump() == tr.dump()
+    assert restored.rounds[1].seats[1].base_a == tr.rounds[1].seats[1].base_a
+
+
+async def test_tracker_awards_failure_does_not_touch_weapons(monkeypatch) -> None:
+    events = _events(monkeypatch)
+    career, tr, store = Career(), MatchTracker(), MemoryStore()
+    for p in (1, 2):
+        career.add(p)
+    t0 = 1_800_000_000
+    roster = _roster(p1=TEAM1, p2=TEAM2)
+    career.fail_categories = {"player_awards4"}
+    await tr.tick(roster, MAP, t0, career.fetch, store)
+    seats = tr.rounds[1].seats
+    assert all(s.base_w is not None and s.base_a is None for s in seats.values())
+    assert events["awards_failed"] == 2 and store.awards == {}
+    career.fail_categories = set()
+    career.settle(winners=[1], losers=[2])
+    await tr.tick(roster, MAP, t0 + 60, career.fetch, store)
+    [closed] = await tr.tick(roster, MAP, t0 + 120, career.fetch, store)
+    assert [(ln.weapons, ln.awards) for ln in closed.lines] == [({}, None), ({}, None)]
+
+
+async def test_tracker_survives_state_from_before_the_upgrade(monkeypatch) -> None:
+    events = _events(monkeypatch)
+    career, tr, store = Career(), MatchTracker(), MemoryStore()
+    for p in (1, 2):
+        career.add(p)
+    t0 = 1_800_000_000
+    roster = _roster(p1=TEAM1, p2=TEAM2)
+    await tr.tick(roster, MAP, t0, career.fetch, store)
+    # 升级前导出的状态和存的快照：核心向量只有 34 项，没有勋带
+    old = 34
+    data = tr.dump()
+    for seat in data["rounds"]["1"]["seats"].values():
+        seat["base"] = seat["base"][:old]
+        del seat["base_a"], seat["end_a"]
+    data["recent"] = {p: [v[0][:old], v[1], v[2]] for p, v in data["recent"].items()}
+    store.rows = {p: (vec[:old], blob, at) for p, (vec, blob, at) in store.rows.items()}
+    store.awards = {}
+
+    # 换了进程、生涯没变：旧快照的武器照常沿用
+    fresh = MatchTracker()
+    await fresh.tick(roster, MAP, t0 + 3600, career.fetch, store)
+    assert events["weapons_reused"] == 2 and events["join_core_same"] == 2
+
+    # 跨部署接着跟的这一局能正常收尾，新加的项记 0、没有勋带
+    restored = MatchTracker()
+    restored.load(json.loads(json.dumps(data)))
+    career.settle(winners=[1], losers=[2])
+    career.vec[1][MVP] += 1
+    await restored.tick(roster, MAP, t0 + 60, career.fetch, store)
+    [closed] = await restored.tick(roster, MAP, t0 + 120, career.fetch, store)
+    lines = {ln.pid: ln for ln in closed.lines}
+    assert (lines[1].status, lines[1].delta[KILLS], lines[1].delta[MVP]) == (FINISHED, 10, 0)
+    assert lines[1].awards is None and lines[1].weapons == {}
+
+
+async def test_round_detail_honors_and_score_parts(test_session) -> None:
+    now = int(datetime.now(UTC).timestamp())
+    a, b = 1005811915302, 1003517866915
+    d = _delta(30, win=True)  # 总分 9000，在场 1200 秒
+    d[MVP] = d[ACE_SQUAD] = 1
+    for k, v in {"general": 3000, "team": 500, "squad": 800, "award": 1500, "bonus": 2000}.items():
+        d[SCORE_PARTS[k]] = v
+    d[MODE_SCORES[0]] = 1000
+    d[OBJECTIVE["flag_captures"]], d[COMBAT["headshots"]] = 3, 7
+    d[SKILL], d[RANK], d[RECORDS["longest_headshot"]] = -37, 88, 312
+    d[KIT_RANKS["medic"]] = 1
+    mg, _ = _slot("player_weapons1")
+    lines = [
+        RoundLine(a, 1, FINISHED, d, {mg: 30}, {33: 2, 1: 1}, {mg // len(rw.METRICS): 24}),
+        RoundLine(b, 2, FINISHED, _delta(1, win=False)),
+    ]
+    await round_service.save_rounds(test_session, [_closed(10, now, lines)])
+    [rid] = (await test_session.scalars(select(Bf1Round.id))).all()
+    detail = await round_service.get_round(test_session, rid)
+    assert (detail.mvp_pid, detail.ace_squad_pids) == (a, [a])
+    players = {p.persona_id: p for p in detail.players}
+    pa, pb = players[a], players[b]
+    # 计分板口径：总分减去勋带勋章奖励和结算奖励；SPM 按它算
+    assert (pa.score, pa.battle_score, pa.spm) == (9000, 5500, 275)
+    assert pa.score_parts is not None
+    assert (pa.score_parts.objective, pa.score_parts.other) == (1000, 200)
+    assert [(r.code, r.count) for r in pa.ribbons or []] == [("r33", 2), ("r01", 1)]
+    assert (pa.objective, pa.combat) == ({"flag_captures": 3}, {"headshots": 7})
+    assert (pa.rank_to, pa.skill_delta, pa.records, pa.kit_ranks) == (
+        88,
+        -3.7,
+        {"longest_headshot": 312},
+        ["medic"],
+    )
+    [star] = pa.stars
+    assert (star.kind, star.name, star.stars) == ("weapon", rw_entry(mg)["name"], 24)
+    # 没有新统计的条目（上线前的）维持原口径
+    assert (pb.battle_score, pb.score_parts, pb.ribbons, pb.mvp, pb.spm) == (
+        None,
+        None,
+        None,
+        False,
+        15,
+    )

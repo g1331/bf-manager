@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 
 
 class CardCredentials(BaseModel):
-    """服主凭据：匿名填 remid + sid；登录用户可改用主绑定账号（use_binding）"""
+    """服主或管理员的凭据：匿名填 remid + sid；登录用户可改用主绑定账号（use_binding）"""
 
     remid: str = Field("", max_length=2048)
     sid: str = Field("", max_length=2048)
@@ -35,6 +35,7 @@ class CardPrecheck(BaseModel):
     owner_id: int
     owner_name: str
     is_owner: bool
+    is_admin: bool  # 在 rspInfo.adminList 里；服主或管理员都能卡行动
     occupied: int  # 士兵 + 观战 + 排队
     soldier_max: int
     mode: str

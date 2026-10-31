@@ -17,7 +17,7 @@ from app.api.rate_limit import API_KEY_HEADER, rate_limit
 router = APIRouter()
 
 _PUBLIC_PREFIX = "/api/v1/bf1/"
-# 服管和卡行动要服主身份，不属于开放查询
+# 服管和卡行动要服主或管理员身份，不属于开放查询
 _EXCLUDED_SEGMENTS = ("/server-admin", "/card")
 
 _cache: dict[str, Any] | None = None

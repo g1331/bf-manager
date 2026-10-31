@@ -1,11 +1,11 @@
-"""卡行动用的 Blaze 进服会话：服主账号单独建一条连接，不碰生产连接池。
+"""卡行动用的 Blaze 进服会话：操作账号（服主或管理员）单独建一条连接，不碰生产连接池。
 
 进服只为唤醒空服、让服务器重新分配图池，每轮停留几秒。报文照搬 CardTool（纯 Blaze 直连，
 不发 Gateway reserveSlot）：登录后先报 setClientState + updateNetworkInfo，进服前用
 getFullGameData 取协议版本和角色，joinGame 后补发一组「真客户端」状态包，再轮询名单
 （PROS）直到出现自己。
 
-同一 EA 账号只能有一个 Blaze 会话：这里登录会把服主正在玩的游戏挤下线，服主账号的
+同一 EA 账号只能有一个 Blaze 会话：这里登录会把这个账号正在玩的游戏挤下线，它的
 Gateway 令牌刷新也可能注销这条会话，调用方发现断线就重建。
 """
 

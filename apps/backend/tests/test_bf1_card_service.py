@@ -19,6 +19,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from tests.test_bf1_card_engine import OPS, RSP, details
 
 OWNER = 1008847306560
+ADMIN = 1005935009520
 GAME_ID = 11473517750387
 SERVER_ID = 12552064
 CREDS = OwnerCredentials(remid="r", sid="s")
@@ -47,6 +48,7 @@ class FakeClient:
                 "rspInfo": {
                     "server": {"serverId": str(SERVER_ID), "persistedGameId": "pgid"},
                     "owner": {"personaId": str(OWNER), "displayName": "M-KOISHI-M"},
+                    "adminList": [{"personaId": str(ADMIN), "displayName": "Admin-A"}],
                 },
             }
         }
@@ -158,10 +160,23 @@ async def test_card_hits_and_anchors(maker, monkeypatch):
     assert card_service.active_game_ids() == set()
 
 
+async def test_admin_can_card(maker, monkeypatch):
+    """服主之外，rspInfo.adminList 里的管理员也能用；任务记的是操作者本人"""
+    client = FakeClient([details("BreakthroughLarge", OPS, soldiers=12)], pid=ADMIN)
+    use_client(monkeypatch, client)
+    async with maker() as db:
+        pre = await CardService(db).precheck(CREDS, GAME_ID)
+        assert (pre.is_owner, pre.is_admin) == (False, True)
+        view, _ = await CardService(db).start(CREDS, GAME_ID, "anchor", user=None, ip=None)
+    job = await wait_done(maker, view.id)
+    assert job.status == "succeeded", job.events
+    assert (job.persona_id, job.persona_name) == (ADMIN, "Admin-A")
+
+
 async def test_start_requires_owner_and_empty_server(maker, monkeypatch):
     use_client(monkeypatch, FakeClient([EMPTY_CQ], pid=123))
     async with maker() as db:
-        with pytest.raises(ForbiddenError):
+        with pytest.raises(ForbiddenError, match="服主或管理员"):
             await CardService(db).start(CREDS, GAME_ID, "card", user=None, ip=None)
 
     use_client(monkeypatch, FakeClient([details("Conquest", ["MP_Alps"], soldiers=3)]))

@@ -1,9 +1,9 @@
 "use client";
 
 /**
- * 一键卡行动：私服没有行动模式选项，服主用这个工具把服务器「抽」成 24 图行动并锚定。
+ * 一键卡行动：私服没有行动模式选项，服主或管理员用这个工具把服务器「抽」成 24 图行动并锚定。
  *
- * 公开工具，不要求登录：服主填 remid + sid（登录用户可直接用主绑定账号）。凭据只随请求发给
+ * 公开工具，不要求登录：服主或管理员填 remid + sid（登录用户可直接用主绑定账号）。凭据只随请求发给
  * 后端、只在任务内存里用，不存本地也不落库；任务 id 和查看令牌存在 localStorage，
  * 刷新或关掉页面后回来还能看进度。
  */
@@ -201,8 +201,7 @@ function CardOperation() {
         <h1 className="mt-1.5 text-2xl font-bold tracking-wide sm:text-3xl">一键卡行动</h1>
         <p className="mt-2 text-sm leading-relaxed text-white/65">
           私服没有行动模式选项。这个工具把轮换换成无效地图，反复唤醒服务器，直到 EA 随机分到 24
-          图行动，再把轮换锚定成同一批地图，之后改设置也不会掉回征服。只有服主能用：EA
-          只允许服主修改服务器设置。
+          图行动，再把轮换锚定成同一批地图，之后改设置也不会掉回征服。需要这台服的服主或管理员账号。
         </p>
       </header>
 
@@ -213,7 +212,7 @@ function CardOperation() {
           cancelling={cancel.isPending}
           onRestore={() => {
             if (!credsReady) {
-              toast.error("先在下面填好服主账号的 remid 和 sid");
+              toast.error("先在下面填好账号的 remid 和 sid");
               return;
             }
             restore.mutate();
@@ -224,7 +223,7 @@ function CardOperation() {
       ) : null}
 
       <Bf1Panel cut={14} className="p-4 sm:p-6" style={PANEL_STYLE}>
-        <SectionHeading className="mb-0">服主账号</SectionHeading>
+        <SectionHeading className="mb-0">服主或管理员账号</SectionHeading>
         {binding && canUseBinding ? (
           <div className="mt-3 inline-flex ring-1 ring-white/15">
             {[
@@ -264,7 +263,7 @@ function CardOperation() {
                     setRemid(e.target.value);
                     setCheck(null);
                   }}
-                  placeholder="服主 EA 账号的 remid"
+                  placeholder="EA 账号的 remid"
                   className="h-11"
                 />
               </label>
@@ -279,7 +278,7 @@ function CardOperation() {
                     setSid(e.target.value);
                     setCheck(null);
                   }}
-                  placeholder="服主 EA 账号的 sid"
+                  placeholder="EA 账号的 sid"
                   className="h-11"
                 />
               </label>
@@ -290,7 +289,7 @@ function CardOperation() {
                 怎么获取 remid 和 sid
               </summary>
               <ol className="mt-2 list-decimal space-y-1 pl-5 leading-relaxed">
-                <li>用服主的 EA 账号在浏览器登录 ea.com。</li>
+                <li>用服主或管理员的 EA 账号在浏览器登录 ea.com。</li>
                 <li>
                   按 F12 打开开发者工具，进入「应用」（Application）→ Cookie →
                   https://accounts.ea.com。
@@ -303,7 +302,7 @@ function CardOperation() {
           </>
         )}
         <p className="mt-3 text-xs leading-relaxed text-white/45">
-          凭据只用于这次操作，不会保存。卡服期间会用这个账号登录游戏服务，服主正在玩的话会被挤下线。
+          凭据只用于这次操作，不会保存。卡服期间会用这个账号登录游戏服务，这个账号正在玩的话会被挤下线。
         </p>
       </Bf1Panel>
 
@@ -313,7 +312,7 @@ function CardOperation() {
           className="mt-3 flex gap-2"
           onSubmit={(e) => {
             e.preventDefault();
-            if (!credsReady) toast.error("请先填写服主账号的 remid 和 sid");
+            if (!credsReady) toast.error("请先填写账号的 remid 和 sid");
             else if (!gidValid) toast.error("请填写服务器的 gameId（数字）");
             else precheck.mutate();
           }}
@@ -353,7 +352,7 @@ function CardOperation() {
         title={confirm === "anchor" ? "锚定当前行动图池？" : "开始卡行动？"}
         description={
           confirm === "anchor"
-            ? "会把轮换改成当前 24 张图、模式统一为空中突击（AA0），名称、简介、密码和规则保持不变。服里没人时会先用服主账号进服。"
+            ? "会把轮换改成当前 24 张图、模式统一为空中突击（AA0），名称、简介、密码和规则保持不变。服里没人时会先用这个账号进服。"
             : "开始前会保存当前设置，失败或停止后可以一键恢复。"
         }
         confirmText={confirm === "anchor" ? "开始锚定" : "开始卡行动"}
@@ -365,7 +364,7 @@ function CardOperation() {
         {confirm === "card" ? (
           <ul className="text-foreground list-disc space-y-1.5 pl-5 text-sm">
             <li>原轮换会被覆盖，卡完是 24 图行动，地图顺序随机。</li>
-            <li>运行期间服主账号会反复进出服务器，正在玩的话会被挤下线。</li>
+            <li>运行期间这个账号会反复进出服务器，正在玩的话会被挤下线。</li>
             <li>一般几分钟，最长 30 分钟；卡完要尽快有人进服，空服太久可能掉回征服。</li>
           </ul>
         ) : null}
@@ -385,12 +384,15 @@ function PrecheckView({
   onCard: () => void;
   onAnchor: () => void;
 }) {
+  const canManage = c.is_owner || c.is_admin;
   const rows: { ok: boolean; text: string }[] = [
     {
-      ok: c.is_owner,
+      ok: canManage,
       text: c.is_owner
         ? `这个账号是服主（${c.owner_name || c.owner_id}）`
-        : `这个账号不是服主，服主是 ${c.owner_name || c.owner_id}`,
+        : c.is_admin
+          ? "这个账号是管理员"
+          : `这个账号不是服主或管理员，服主是 ${c.owner_name || c.owner_id}`,
     },
     {
       ok: c.occupied === 0,
@@ -400,8 +402,8 @@ function PrecheckView({
           : `服里有 ${c.occupied} 人，抽图需要空服${c.is_operation ? "；当前已是行动，可以直接锚定" : ""}`,
     },
   ];
-  const canCard = c.is_owner && c.occupied === 0 && !c.running_job_id;
-  const canAnchor = c.is_owner && c.is_operation && !c.running_job_id;
+  const canCard = canManage && c.occupied === 0 && !c.running_job_id;
+  const canAnchor = canManage && c.is_operation && !c.running_job_id;
 
   return (
     <div className="mt-4 space-y-3">
@@ -537,7 +539,7 @@ function JobPanel({
           <dd className="mt-0.5 font-semibold tabular-nums">{duration(elapsed)}</dd>
         </div>
         <div>
-          <dt className="text-xs text-white/45">服主账号</dt>
+          <dt className="text-xs text-white/45">操作账号</dt>
           <dd className="mt-0.5 truncate font-semibold">{j.persona_name || j.persona_id}</dd>
         </div>
       </dl>

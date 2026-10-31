@@ -305,7 +305,7 @@ function ServerDetailView({
               <>
                 {!summary.is_official ? (
                   <p className="mb-3 text-xs text-white/55">
-                    服主可以用{" "}
+                    服主或管理员可以用{" "}
                     <Link
                       href={`/bf1/card?gameId=${gameId}`}
                       className="inline-action text-amber-400 hover:underline"

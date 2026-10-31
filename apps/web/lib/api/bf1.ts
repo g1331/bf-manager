@@ -1069,7 +1069,7 @@ export interface AutoSwitchView {
   events: { ts: number; kind: string; message: string }[];
 }
 
-/** 一键卡行动：服主凭据。匿名填 remid + sid，登录用户可改用主绑定账号 */
+/** 一键卡行动：服主或管理员的凭据。匿名填 remid + sid，登录用户可改用主绑定账号 */
 export interface CardCredentials {
   remid: string;
   sid: string;
@@ -1084,6 +1084,7 @@ export interface CardPrecheck {
   owner_id: number;
   owner_name: string;
   is_owner: boolean;
+  is_admin: boolean;
   /** 士兵 + 观战 + 排队 */
   occupied: number;
   soldier_max: number;

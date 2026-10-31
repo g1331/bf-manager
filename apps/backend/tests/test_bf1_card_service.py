@@ -7,7 +7,7 @@ from typing import Any, ClassVar
 
 import pytest
 import pytest_asyncio
-from app.api.errors import ForbiddenError, ValidationError
+from app.api.errors import EAApiError, ForbiddenError, ValidationError
 from app.models import AuditLog, Base
 from app.models.bf1 import Bf1CardJob
 from app.services.bf1 import card_engine as engine
@@ -19,6 +19,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from tests.test_bf1_card_engine import OPS, RSP, details
 
 OWNER = 1008847306560
+ADMIN = 1005935009520
 GAME_ID = 11473517750387
 SERVER_ID = 12552064
 CREDS = OwnerCredentials(remid="r", sid="s")
@@ -27,7 +28,15 @@ CREDS = OwnerCredentials(remid="r", sid="s")
 class FakeClient:
     """模拟一台服：states[0] 是开始前的状态，之后 getServerDetails 依次返回其余的，最后一个一直重复"""
 
-    def __init__(self, states: list[dict], *, pid: int = OWNER, update_result: Any = None):
+    def __init__(
+        self,
+        states: list[dict],
+        *,
+        pid: int = OWNER,
+        update_result: Any = None,
+        apply_on_error: bool = False,
+        admin_entry: dict | None = None,
+    ):
         self.pid = pid
         self.check_login = True
         self.http_session = None
@@ -35,6 +44,9 @@ class FakeClient:
         self.initial = states[0]
         self.states = list(states[1:]) or [states[0]]
         self.update_result = update_result if update_result is not None else {"result": "success"}
+        # 返回错误但设置照样生效（banner 噪音的情形）
+        self.apply_on_error = apply_on_error
+        self.admin_entry = admin_entry or {"personaId": str(ADMIN), "displayName": "Admin-A"}
         self.rotation = RSP["mapRotations"][0]["maps"]
         self.updates: list[dict] = []
         self.chosen: list[tuple[str, int]] = []
@@ -47,6 +59,7 @@ class FakeClient:
                 "rspInfo": {
                     "server": {"serverId": str(SERVER_ID), "persistedGameId": "pgid"},
                     "owner": {"personaId": str(OWNER), "displayName": "M-KOISHI-M"},
+                    "adminList": [self.admin_entry],
                 },
             }
         }
@@ -58,7 +71,7 @@ class FakeClient:
 
     async def updateServer(self, params):  # noqa: N802
         self.updates.append(params)
-        if isinstance(self.update_result, dict):
+        if isinstance(self.update_result, dict) or self.apply_on_error:
             self.rotation = params["mapRotation"]["maps"]
         return self.update_result
 
@@ -158,10 +171,62 @@ async def test_card_hits_and_anchors(maker, monkeypatch):
     assert card_service.active_game_ids() == set()
 
 
+async def test_admin_can_card(maker, monkeypatch):
+    """服主之外，rspInfo.adminList 里的管理员也能用；任务记的是操作者本人"""
+    client = FakeClient([details("BreakthroughLarge", OPS, soldiers=12)], pid=ADMIN)
+    use_client(monkeypatch, client)
+    async with maker() as db:
+        pre = await CardService(db).precheck(CREDS, GAME_ID)
+        assert (pre.is_owner, pre.is_admin) == (False, True)
+        view, _ = await CardService(db).start(CREDS, GAME_ID, "anchor", user=None, ip=None)
+    job = await wait_done(maker, view.id)
+    assert job.status == "succeeded", job.events
+    assert (job.persona_id, job.persona_name) == (ADMIN, "Admin-A")
+
+
+async def test_admin_entry_uses_shared_member_parsing(maker, monkeypatch):
+    """adminList 的 personaID / name 别名和服管身份识别同样认"""
+    entry = {"personaID": str(ADMIN), "name": "Admin-B"}
+    use_client(monkeypatch, FakeClient([EMPTY_CQ], pid=ADMIN, admin_entry=entry))
+    async with maker() as db:
+        pre = await CardService(db).precheck(CREDS, GAME_ID)
+    assert pre.is_admin
+
+
+async def test_bare_auth_error_is_verified_by_reading_back(maker, monkeypatch):
+    """不带 updateServerBanner 的 ERR_AUTHORIZATION_REQUIRED：轮换真写进去了算成功，没写进去就失败"""
+    busy = details("BreakthroughLarge", OPS, soldiers=12)
+    noisy = FakeClient(
+        [busy], pid=ADMIN, update_result="ERR_AUTHORIZATION_REQUIRED", apply_on_error=True
+    )
+    use_client(monkeypatch, noisy)
+    async with maker() as db:
+        view, _ = await CardService(db).start(CREDS, GAME_ID, "anchor", user=None, ip=None)
+    job = await wait_done(maker, view.id)
+    assert job.status == "succeeded", job.events
+    assert noisy.rotation == engine.anchor_maps(OPS)
+
+    denied = FakeClient([busy], pid=ADMIN, update_result="ERR_AUTHORIZATION_REQUIRED")
+    use_client(monkeypatch, denied)
+    async with maker() as db:
+        view, token = await CardService(db).start(CREDS, GAME_ID, "anchor", user=None, ip=None)
+    job = await wait_done(maker, view.id)
+    assert job.status == "failed"
+    assert "回读设置未生效" in job.message
+
+    # 服务器停在别的轮换上、恢复同样被拒：报错，不标记已恢复
+    denied.rotation = engine.anchor_maps(OPS)
+    async with maker() as db:
+        with pytest.raises(EAApiError, match="恢复失败"):
+            await CardService(db).restore(view.id, token, None, CREDS)
+    async with maker() as db:
+        assert (await db.get(Bf1CardJob, view.id)).restored_at is None
+
+
 async def test_start_requires_owner_and_empty_server(maker, monkeypatch):
     use_client(monkeypatch, FakeClient([EMPTY_CQ], pid=123))
     async with maker() as db:
-        with pytest.raises(ForbiddenError):
+        with pytest.raises(ForbiddenError, match="服主或管理员"):
             await CardService(db).start(CREDS, GAME_ID, "card", user=None, ip=None)
 
     use_client(monkeypatch, FakeClient([details("Conquest", ["MP_Alps"], soldiers=3)]))

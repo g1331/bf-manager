@@ -1,8 +1,8 @@
 """BF1 一键卡行动：预检、任务编排、停止、恢复。
 
 判断与请求体在 card_engine（纯函数），Blaze 进服在 card_blaze。这里负责：
-- 用服主凭据（匿名填的 remid + sid，或登录用户的主绑定）登录 Gateway，核对是不是服主；
-  EA 只允许服主改服务器设置，不回落号池；
+- 用服主或管理员的凭据（匿名填的 remid + sid，或登录用户的主绑定）登录 Gateway，核对它在
+  这台服的 rspInfo 里是服主或管理员；不回落号池；
 - 每个任务一个 asyncio 任务，凭据只在任务内存里，结束即丢弃；进度、事件和设置快照落库，
   快照含服务器密码，加密存放；
 - 护栏：同一台服同时一个任务、全站最多 MAX_CONCURRENT 个，抽图最多 MAX_ATTEMPTS 轮或
@@ -48,6 +48,7 @@ from app.schemas.bf1.card import CardCredentials, CardEvent, CardJobView, CardPr
 from app.services.audit_service import AuditService
 from app.services.bf1 import card_engine as engine
 from app.services.bf1.card_blaze import CardBlazeSession
+from app.services.bf1.server_service import _to_member
 from app.services.ea_binding_service import EaBindingService
 
 MAX_ATTEMPTS = 120
@@ -106,12 +107,12 @@ def resolve_credentials(req: CardCredentials, user: User | None) -> OwnerCredent
         )
     remid, sid = req.remid.strip(), req.sid.strip()
     if not remid or not sid:
-        raise ValidationError("请填写服主账号的 remid 和 sid")
+        raise ValidationError("请填写服主或管理员账号的 remid 和 sid")
     return OwnerCredentials(remid=remid, sid=sid)
 
 
 async def _login(creds: OwnerCredentials) -> BF1GatewayClient:
-    """用服主凭据登录 Gateway；失败时关闭连接并抛错"""
+    """用服主或管理员的凭据登录 Gateway；失败时关闭连接并抛错"""
     binding_id = creds.binding_id
 
     async def _on_refresh(_pid: int, new_sid: str | None, new_session: str | None) -> None:
@@ -155,7 +156,14 @@ class _ServerInfo:
     name: str
     owner_id: int
     owner_name: str
+    admins: dict[int, str]  # 管理员 persona_id → 名字，不含服主
     state: engine.ServerState
+
+    def can_manage(self, pid: int) -> bool:
+        return pid == self.owner_id or pid in self.admins
+
+    def name_of(self, pid: int) -> str:
+        return self.owner_name if pid == self.owner_id else self.admins.get(pid, "")
 
 
 async def _server_info(client: BF1GatewayClient, game_id: int) -> _ServerInfo:
@@ -166,6 +174,12 @@ async def _server_info(client: BF1GatewayClient, game_id: int) -> _ServerInfo:
     if not info or not server.get("serverId"):
         raise ValidationError("找不到这台服，或者它不是可管理的私服")
     owner = rsp.get("owner") or {}
+    # 和服管身份识别（authz_service）同一套解析：兼容 personaId / personaID、displayName / name
+    admins = {
+        m.persona_id: m.display_name or ""
+        for m in (_to_member(a) for a in rsp.get("adminList") or [] if isinstance(a, dict))
+        if m
+    }
     return _ServerInfo(
         game_id=game_id,
         server_id=int(server["serverId"]),
@@ -173,6 +187,7 @@ async def _server_info(client: BF1GatewayClient, game_id: int) -> _ServerInfo:
         name=str(info.get("name") or server.get("name") or ""),
         owner_id=int(owner.get("personaId") or server.get("ownerId") or 0),
         owner_name=str(owner.get("displayName") or ""),
+        admins=admins,
         state=engine.parse_state(info),
     )
 
@@ -183,6 +198,24 @@ async def _snapshot(client: BF1GatewayClient, server_id: int) -> engine.Snapshot
     if not snap.settings["name"]:
         raise EAApiError(code="CARD_SNAPSHOT_FAILED", message="读取服务器设置失败：名称为空")
     return snap
+
+
+async def _apply_update(
+    client: BF1GatewayClient, server_id: int, params: dict[str, Any]
+) -> str | None:
+    """updateServer 并判定结果：成功返回 None，失败返回错误描述。
+
+    EA 对已废弃的 bannerSettings 常回 ERR_AUTHORIZATION_REQUIRED 而设置照常生效，真被拒时
+    可能回同一个错误：分不清就回读设置，轮换和名称确实是这次写入的才算成功。
+    """
+    err = engine.update_error(await client.updateServer(params))
+    if err is None or not engine.needs_verify(err):
+        return err
+    try:
+        after = await _snapshot(client, server_id)
+    except Exception as exc:
+        return f"{err}（回读设置失败：{exc}）"
+    return None if engine.update_applied(after, params) else f"{err}（回读设置未生效）"
 
 
 def _mode_name(mode: str) -> str:
@@ -212,6 +245,7 @@ class CardService:
             owner_id=srv.owner_id,
             owner_name=srv.owner_name,
             is_owner=srv.owner_id == int(client.pid),
+            is_admin=int(client.pid) in srv.admins,
             occupied=st.occupied,
             soldier_max=st.soldier_max,
             mode=st.mode,
@@ -238,9 +272,9 @@ class CardService:
         client = await _login(creds)
         try:
             srv = await _server_info(client, game_id)
-            if srv.owner_id != int(client.pid):
+            if not srv.can_manage(int(client.pid)):
                 raise ForbiddenError(
-                    f"这个账号不是服主，EA 只允许服主修改服务器（服主：{srv.owner_name or srv.owner_id}）"
+                    f"这个账号不是这台服的服主或管理员（服主：{srv.owner_name or srv.owner_id}）"
                 )
             st = srv.state
             if kind == "card" and st.occupied > 0:
@@ -263,7 +297,7 @@ class CardService:
                 server_name=srv.name[:128],
                 user_id=user.id if user else None,
                 persona_id=int(client.pid),
-                persona_name=srv.owner_name[:64],
+                persona_name=srv.name_of(int(client.pid))[:64],
                 token_hash=_hash(token),
                 client_ip=ip,
                 status="running",
@@ -342,9 +376,9 @@ class CardService:
         client = await _login(creds)
         try:
             if int(client.pid) != job.persona_id:
-                raise ForbiddenError("请使用开始任务时的同一个服主账号")
-            err = engine.update_error(
-                await client.updateServer(engine.update_params(job.server_id, snap))
+                raise ForbiddenError("请使用开始任务时的同一个账号")
+            err = await _apply_update(
+                client, job.server_id, engine.update_params(job.server_id, snap)
             )
         finally:
             await _close(client)
@@ -460,10 +494,10 @@ class _Runner:
     # ---- EA 调用
 
     async def update(self, maps: list[dict[str, str]] | None, what: str) -> None:
-        err = engine.update_error(
-            await self.client.updateServer(
-                engine.update_params(self.srv.server_id, self.snap, maps)
-            )
+        err = await _apply_update(
+            self.client,
+            self.srv.server_id,
+            engine.update_params(self.srv.server_id, self.snap, maps),
         )
         if err:
             await self.fail(f"{what}失败：{err}")
@@ -605,7 +639,7 @@ class _Runner:
         if st.occupied > 0:
             await self.log("info", f"服里已有 {st.occupied} 人，不用进服，直接锚定")
         else:
-            await self.log("info", "服里没人，先用服主账号进服（锚定要求服里有人）")
+            await self.log("info", "服里没人，先用这个账号进服（锚定要求服里有人）")
             await self.open_blaze()
             for i in range(1, ANCHOR_JOIN_TRIES + 1):
                 reason = await self.join()

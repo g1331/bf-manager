@@ -1822,7 +1822,7 @@ class RSP(_BF1GatewayBase):
 
     async def updateServer(self, params: dict) -> dict | str:
         """
-        覆盖服务器设置与地图轮换（EA 只允许服主调用）。
+        覆盖服务器设置与地图轮换（服主可用；管理员据反馈也可以，未实测）。
         :param params: 完整请求参数，由 services/bf1/card_engine.update_params 构造：
             {
                 "game": "tunguska",
@@ -1839,7 +1839,7 @@ class RSP(_BF1GatewayBase):
         :return:
             {"jsonrpc": "2.0", "id": "...", "result": "success"}
             bannerSettings 已废弃，EA 常附带回 ERR_AUTHORIZATION_REQUIRED（updateServerBanner），
-            设置本身照常生效，调用方按噪音处理。
+            设置本身照常生效；分不清时调用方回读设置确认（card_service._apply_update）。
         """
         return await self.api_call(
             {

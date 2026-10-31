@@ -152,6 +152,8 @@ class Career:
         self.calls: list[tuple[list[int], dict[str, list[str]]]] = []
         self.fail = False
         self.fail_categories: set[str] = set()
+        # (pid, 类别)：请求成功，但这一类没返回这个人
+        self.missing: set[tuple[int, str]] = set()
 
     def add(self, pid: int, **kw: int) -> None:
         v = self.vec.setdefault(pid, [100] * N)
@@ -174,14 +176,15 @@ class Career:
         if self.fail or names.keys() & self.fail_categories:
             raise RuntimeError("blaze down")
         self.calls.append((pids, names))
-        wanted = {n for ns in names.values() for n in ns}
         core = {name: i for i, (_, name) in enumerate(ROUND_STATS)}
         return {
             p: {
                 name: self.vec[p][core[name]] / SCALE.get(core[name], 1)
                 if name in core
                 else self.extra.get(p, {}).get(name, 0.0)
-                for name in wanted
+                for cat, ns in names.items()
+                if (p, cat) not in self.missing
+                for name in ns
             }
             for p in pids
             if p in self.vec
@@ -882,6 +885,17 @@ async def test_tracker_awards_failure_does_not_touch_weapons(monkeypatch) -> Non
     [closed] = await tr.tick(roster, MAP, t0 + 120, career.fetch, store)
     assert [(ln.weapons, ln.awards) for ln in closed.lines] == [({}, None), ({}, None)]
 
+    # 请求成功但一个勋带类别没返回某人：不能把缺的当成 0 存下来，这个人这轮没有勋带
+    base_a = tr.rounds[1].seats[1].base_a
+    career.use(1, r46_00=2)
+    career.vec[1][RIBBONS] += 2
+    career.missing = {(1, "player_awards4")}
+    career.add(1, k=1, s=100)
+    await tr.tick(_roster(p2=TEAM2), MAP, t0 + 180, career.fetch, store)
+    seat = tr.rounds[1].seats[1]
+    assert seat.left and seat.end is not None and seat.end_a is None
+    assert store.awards[1] == base_a and events["awards_failed"] == 3
+
 
 async def test_tracker_survives_state_from_before_the_upgrade(monkeypatch) -> None:
     events = _events(monkeypatch)
@@ -916,6 +930,30 @@ async def test_tracker_survives_state_from_before_the_upgrade(monkeypatch) -> No
     lines = {ln.pid: ln for ln in closed.lines}
     assert (lines[1].status, lines[1].delta[KILLS], lines[1].delta[MVP]) == (FINISHED, 10, 0)
     assert lines[1].awards is None and lines[1].weapons == {}
+
+
+async def test_left_player_end_from_before_the_upgrade_still_saves(test_session) -> None:
+    career, tr, store = Career(), MatchTracker(), MemoryStore()
+    for p in (1, 2, 3):
+        career.add(p)
+    t0 = int(datetime.now(UTC).timestamp()) - 600
+    await tr.tick(_roster(p1=TEAM1, p2=TEAM1, p3=TEAM2), MAP, t0, career.fetch, store)
+    # 2 打完结算就走了，离开时的终值已查到；整服的结算要下一轮才收尾
+    career.settle(winners=[1, 2], losers=[3])
+    await tr.tick(_roster(p1=TEAM1, p3=TEAM2), MAP, t0 + 60, career.fetch, store)
+    assert tr.rounds[1].seats[2].end is not None and tr.rounds[1].settle_seen_at is not None
+    # 这时停机升级：导出的基线和终值都只有 34 项
+    data = tr.dump()
+    for seat in data["rounds"]["1"]["seats"].values():
+        seat["base"] = seat["base"][:34]
+        if seat["end"] is not None:
+            seat["end"] = seat["end"][:34]
+    restored = MatchTracker()
+    restored.load(json.loads(json.dumps(data)))
+    [closed] = await restored.tick(_roster(p1=TEAM1, p3=TEAM2), MAP, t0 + 120, career.fetch, store)
+    lines = {ln.pid: ln for ln in closed.lines}
+    assert (lines[2].status, lines[2].delta[KILLS], len(lines[2].delta)) == (FINISHED, 10, N)
+    assert await round_service.save_rounds(test_session, [closed]) == 1
 
 
 async def test_round_detail_honors_and_score_parts(test_session) -> None:

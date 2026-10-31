@@ -199,6 +199,8 @@ def _line(
     delta = diff(end, seat.base)
     if delta is None or not any(delta):
         return None
+    # 升级前离开时存下的终值比现在短：补齐，后面按下标取新统计项不会越界
+    delta += [0] * (len(ROUND_STATS) - len(delta))
     rounds = delta[ROUNDS]
     status = FINISHED if rounds == 1 else LEFT_EARLY if rounds == 0 else SUSPECT
     weapons = None
@@ -735,10 +737,11 @@ class MatchTracker:
         ea_metrics.count_event("awards_read", len(todo))
         saved: dict[int, bytes] = {}
         for pid in todo:
-            if pid not in rows:
+            # 3 个类别分别请求、按人合并，缺了哪一类都不能当成 0 存下来
+            if (counts := ra.read(rows.get(pid, {}))) is None:
                 ea_metrics.count_event("awards_failed")
                 continue
-            blob = rw.pack(ra.gates(vectors[pid]), ra.read(rows[pid]))
+            blob = rw.pack(ra.gates(vectors[pid]), counts)
             if pid in audits:
                 same = rw.unpack(blob)[1] == rw.unpack(priors[pid][0])[1]
                 ea_metrics.count_event(f"awards_audit_{'ok' if same else 'miss'}")

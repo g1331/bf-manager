@@ -34,8 +34,15 @@ def gates(vec: list[int]) -> list[int]:
     return [vec[i] for i in GATES]
 
 
-def read(values: dict[str, float]) -> dict[int, int]:
-    """Blaze 返回的 {统计名: 数值} 里的非零勋带次数 {勋带号: 次数}"""
+def read(values: dict[str, float]) -> dict[int, int] | None:
+    """Blaze 返回的 {统计名: 数值} 里的非零勋带次数 {勋带号: 次数}。
+
+    3 个类别是分开请求再按人合并的，有一类没返回这个人（一个名字都不在）就给 None，
+    不能把缺的计数当成 0：存成快照后，下一次差分会出负数，或把历史次数算进以后的对局。
+    """
+    for ns in CATEGORIES.values():
+        if not any(f"r{n:02d}_00" in values for n in ns):
+            return None
     return {n: v for name, n in NUMBERS.items() if (v := round(values.get(name, 0.0)))}
 
 

@@ -112,10 +112,15 @@ def test_anchor_maps_and_check():
 
 def test_update_error_ignores_banner_noise():
     assert engine.update_error({"result": "success"}) is None
-    assert engine.update_error("ERR_AUTHORIZATION_REQUIRED") is None
     assert engine.update_error("Internal Error: updateServerBanner failed") is None
     assert engine.update_error("无权限") == "无权限"
     assert engine.is_permission_error("无权限")
+    # 不带 updateServerBanner 的授权错误分不清是不是噪音，交给调用方回读确认
+    err = engine.update_error("ERR_AUTHORIZATION_REQUIRED")
+    assert err == "ERR_AUTHORIZATION_REQUIRED"
+    assert engine.needs_verify(err)
+    assert engine.is_permission_error(err)
+    assert not engine.needs_verify("无权限")
 
 
 def test_append_events_newest_first_and_capped():

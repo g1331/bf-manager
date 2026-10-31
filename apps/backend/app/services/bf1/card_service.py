@@ -48,6 +48,7 @@ from app.schemas.bf1.card import CardCredentials, CardEvent, CardJobView, CardPr
 from app.services.audit_service import AuditService
 from app.services.bf1 import card_engine as engine
 from app.services.bf1.card_blaze import CardBlazeSession
+from app.services.bf1.server_service import _to_member
 from app.services.ea_binding_service import EaBindingService
 
 MAX_ATTEMPTS = 120
@@ -173,13 +174,12 @@ async def _server_info(client: BF1GatewayClient, game_id: int) -> _ServerInfo:
     if not info or not server.get("serverId"):
         raise ValidationError("找不到这台服，或者它不是可管理的私服")
     owner = rsp.get("owner") or {}
-    admins: dict[int, str] = {}
-    for a in rsp.get("adminList") or []:
-        if not isinstance(a, dict):
-            continue
-        with contextlib.suppress(TypeError, ValueError):
-            if pid := int(a.get("personaId") or 0):
-                admins[pid] = str(a.get("displayName") or "")
+    # 和服管身份识别（authz_service）同一套解析：兼容 personaId / personaID、displayName / name
+    admins = {
+        m.persona_id: m.display_name or ""
+        for m in (_to_member(a) for a in rsp.get("adminList") or [] if isinstance(a, dict))
+        if m
+    }
     return _ServerInfo(
         game_id=game_id,
         server_id=int(server["serverId"]),
@@ -198,6 +198,24 @@ async def _snapshot(client: BF1GatewayClient, server_id: int) -> engine.Snapshot
     if not snap.settings["name"]:
         raise EAApiError(code="CARD_SNAPSHOT_FAILED", message="读取服务器设置失败：名称为空")
     return snap
+
+
+async def _apply_update(
+    client: BF1GatewayClient, server_id: int, params: dict[str, Any]
+) -> str | None:
+    """updateServer 并判定结果：成功返回 None，失败返回错误描述。
+
+    EA 对已废弃的 bannerSettings 常回 ERR_AUTHORIZATION_REQUIRED 而设置照常生效，真被拒时
+    可能回同一个错误：分不清就回读设置，轮换和名称确实是这次写入的才算成功。
+    """
+    err = engine.update_error(await client.updateServer(params))
+    if err is None or not engine.needs_verify(err):
+        return err
+    try:
+        after = await _snapshot(client, server_id)
+    except Exception as exc:
+        return f"{err}（回读设置失败：{exc}）"
+    return None if engine.update_applied(after, params) else f"{err}（回读设置未生效）"
 
 
 def _mode_name(mode: str) -> str:
@@ -359,8 +377,8 @@ class CardService:
         try:
             if int(client.pid) != job.persona_id:
                 raise ForbiddenError("请使用开始任务时的同一个账号")
-            err = engine.update_error(
-                await client.updateServer(engine.update_params(job.server_id, snap))
+            err = await _apply_update(
+                client, job.server_id, engine.update_params(job.server_id, snap)
             )
         finally:
             await _close(client)
@@ -476,10 +494,10 @@ class _Runner:
     # ---- EA 调用
 
     async def update(self, maps: list[dict[str, str]] | None, what: str) -> None:
-        err = engine.update_error(
-            await self.client.updateServer(
-                engine.update_params(self.srv.server_id, self.snap, maps)
-            )
+        err = await _apply_update(
+            self.client,
+            self.srv.server_id,
+            engine.update_params(self.srv.server_id, self.snap, maps),
         )
         if err:
             await self.fail(f"{what}失败：{err}")

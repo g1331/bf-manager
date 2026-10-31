@@ -189,18 +189,42 @@ def update_params(
     }
 
 
+_AUTH_REQUIRED = "ERR_AUTHORIZATION_REQUIRED"
+
+
 def update_error(res: Any) -> str | None:
-    """updateServer 的返回值 → 错误描述；成功或只是 banner 噪音时返回 None"""
+    """updateServer 的返回值 → 错误描述；成功或明确来自 updateServerBanner 的噪音时返回 None。
+
+    不带 updateServerBanner 的 ERR_AUTHORIZATION_REQUIRED 照样返回，由调用方回读设置判断
+    是 banner 噪音还是写入真被拒（needs_verify）。
+    """
     if isinstance(res, dict):
         return None
     text = str(res)
-    if "updateServerBanner" in text or "ERR_AUTHORIZATION_REQUIRED" in text:
+    if "updateServerBanner" in text:
         return None
     return text[:200] or "未知错误"
 
 
+def needs_verify(err: str) -> bool:
+    """只有 ERR_AUTHORIZATION_REQUIRED、分不清是 banner 噪音还是写入被拒"""
+    return _AUTH_REQUIRED in err
+
+
+def update_applied(after: Snapshot, params: dict[str, Any]) -> bool:
+    """回读的设置里，轮换和服务器名是否就是这次写入的"""
+
+    def pairs(maps: list[dict[str, Any]]) -> list[tuple[str, str]]:
+        return [(str(m.get("gameMode") or ""), str(m.get("mapName") or "")) for m in maps]
+
+    return (
+        pairs(after.rotation.get("maps") or []) == pairs(params["mapRotation"]["maps"])
+        and after.settings.get("name") == params["serverSettings"]["name"]
+    )
+
+
 def is_permission_error(text: str) -> bool:
-    return "无权限" in text or "-35160" in text
+    return "无权限" in text or "-35160" in text or _AUTH_REQUIRED in text
 
 
 def append_events(

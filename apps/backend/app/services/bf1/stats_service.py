@@ -8,11 +8,21 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.errors import EAApiError
+from app.core.cache import get_cache
+from app.domain.games.bf1 import round_awards
 from app.domain.games.bf1.blaze_catalog import catalog, stat_names
-from app.domain.games.bf1.blaze_stats import BlazeCareer, career_stat_names, parse_career
+from app.domain.games.bf1.blaze_stats import BlazeCareer
+from app.domain.games.bf1.career_profile import BlazeProfile, parse_profile, profile_stat_names
 from app.domain.games.bf1.maps import normalize_emblem_url, normalize_map_image_url
 from app.domain.games.bf1.skins import SkinInfo, lookup_skin
 from app.schemas.bf1.stats import (
+    CareerCombat,
+    CareerHonors,
+    CareerMisc,
+    CareerMode,
+    CareerRibbon,
+    CareerTeamwork,
+    EliteKitStat,
     OnlineStatus,
     PlayerPlatoon,
     PlayerStatsDetail,
@@ -29,6 +39,10 @@ from app.services.bf1.blaze_service import fetch_stats
 from app.services.bf1.gateway_factory import get_bf1_client
 
 logger = logging.getLogger(__name__)
+
+# 战绩页的完整生涯一次要 5 个 Blaze 请求，同一个人 10 分钟内重复打开直接用缓存
+CAREER_CACHE_KEY = "bf1:career:{}"
+CAREER_CACHE_TTL = 600
 
 
 def _build_summary(persona_id: int, career: BlazeCareer) -> PlayerStatsSummary:
@@ -122,6 +136,57 @@ def _build_soldiers(career: BlazeCareer) -> list[SoldierClassStat]:
         for kit, k in career.kits.items()
         if k.seconds or k.kills
     ]
+
+
+def _ratio(a: int, b: int) -> float | None:
+    return a / b if b else None
+
+
+def _build_detail(persona_id: int, p: BlazeProfile, raw: dict[str, Any]) -> PlayerStatsDetail:
+    """完整生涯 → 战绩页数据。纯函数，便于单测。"""
+    c = p.career
+    combat = CareerCombat(
+        **p.combat,
+        accuracy=_ratio(p.combat["hits"], p.combat["shots"]),
+        headshot_rate=_ratio(p.combat["headshots"], c.kills),
+    )
+    return PlayerStatsDetail(
+        summary=_build_summary(persona_id, c),
+        soldiers=_build_soldiers(c),
+        honors=CareerHonors(**p.honors),
+        combat=combat,
+        teamwork=CareerTeamwork(**p.teamwork),
+        # 一局都没打过的模式不列
+        modes=[
+            CareerMode(
+                mode=m.mode,
+                wins=m.wins,
+                losses=m.losses,
+                win_rate=_ratio(m.wins, m.wins + m.losses),
+                score=m.score,
+            )
+            for m in p.modes
+            if m.wins or m.losses or m.score
+        ],
+        elite_kits=[
+            EliteKitStat(kit=k.kit, kills=k.kills, time_seconds=round(k.seconds))
+            for k in p.elite_kits
+            if k.seconds or k.kills
+        ],
+        ribbons=None
+        if p.ribbons is None
+        else [
+            CareerRibbon(code=round_awards.code(n), count=p.ribbons.get(n, 0))
+            for n in round_awards.NUMBERS.values()
+        ],
+        misc=CareerMisc(
+            rounds_completed=p.rounds_completed,
+            rounds_played=p.rounds_played,
+            completion_rate=_ratio(p.rounds_completed, p.rounds_played),
+            spectator_seconds=round(p.spectator_seconds),
+        ),
+        raw=raw,
+    )
 
 
 # 载具皮肤在 Loadout presets 中按 kit 编号存放，分类级 sortOrder → kit 编号映射
@@ -310,13 +375,22 @@ class BF1StatsService:
         self.db = db
 
     async def get_detailed_stats(self, persona_id: int) -> PlayerStatsDetail:
-        values = await _fetch_one(self.db, persona_id, career_stat_names())
-        career = parse_career(values)
-        return PlayerStatsDetail(
-            summary=_build_summary(persona_id, career),
-            soldiers=_build_soldiers(career),
-            raw=values,
-        )
+        key = CAREER_CACHE_KEY.format(persona_id)
+        try:
+            cache = await get_cache()
+            if (hit := await cache.get(key)) is not None:
+                return PlayerStatsDetail.model_validate(hit)
+        except Exception as exc:
+            logger.warning("BF1 生涯缓存读取失败 persona_id=%s: %s", persona_id, exc)
+            cache = None
+        values = await _fetch_one(self.db, persona_id, profile_stat_names())
+        detail = _build_detail(persona_id, parse_profile(values), values)
+        if cache is not None:
+            try:
+                await cache.set(key, detail.model_dump(mode="json"), ttl=CAREER_CACHE_TTL)
+            except Exception as exc:
+                logger.warning("BF1 生涯缓存写入失败 persona_id=%s: %s", persona_id, exc)
+        return detail
 
     async def get_online_status(self, persona_id: int) -> OnlineStatus:
         async with get_bf1_client(self.db) as client:

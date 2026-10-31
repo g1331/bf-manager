@@ -9,9 +9,11 @@ from __future__ import annotations
 import pytest
 from app.domain.games.bf1 import blaze_catalog
 from app.domain.games.bf1.blaze_stats import career_stat_names, parse_career
+from app.domain.games.bf1.career_profile import parse_profile, profile_stat_names
 from app.domain.games.bf1.maps import normalize_emblem_url
 from app.services.bf1 import stats_service
 from app.services.bf1.stats_service import (
+    _build_detail,
     _build_platoon,
     _build_soldiers,
     _build_summary,
@@ -62,6 +64,125 @@ def test_career_stat_names_cover_every_parsed_stat() -> None:
     # parse_career 读到的统计名都必须在请求名单里，否则线上会一直按 0 处理
     names = {n for ns in career_stat_names().values() for n in ns}
     assert set(_make_values()) <= names
+
+
+def _profile_values() -> dict[str, float]:
+    """战绩页完整生涯：在 _make_values 之外加上荣誉、战斗、模式、精英兵、勋带"""
+    return {
+        **_make_values(),
+        "c_fip__psx_g": 12.0,
+        "c___bc_g": 85.0,
+        "c_aA__ga_g": 9_000.0,
+        "c_mA__ga_g": 40.0,
+        "c___hsh_g": 7_000.0,
+        "c___sfw_g": 400_000.0,
+        "c___shw_g": 100_000.0,
+        "c___nk_ghva": 9.0,
+        "c___rs_g": 300.0,
+        "c___ccp_g": 2_000.0,
+        "c_mwin_mgc_roo_g": 600.0,
+        "c_mlos_mgc_roo_g": 400.0,
+        "sc_conquest": 7_000_000.0,
+        "c_mwin_mgb_roo_g": 300.0,
+        "c_mlos_mgb_roo_g": 100.0,
+        "sc_operations": 4_000_000.0,
+        "c_st__ks_g": 150.0,
+        "c_st__sa_g": 9_000.0,
+        "c_in__sa_g": 600.0,
+        "c___roo_g": 1_520.0,
+        "c___ro_g": 1_900.0,
+        "c___sas_g": 3_600.0,
+        "r01_00": 30.0,
+        "r33_00": 120.0,
+        "r40_00": 0.0,
+        "r46_00": 2.0,
+    }
+
+
+def test_profile_stat_names_cover_every_parsed_stat() -> None:
+    names = {n for ns in profile_stat_names().values() for n in ns}
+    assert set(_profile_values()) <= names
+    # 计分板批量查询的名单不能跟着变大
+    assert len({n for ns in career_stat_names().values() for n in ns}) < 40
+    assert "player_statcategory3" not in profile_stat_names()  # 没核对过的类别不读
+
+
+def test_build_detail_profile_sections() -> None:
+    values = _profile_values()
+    d = _build_detail(7, parse_profile(values), values)
+    assert d.summary.kills == 35_000
+    assert d.honors is not None and (d.honors.mvp, d.honors.ace_squad, d.honors.medals) == (
+        12,
+        85,
+        40,
+    )
+    assert d.combat is not None
+    assert (d.combat.accuracy, d.combat.headshot_rate) == (0.25, 0.2)
+    assert d.combat.max_nemesis_streak == 9
+    assert d.teamwork is not None and (d.teamwork.resupplies, d.teamwork.flag_captures) == (
+        300,
+        2_000,
+    )
+    # 没打过的模式不列；空中突袭没有得分
+    assert [(m.mode, m.wins, m.losses, m.win_rate, m.score) for m in d.modes] == [
+        ("conquest", 600, 400, 0.6, 7_000_000),
+        ("operations", 300, 100, 0.75, 4_000_000),
+    ]
+    # 渗透者击杀还没读，为 None
+    assert [(k.kit, k.kills, k.time_seconds) for k in d.elite_kits] == [
+        ("sentry", 150, 9_000),
+        ("infiltrator", None, 600),
+    ]
+    assert d.ribbons is not None and len(d.ribbons) == 47
+    counts = {r.code: r.count for r in d.ribbons}
+    assert (counts["r01"], counts["r33"], counts["r40"], counts["r46"], counts["r02"]) == (
+        30,
+        120,
+        0,
+        2,
+        0,
+    )
+    assert d.misc is not None
+    assert (d.misc.completion_rate, d.misc.spectator_seconds) == (1_520 / 1_900, 3_600)
+
+
+def test_build_detail_ribbons_none_when_a_category_is_missing() -> None:
+    # 勋带 3 个类别分开请求，缺了一类就不能当成全是 0
+    values = {k: v for k, v in _profile_values().items() if k != "r46_00"}
+    d = _build_detail(7, parse_profile(values), values)
+    assert d.ribbons is None
+    empty = _build_detail(7, parse_profile({}), {})
+    assert (empty.modes, empty.elite_kits, empty.ribbons) == ([], [], None)
+    assert empty.combat is not None and empty.combat.accuracy is None
+
+
+async def test_get_detailed_stats_uses_cache(monkeypatch) -> None:
+    calls: list[int] = []
+
+    async def fake_fetch(db, pids, names):
+        calls.append(len(names))
+        return {pids[0]: _profile_values()}
+
+    store: dict[str, object] = {}
+
+    class FakeCache:
+        async def get(self, key):
+            return store.get(key)
+
+        async def set(self, key, value, ttl=None):
+            store[key] = value
+
+    async def fake_get_cache():
+        return FakeCache()
+
+    monkeypatch.setattr(stats_service, "fetch_stats", fake_fetch)
+    monkeypatch.setattr(stats_service, "get_cache", fake_get_cache)
+    svc = stats_service.BF1StatsService(db=None)  # type: ignore[arg-type]
+    first = await svc.get_detailed_stats(9)
+    second = await svc.get_detailed_stats(9)
+    assert calls == [5]  # 一次查询 5 个类别，第二次走缓存
+    assert second == first
+    assert second.soldiers and second.soldiers[0].class_name == first.soldiers[0].class_name
 
 
 def test_parse_career_rounds_int_fields_and_sums_time() -> None:

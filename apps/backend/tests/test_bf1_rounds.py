@@ -992,6 +992,48 @@ async def test_round_detail_honors_and_score_parts(test_session) -> None:
     )
     [star] = pa.stars
     assert (star.kind, star.name, star.stars) == ("weapon", rw_entry(mg)["name"], 24)
+    assert pa.career is None  # 没有快照
+
+    # 快照晚于这一局结束：先减掉这一局，得到这一局之前的生涯
+    before = [0] * N
+    before[KILLS], before[DEATHS], before[SCORE], before[KIT_BASE + 2] = 1000, 500, 600000, 36000
+    before[SCORE_PARTS["bonus"]], before[SCORE_PARTS["award"]] = 100000, 50000
+    before[COMBAT["hits"]], before[COMBAT["shots"]], before[COMBAT["headshots"]] = 3000, 12000, 150
+    before[SKILL], before[RANK], before[RECORDS["longest_headshot"]] = 3000, 87, 300
+    snap_vec = [x + y for x, y in zip(before, d, strict=True)]
+    mg_slots = {m: mg - rw.KILLS_METRIC + rw.METRICS.index(m) for m in rw.METRICS}
+    blob = rw.pack(
+        [],
+        {
+            mg_slots["kills"]: 230,
+            mg_slots["seconds"]: 6000,
+            mg_slots["hits"]: 400,
+            mg_slots["shots"]: 1600,
+        },
+    )
+    await round_service.SnapshotStore(test_session).save({a: (snap_vec, blob, now + 60)})
+    pa = {p.persona_id: p for p in (await round_service.get_round(test_session, rid)).players}[a]
+    assert pa.career is not None
+    assert (pa.career.kd, pa.career.kpm, pa.career.spm) == (2.0, 1.6667, 750)
+    assert (pa.career.accuracy, pa.career.headshot_rate) == (0.25, 0.15)
+    # 加上这一局之后：1030 杀 / 505 死，37200 秒，计分板口径得分 450000 + 5500
+    after = pa.career_after
+    assert after is not None
+    assert (after.kd, after.kpm, after.spm) == (
+        round(1030 / 505, 4),
+        round(1030 * 60 / 37200, 4),
+        round(455500 * 60 / 37200, 2),
+    )
+    assert after.headshot_rate == round(157 / 1030, 6)
+    [w] = pa.weapons or []
+    assert (w.career_accuracy, w.career_kpm, w.career_headshot_rate) == (0.25, 2.0, 0.0)
+    # 升级前存的短快照（开局前读的）：没有的项给空
+    await round_service.SnapshotStore(test_session).save({a: (snap_vec[:34], blob, now - 3600)})
+    pa = {p.persona_id: p for p in (await round_service.get_round(test_session, rid)).players}[a]
+    assert pa.career is not None
+    assert (pa.career.kd, pa.career.spm, pa.career.accuracy) == (round(1030 / 505, 4), None, None)
+    assert pa.career_after is not None and pa.career_after.spm is None
+
     # 没有新统计的条目（上线前的）维持原口径
     assert (pb.battle_score, pb.score_parts, pb.ribbons, pb.mvp, pb.spm) == (
         None,
@@ -1000,3 +1042,60 @@ async def test_round_detail_honors_and_score_parts(test_session) -> None:
         False,
         15,
     )
+
+
+def _snap_entry(status: int, *, extended: bool) -> tuple[Entry, list[int]]:
+    """这一局 20 杀 5 死、得分 6000、在场 600 秒；局前生涯 100 杀 50 死、得分 60000、6000 秒"""
+    d = _delta(20, win=None, seconds=600)
+    d[SCORE] = 6000
+    if extended:
+        d[COMBAT["shots"]], d[COMBAT["hits"]], d[COMBAT["headshots"]] = 200, 50, 4
+        d[SCORE_PARTS["general"]] = 6000
+    before = [0] * N
+    before[KILLS], before[DEATHS], before[SCORE], before[KIT_BASE + 2] = 100, 50, 60000, 6000
+    before[COMBAT["shots"]], before[COMBAT["hits"]], before[COMBAT["headshots"]] = 1000, 200, 20
+    stats = {i: v for i, v in enumerate(d) if v}
+    return Entry(1, 1, status, stats, None, None, {}), before
+
+
+def test_round_career_snapshot_timing() -> None:
+    blob = rw.pack([], {})
+    span = (1000, 2000)
+    e, before = _snap_entry(FINISHED, extended=True)
+    end = [x + e.stats.get(i, 0) for i, x in enumerate(before)]
+    # 结束后读的快照含这一局，先减掉
+    p = round_service._player(1, e, None, (end, blob, 2100), span)
+    assert p.career is not None and p.career_after is not None
+    assert (p.career.kd, p.career.accuracy, p.career_after.kd) == (2.0, 0.2, round(120 / 55, 4))
+    # 开局前读的不含
+    p = round_service._player(1, e, None, (before, blob, 900), span)
+    assert p.career is not None and (p.career.kd, p.career.accuracy) == (2.0, 0.2)
+    # 局中读的分不清是基线、退出时的终值还是前半段的终值（终值不一定存下了快照），不比
+    for status in (FINISHED, LEFT_EARLY, SUSPECT):
+        e, before = _snap_entry(status, extended=True)
+        for snap in (before, [x + e.stats.get(i, 0) for i, x in enumerate(before)]):
+            p = round_service._player(1, e, None, (snap, blob, 1500), span)
+            assert (p.career, p.career_after) == (None, None)
+
+
+def test_round_career_without_extended_stats() -> None:
+    blob = rw.pack([], {})
+    e, before = _snap_entry(FINISHED, extended=False)
+    end = [x + e.stats.get(i, 0) for i, x in enumerate(before)]
+    end[SCORE_PARTS["bonus"]] = 9000  # 新版快照里的奖励，这一局有多少不知道
+    p = round_service._player(1, e, None, (end, blob, 2100), (1000, 2000))
+    # 旧条目没有战斗、目标统计：给空，不是「全是 0」
+    assert (p.combat, p.objective, p.battle_score) == (None, None, None)
+    assert p.career is not None and p.career_after is not None
+    # 击杀、死亡照常；命中、爆头、SPM 要减掉 / 加上这一局未知的增量，给空
+    assert p.career.kd == 2.0
+    assert (p.career.accuracy, p.career.headshot_rate, p.career.spm) == (None, None, None)
+    assert (p.career_after.accuracy, p.career_after.headshot_rate, p.career_after.spm) == (
+        None,
+        None,
+        None,
+    )
+    # 快照在这一局之前：之前的值完整，之后的未知项给空
+    p = round_service._player(1, e, None, (before, blob, 900), (1000, 2000))
+    assert p.career is not None and p.career_after is not None
+    assert (p.career.accuracy, p.career_after.accuracy) == (0.2, None)

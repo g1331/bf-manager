@@ -14,6 +14,7 @@ import {
   roundDuration,
   roundHref,
 } from "@/components/bf1/rounds/RoundDetailView";
+import { HonorBadges, boardScore } from "@/components/bf1/rounds/RoundHonors";
 import { mainWeapon } from "@/components/bf1/rounds/RoundPlayerBreakdown";
 import { RowsSkeleton } from "@/components/layout/PageSkeleton";
 import { bf1Api, type PlayerRound } from "@/lib/api/bf1";
@@ -212,13 +213,16 @@ function RoundCard({
       </span>
     );
   const title = (
-    <div className="truncate text-[15px] font-bold text-white">
-      {mapName}
-      {r.mode_display_name ? (
-        <span className="ml-1.5 text-[11px] font-medium text-amber-300/85">
-          {r.mode_display_name}
-        </span>
-      ) : null}
+    <div className="flex min-w-0 items-center gap-1.5">
+      <div className="min-w-0 truncate text-[15px] font-bold text-white">
+        {mapName}
+        {r.mode_display_name ? (
+          <span className="ml-1.5 text-[11px] font-medium text-amber-300/85">
+            {r.mode_display_name}
+          </span>
+        ) : null}
+      </div>
+      <HonorBadges player={p} />
     </div>
   );
   const result = (
@@ -251,7 +255,7 @@ function RoundCard({
   const stats = (
     <>
       <Stat label="击杀 / 死亡" value={`${p.kills} / ${p.deaths}`} />
-      <Stat label="得分" value={p.score.toLocaleString("en-US")} />
+      <Stat label="得分" value={boardScore(p).toLocaleString("en-US")} />
       <Stat label="SPM" value={p.spm ?? "—"} />
       <Stat label="K/D" value={p.kd != null ? p.kd.toFixed(2) : "—"} />
     </>

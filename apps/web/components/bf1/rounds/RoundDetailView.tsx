@@ -7,6 +7,7 @@ import { ChevronDown } from "lucide-react";
 import { bf1Api, type RoundDetail, type RoundPlayer, type RoundSummary } from "@/lib/api/bf1";
 import { classLabel } from "@/components/bf1/player-detail/format";
 import { RoundPlayerBreakdown } from "@/components/bf1/rounds/RoundPlayerBreakdown";
+import { HonorBadges, boardScore } from "@/components/bf1/rounds/RoundHonors";
 import { FACTION_SLUG } from "@/lib/bf1/factions";
 import { cn } from "@/lib/utils";
 import { TipLine } from "@/components/bf1/codex/TipLine";
@@ -117,7 +118,7 @@ export function RoundDetailView({
   }
   const r = q.data;
   const byTeam = (t: Team) =>
-    r.players.filter((p) => p.team === t).sort((a, b) => b.score - a.score);
+    r.players.filter((p) => p.team === t).sort((a, b) => boardScore(b) - boardScore(a));
   const teams = [byTeam(1), byTeam(2)] as const;
 
   return (
@@ -139,8 +140,8 @@ export function RoundDetailView({
         ))}
       </div>
       <p className="mt-4 text-[11px] leading-relaxed text-white/35">
-        {"战绩是进服前与结算（或退出）后的生涯差值，得分含结算奖励。名字前是在场最久的兵种，" +
-          "点一行可看这一局的武器载具和其他数据。中途退出的人没有胜负，「存疑」表示增量里可能混进了别的局。"}
+        {"战绩是进服前与结算（或退出）后的生涯差值，得分不含勋带和结算奖励。点一行看明细；" +
+          "中途退出的人没有胜负，「存疑」表示可能混进了别的局。"}
       </p>
     </section>
   );
@@ -156,6 +157,7 @@ function RoundBanner({
   teams: readonly [RoundPlayer[], RoundPlayer[]];
   game: string;
 }) {
+  const mvp = r.mvp_pid != null ? r.players.find((p) => p.persona_id === r.mvp_pid) : undefined;
   return (
     <div className="relative overflow-hidden border border-white/10 [clip-path:polygon(0_0,100%_0,100%_calc(100%-14px),calc(100%-14px)_100%,0_100%)]">
       {r.map_image_url ? (
@@ -187,6 +189,14 @@ function RoundBanner({
             </Link>
           ) : null}
           <div className="mt-2 flex flex-wrap justify-center gap-1.5 text-[11px] empty:hidden">
+            {mvp ? (
+              <span className="flex max-w-full items-center gap-1.5 rounded-sm bg-amber-400/15 py-0.5 pr-2 pl-1 text-amber-200">
+                <span className="rounded-sm bg-amber-400 px-1 text-[9.5px] leading-[1.6] font-extrabold text-black">
+                  MVP
+                </span>
+                <span className="truncate">{mvp.name ?? mvp.persona_id}</span>
+              </span>
+            ) : null}
             {!r.settled ? (
               <span className="rounded-sm bg-white/10 px-2 py-0.5 text-white/60">未打完</span>
             ) : null}
@@ -270,7 +280,11 @@ export function ResultTag({ won, className }: { won: boolean | null; className?:
 
 function teamTotals(players: RoundPlayer[]) {
   return players.reduce(
-    (s, p) => ({ kills: s.kills + p.kills, deaths: s.deaths + p.deaths, score: s.score + p.score }),
+    (s, p) => ({
+      kills: s.kills + p.kills,
+      deaths: s.deaths + p.deaths,
+      score: s.score + boardScore(p),
+    }),
     { kills: 0, deaths: 0, score: 0 },
   );
 }
@@ -483,6 +497,7 @@ function PlayerRow({
                 {tag}
               </span>
             ) : null}
+            <HonorBadges player={p} />
             <button
               type="button"
               aria-expanded={open}
@@ -503,7 +518,7 @@ function PlayerRow({
           {p.kd != null ? p.kd.toFixed(2) : "—"}
         </td>
         <td className="py-[7px] pl-4 text-right font-semibold text-white">
-          {p.score.toLocaleString("en-US")}
+          {boardScore(p).toLocaleString("en-US")}
         </td>
       </tr>
       {open ? (
@@ -515,7 +530,7 @@ function PlayerRow({
         >
           <td colSpan={6} className="p-0">
             <div className="sticky left-0 w-[100cqw] pl-7 lg:static lg:w-auto">
-              <RoundPlayerBreakdown player={p} />
+              <RoundPlayerBreakdown player={p} game={game} />
             </div>
           </td>
         </tr>

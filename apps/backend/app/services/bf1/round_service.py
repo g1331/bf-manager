@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from collections.abc import Callable
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
@@ -57,6 +58,8 @@ from app.domain.games.bf1.round_stats import (
     RECORDS,
     REPAIRS,
     REVIVES,
+    SC_AWARD,
+    SC_BONUS,
     SCORE,
     SCORE_PARTS,
     SKILL,
@@ -75,6 +78,7 @@ from app.models.bf1.rounds import Bf1CareerSnapshot, Bf1PlayerRoundDay, Bf1Round
 from app.schemas.bf1.rounds import (
     PlayerRound,
     PlayerRoundPage,
+    RoundCareer,
     RoundDetail,
     RoundPage,
     RoundPlayer,
@@ -352,17 +356,32 @@ def _item(key: str) -> tuple[str, dict[str, Any]]:
     return kind, catalog(name).get(code) or {}
 
 
-def _weapons(slots: dict[int, int] | None) -> list[RoundWeapon] | None:
-    """武器载具槽位增量 → 按条目合并的列表，击杀多的在前、其次时长。"""
-    if slots is None:
-        return None
-    by_item: dict[str, dict[str, int]] = {}
+def _by_item(slots: dict[int, int]) -> dict[str, dict[str, int]]:
+    """槽位 → {条目键: {指标: 值}}"""
+    out: dict[str, dict[str, int]] = {}
     for slot, v in slots.items():
         key, metric = rw.slot_item(slot)
-        by_item.setdefault(key, {})[metric] = v
+        out.setdefault(key, {})[metric] = v
+    return out
+
+
+def _ratio(a: int, b: int, digits: int = 4) -> float | None:
+    return round(a / b, digits) if b > 0 else None
+
+
+def _weapons(
+    slots: dict[int, int] | None, career: dict[str, dict[str, int]] | None = None
+) -> list[RoundWeapon] | None:
+    """武器载具槽位增量 → 按条目合并的列表，击杀多的在前、其次时长。
+
+    career 是这一局之前各条目的生涯值（同样按条目合并），给了就带上生涯命中率、爆头率、KPM。
+    """
+    if slots is None:
+        return None
     out: list[RoundWeapon] = []
-    for key, metrics in by_item.items():
+    for key, metrics in _by_item(slots).items():
         kind, entry = _item(key)
+        c = (career or {}).get(key, {})
         out.append(
             RoundWeapon(
                 kind=kind,  # type: ignore[arg-type]
@@ -370,6 +389,9 @@ def _weapons(slots: dict[int, int] | None) -> list[RoundWeapon] | None:
                 category=entry.get("category"),
                 image=normalize_map_image_url(entry.get("image")),
                 shared_kills=key in rw.SHARED_KILLS,
+                career_accuracy=_ratio(c.get("hits", 0), c.get("shots", 0)),
+                career_headshot_rate=_ratio(c.get("headshots", 0), c.get("kills", 0)),
+                career_kpm=_ratio(c.get("kills", 0) * 60, c.get("seconds", 0), 2),
                 **metrics,
             )
         )
@@ -406,8 +428,97 @@ def _score_parts(stats: dict[int, int], score: int) -> RoundScoreParts | None:
     )
 
 
-def _player(pid: int, e: Entry, name: str | None) -> RoundPlayer:
+_KIT_SECONDS = (*(KIT_BASE + 3 * i + 2 for i in range(len(KITS))), ELITE)
+# 2026-10-31 之前的条目只有前 34 项（到 ELITE 为止），之后追加的项都在这之后
+_EXTENDED_FROM = ELITE + 1
+
+
+def _extended(stats: dict[int, int]) -> bool:
+    """条目带不带 2026-10-31 追加的统计。稀疏编码不存 0，所以看有没有一项非零：
+    真打过的人总有开火、得分分项之类的值；跨升级的那几局追加项全是 0，同样算没有"""
+    return any(i >= _EXTENDED_FROM for i in stats)
+
+
+def _levels(v: Callable[[int], int | None]) -> RoundCareer:
+    """按生涯累计值算出 KD、KPM、SPM、命中率、爆头率；多留几位小数，前端要算一局带来的细微变化"""
+    kills, deaths, score = v(KILLS) or 0, v(DEATHS) or 0, v(SCORE) or 0
+    seconds = sum(v(i) or 0 for i in _KIT_SECONDS)
+    bonus, award = v(SC_BONUS), v(SC_AWARD)
+    hits, shots, heads = (v(COMBAT[k]) for k in ("hits", "shots", "headshots"))
+    return RoundCareer(
+        kd=round(kills / max(deaths, 1), 4),
+        kpm=_ratio(kills * 60, seconds, 4),
+        spm=_ratio((score - bonus - award) * 60, seconds, 2)
+        if bonus is not None and award is not None
+        else None,
+        accuracy=_ratio(hits, shots, 6) if hits is not None and shots is not None else None,
+        headshot_rate=_ratio(heads, kills, 6) if heads is not None else None,
+    )
+
+
+def _career(
+    e: Entry, snap: Snapshot, started_at: int, ended_at: int
+) -> tuple[RoundCareer, RoundCareer, dict[str, dict[str, int]]] | None:
+    """快照 → 这一局之前和加上这一局之后的生涯水平，以及这一局用过的各武器载具的（之前的）生涯值。
+
+    快照是这个人最近一次存下的生涯，先判断含不含这一局：结束之后读的含，先减掉；开局之前读的不含。
+    局中读的不比：可能是进服基线，也可能是退出时的终值，而跟踪器读到终值时不一定存下了快照
+    （武器那段读失败、超过配额都会跳过），中途退出又回来的还可能是前半段的终值，分不清。
+    之后几局的影响相对生涯总量可以忽略。「之后」按之前加这一局的增量算，
+    不直接用快照，免得混进之后的对局。
+
+    缺的项给空：2026-11 前存的快照核心向量较短；这一局的条目没有追加项（命中、爆头、得分分项）时，
+    这一局的这些增量未知，需要减掉或加上它们的值也给空，不能当 0。
+    """
+    vec, blob, at = snap
+    if at >= ended_at:
+        after = True
+    elif at <= started_at:
+        after = False
+    else:
+        return None
+    known = _extended(e.stats)
+
+    def before(i: int) -> int | None:
+        if i >= len(vec):
+            return None
+        if not after:
+            return vec[i]
+        if i >= _EXTENDED_FROM and not known:
+            return None
+        return vec[i] - e.stats.get(i, 0)
+
+    def with_round(i: int) -> int | None:
+        b = before(i)
+        if b is None or (i >= _EXTENDED_FROM and not known):
+            return None
+        return b + e.stats.get(i, 0)
+
+    weapons: dict[str, dict[str, int]] = {}
+    if e.weapons:
+        _, values = rw.unpack(blob)
+        used = _by_item(e.weapons)
+        items = {slot // len(rw.METRICS) for slot in e.weapons}
+        mine = {slot: n for slot, n in values.items() if slot // len(rw.METRICS) in items}
+        for key, metrics in _by_item(mine).items():
+            weapons[key] = {
+                m: n - (used[key].get(m, 0) if after else 0) for m, n in metrics.items()
+            }
+    return _levels(before), _levels(with_round), weapons
+
+
+def _player(
+    pid: int,
+    e: Entry,
+    name: str | None,
+    snap: Snapshot | None = None,
+    span: tuple[int, int] = (0, 0),
+) -> RoundPlayer:
+    """span 是这一局的 (开始, 结束)，有快照时用来判断快照含不含这一局"""
     team, status, stats = e.team, e.status, e.stats
+    compared = _career(e, snap, *span) if snap is not None else None
+    career, career_after, career_w = compared or (None, None, None)
+    extended = _extended(stats)
     kit_seconds = {kit: stats.get(KIT_BASE + 3 * i + 2, 0) for i, kit in enumerate(KITS)} | {
         "elite": stats.get(ELITE, 0)
     }
@@ -440,7 +551,7 @@ def _player(pid: int, e: Entry, name: str | None) -> RoundPlayer:
         kd=round(kills / max(deaths, 1), 2),  # 没死过时 KD 记为击杀数
         kpm=round(kills / seconds * 60, 2) if seconds else None,
         spm=round((score if battle is None else battle) / seconds * 60) if seconds else None,
-        weapons=_weapons(e.weapons),
+        weapons=_weapons(e.weapons, career_w),
         battle_score=battle,
         score_parts=parts,
         mvp=finished and stats.get(MVP, 0) > 0,
@@ -452,13 +563,17 @@ def _player(pid: int, e: Entry, name: str | None) -> RoundPlayer:
             for n, c in sorted(e.awards.items(), key=lambda x: (-x[1], x[0]))
         ],
         medals=stats.get(MEDALS, 0),
-        objective={k: v for k, i in OBJECTIVE.items() if (v := stats.get(i, 0))},
-        combat={k: v for k, i in COMBAT.items() if (v := stats.get(i, 0))},
+        objective={k: v for k, i in OBJECTIVE.items() if (v := stats.get(i, 0))}
+        if extended
+        else None,
+        combat={k: v for k, i in COMBAT.items() if (v := stats.get(i, 0))} if extended else None,
         rank_to=stats.get(RANK) or None,
         kit_ranks=[kit for kit, i in KIT_RANKS.items() if stats.get(i)],
         skill_delta=stats[SKILL] / 10 if stats.get(SKILL) else None,
         records={k: v for k, i in RECORDS.items() if (v := stats.get(i, 0))},
         stars=_stars(e.stars),
+        career=career,
+        career_after=career_after,
     )
 
 
@@ -494,11 +609,13 @@ async def get_round(db: AsyncSession, round_id: int) -> RoundDetail:
         )
     )
     names = await read_names(db, pids) if pids else {}
+    snaps = await SnapshotStore(db).load(pids) if pids else {}
+    span = (_ts(r.started_at), _ts(r.ended_at))
     players: list[RoundPlayer] = []
     for pid, data in rows.tuples():
         for e in decode_entries(data):
             if e.round_id == round_id:
-                players.append(_player(pid, e, names.get(pid)))
+                players.append(_player(pid, e, names.get(pid), snaps.get(pid), span))
     players.sort(key=lambda p: (p.team, -(p.score if p.battle_score is None else p.battle_score)))
     mvps = [p.persona_id for p in players if p.mvp]
     return RoundDetail(

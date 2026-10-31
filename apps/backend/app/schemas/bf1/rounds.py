@@ -47,6 +47,10 @@ class RoundWeapon(BaseModel):
     destroyed: int = 0
     # 击杀里含骑乘时用别的武器打的（战马），和武器重复，不能和其他条目相加
     shared_kills: bool = False
+    # 这件武器载具在这一局之前的生涯水平（只在单局详情里有）：命中率、爆头率（爆头 ÷ 击杀）、KPM
+    career_accuracy: float | None = None
+    career_headshot_rate: float | None = None
+    career_kpm: float | None = None
 
 
 class RoundRibbon(BaseModel):
@@ -75,6 +79,17 @@ class RoundScoreParts(BaseModel):
     other: int  # 总分减去各项后剩下的（载具、巨兽等），可能为负的零头
     award: int  # 勋带勋章奖励
     bonus: int  # 结算奖励，只有打到结算的人有
+
+
+class RoundCareer(BaseModel):
+    """这一局之前的生涯水平，和单局数字对比用。2026-11 前存的快照没有命中、爆头和得分构成，
+    对应项为空；spm 和单局 spm 同口径（扣掉勋带勋章奖励和结算奖励）"""
+
+    kd: float | None = None
+    kpm: float | None = None
+    spm: float | None = None
+    accuracy: float | None = None
+    headshot_rate: float | None = None
 
 
 class RoundPlayer(BaseModel):
@@ -124,6 +139,8 @@ class RoundPlayer(BaseModel):
     # 本局刷新的生涯纪录 → 新纪录：max_killstreak、longest_headshot（米）、max_nemesis_streak
     records: dict[str, int] = {}
     stars: list[RoundStar] = []
+    # 这一局之前的生涯水平，只在单局详情里有；14 天没被跟踪到的人没有快照，为空
+    career: RoundCareer | None = None
 
 
 class RoundDetail(RoundSummary):

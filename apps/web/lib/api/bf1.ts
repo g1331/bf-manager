@@ -334,6 +334,44 @@ export interface RoundWeapon {
   destroyed: number;
   /** 击杀里含骑乘时用别的武器打的（战马），和武器重复，不能和其他条目相加 */
   shared_kills: boolean;
+  /** 这件在这一局之前的生涯水平（只在单局详情里有）：命中率、爆头率（爆头 ÷ 击杀）、KPM */
+  career_accuracy?: number | null;
+  career_headshot_rate?: number | null;
+  career_kpm?: number | null;
+}
+
+/** 本局拿到的一种勋带，code 即图鉴 ribbons 的 code（r01…r47） */
+export interface RoundRibbon {
+  code: string;
+  count: number;
+}
+
+/** 本局击杀跨过整百、拿到新服役星的武器载具 */
+export interface RoundStar {
+  kind: "weapon" | "vehicle";
+  name: string | null;
+  image: string | null;
+  stars: number;
+}
+
+/** 得分构成，加起来是总分。前五项是游戏计分板上的分数，award、bonus 是结算时另给的经验 */
+export interface RoundScoreParts {
+  general: number;
+  team: number;
+  squad: number;
+  objective: number;
+  other: number;
+  award: number;
+  bonus: number;
+}
+
+/** 这一局之前的生涯水平；spm 与单局 spm 同口径。旧快照没有命中、爆头和得分构成，对应项为 null */
+export interface RoundCareer {
+  kd: number | null;
+  kpm: number | null;
+  spm: number | null;
+  accuracy: number | null;
+  headshot_rate: number | null;
 }
 
 /** 一个人在一局里的战绩：finished 打到结算、left 中途退出（没有胜负）、suspect 混了别的局。
@@ -360,10 +398,33 @@ export interface RoundPlayer {
   spm: number | null;
   /** 按击杀、时长倒序；null 表示这一局没有武器载具数据（功能上线前，或当时没读到） */
   weapons: RoundWeapon[] | null;
+  // 以下来自 2026-10-31 起记录的统计，之前的对局为 null / 默认值
+  /** 和游戏计分板同口径：总分减去勋带勋章奖励和结算奖励；有它时 spm 按它算 */
+  battle_score?: number | null;
+  score_parts?: RoundScoreParts | null;
+  mvp?: boolean;
+  ace_squad?: boolean;
+  /** 次数多的在前；null 表示这一局没有勋带数据 */
+  ribbons?: RoundRibbon[] | null;
+  medals?: number;
+  /** 只有非零项；键见后端 RoundPlayer 注释 */
+  objective?: Record<string, number>;
+  combat?: Record<string, number>;
+  rank_to?: number | null;
+  kit_ranks?: string[];
+  skill_delta?: number | null;
+  /** 本局刷新的生涯纪录：max_killstreak、longest_headshot（米）、max_nemesis_streak */
+  records?: Record<string, number>;
+  stars?: RoundStar[];
+  /** 这一局之前的生涯水平，只在单局详情里有 */
+  career?: RoundCareer | null;
 }
 
 export interface RoundDetail extends RoundSummary {
   players: RoundPlayer[];
+  /** 游戏评出的本局 MVP 与王牌小队（只认打到结算的人） */
+  mvp_pid?: number | null;
+  ace_squad_pids?: number[];
 }
 
 export interface RoundPage {

@@ -992,6 +992,38 @@ async def test_round_detail_honors_and_score_parts(test_session) -> None:
     )
     [star] = pa.stars
     assert (star.kind, star.name, star.stars) == ("weapon", rw_entry(mg)["name"], 24)
+    assert pa.career is None  # 没有快照
+
+    # 快照晚于这一局结束：先减掉这一局，得到这一局之前的生涯
+    before = [0] * N
+    before[KILLS], before[DEATHS], before[SCORE], before[KIT_BASE + 2] = 1000, 500, 600000, 36000
+    before[SCORE_PARTS["bonus"]], before[SCORE_PARTS["award"]] = 100000, 50000
+    before[COMBAT["hits"]], before[COMBAT["shots"]], before[COMBAT["headshots"]] = 3000, 12000, 150
+    before[SKILL], before[RANK], before[RECORDS["longest_headshot"]] = 3000, 87, 300
+    snap_vec = [x + y for x, y in zip(before, d, strict=True)]
+    mg_slots = {m: mg - rw.KILLS_METRIC + rw.METRICS.index(m) for m in rw.METRICS}
+    blob = rw.pack(
+        [],
+        {
+            mg_slots["kills"]: 230,
+            mg_slots["seconds"]: 6000,
+            mg_slots["hits"]: 400,
+            mg_slots["shots"]: 1600,
+        },
+    )
+    await round_service.SnapshotStore(test_session).save({a: (snap_vec, blob, now + 60)})
+    pa = {p.persona_id: p for p in (await round_service.get_round(test_session, rid)).players}[a]
+    assert pa.career is not None
+    assert (pa.career.kd, pa.career.kpm, pa.career.spm) == (2.0, 1.67, 750)
+    assert (pa.career.accuracy, pa.career.headshot_rate) == (0.25, 0.15)
+    [w] = pa.weapons or []
+    assert (w.career_accuracy, w.career_kpm, w.career_headshot_rate) == (0.25, 2.0, 0.0)
+    # 升级前存的短快照：没有的项给空
+    await round_service.SnapshotStore(test_session).save({a: (snap_vec[:34], blob, now - 60)})
+    pa = {p.persona_id: p for p in (await round_service.get_round(test_session, rid)).players}[a]
+    assert pa.career is not None
+    assert (pa.career.kd, pa.career.spm, pa.career.accuracy) == (round(1030 / 505, 2), None, None)
+
     # 没有新统计的条目（上线前的）维持原口径
     assert (pb.battle_score, pb.score_parts, pb.ribbons, pb.mvp, pb.spm) == (
         None,

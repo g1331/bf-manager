@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   BattlefieldHero,
@@ -113,7 +114,18 @@ export default async function MapPage({ params }: Props) {
         </DetailPanel>
 
         <aside className="max-w-[42rem] border border-white/[0.07] bg-black/45 p-4 backdrop-blur-sm sm:p-5 lg:p-6">
-          <SectionTitle title="载入贴士" count={tips.length} />
+          <div className="flex items-baseline justify-between gap-3">
+            <SectionTitle title="载入贴士" count={tips.length} />
+            {tips.length ? (
+              <Link
+                href={`/bf1/codex/tips?tag=${map.id}`}
+                prefetch={false}
+                className="inline-action text-xs text-white/45 hover:text-amber-300"
+              >
+                在小贴士里查看
+              </Link>
+            ) : null}
+          </div>
           {tips.length ? (
             <TipList tips={tips} className="mt-2" />
           ) : (

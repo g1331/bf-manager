@@ -1,3 +1,4 @@
+import { TipLine } from "@/components/bf1/codex/TipLine";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -97,7 +98,14 @@ export function PlayerDetailSkeleton() {
     <div className="relative min-h-screen w-full overflow-hidden text-white">
       <div className="relative z-10 max-w-[1600px] px-3 py-4 sm:px-10 sm:py-8">
         <Skeleton className="mb-4 h-5 w-28" />
-        <Skeleton className="h-80 w-full" />
+        <div className="relative">
+          <Skeleton className="h-80 w-full" />
+          {/* 战绩要等几秒，正是游戏里看载入贴士的时候 */}
+          <div className="absolute inset-x-0 bottom-0 p-4 sm:p-8">
+            <div className="text-[11px] tracking-[0.25em] text-white/40">正在查询战绩…</div>
+            <TipLine variant="bare" className="mt-1 max-w-3xl" />
+          </div>
+        </div>
         <Skeleton className="mt-6 h-12 w-full" />
         <div className="mt-6 grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
           <Skeleton className="h-72 w-full" />

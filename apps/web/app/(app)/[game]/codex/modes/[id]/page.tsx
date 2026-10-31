@@ -21,6 +21,7 @@ import {
   tipsFor,
 } from "@/lib/bf1/codex/battlefield";
 import { getCodexEntry } from "@/lib/bf1/codex/codex";
+import { modeTag } from "@/lib/bf1/codex/tips";
 import texts from "@/lib/bf1/codex/data/codex-text.json";
 
 const TEXTS = texts as Record<string, string>;
@@ -51,7 +52,9 @@ export default async function ModePage({ params }: Props) {
   const mode = getMode((await params).id);
   if (!mode) notFound();
   const entry = getCodexEntry(mode.codex);
-  const tips = tipsFor(mode.id);
+  // 行动模式没有自己的贴士，沿用闪击行动的（区域、兵力规则相同）
+  const tag = modeTag(mode.id);
+  const tips = tipsFor(tag);
   const { prev, next } = modeNeighbors(mode.id);
   const others = MODES.filter((m) => m.id !== mode.id);
   const step = (m?: GameMode) =>
@@ -117,7 +120,18 @@ export default async function ModePage({ params }: Props) {
         </DetailPanel>
 
         <aside className="max-w-[42rem] border border-white/[0.07] bg-black/45 p-4 backdrop-blur-sm sm:p-5 lg:p-6">
-          <SectionTitle title="载入贴士" count={tips.length} />
+          <div className="flex items-baseline justify-between gap-3">
+            <SectionTitle title="载入贴士" count={tips.length} />
+            {tips.length ? (
+              <Link
+                href={`/bf1/codex/tips?tag=${tag}`}
+                prefetch={false}
+                className="inline-action text-xs text-white/45 hover:text-amber-300"
+              >
+                在小贴士里查看
+              </Link>
+            ) : null}
+          </div>
           {tips.length ? (
             <TipList tips={tips} className="mt-2" />
           ) : (

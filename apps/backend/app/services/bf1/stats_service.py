@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.errors import EAApiError
@@ -42,8 +43,12 @@ from app.services.bf1.gateway_factory import get_bf1_client
 logger = logging.getLogger(__name__)
 
 # 战绩页的完整生涯一次要 7 个 Blaze 请求，同一个人 10 分钟内重复打开直接用缓存
-CAREER_CACHE_KEY = "bf1:career:v2:{}"  # 字段有增减就换版本，免得读到缺字段的旧缓存
-CAREER_CACHE_TTL = 600
+# 字段有增减就换版本，免得读到缺字段的旧缓存
+CAREER_CACHE_KEY = "bf1:career:v2:{}"
+WEAPONS_CACHE_KEY = "bf1:weapons:v1:{}"
+VEHICLES_CACHE_KEY = "bf1:vehicles:v1:{}"
+# 访问日志里同一玩家 10 分钟内的重复查看，绝大多数落在 5 分钟内
+PLAYER_CACHE_TTL = 300
 
 
 def _build_summary(persona_id: int, career: BlazeCareer) -> PlayerStatsSummary:
@@ -377,34 +382,48 @@ async def _fetch_one(
     return values[persona_id]
 
 
+def _has_all(values: dict[str, float], names: dict[str, list[str]]) -> bool:
+    """Blaze 某类别没返回这个人时，该类的统计名全都不在 values 里"""
+    return all(name in values for ns in names.values() for name in ns)
+
+
+async def _cache_get[M: BaseModel](key: str, model: type[M]) -> M | None:
+    try:
+        hit = await (await get_cache()).get(key)
+    except Exception as exc:
+        logger.warning("BF1 玩家缓存读取失败 %s: %s", key, exc)
+        return None
+    if hit is None:
+        return None
+    try:
+        return model.model_validate(hit)
+    except Exception as exc:
+        # 条目结构对不上（如 schema 改过）：当作没命中，查到后覆盖它
+        logger.warning("BF1 玩家缓存条目无效 %s: %s", key, exc)
+        return None
+
+
+async def _cache_set(key: str, value: BaseModel) -> None:
+    try:
+        await (await get_cache()).set(key, value.model_dump(mode="json"), ttl=PLAYER_CACHE_TTL)
+    except Exception as exc:
+        logger.warning("BF1 玩家缓存写入失败 %s: %s", key, exc)
+
+
 class BF1StatsService:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
     async def get_detailed_stats(self, persona_id: int) -> PlayerStatsDetail:
         key = CAREER_CACHE_KEY.format(persona_id)
-        cache = None
-        hit = None
-        try:
-            cache = await get_cache()
-            hit = await cache.get(key)
-        except Exception as exc:
-            logger.warning("BF1 生涯缓存读取失败 persona_id=%s: %s", persona_id, exc)
-        if hit is not None:
-            try:
-                return PlayerStatsDetail.model_validate(hit)
-            except Exception as exc:
-                # 条目结构对不上（如 schema 改过）：当作没命中，查到后覆盖它
-                logger.warning("BF1 生涯缓存条目无效 persona_id=%s: %s", persona_id, exc)
+        if (hit := await _cache_get(key, PlayerStatsDetail)) is not None:
+            return hit
         values = await _fetch_one(self.db, persona_id, profile_stat_names())
         profile = parse_profile(values)
         detail = _build_detail(persona_id, profile, values)
         # 有类别没返回这个人：照常展示（缺的项为 null），但不缓存，下次重新查
-        if cache is not None and profile.complete:
-            try:
-                await cache.set(key, detail.model_dump(mode="json"), ttl=CAREER_CACHE_TTL)
-            except Exception as exc:
-                logger.warning("BF1 生涯缓存写入失败 persona_id=%s: %s", persona_id, exc)
+        if profile.complete:
+            await _cache_set(key, detail)
         return detail
 
     async def get_online_status(self, persona_id: int) -> OnlineStatus:
@@ -418,21 +437,36 @@ class BF1StatsService:
             return _build_platoon(res)
 
     async def get_weapons(self, persona_id: int) -> WeaponStats:
+        key = WEAPONS_CACHE_KEY.format(persona_id)
+        if (hit := await _cache_get(key, WeaponStats)) is not None:
+            return hit
+        names = stat_names("weapons")
         # Blaze 先查完再开 Gateway：两者共用 self.db，不并发
-        values = await _fetch_one(self.db, persona_id, stat_names("weapons"))
+        values = await _fetch_one(self.db, persona_id, names)
         presets_result = await _fetch_presets_result(self.db, persona_id)
-        return WeaponStats(
+        result = WeaponStats(
             persona_id=persona_id,
             weapons=_build_weapons(values, _extract_weapon_skin_candidates(presets_result)),
         )
+        # 缺类别或皮肤降级的结果只展示这一次，不缓存
+        if presets_result is not None and _has_all(values, names):
+            await _cache_set(key, result)
+        return result
 
     async def get_vehicles(self, persona_id: int) -> VehicleStats:
-        values = await _fetch_one(self.db, persona_id, stat_names("vehicles"))
+        key = VEHICLES_CACHE_KEY.format(persona_id)
+        if (hit := await _cache_get(key, VehicleStats)) is not None:
+            return hit
+        names = stat_names("vehicles")
+        values = await _fetch_one(self.db, persona_id, names)
         presets_result = await _fetch_presets_result(self.db, persona_id)
-        return VehicleStats(
+        result = VehicleStats(
             persona_id=persona_id,
             vehicles=_build_vehicles(values, _extract_kit_skin_candidates(presets_result)),
         )
+        if presets_result is not None and _has_all(values, names):
+            await _cache_set(key, result)
+        return result
 
     async def get_recent_servers(self, persona_id: int) -> RecentServers:
         async with get_bf1_client(self.db) as client:

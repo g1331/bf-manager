@@ -235,6 +235,68 @@ async def test_get_detailed_stats_uses_cache(monkeypatch) -> None:
     assert not store
 
 
+@pytest.mark.parametrize(
+    ("method", "key", "kind", "field"),
+    [
+        ("get_weapons", stats_service.WEAPONS_CACHE_KEY, "weapons", "weapons"),
+        ("get_vehicles", stats_service.VEHICLES_CACHE_KEY, "vehicles", "vehicles"),
+    ],
+)
+async def test_weapons_and_vehicles_use_cache(monkeypatch, method, key, kind, field) -> None:
+    names = blaze_catalog.stat_names(kind)
+    first_cat = next(iter(names))
+    blaze_calls: list[int] = []
+    preset_calls: list[int] = []
+    state = {"full": True, "presets": {}}
+
+    async def fake_fetch(db, pids, req):
+        blaze_calls.append(len(req))
+        values = {n: 5.0 for ns in req.values() for n in ns}
+        if not state["full"]:
+            values = {k: v for k, v in values.items() if k not in req[first_cat]}
+        return {pids[0]: values}
+
+    async def fake_presets(db, pid):
+        preset_calls.append(pid)
+        return state["presets"]
+
+    store: dict[str, object] = {}
+    ttls: list[int | None] = []
+
+    class FakeCache:
+        async def get(self, k):
+            return store.get(k)
+
+        async def set(self, k, value, ttl=None):
+            store[k] = value
+            ttls.append(ttl)
+
+    async def fake_get_cache():
+        return FakeCache()
+
+    monkeypatch.setattr(stats_service, "fetch_stats", fake_fetch)
+    monkeypatch.setattr(stats_service, "_fetch_presets_result", fake_presets)
+    monkeypatch.setattr(stats_service, "get_cache", fake_get_cache)
+    svc = stats_service.BF1StatsService(db=None)  # type: ignore[arg-type]
+    call = getattr(svc, method)
+
+    first = await call(9)
+    assert getattr(first, field)
+    assert await call(9) == first
+    assert (len(blaze_calls), len(preset_calls)) == (1, 1)  # 第二次走缓存，EA 不再被请求
+    assert ttls == [300]
+    assert set(store) == {key.format(9)}
+
+    # 皮肤没取到、或有类别没返回这个人：照常返回但不缓存
+    for full, presets in ((True, None), (False, {})):
+        store.clear()
+        state.update(full=full, presets=presets)
+        await call(9)
+        await call(9)
+        assert not store
+    assert len(blaze_calls) == 5
+
+
 def test_parse_career_rounds_int_fields_and_sums_time() -> None:
     c = parse_career({**_make_values(), "c___kak_g": 4_800.4})
     assert c.assists == 4_800

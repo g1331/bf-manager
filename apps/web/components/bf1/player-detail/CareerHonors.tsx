@@ -117,7 +117,7 @@ function RibbonWall({ ribbons, game }: { ribbons: CareerRibbon[]; game: string }
   );
 }
 
-/** 各模式胜负与得分，按局数倒序 */
+/** 各模式胜负与目标得分（sc_<模式> 只含占点、炸弹、信鸽这类目标分，不含击杀和团队分），按局数倒序 */
 export function ModesPanel({ modes }: { modes: CareerMode[] }) {
   const rows = [...modes].sort((a, b) => b.wins + b.losses - (a.wins + a.losses));
   return (
@@ -132,7 +132,7 @@ export function ModesPanel({ modes }: { modes: CareerMode[] }) {
               <th className="pb-2 text-left font-normal">模式</th>
               <th className="pb-2 text-right font-normal">胜 / 负</th>
               <th className="pb-2 text-right font-normal">胜率</th>
-              <th className="pb-2 text-right font-normal">得分</th>
+              <th className="pb-2 text-right font-normal">目标得分</th>
             </tr>
           </thead>
           <tbody>

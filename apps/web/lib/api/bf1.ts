@@ -94,7 +94,7 @@ export interface CareerMode {
   losses: number;
   /** 0-1 */
   win_rate: number | null;
-  /** 空中突击没有单独的得分 */
+  /** 这个模式里的目标得分（不含击杀、团队分）；空中突击没有 */
   score: number | null;
 }
 

@@ -91,7 +91,7 @@ class CareerMode(BaseModel):
     wins: int = 0
     losses: int = 0
     win_rate: float | None = None  # 0-1
-    score: int | None = None
+    score: int | None = None  # 这个模式里的目标得分，不含击杀、团队、小队分
 
 
 class EliteKitStat(BaseModel):

@@ -9,6 +9,8 @@ BF1 已停止更新，这些内容不会再变。导出一次、随前端发布�
   ribbons.json      勋带（旧 bot data/battlefield/勋带）
   assignments.json  勤务小任务（旧 bot data/battlefield/勤务小任务）
   medals.json       Progression.getMedalsByPersonaId（2026-10-30 用号池账号补拉）
+  gamedata.json     Gamedata.getGameData：模式、地图、战争故事章节、阵营（旧 bot data/battlefield/游戏模式）
+  tips.json         载入画面小贴士（旧 bot data/battlefield/小标语）
 
 用法（在仓库根目录）：
   # 从旧 bot 目录导入并清洗原始数据（一次性，结果提交到 raw/）
@@ -107,6 +109,8 @@ def cmd_import(args: argparse.Namespace) -> None:
         "ribbons.json": bot / "勋带" / "data.json",
         "assignments.json": bot / "勤务小任务" / "data.json",
         "medals.json": Path(args.medals),
+        "gamedata.json": bot / "游戏模式" / "data.json",
+        "tips.json": bot / "小标语" / "data.json",
     }
     RAW.mkdir(parents=True, exist_ok=True)
     for name, src in sources.items():
@@ -121,7 +125,7 @@ def cmd_import(args: argparse.Namespace) -> None:
 # ---------------------------------------------------------------- build
 
 
-def load(name: str) -> list:
+def load(name: str):
     return json.loads((RAW / name).read_text(encoding="utf-8"))
 
 
@@ -249,6 +253,124 @@ def build_assignments() -> tuple[list, list]:
     return items, images
 
 
+# 战争故事 → 章节（gamedata 里只有章节，没有归属）。按游戏菜单顺序排列，
+# 章节归属对照 IGN 攻略的任务列表核对过，也和百科条目的解锁条件一一对得上
+# （例如「至上权威」的 4 章都出现在空战相关条目里）。completion 是「完成某故事」解锁的百科条目。
+STORIES = [
+    {"id": "prologue", "name": "破晓", "en": "Storm of Steel", "kind": "prologue",
+     "completion": "c157", "chapters": ["SP_Prologue"]},
+    {"id": "mud-and-blood", "name": "浴血之战", "en": "Through Mud and Blood", "kind": "story",
+     "completion": "c174",
+     "chapters": ["SP_TankAssault", "SP_FogOfWar", "SP_OutOfGas", "SP_SteelOnSteel"]},
+    {"id": "high-places", "name": "至上权威", "en": "Friends in High Places", "kind": "story",
+     "completion": "c172",
+     "chapters": ["SP_FlightSchool", "SP_TotalWar", "SP_CarryYourFriend", "SP_Blitz"]},
+    {"id": "avanti-savoia", "name": "萨伏依万岁！", "en": "Avanti Savoia!", "kind": "story",
+     "completion": "c175", "chapters": ["SP_Arditi", "SP_SearchRescue"]},
+    {"id": "the-runner", "name": "传令兵", "en": "The Runner", "kind": "story",
+     "completion": "c176", "chapters": ["SP_Gallipoli", "SP_TheRunaround", "SP_SavingALife"]},
+    {"id": "nothing-is-written", "name": "事在人为", "en": "Nothing Is Written", "kind": "story",
+     "completion": "c173",
+     "chapters": ["SP_HiddenInPlainSight", "SP_YoungMensWork", "SP_HearTheDesert"]},
+    {"id": "epilogue", "name": "勿忘我们", "en": "Epilogue", "kind": "epilogue",
+     "completion": "", "chapters": ["SP_Epilogue"]},
+]  # fmt: skip
+
+# 地图资料片里多了一个 XPACK0：免费地图「庞然暗影」
+MAP_EXPANSIONS = {"XPACK0": "庞然暗影", **EXPANSIONS}
+
+
+def build_battlefield(codex: list) -> tuple[dict, list, list]:
+    """模式、多人地图、战争故事、阵营，顺带把百科条目和小贴士按名称、代号串上。"""
+    gd = load("gamedata.json")
+    # 「在 X 赢得 1 场游戏」「在 X 模式中赢得…」「扮演 X 赢得…」→ 对应的百科条目
+    win: dict[str, str] = {}
+    for e in codex:
+        m = re.match(r"^(?:在|扮演)(.+?)(?:模式)?中?赢得 1 场游戏$", e["unlock"])
+        if m:
+            win[m.group(1)] = e["code"]
+    # 「在“章节名”中……」→ 该章节解锁的百科条目；「完成“故事名”」是故事通关奖励，另算
+    by_chapter: dict[str, list[str]] = {}
+    for e in codex:
+        m = re.search(r"“(.+?)”", e["unlock"])
+        if m and not e["unlock"].startswith("完成"):
+            by_chapter.setdefault(m.group(1), []).append(e["code"])
+
+    tips_raw = load("tips.json")
+    tips = [
+        {
+            "text": zh(t["name"]),
+            "type": "map" if t["tipType"]["name"] == "Level" else "mode",
+            "tags": t.get("tags") or [],
+        }
+        for t in tips_raw
+    ]
+
+    images = []
+    modes = []
+    for m in gd["gameModes"]:
+        name = zh(m["prettyName"])
+        modes.append(
+            {
+                "id": m["name"],
+                "name": name,
+                "header": zh(m["header"]),
+                "body": zh(m["body"]),
+                # 「行动模式」的解锁条件写作「在行动模式中」，正则把「模式」当后缀去掉了
+                "codex": win.get(name) or win.get(name.removesuffix("模式"), ""),
+            }
+        )
+        images.append((bb(m["images"]["Jpg1000xANY"]), "modes", m["name"], [1000, 480]))
+
+    maps, chapters = [], {}
+    for m in gd["maps"]:
+        asset, name = m["assetName"], zh(m["name"])
+        if m["levelType"] == "MP":
+            xp = next((e["name"] for e in m["expansions"] if e["name"] in MAP_EXPANSIONS), "")
+            maps.append({"id": asset, "expansion": xp, "codex": win.get(name, "")})
+            images.append((bb(m["images"]["Jpg1000xANY"]), "maps", asset, [1000, 480]))
+        elif asset.startswith("SP_"):
+            # 章节在 gamedata 里只有占位图，页面改用章节解锁的百科条目配图
+            chapters[asset] = {"id": asset, "name": name, "codex": by_chapter.get(name, [])}
+
+    stories = []
+    for s in STORIES:
+        missing = [c for c in s["chapters"] if c not in chapters]
+        if missing:
+            sys.exit(f"战争故事 {s['name']} 的章节不在 gamedata 里：{missing}")
+        stories.append({**s, "chapters": [chapters.pop(c) for c in s["chapters"]]})
+    if chapters:
+        sys.exit(f"有章节没归到任何战争故事：{sorted(chapters)}")
+
+    # 同名阵营在数据里有重复（如两个鄂图曼帝国），按全称去重
+    factions, seen = [], set()
+    for f in gd["factions"]:
+        name = zh(f["name"])
+        if name in seen:
+            continue
+        seen.add(name)
+        factions.append(
+            {
+                "id": f["key"],
+                "name": name,
+                "short": zh(f["shortName"]),
+                "codex": win.get(name, ""),
+            }
+        )
+        images.append((bb(f["images"]["Png160xANY"]), "factions", f["key"], [160]))
+
+    unknown = sorted(
+        {t for tip in tips for t in tip["tags"]}
+        - {m["id"] for m in maps}
+        - {m["id"] for m in modes}
+    )
+    if unknown:
+        sys.exit(f"小贴士标签对不上地图或模式：{unknown}")
+
+    data = {"modes": modes, "maps": maps, "stories": stories, "factions": factions}
+    return data, tips, images
+
+
 def fetch(url: str) -> bytes:
     CACHE.mkdir(parents=True, exist_ok=True)
     cached = CACHE / re.sub(r"[^\w.-]", "_", url.removeprefix(BB_PREFIX))
@@ -301,6 +423,7 @@ def cmd_build(_: argparse.Namespace) -> None:
     medals, img_medals = build_medals(dogtags)
     ribbons, img_ribbons = build_ribbons()
     assignments, img_assign = build_assignments()
+    battlefield, tips, img_field = build_battlefield(codex)
 
     print("数据：")
     write("codex.json", codex)
@@ -309,6 +432,8 @@ def cmd_build(_: argparse.Namespace) -> None:
     write("medals.json", medals)
     write("ribbons.json", ribbons)
     write("assignments.json", assignments)
+    write("battlefield.json", battlefield)
+    write("tips.json", tips)
     # 前端 CI 会对 json 跑 prettier --check，写完按仓库的格式排一遍
     subprocess.run(
         ["pnpm", "exec", "prettier", "--write", "--log-level", "warn", str(DATA_OUT)],
@@ -316,7 +441,7 @@ def cmd_build(_: argparse.Namespace) -> None:
         check=True,
     )
 
-    jobs = img_codex + img_tags + img_medals + img_ribbons + img_assign
+    jobs = img_codex + img_tags + img_medals + img_ribbons + img_assign + img_field
     # 勤务小任务有几项共用同一张图
     jobs = list({(j[1], j[2]): j for j in jobs}.values())
     print(f"图片：{len(jobs)} 张原图")

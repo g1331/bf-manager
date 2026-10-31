@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { CODEX_ENTRIES } from "@/lib/bf1/codex/codex";
+import { MAPS } from "@/lib/bf1/codex/battlefield";
 import { ASSIGNMENTS, DOGTAGS, MEDALS, RIBBONS } from "@/lib/bf1/codex/collection";
 import { cn } from "@/lib/utils";
 
 /** 图鉴的分区。新分区上线时在这里登记（服务端组件，计数直接取数据，不进客户端包） */
 const SECTIONS = [
   { key: "entries", label: "百科", count: CODEX_ENTRIES.length, href: "/bf1/codex" },
+  // 战场的计数取多人地图数
+  { key: "battlefield", label: "战场", count: MAPS.length, href: "/bf1/codex/battlefield" },
   { key: "medals", label: "勋章", count: MEDALS.length, href: "/bf1/codex/medals" },
   { key: "ribbons", label: "勋带", count: RIBBONS.length, href: "/bf1/codex/ribbons" },
   { key: "assignments", label: "勤务", count: ASSIGNMENTS.length, href: "/bf1/codex/assignments" },

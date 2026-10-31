@@ -1,0 +1,200 @@
+{
+  "modes": [
+    {
+      "id": "Rush",
+      "name": "突袭",
+      "header": "攻击或防守电报站",
+      "body": "攻击方必须摧毁电报站来通过敌方领地。防守方必须利用电报呼叫强力炮击以轰炸发现的敌军。",
+      "codex": "c098"
+    },
+    {
+      "id": "Conquest",
+      "name": "征服",
+      "header": "占领并守住旗帜",
+      "body": "壮阔的全面战争：守住多数旗帜并歼灭敌方士兵来获得胜利。",
+      "codex": "c095"
+    },
+    {
+      "id": "TeamDeathMatch",
+      "name": "团队死斗",
+      "header": "生死存亡之战",
+      "body": "击杀数最多的一方便能获胜。",
+      "codex": "c099"
+    },
+    {
+      "id": "Breakthrough",
+      "name": "闪击行动",
+      "header": "突破或坚守各区域",
+      "body": "踏上一次大战的史诗战役旅途。攻击方需要占领旗帜，并且突破由防守方所坚守的防线。",
+      "codex": ""
+    },
+    {
+      "id": "Domination",
+      "name": "抢攻",
+      "header": "占领并守住旗帜",
+      "body": "紧凑的步兵战斗。守住多数旗帜并歼灭敌方士兵来获得胜利。",
+      "codex": "c096"
+    },
+    {
+      "id": "Possession",
+      "name": "战争信鸽",
+      "header": "取回并送出信鸽",
+      "body": "找出信鸽并寄送讯息至火炮支援阵地来除掉敌人。",
+      "codex": "c097"
+    },
+    {
+      "id": "BreakthroughLarge",
+      "name": "行动模式",
+      "header": "突破或坚守各区域",
+      "body": "踏上一次大战的史诗战役旅途。攻击方需要占领旗帜，并且突破由防守方所坚守的防线。",
+      "codex": "c093"
+    },
+    {
+      "id": "TugOfWar",
+      "name": "前线",
+      "header": "夺旗然后攻击电报站",
+      "body": "势均力敌的双方在一条可能往任何一方变动的前线交手。夺得目标旗帜将让小队更加接近敌方基地。\n当小队在最靠近其基地的夺旗目标上失利后，他们就必须在其基地内防守两座电报站。",
+      "codex": "cxp111"
+    },
+    {
+      "id": "ZoneControl",
+      "name": "空降补给",
+      "header": "获取空降补给",
+      "body": "一场为了争夺资源的激烈战斗：取得多数补给即可获胜。",
+      "codex": "cxp226"
+    },
+    {
+      "id": "AirAssault",
+      "name": "空中突击",
+      "header": "空中突击",
+      "body": "大规模全面空战",
+      "codex": ""
+    }
+  ],
+  "maps": [
+    { "id": "MP_MountainFort", "expansion": "", "codex": "c112" },
+    { "id": "MP_Forest", "expansion": "", "codex": "c110" },
+    { "id": "MP_ItalianCoast", "expansion": "", "codex": "c111" },
+    { "id": "MP_Chateau", "expansion": "", "codex": "c107" },
+    { "id": "MP_Scar", "expansion": "", "codex": "c113" },
+    { "id": "MP_Desert", "expansion": "", "codex": "c108" },
+    { "id": "MP_Amiens", "expansion": "", "codex": "c106" },
+    { "id": "MP_Suez", "expansion": "", "codex": "c114" },
+    { "id": "MP_FaoFortress", "expansion": "", "codex": "c109" },
+    { "id": "MP_Giant", "expansion": "XPACK0", "codex": "cxp119" },
+    { "id": "MP_Fields", "expansion": "XPACK1", "codex": "cxp115" },
+    { "id": "MP_Graveyard", "expansion": "", "codex": "cxp116" },
+    { "id": "MP_Underworld", "expansion": "XPACK1", "codex": "cxp114" },
+    { "id": "MP_Verdun", "expansion": "XPACK1", "codex": "cxp113" },
+    { "id": "MP_Trench", "expansion": "XPACK1", "codex": "cxp120" },
+    { "id": "MP_ShovelTown", "expansion": "", "codex": "cxp121" },
+    { "id": "MP_Bridge", "expansion": "XPACK2", "codex": "cxp225" },
+    { "id": "MP_Islands", "expansion": "XPACK2", "codex": "cxp222" },
+    { "id": "MP_Ravines", "expansion": "XPACK2", "codex": "cxp223" },
+    { "id": "MP_Valley", "expansion": "XPACK2", "codex": "cxp224" },
+    { "id": "MP_Tsaritsyn", "expansion": "XPACK2", "codex": "cxp220" },
+    { "id": "MP_Volga", "expansion": "XPACK2", "codex": "cxp221" },
+    { "id": "MP_Beachhead", "expansion": "XPACK3", "codex": "cxp313" },
+    { "id": "MP_Harbor", "expansion": "XPACK3", "codex": "cxp316" },
+    { "id": "MP_Naval", "expansion": "XPACK3", "codex": "cxp315" },
+    { "id": "MP_Ridge", "expansion": "XPACK3", "codex": "cxp314" },
+    { "id": "MP_Offensive", "expansion": "XPACK4", "codex": "cxp416" },
+    { "id": "MP_Hell", "expansion": "XPACK4", "codex": "cxp414" },
+    { "id": "MP_River", "expansion": "XPACK4", "codex": "cxp415" },
+    { "id": "MP_Alps", "expansion": "XPACK4", "codex": "cxp412" },
+    { "id": "MP_Blitz", "expansion": "XPACK4", "codex": "cxp417" },
+    { "id": "MP_London", "expansion": "XPACK4", "codex": "cxp413" }
+  ],
+  "stories": [
+    {
+      "id": "prologue",
+      "name": "破晓",
+      "en": "Storm of Steel",
+      "kind": "prologue",
+      "completion": "c157",
+      "chapters": [{ "id": "SP_Prologue", "name": "破晓", "codex": [] }]
+    },
+    {
+      "id": "mud-and-blood",
+      "name": "浴血之战",
+      "en": "Through Mud and Blood",
+      "kind": "story",
+      "completion": "c174",
+      "chapters": [
+        { "id": "SP_TankAssault", "name": "绝顶表现", "codex": ["c163", "c139", "c140"] },
+        { "id": "SP_FogOfWar", "name": "战争迷雾", "codex": ["c164", "c141", "c142"] },
+        { "id": "SP_OutOfGas", "name": "临崩之际", "codex": ["c165", "c143", "c144"] },
+        { "id": "SP_SteelOnSteel", "name": "钢铁对决", "codex": ["c166", "c146", "c145"] }
+      ]
+    },
+    {
+      "id": "high-places",
+      "name": "至上权威",
+      "en": "Friends in High Places",
+      "kind": "story",
+      "completion": "c172",
+      "chapters": [
+        { "id": "SP_FlightSchool", "name": "试飞任务", "codex": ["c124", "c125"] },
+        { "id": "SP_TotalWar", "name": "全面战争", "codex": ["c126", "c127"] },
+        { "id": "SP_CarryYourFriend", "name": "荣耀堕狱", "codex": ["c129", "c128", "c158"] },
+        { "id": "SP_Blitz", "name": "力量与忠诚", "codex": ["c159", "c131", "c130"] }
+      ]
+    },
+    {
+      "id": "avanti-savoia",
+      "name": "萨伏依万岁！",
+      "en": "Avanti Savoia!",
+      "kind": "story",
+      "completion": "c175",
+      "chapters": [
+        { "id": "SP_Arditi", "name": "为了胜利", "codex": ["c167", "c148", "c147"] },
+        { "id": "SP_SearchRescue", "name": "宁死不屈", "codex": ["c168", "c150", "c149"] }
+      ]
+    },
+    {
+      "id": "the-runner",
+      "name": "传令兵",
+      "en": "The Runner",
+      "kind": "story",
+      "completion": "c176",
+      "chapters": [
+        { "id": "SP_Gallipoli", "name": "海丽丝岬", "codex": ["c169", "c152", "c151"] },
+        { "id": "SP_TheRunaround", "name": "传令兵", "codex": ["c170", "c153", "c154"] },
+        { "id": "SP_SavingALife", "name": "愿你平安", "codex": ["c171", "c155", "c156"] }
+      ]
+    },
+    {
+      "id": "nothing-is-written",
+      "name": "事在人为",
+      "en": "Nothing Is Written",
+      "kind": "story",
+      "completion": "c173",
+      "chapters": [
+        { "id": "SP_HiddenInPlainSight", "name": "大隐隐于市", "codex": ["c132", "c133", "c160"] },
+        { "id": "SP_YoungMensWork", "name": "青年使命", "codex": ["c136", "c134", "c135", "c161"] },
+        { "id": "SP_HearTheDesert", "name": "沙漠之声", "codex": ["c162", "c137", "c138"] }
+      ]
+    },
+    {
+      "id": "epilogue",
+      "name": "勿忘我们",
+      "en": "Epilogue",
+      "kind": "epilogue",
+      "completion": "",
+      "chapters": [{ "id": "SP_Epilogue", "name": "勿忘我们", "codex": [] }]
+    }
+  ],
+  "factions": [
+    { "id": "AHU", "name": "奥匈帝国", "short": "奥匈", "codex": "c100" },
+    { "id": "GER", "name": "德意志帝国", "short": "日耳曼", "codex": "c101" },
+    { "id": "ITA", "name": "意大利王国", "short": "义", "codex": "c102" },
+    { "id": "OTM", "name": "鄂图曼帝国", "short": "鄂图曼", "codex": "c103" },
+    { "id": "UK", "name": "大英帝国", "short": "英国", "codex": "c104" },
+    { "id": "USA", "name": "美利坚合众国", "short": "美国", "codex": "c105" },
+    { "id": "FRA", "name": "法国", "short": "法", "codex": "cxp112" },
+    { "id": "RUS", "name": "俄罗斯帝国", "short": "俄国", "codex": "cxp227" },
+    { "id": "BOL", "name": "红军", "short": "红军", "codex": "" },
+    { "id": "WA", "name": "白军", "short": "白军", "codex": "" },
+    { "id": "UKM", "name": "皇家海军陆战队", "short": "英国", "codex": "" }
+  ]
+}

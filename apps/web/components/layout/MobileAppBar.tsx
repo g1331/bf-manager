@@ -20,6 +20,8 @@ const DETAIL_ROUTES: Array<{ prefix: string | RegExp; title: string; fallback: s
   { prefix: /^\/bf1\/codex\/c[a-z]*\d/, title: "百科", fallback: "/bf1/codex" },
   { prefix: "/bf1/codex/medals/", title: "勋章", fallback: "/bf1/codex/medals" },
   { prefix: "/bf1/codex/dogtags/", title: "狗牌", fallback: "/bf1/codex/dogtags" },
+  { prefix: "/bf1/codex/maps/", title: "地图", fallback: "/bf1/codex/battlefield" },
+  { prefix: "/bf1/codex/modes/", title: "模式", fallback: "/bf1/codex/battlefield" },
 ];
 
 export function getDetailRoute(pathname: string) {

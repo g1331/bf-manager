@@ -57,7 +57,17 @@ def test_build_dogtags_keeps_progress_only_when_meaningful() -> None:
     ]
 
 
-@pytest.mark.parametrize("res", ["EA 报错", {"result": None}, {"error": {"code": -32000}}])
+@pytest.mark.parametrize(
+    "res",
+    [
+        "EA 报错",
+        {"result": None},
+        {"error": {"code": -32000}},
+        # 内层结构不对：不能当成空收藏（会缓存一天），也不能变成 500
+        {"result": [{"awards": "EA error", "dogtags": "EA error"}]},
+        {"result": [{"awards": 123, "dogtags": 123}]},
+    ],
+)
 def test_bad_gateway_response_raises(res) -> None:
     with pytest.raises(EAApiError):
         cs._build_medals(res)
@@ -120,3 +130,44 @@ async def test_get_collection_caches(monkeypatch) -> None:
     assert first.equipped == [] and len(first.medals) == 2
     assert await cs.get_collection(None, 7) == first  # type: ignore[arg-type]
     assert calls == ["medals", "dogtags", "equipped"]
+
+
+def test_bad_medal_stages_raise() -> None:
+    res = {"result": [{"awards": [{"code": "m05", "stages": 3}]}]}
+    with pytest.raises(EAApiError):
+        cs._build_medals(res)
+
+
+async def test_get_collection_parses_inside_account_context(monkeypatch) -> None:
+    # EA 返回错误字符串：要在号池上下文里抛出（工厂据此记账号失败），且不再发后面的请求
+    events: list[str] = []
+
+    class FakeClient:
+        async def getMedalsByPersonaId(self, pid):  # noqa: N802
+            events.append("medals")
+            return "网络超时!"
+
+        async def getDogtagsByPersonaId(self, pid):  # noqa: N802
+            events.append("dogtags")
+            return DOGTAGS
+
+        async def getEquippedDogtagsByPersonaId(self, pid):  # noqa: N802
+            events.append("equipped")
+            return {"result": []}
+
+    class Ctx:
+        async def __aenter__(self):
+            return FakeClient()
+
+        async def __aexit__(self, exc_type, exc, tb):
+            events.append("exit_error" if exc_type else "exit_ok")
+            return False
+
+    async def no_cache():
+        raise RuntimeError("redis down")
+
+    monkeypatch.setattr(cs, "get_bf1_client", lambda db: Ctx())
+    monkeypatch.setattr(cs, "get_cache", no_cache)
+    with pytest.raises(EAApiError):
+        await cs.get_collection(None, 7)  # type: ignore[arg-type]
+    assert events == ["medals", "exit_error"]

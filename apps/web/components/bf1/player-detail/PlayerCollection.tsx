@@ -137,17 +137,23 @@ function MedalTile({
 }) {
   const done = state?.unlocked ?? false;
   const partial = !done && state && state.stages_done > 0;
+  const label = done
+    ? `${name}，已解锁`
+    : partial
+      ? `${name}，未解锁，${state.stages_done} / ${state.stages_total} 阶段`
+      : `${name}，未解锁`;
   return (
     <Link
       href={`/bf1/codex/medals/${code}`}
       prefetch={false}
-      title={state && !done ? `${name}：${state.stages_done} / ${state.stages_total} 阶段` : name}
+      title={label}
+      aria-label={label}
       className="group compact-action block"
     >
       {/* eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp */}
       <img
         src={medalImage(code)}
-        alt={name}
+        alt=""
         width={256}
         height={256}
         loading="lazy"
@@ -176,17 +182,23 @@ function DogtagTile({
   const done = state?.unlocked ?? false;
   const ratio =
     state?.acquired != null && state.needed ? Math.min(state.acquired / state.needed, 1) : null;
+  const label = done
+    ? `${name}，已解锁`
+    : ratio != null
+      ? `${name}，未解锁，${state?.acquired} / ${state?.needed}`
+      : `${name}，未解锁`;
   return (
     <Link
       href={`/bf1/codex/dogtags/${id}`}
       prefetch={false}
-      title={ratio != null ? `${name}：${state?.acquired} / ${state?.needed}` : name}
+      title={label}
+      aria-label={label}
       className="group compact-action block"
     >
       {/* eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp */}
       <img
         src={dogtagImage(id)}
-        alt={name}
+        alt=""
         width={300}
         height={300}
         loading="lazy"

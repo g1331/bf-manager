@@ -26,16 +26,32 @@ def _progress(item: Any) -> dict[str, Any]:
     return p if isinstance(p, dict) else {}
 
 
+def _failed(method: str) -> EAApiError:
+    return EAApiError(code="EA_COLLECTION_FETCH_FAILED", message=f"EA Gateway {method} 查询失败")
+
+
+def _list(value: Any, method: str) -> list[Any]:
+    """允许为空（null），其它非列表说明返回结构不对：报上游错误，不能当成空收藏缓存一天"""
+    if value is None:
+        return []
+    if not isinstance(value, list):
+        raise _failed(method)
+    return value
+
+
 def _groups(res: Any, items_key: str, method: str) -> list[dict[str, Any]]:
-    """Gateway 返回 {"result": [{"name": 分类, items_key: [...]}, ...]}，展开成条目列表"""
+    """Gateway 返回 {"result": [{"name": 分类, items_key: [...]}, ...]}，展开成条目列表。
+
+    EA 出错时 Gateway 客户端返回的是错误字符串而不是异常，这里统一转成 EAApiError。
+    """
     result = res.get("result") if isinstance(res, dict) else None
     if not isinstance(result, list):
-        raise EAApiError(code="EA_COLLECTION_FETCH_FAILED", message=f"EA Gateway {method} 查询失败")
+        raise _failed(method)
     return [
         x
         for g in result
         if isinstance(g, dict)
-        for x in g.get(items_key) or []
+        for x in _list(g.get(items_key), method)
         if isinstance(x, dict)
     ]
 
@@ -45,7 +61,7 @@ def _build_medals(res: Any) -> list[CollectionMedal]:
     for m in _groups(res, "awards", "getMedalsByPersonaId"):
         if not m.get("code"):
             continue
-        stages = [s for s in m.get("stages") or [] if isinstance(s, dict)]
+        stages = [s for s in _list(m.get("stages"), "getMedalsByPersonaId") if isinstance(s, dict)]
         medals.append(
             CollectionMedal(
                 code=str(m["code"]).lower(),
@@ -95,20 +111,18 @@ async def get_collection(db: AsyncSession, persona_id: int) -> PlayerCollection:
             return PlayerCollection.model_validate(hit)
     except Exception as exc:
         logger.warning("BF1 收藏缓存读取失败 persona_id=%s: %s", persona_id, exc)
+    # 在号池上下文里逐个解析：返回不对就在这里抛出，工厂按失败记账号，也不再发后面的请求
+    # 在号池上下文里逐个解析：返回不对就在这里抛出，工厂按失败记账号，也不再发后面的请求
     async with get_bf1_client(db) as client:
-        medals = await client.getMedalsByPersonaId(persona_id)
-        dogtags = await client.getDogtagsByPersonaId(persona_id)
+        medals = _build_medals(await client.getMedalsByPersonaId(persona_id))
+        dogtags = _build_dogtags(await client.getDogtagsByPersonaId(persona_id))
+        # 佩戴的狗牌只是装饰：读不到给空列表，不影响整页，也不算账号失败
         try:
             equipped = _build_equipped(await client.getEquippedDogtagsByPersonaId(persona_id))
-        except Exception as exc:  # 佩戴的狗牌只是装饰，读不到不影响整页
+        except Exception as exc:
             logger.warning("BF1 佩戴狗牌查询失败 persona_id=%s: %s", persona_id, exc)
             equipped = []
-    out = PlayerCollection(
-        persona_id=persona_id,
-        medals=_build_medals(medals),
-        dogtags=_build_dogtags(dogtags),
-        equipped=equipped,
-    )
+    out = PlayerCollection(persona_id=persona_id, medals=medals, dogtags=dogtags, equipped=equipped)
     if cache is not None:
         try:
             await cache.set(key, out.model_dump(mode="json"), ttl=COLLECTION_CACHE_TTL)

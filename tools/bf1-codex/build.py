@@ -155,7 +155,9 @@ def build_codex() -> tuple[list, dict, list]:
                     "unlock": zh(crit["name"]),
                 }
             )
-            texts[a["code"]] = zh(e["description"])
+            # 长条目的正文分两段存：description + text2（26 条）
+            paragraphs = (zh(e["description"]), zh(e.get("text2")))
+            texts[a["code"]] = "\n\n".join(p for p in paragraphs if p)
             images.append((bb(e["images"]["Png640xANY"]), "entries", a["code"], [640, 480]))
     return entries, texts, images
 

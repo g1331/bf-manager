@@ -593,7 +593,7 @@ function TeamColumn({
       {/* 移动端(<lg)：密集战绩表宽于窄屏，裹 overflow-x-auto 让整表可左右滑动查看，
           避免右侧「延迟/语言/操作」列被推出视口而看不见、点不到；桌面双列各有空间，
           lg:overflow-x-visible + lg:min-w-0 完全保持原样不滚动。 */}
-      <div className="h-full overflow-x-auto lg:overflow-x-visible">
+      <div className="@container/team h-full overflow-x-auto lg:overflow-x-visible">
         <table className="h-full w-full min-w-[26rem] border-collapse text-[12.5px] tabular-nums lg:min-w-0">
           {/* 自适应布局：数字列按 colgroup 宽取最小宽，名字列由 td 的 w-full+max-w-0 吃满剩余并截断长名 */}
           <colgroup>
@@ -708,9 +708,17 @@ function PlayerRow({ player, seq, game }: { player: BlazePlayer; seq: number; ga
           title={`${player.display_name}（在新标签查看战绩）`}
         >
           {dot ? <span className={cn("size-1.5 shrink-0 rounded-full", dot)} /> : null}
-          <span className={cn("min-w-0 truncate font-medium whitespace-nowrap", nameColor(player))}>
+          <span
+            className={cn(
+              "min-w-0 truncate font-medium whitespace-nowrap",
+              nameColor(player),
+              player.loading && "opacity-50",
+            )}
+          >
             {player.display_name}
           </span>
+          {/* 列宽放不下整表（26rem）时延迟列被挤到右边看不到，名字后面再标一次 */}
+          {player.loading ? <ConnectingBars className="shrink-0 @[26rem]/team:hidden" /> : null}
         </Link>
       </td>
       <td className="py-[5px] pl-3 text-right text-white/85">{formatPercent(stats?.win_rate)}</td>
@@ -718,7 +726,7 @@ function PlayerRow({ player, seq, game }: { player: BlazePlayer; seq: number; ga
       <td className="py-[5px] pl-3 text-right text-white/60">{formatRatio(stats?.kpm)}</td>
       <td className="py-[5px] pl-3 text-right text-white/60">{formatHours(stats?.time_hours)}</td>
       <td className="py-[5px] pl-2">
-        <LatencyCell latency={player.latency} />
+        <LatencyCell latency={player.latency} loading={player.loading} />
       </td>
       <td className="py-[5px] text-center text-white/65">{player.language || "—"}</td>
       {canManage ? (
@@ -763,8 +771,31 @@ function RankBadge({ rank }: { rank: number }) {
   );
 }
 
-/** 延迟以三格信号条 + 数值表示，按强度亮格并着色（低绿 / 中黄 / 高红） */
-function LatencyCell({ latency }: { latency: number }) {
+/** 三格信号依次点亮：载入中的玩家还没有延迟，用「正在连接」代替 */
+function ConnectingBars({ className }: { className?: string }) {
+  return (
+    <span className={cn("signal-connecting flex items-end gap-px", className)} aria-hidden>
+      {[1, 2, 3].map((n) => (
+        <span
+          key={n}
+          className="w-[3px] rounded-sm bg-white"
+          style={{ height: `${n * 3 + 1}px` }}
+        />
+      ))}
+    </span>
+  );
+}
+
+/** 延迟以三格信号条 + 数值表示，按强度亮格并着色（低绿 / 中黄 / 高红）；载入中显示连接动画 */
+function LatencyCell({ latency, loading }: { latency: number; loading?: boolean }) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center gap-1" title="正在载入">
+        <ConnectingBars />
+        <span className="text-[11px] whitespace-nowrap text-white/50">载入</span>
+      </div>
+    );
+  }
   if (!latency || latency <= 0) {
     return <div className="text-center text-white/25">—</div>;
   }
@@ -818,7 +849,10 @@ function SidePlayerGroup({
               )}
             >
               <RankBadge rank={p.rank} />
-              <span className="max-w-[140px] truncate">{p.display_name}</span>
+              <span className={cn("max-w-[140px] truncate", p.loading && "opacity-50")}>
+                {p.display_name}
+              </span>
+              {p.loading ? <ConnectingBars className="ml-0.5" /> : null}
             </Link>
             {canManage ? <PlayerRowActions player={p} /> : null}
           </span>
@@ -840,6 +874,7 @@ function PlayerLegend({
     online_vip_count: number;
     online_registered_count: number;
     rank_150_count: number;
+    loading_count?: number;
   };
   playerCount: number;
   maxPlayers: number;
@@ -857,6 +892,15 @@ function PlayerLegend({
       <LegendItem markClass="bg-red-400" label="在线VIP" value={summary.online_vip_count} />
       <LegendItem markClass="bg-sky-400" label="在线群友" value={summary.online_registered_count} />
       <LegendItem markClass="bg-[#ff8400]" label="满级150" value={summary.rank_150_count} />
+      <span className="inline-flex items-center gap-1.5">
+        <ConnectingBars />
+        <span>
+          载入中：
+          <span className="font-semibold text-white/90 tabular-nums">
+            {summary.loading_count ?? 0}
+          </span>
+        </span>
+      </span>
       <span className="ml-auto text-white/45 tabular-nums">
         在线 {playerCount}/{maxPlayers}
         {statsIncluded ? "" : " · 未加载战绩"}

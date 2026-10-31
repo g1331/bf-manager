@@ -606,6 +606,8 @@ export interface BlazePlayer {
   latency: number;
   language: string | null;
   join_time: number | null;
+  /** 已占队伍或观战位、还在载入（Blaze STAT 不是 4）；旧数据可能没有这个字段 */
+  loading?: boolean;
   role: string;
   is_admin: boolean;
   is_vip: boolean;
@@ -628,6 +630,7 @@ export interface ServerPlayersSummary {
   online_vip_count: number;
   online_registered_count: number;
   rank_150_count: number;
+  loading_count?: number;
 }
 
 export interface OperationMap {

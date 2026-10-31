@@ -18,6 +18,7 @@ from app.domain.games.bf1.skins import SkinInfo, lookup_skin
 from app.schemas.bf1.stats import (
     CareerCombat,
     CareerHonors,
+    CareerMap,
     CareerMisc,
     CareerMode,
     CareerRibbon,
@@ -40,8 +41,8 @@ from app.services.bf1.gateway_factory import get_bf1_client
 
 logger = logging.getLogger(__name__)
 
-# 战绩页的完整生涯一次要 5 个 Blaze 请求，同一个人 10 分钟内重复打开直接用缓存
-CAREER_CACHE_KEY = "bf1:career:{}"
+# 战绩页的完整生涯一次要 7 个 Blaze 请求，同一个人 10 分钟内重复打开直接用缓存
+CAREER_CACHE_KEY = "bf1:career:v2:{}"  # 字段有增减就换版本，免得读到缺字段的旧缓存
 CAREER_CACHE_TTL = 600
 
 
@@ -173,6 +174,12 @@ def _build_detail(persona_id: int, p: BlazeProfile, raw: dict[str, Any]) -> Play
             for k in p.elite_kits
             if k.seconds or k.kills
         ],
+        maps=None
+        if p.maps is None
+        else sorted(
+            (CareerMap(map=m, time_seconds=round(s)) for m, s in p.maps.items() if s >= 1),
+            key=lambda m: -m.time_seconds,
+        ),
         ribbons=None
         if p.ribbons is None
         else [
@@ -390,8 +397,10 @@ class BF1StatsService:
                 # 条目结构对不上（如 schema 改过）：当作没命中，查到后覆盖它
                 logger.warning("BF1 生涯缓存条目无效 persona_id=%s: %s", persona_id, exc)
         values = await _fetch_one(self.db, persona_id, profile_stat_names())
-        detail = _build_detail(persona_id, parse_profile(values), values)
-        if cache is not None:
+        profile = parse_profile(values)
+        detail = _build_detail(persona_id, profile, values)
+        # 有类别没返回这个人：照常展示（缺的项为 null），但不缓存，下次重新查
+        if cache is not None and profile.complete:
             try:
                 await cache.set(key, detail.model_dump(mode="json"), ttl=CAREER_CACHE_TTL)
             except Exception as exc:

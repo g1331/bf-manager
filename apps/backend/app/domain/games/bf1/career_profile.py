@@ -1,6 +1,6 @@
-"""BF1 战绩页的完整生涯：career 之外的荣誉、战斗、团队、模式、精英兵、勋带墙、杂项
+"""BF1 战绩页的完整生涯：career 之外的荣誉、战斗、团队、模式、精英兵、地图、勋带墙、杂项
 
-只用于单人战绩页（一次 fetch_stats 读 core、statcategory 和 3 个勋带类别，共 5 个请求），
+只用于单人战绩页（一次 fetch_stats 读 core、statcategory 1/3/4 和 3 个勋带类别，共 7 个请求），
 不进计分板的批量查询（那边只要 blaze_stats.career_stat_names）。
 """
 
@@ -17,8 +17,9 @@ from app.domain.games.bf1.blaze_stats import (
     parse_career,
 )
 
-# 下面的统计名 2026-10-31 都用 Stats.getStatDescs 核对过存在（写错会让整个请求报错）；
-# 渗透者击杀、勋带总数在 player_statcategory3，还没核对，先不读
+# 下面的统计名 2026-10-31 都用 Stats.getStatDescs 核对过存在（写错会让整个请求报错）
+STAT3 = "player_statcategory3"
+STAT4 = "player_statcategory4"
 
 HONORS: dict[str, str] = {
     "mvp": "c_fip__psx_g",
@@ -66,10 +67,50 @@ ELITE_KITS: dict[str, str] = {
     "tank_hunter": "at",
     "infiltrator": "in",
 }
-# 渗透者的击杀在 statcategory3，还没核对
-_ELITE_NO_KILLS = frozenset({"in"})
+# 渗透者的击杀不在 statcategory，在 statcategory3
+_ELITE_KILLS_IN_STAT3 = frozenset({"in"})
 ROUNDS_COMPLETED, ROUNDS_PLAYED = "c___roo_g", "c___ro_g"
 SPECTATOR_SECONDS = "c___sas_g"  # core
+
+# 地图代号 → (类别, 在这张图上的秒数)。本体、庞然暗影、以沙皇之名、力挽狂澜、启示录的对应关系
+# 写在统计描述里；誓死坚守的描述只有 XP1_001…006，对应关系取自 EA 勋章、小任务的条件
+# （拉萨勒勋章「在凡尔登高地/法乌克斯要塞/苏瓦松/决裂进行击杀」用 xp1mp1…4，
+# 小任务「坚守之处」的尼维尔之夜用 xp1mp5），mp6 是剩下的攻占托尔；2026-10-31 结算差值实测吻合。
+# 空中优势（c_lmp10）和教学关（c_mptut）不算地图。
+MAPS: dict[str, tuple[str, str]] = {
+    "MP_Amiens": (STAT, "c_lmp1__so_g"),
+    "MP_Chateau": (STAT, "c_lmp2__so_g"),
+    "MP_Desert": (STAT, "c_lmp3__so_g"),
+    "MP_FaoFortress": (STAT, "c_lmp4__so_g"),
+    "MP_Forest": (STAT, "c_lmp5__so_g"),
+    "MP_ItalianCoast": (STAT, "c_lmp6__so_g"),
+    "MP_MountainFort": (STAT, "c_lmp7__so_g"),
+    "MP_Scar": (STAT, "c_lmp8__so_g"),
+    "MP_Suez": (STAT, "c_lmp9__so_g"),
+    "MP_Giant": (STAT, "c_xp0g__so_g"),
+    "MP_Verdun": (STAT, "c_xp1mp1__so_g"),
+    "MP_Underworld": (STAT, "c_xp1mp2__so_g"),
+    "MP_Fields": (STAT, "c_xp1mp3__so_g"),
+    "MP_Graveyard": (STAT, "c_xp1mp4__so_g"),
+    "MP_Trench": (STAT, "c_xp1mp5__so_g"),
+    "MP_ShovelTown": (STAT, "c_xp1mp6__so_g"),
+    "MP_Bridge": (STAT, "c_xp2mp1__so_g"),
+    "MP_Ravines": (STAT, "c_xp2mp2__so_g"),
+    "MP_Valley": (STAT, "c_xp2mp3__so_g"),
+    "MP_Islands": (STAT, "c_xp2mp4__so_g"),
+    "MP_Volga": (STAT, "c_xp2mp5__so_g"),
+    "MP_Tsaritsyn": (STAT, "c_xp2mp6__so_g"),
+    "MP_Beachhead": (STAT3, "c_xp3mp1__so_g"),
+    "MP_Ridge": (STAT3, "c_xp3mp2__so_g"),
+    "MP_Naval": (STAT3, "c_xp3mp3__so_g"),
+    "MP_Harbor": (STAT3, "c_xp3mp4__so_g"),
+    "MP_Hell": (STAT4, "c_xp4mp1__so_g"),
+    "MP_Offensive": (STAT4, "c_xp4mp2__so_g"),
+    "MP_River": (STAT4, "c_xp4mp3__so_g"),
+    "MP_Blitz": (STAT4, "c_xp4mp4__so_g"),
+    "MP_Alps": (STAT4, "c_xp4mp5__so_g"),
+    "MP_London": (STAT4, "c_xp4mp6__so_g"),
+}
 
 
 class BlazeMode(BaseModel):
@@ -81,12 +122,12 @@ class BlazeMode(BaseModel):
 
 class BlazeEliteKit(BaseModel):
     kit: str
-    kills: int | None = None  # None：这项还没读
+    kills: int | None = None  # None：所在类别没返回这个人
     seconds: float = 0.0
 
 
 class BlazeProfile(BaseModel):
-    """战绩页要的完整生涯：career 之外的荣誉、战斗、团队、模式、精英兵、勋带墙、杂项"""
+    """战绩页要的完整生涯：career 之外的荣誉、战斗、团队、模式、精英兵、地图、勋带墙、杂项"""
 
     career: BlazeCareer
     honors: dict[str, int]
@@ -94,29 +135,40 @@ class BlazeProfile(BaseModel):
     teamwork: dict[str, int]
     modes: list[BlazeMode]
     elite_kits: list[BlazeEliteKit]
+    # 地图代号 → 在这张图上的秒数；None：有类别没返回这个人，不全的排行不如不给
+    maps: dict[str, float] | None
     # 勋带号 → 次数；None 表示勋带类别没返回这个人
     ribbons: dict[int, int] | None
     rounds_completed: int = 0
     rounds_played: int = 0
     spectator_seconds: float = 0.0
+    # 请求的统计全都返回了。Blaze 按类别分开请求，某一类没返回这个人时其余照常合并，
+    # 缺的项不能当 0，也不该进缓存
+    complete: bool = True
 
 
 def profile_stat_names() -> dict[str, list[str]]:
-    """战绩页一次查询的全部统计：career_stat_names 加上面几组和 3 个勋带类别"""
-    names = career_stat_names()
+    """战绩页一次查询的全部统计：career_stat_names 加上面几组、statcategory3/4 和 3 个勋带类别"""
+    names = career_stat_names() | {STAT3: [], STAT4: []}
     names[STAT] += [*HONORS.values(), *COMBAT.values(), *TEAMWORK.values()]
     names[STAT] += [f"c_m{r}_{code}_roo_g" for code, _ in MODES.values() for r in ("win", "los")]
     names[CORE] += [score for _, score in MODES.values() if score]
-    names[STAT] += [f"c_{k}__ks_g" for k in ELITE_KITS.values() if k not in _ELITE_NO_KILLS]
+    for k in ELITE_KITS.values():
+        names[STAT3 if k in _ELITE_KILLS_IN_STAT3 else STAT].append(f"c_{k}__ks_g")
     names[CORE] += [f"c_{k}__sa_g" for k in ELITE_KITS.values()]
     names[STAT] += [ROUNDS_COMPLETED, ROUNDS_PLAYED]
     names[CORE].append(SPECTATOR_SECONDS)
+    for cat, name in MAPS.values():
+        names[cat].append(name)
     return names | round_awards.names()
 
 
 def parse_profile(values: dict[str, float]) -> BlazeProfile:
     def n(name: str) -> int:
         return round(values.get(name, 0.0))
+
+    def known(name: str) -> int | None:
+        return round(values[name]) if name in values else None
 
     return BlazeProfile(
         career=parse_career(values),
@@ -135,13 +187,17 @@ def parse_profile(values: dict[str, float]) -> BlazeProfile:
         elite_kits=[
             BlazeEliteKit(
                 kit=kit,
-                kills=None if k in _ELITE_NO_KILLS else n(f"c_{k}__ks_g"),
+                kills=known(f"c_{k}__ks_g"),
                 seconds=values.get(f"c_{k}__sa_g", 0.0),
             )
             for kit, k in ELITE_KITS.items()
         ],
+        maps={m: values[name] for m, (_, name) in MAPS.items()}
+        if all(name in values for _, name in MAPS.values())
+        else None,
         ribbons=round_awards.read(values),
         rounds_completed=n(ROUNDS_COMPLETED),
         rounds_played=n(ROUNDS_PLAYED),
         spectator_seconds=values.get(SPECTATOR_SECONDS, 0.0),
+        complete=all(name in values for ns in profile_stat_names().values() for name in ns),
     )

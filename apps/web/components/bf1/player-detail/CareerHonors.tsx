@@ -5,12 +5,15 @@ import { SectionHeading } from "@/components/layout/SectionHeading";
 import { RibbonStrip } from "@/components/bf1/rounds/RoundHonors";
 import type {
   CareerHonors,
+  CareerMap,
   CareerMisc,
   CareerMode,
   CareerRibbon,
   EliteKitStat,
 } from "@/lib/api/bf1";
+import { mapImage } from "@/lib/bf1/codex/battlefield";
 import { groupBy, RIBBONS } from "@/lib/bf1/codex/collection";
+import { mapLabel } from "@/lib/bf1/catalog";
 import { cn, formatDuration } from "@/lib/utils";
 import { Panel } from "./CareerOverview";
 import { fmtFixed, fmtFull, fmtHours, fmtPct, perMinute } from "./format";
@@ -121,7 +124,7 @@ function RibbonWall({ ribbons, game }: { ribbons: CareerRibbon[]; game: string }
 export function ModesPanel({ modes }: { modes: CareerMode[] }) {
   const rows = [...modes].sort((a, b) => b.wins + b.losses - (a.wins + a.losses));
   return (
-    <Panel className="h-full">
+    <Panel>
       <SectionHeading className="mb-4">模式</SectionHeading>
       {rows.length === 0 ? (
         <div className="py-8 text-center text-sm text-white/40">暂无模式数据</div>
@@ -157,6 +160,49 @@ export function ModesPanel({ modes }: { modes: CareerMode[] }) {
 function fmtScore(v: number | null): string {
   if (v == null) return "—";
   return v >= 10_000 ? `${(v / 10_000).toFixed(v >= 1_000_000 ? 0 : 1)} 万` : fmtFull(v);
+}
+
+/** 最常玩的地图：前 6 张，地图图片 + 时长和占比，点开进图鉴 */
+export function MapsPanel({ maps, game }: { maps: CareerMap[]; game: string }) {
+  if (!maps.length) return null;
+  const total = maps.reduce((sum, m) => sum + m.time_seconds, 0);
+  return (
+    <Panel>
+      <SectionHeading className="mb-4">常玩地图</SectionHeading>
+      <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-2">
+        {maps.slice(0, 6).map((m) => (
+          <li key={m.map}>
+            <Link
+              href={`/${game}/codex/maps/${m.map}`}
+              prefetch={false}
+              className="group compact-action block outline-none"
+            >
+              <div className="relative aspect-[16/9] overflow-hidden bg-black/40 ring-1 ring-white/10 transition-shadow group-hover:ring-amber-400/50 group-focus-visible:ring-amber-400/50">
+                {/* eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp */}
+                <img
+                  src={mapImage(m.map, 480)}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  className="size-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 p-2">
+                  <div className="truncate text-[13px] leading-tight font-semibold text-white group-hover:text-amber-200">
+                    {mapLabel(m.map)}
+                  </div>
+                  <div className="mt-0.5 flex justify-between gap-2 text-[11px] text-white/60 tabular-nums">
+                    <span>{fmtHours(m.time_seconds)}</span>
+                    <span>{fmtPct(m.time_seconds / total)}</span>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </Panel>
+  );
 }
 
 /** 精英兵：接在兵种表下面，只列玩过的 */

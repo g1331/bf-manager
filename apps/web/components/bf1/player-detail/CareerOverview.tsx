@@ -29,10 +29,10 @@ import type {
 } from "@/lib/api/bf1";
 import { rarityHex } from "@/lib/bf1/rarity";
 import { cn, formatDuration } from "@/lib/utils";
-import { EliteKits, HonorsPanel, ModesPanel } from "./CareerHonors";
+import { EliteKits, HonorsPanel, MapsPanel, ModesPanel } from "./CareerHonors";
 import { classLabel, fmtFixed, fmtFull, fmtPct, perMinute, winRate } from "./format";
 
-/** 概览分区：战斗 + 团队贡献，兵种 + 常用装备，荣誉 + 模式，三行左宽右窄 */
+/** 概览分区：战斗 + 团队贡献，兵种 + 常用装备，荣誉 + 模式与地图，三行左宽右窄 */
 export function CareerOverview({
   stats,
   weapons,
@@ -65,7 +65,10 @@ export function CareerOverview({
             ribbons={stats.ribbons}
             game={game}
           />
-          <ModesPanel modes={stats.modes ?? []} />
+          <div className="space-y-4 sm:space-y-6">
+            <ModesPanel modes={stats.modes ?? []} />
+            <MapsPanel maps={stats.maps ?? []} game={game} />
+          </div>
         </div>
       ) : null}
     </div>

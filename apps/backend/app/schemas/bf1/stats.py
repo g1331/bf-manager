@@ -98,12 +98,16 @@ class CareerMode(BaseModel):
 
 
 class EliteKitStat(BaseModel):
-    """精英兵：sentry / flamethrower / trench_raider / tank_hunter / infiltrator。
-    渗透者的击杀在另一个统计类别，还没接入，为 None"""
+    """精英兵：sentry / flamethrower / trench_raider / tank_hunter / infiltrator"""
 
     kit: str
-    kills: int | None = None
+    kills: int | None = Field(default=None, description="EA 这次没返回这项时为 null")
     time_seconds: int = 0
+
+
+class CareerMap(BaseModel):
+    map: str  # 地图代号（MP_*）
+    time_seconds: int
 
 
 class CareerRibbon(BaseModel):
@@ -132,6 +136,9 @@ class PlayerStatsDetail(BaseModel):
     teamwork: CareerTeamwork | None = None
     modes: list[CareerMode] = []
     elite_kits: list[EliteKitStat] = []
+    maps: list[CareerMap] | None = Field(
+        default=None, description="玩过的地图，按时长倒序；EA 这次没返回全部地图统计时为 null"
+    )
     ribbons: list[CareerRibbon] | None = None
     misc: CareerMisc | None = None
     raw: dict[str, Any]

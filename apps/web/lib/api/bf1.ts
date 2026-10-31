@@ -101,8 +101,13 @@ export interface CareerMode {
 export interface EliteKitStat {
   /** sentry / flamethrower / trench_raider / tank_hunter / infiltrator */
   kit: string;
-  /** 入侵者的击杀还没接入，为 null */
-  kills: number | null;
+  kills: number;
+  time_seconds: number;
+}
+
+export interface CareerMap {
+  /** 地图代号（MP_*） */
+  map: string;
   time_seconds: number;
 }
 
@@ -128,6 +133,8 @@ export interface PlayerStatsDetail {
   teamwork?: CareerTeamwork | null;
   modes?: CareerMode[];
   elite_kits?: EliteKitStat[];
+  /** 玩过的地图，按时长倒序 */
+  maps?: CareerMap[];
   /** 47 种全列，次数为 0 的也在；null 表示勋带没读到 */
   ribbons?: CareerRibbon[] | null;
   misc?: CareerMisc | null;

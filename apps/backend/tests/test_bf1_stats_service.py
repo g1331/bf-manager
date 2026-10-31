@@ -9,8 +9,8 @@ from __future__ import annotations
 import pytest
 from app.domain.games.bf1 import blaze_catalog
 from app.domain.games.bf1.blaze_stats import career_stat_names, parse_career
-from app.domain.games.bf1.career_profile import parse_profile, profile_stat_names
-from app.domain.games.bf1.maps import normalize_emblem_url
+from app.domain.games.bf1.career_profile import MAPS, parse_profile, profile_stat_names
+from app.domain.games.bf1.maps import MapData, normalize_emblem_url
 from app.services.bf1 import stats_service
 from app.services.bf1.stats_service import (
     _build_detail,
@@ -67,7 +67,7 @@ def test_career_stat_names_cover_every_parsed_stat() -> None:
 
 
 def _profile_values() -> dict[str, float]:
-    """战绩页完整生涯：在 _make_values 之外加上荣誉、战斗、模式、精英兵、勋带"""
+    """战绩页完整生涯：在 _make_values 之外加上荣誉、战斗、模式、精英兵、地图、勋带"""
     return {
         **_make_values(),
         "c_fip__psx_g": 12.0,
@@ -89,6 +89,11 @@ def _profile_values() -> dict[str, float]:
         "c_st__ks_g": 150.0,
         "c_st__sa_g": 9_000.0,
         "c_in__sa_g": 600.0,
+        "c_in__ks_g": 40.0,
+        "c_lmp2__so_g": 50_000.0,
+        "c_xp1mp1__so_g": 90_000.0,
+        "c_xp3mp4__so_g": 3_000.0,
+        "c_xp4mp6__so_g": 0.4,
         "c___roo_g": 1_520.0,
         "c___ro_g": 1_900.0,
         "c___sas_g": 3_600.0,
@@ -104,7 +109,9 @@ def test_profile_stat_names_cover_every_parsed_stat() -> None:
     assert set(_profile_values()) <= names
     # 计分板批量查询的名单不能跟着变大
     assert len({n for ns in career_stat_names().values() for n in ns}) < 40
-    assert "player_statcategory3" not in profile_stat_names()  # 没核对过的类别不读
+    # 32 张多人图各一个统计，不重复，和地图表的代号一致
+    assert len({name for _, name in MAPS.values()}) == len(MAPS) == 32
+    assert set(MAPS) == set(MapData.MapTeamDict)
 
 
 def test_build_detail_profile_sections() -> None:
@@ -128,10 +135,15 @@ def test_build_detail_profile_sections() -> None:
         ("conquest", 600, 400, 0.6, 7_000_000),
         ("operations", 300, 100, 0.75, 4_000_000),
     ]
-    # 渗透者击杀还没读，为 None
     assert [(k.kit, k.kills, k.time_seconds) for k in d.elite_kits] == [
         ("sentry", 150, 9_000),
-        ("infiltrator", None, 600),
+        ("infiltrator", 40, 600),
+    ]
+    # 按时长倒序，不到 1 秒的不算玩过
+    assert [(m.map, m.time_seconds) for m in d.maps] == [
+        ("MP_Verdun", 90_000),
+        ("MP_Chateau", 50_000),
+        ("MP_Harbor", 3_000),
     ]
     assert d.ribbons is not None and len(d.ribbons) == 47
     counts = {r.code: r.count for r in d.ribbons}
@@ -152,7 +164,7 @@ def test_build_detail_ribbons_none_when_a_category_is_missing() -> None:
     d = _build_detail(7, parse_profile(values), values)
     assert d.ribbons is None
     empty = _build_detail(7, parse_profile({}), {})
-    assert (empty.modes, empty.elite_kits, empty.ribbons) == ([], [], None)
+    assert (empty.modes, empty.elite_kits, empty.maps, empty.ribbons) == ([], [], [], None)
     assert empty.combat is not None and empty.combat.accuracy is None
 
 
@@ -180,14 +192,14 @@ async def test_get_detailed_stats_uses_cache(monkeypatch) -> None:
     svc = stats_service.BF1StatsService(db=None)  # type: ignore[arg-type]
     first = await svc.get_detailed_stats(9)
     second = await svc.get_detailed_stats(9)
-    assert calls == [5]  # 一次查询 5 个类别，第二次走缓存
+    assert calls == [7]  # 一次查询 7 个类别，第二次走缓存
     assert second == first
     assert second.soldiers and second.soldiers[0].class_name == first.soldiers[0].class_name
     # 结构对不上的旧条目当作没命中，查到后覆盖，下一次就走缓存
-    store["bf1:career:9"] = {"summary": "broken"}
+    store[stats_service.CAREER_CACHE_KEY.format(9)] = {"summary": "broken"}
     assert await svc.get_detailed_stats(9) == first
     assert await svc.get_detailed_stats(9) == first
-    assert calls == [5, 5]
+    assert calls == [7, 7]
 
 
 def test_parse_career_rounds_int_fields_and_sums_time() -> None:

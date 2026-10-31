@@ -376,13 +376,19 @@ class BF1StatsService:
 
     async def get_detailed_stats(self, persona_id: int) -> PlayerStatsDetail:
         key = CAREER_CACHE_KEY.format(persona_id)
+        cache = None
+        hit = None
         try:
             cache = await get_cache()
-            if (hit := await cache.get(key)) is not None:
-                return PlayerStatsDetail.model_validate(hit)
+            hit = await cache.get(key)
         except Exception as exc:
             logger.warning("BF1 生涯缓存读取失败 persona_id=%s: %s", persona_id, exc)
-            cache = None
+        if hit is not None:
+            try:
+                return PlayerStatsDetail.model_validate(hit)
+            except Exception as exc:
+                # 条目结构对不上（如 schema 改过）：当作没命中，查到后覆盖它
+                logger.warning("BF1 生涯缓存条目无效 persona_id=%s: %s", persona_id, exc)
         values = await _fetch_one(self.db, persona_id, profile_stat_names())
         detail = _build_detail(persona_id, parse_profile(values), values)
         if cache is not None:

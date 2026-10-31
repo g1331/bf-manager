@@ -183,6 +183,11 @@ async def test_get_detailed_stats_uses_cache(monkeypatch) -> None:
     assert calls == [5]  # 一次查询 5 个类别，第二次走缓存
     assert second == first
     assert second.soldiers and second.soldiers[0].class_name == first.soldiers[0].class_name
+    # 结构对不上的旧条目当作没命中，查到后覆盖，下一次就走缓存
+    store["bf1:career:9"] = {"summary": "broken"}
+    assert await svc.get_detailed_stats(9) == first
+    assert await svc.get_detailed_stats(9) == first
+    assert calls == [5, 5]
 
 
 def test_parse_career_rounds_int_fields_and_sums_time() -> None:

@@ -122,23 +122,25 @@ export function PlayerHeroBanner({
                 {platoon.emblem_url ? (
                   // EA 徽章域不在 next/image remotePatterns 内
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={platoon.emblem_url} alt="" className="size-5 object-contain" />
+                  <img src={platoon.emblem_url} alt="" className="size-5 shrink-0 object-contain" />
                 ) : null}
                 {platoon.guid ? (
                   <Link
                     href={`/${game}/platoon/${platoon.guid}`}
-                    className="truncate transition-colors hover:text-amber-300"
+                    className="inline-action min-w-0 truncate transition-colors hover:text-amber-300"
                   >
                     {platoon.name ?? platoon.tag}
                     {platoon.size != null ? ` · ${platoon.size} 人` : ""}
                   </Link>
                 ) : (
-                  <span className="truncate">
+                  <span className="min-w-0 truncate">
                     {platoon.name ?? platoon.tag}
                     {platoon.size != null ? ` · ${platoon.size} 人` : ""}
                   </span>
                 )}
-                {platoon.verified ? <span className="text-amber-300/90">已认证</span> : null}
+                {platoon.verified ? (
+                  <span className="shrink-0 text-amber-300/90">已认证</span>
+                ) : null}
               </div>
             ) : null}
             <h1 className="font-display flex flex-wrap items-baseline gap-x-2 text-2xl leading-tight font-bold tracking-wide break-all sm:gap-x-3 sm:text-4xl @6xl:text-5xl">

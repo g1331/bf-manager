@@ -63,7 +63,6 @@ from app.domain.games.bf1.round_stats import (
     SCORE,
     SCORE_PARTS,
     SKILL,
-    SUSPECT,
     VEHICLE_KILLS,
     WINS,
     Entry,
@@ -462,10 +461,10 @@ def _career(
 ) -> tuple[RoundCareer, RoundCareer, dict[str, dict[str, int]]] | None:
     """快照 → 这一局之前和加上这一局之后的生涯水平，以及这一局用过的各武器载具的（之前的）生涯值。
 
-    快照是这个人最近一次读到的生涯，先判断含不含这一局：结束之后读的含；开局之前读的不含；
-    局中读的看身份：中途退出的人退出后会读终值，最近一次就是它，含这一局；打到结算的人局中只读过
-    进服基线或复查，不含（结算后读的在结束之后）。存疑的条目分不清，不比。
-    含这一局的先减掉；之后几局的影响相对生涯总量可以忽略。「之后」按之前加这一局的增量算，
+    快照是这个人最近一次存下的生涯，先判断含不含这一局：结束之后读的含，先减掉；开局之前读的不含。
+    局中读的不比：可能是进服基线，也可能是退出时的终值，而跟踪器读到终值时不一定存下了快照
+    （武器那段读失败、超过配额都会跳过），中途退出又回来的还可能是前半段的终值，分不清。
+    之后几局的影响相对生涯总量可以忽略。「之后」按之前加这一局的增量算，
     不直接用快照，免得混进之后的对局。
 
     缺的项给空：2026-11 前存的快照核心向量较短；这一局的条目没有追加项（命中、爆头、得分分项）时，
@@ -476,10 +475,8 @@ def _career(
         after = True
     elif at <= started_at:
         after = False
-    elif e.status == SUSPECT:
-        return None
     else:
-        after = e.status == LEFT_EARLY
+        return None
     known = _extended(e.stats)
 
     def before(i: int) -> int | None:

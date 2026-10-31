@@ -1027,8 +1027,8 @@ async def test_round_detail_honors_and_score_parts(test_session) -> None:
     assert after.headshot_rate == round(157 / 1030, 6)
     [w] = pa.weapons or []
     assert (w.career_accuracy, w.career_kpm, w.career_headshot_rate) == (0.25, 2.0, 0.0)
-    # 升级前存的短快照：没有的项给空
-    await round_service.SnapshotStore(test_session).save({a: (snap_vec[:34], blob, now - 60)})
+    # 升级前存的短快照（开局前读的）：没有的项给空
+    await round_service.SnapshotStore(test_session).save({a: (snap_vec[:34], blob, now - 3600)})
     pa = {p.persona_id: p for p in (await round_service.get_round(test_session, rid)).players}[a]
     assert pa.career is not None
     assert (pa.career.kd, pa.career.spm, pa.career.accuracy) == (round(1030 / 505, 4), None, None)
@@ -1061,23 +1061,21 @@ def _snap_entry(status: int, *, extended: bool) -> tuple[Entry, list[int]]:
 def test_round_career_snapshot_timing() -> None:
     blob = rw.pack([], {})
     span = (1000, 2000)
-    # 中途退出的人：局中退出后读的终值已含这一局，要先减掉
-    e, before = _snap_entry(LEFT_EARLY, extended=True)
-    end = [x + e.stats.get(i, 0) for i, x in enumerate(before)]
-    p = round_service._player(1, e, None, (end, blob, 1500), span)
-    assert p.career is not None and p.career_after is not None
-    assert (p.career.kd, p.career_after.kd) == (2.0, round(120 / 55, 4))
-    # 打到结算的人：局中的快照只会是进服基线，不含这一局
     e, before = _snap_entry(FINISHED, extended=True)
-    p = round_service._player(1, e, None, (before, blob, 1500), span)
-    assert p.career is not None and (p.career.kd, p.career.accuracy) == (2.0, 0.2)
-    # 开局前读的快照不含；结束后读的含
-    assert round_service._player(1, e, None, (before, blob, 900), span).career.kd == 2.0  # type: ignore[union-attr]
     end = [x + e.stats.get(i, 0) for i, x in enumerate(before)]
-    assert round_service._player(1, e, None, (end, blob, 2100), span).career.kd == 2.0  # type: ignore[union-attr]
-    # 存疑的条目分不清快照含不含这一局，不比
-    e, before = _snap_entry(SUSPECT, extended=True)
-    assert round_service._player(1, e, None, (before, blob, 1500), span).career is None
+    # 结束后读的快照含这一局，先减掉
+    p = round_service._player(1, e, None, (end, blob, 2100), span)
+    assert p.career is not None and p.career_after is not None
+    assert (p.career.kd, p.career.accuracy, p.career_after.kd) == (2.0, 0.2, round(120 / 55, 4))
+    # 开局前读的不含
+    p = round_service._player(1, e, None, (before, blob, 900), span)
+    assert p.career is not None and (p.career.kd, p.career.accuracy) == (2.0, 0.2)
+    # 局中读的分不清是基线、退出时的终值还是前半段的终值（终值不一定存下了快照），不比
+    for status in (FINISHED, LEFT_EARLY, SUSPECT):
+        e, before = _snap_entry(status, extended=True)
+        for snap in (before, [x + e.stats.get(i, 0) for i, x in enumerate(before)]):
+            p = round_service._player(1, e, None, (snap, blob, 1500), span)
+            assert (p.career, p.career_after) == (None, None)
 
 
 def test_round_career_without_extended_stats() -> None:

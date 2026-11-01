@@ -67,9 +67,9 @@ def build_session_user(user: User) -> SessionUser:
     return SessionUser(
         id=user.id,
         username=user.username,
-        role=user.role,
+        role=user.role,  # type: ignore[arg-type]
         email=user.email,
-        status=user.status,
+        status=user.status,  # type: ignore[arg-type]
         is_frozen=user.is_frozen,
         last_login_at=user.last_login_at,
         primary_binding=(
@@ -296,10 +296,10 @@ async def lookup_verification(
 ) -> VerificationInfoResponse:
     info = await account_service.get_verification_info(db, payload.token)
     return VerificationInfoResponse(
-        kind=info.kind,
+        kind=info.kind,  # type: ignore[arg-type]
         email=info.email,
         persona_name=info.persona_name,
-        mode=info.mode,
+        mode=info.mode,  # type: ignore[arg-type]
     )
 
 

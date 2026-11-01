@@ -312,7 +312,7 @@ async def _execute_plan(
                     VipApplyFailure(
                         persona_id=pid,
                         display_name=ledger.name(pid),
-                        action=action,
+                        action=action,  # type: ignore[arg-type]
                         message=str(res)[:256],
                     )
                 )
@@ -350,7 +350,7 @@ class TimedVipService(BF1ServerAdminService):
             TimedVipItem(
                 persona_id=pid,
                 display_name=ledger.name(pid),
-                status=e.status,
+                status=e.status,  # type: ignore[arg-type]
                 expires_at=e.expires_at,
                 remaining_seconds=_seconds_left(e, now),
                 expired=engine.is_expired(e, now),

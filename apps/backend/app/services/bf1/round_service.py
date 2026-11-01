@@ -353,7 +353,7 @@ def _summary(r: Bf1Round, servers: dict[int, tuple[str, int]]) -> RoundSummary:
         ended_at=_ts(r.ended_at),
         observed_start=r.observed_start,
         settled=r.settled,
-        winner=r.winner if r.winner in (1, 2) else None,
+        winner=r.winner if r.winner in (1, 2) else None,  # type: ignore[arg-type]
         team1_faction=teams.get("Team1"),
         team2_faction=teams.get("Team2"),
         player_count=r.player_count,
@@ -395,7 +395,7 @@ def _weapons(
         c = (career or {}).get(key, {})
         out.append(
             RoundWeapon(
-                kind=kind,
+                kind=kind,  # type: ignore[arg-type]
                 name=entry.get("name"),
                 category=entry.get("category"),
                 image=normalize_map_image_url(entry.get("image")),
@@ -416,7 +416,7 @@ def _stars(stars: dict[int, int]) -> list[RoundStar]:
         kind, entry = _item(rw.items()[idx])
         out.append(
             RoundStar(
-                kind=kind,
+                kind=kind,  # type: ignore[arg-type]
                 name=entry.get("name"),
                 image=normalize_map_image_url(entry.get("image")),
                 stars=n,
@@ -545,7 +545,7 @@ def _player(
     return RoundPlayer(
         persona_id=pid,
         name=name,
-        team=team,
+        team=team,  # type: ignore[arg-type]
         status="finished" if status == FINISHED else "left" if status == LEFT_EARLY else "suspect",
         won=won,
         kills=kills,

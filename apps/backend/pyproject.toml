@@ -132,3 +132,7 @@ module = [
     "app.domain.games.bf1.gateway",
 ]
 ignore_errors = true
+
+[tool.pydantic-mypy]
+# 默认把模型构造参数当 Any，会放过 mode="typo" 这类运行时才报的错
+init_typed = true

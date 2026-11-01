@@ -1,5 +1,5 @@
 # 生产库每日备份。安装：
-#   install -m 755 tools/backup.sh /srv/bf-manager/tools/backup.sh
+#   install -D -m 755 tools/backup.sh /srv/bf-manager/tools/backup.sh
 #   cp tools/systemd/bf-manager-backup.{service,timer} /etc/systemd/system/
 #   systemctl daemon-reload && systemctl enable --now bf-manager-backup.timer
 [Unit]

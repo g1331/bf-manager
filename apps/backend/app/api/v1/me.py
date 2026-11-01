@@ -186,7 +186,7 @@ def _invite_item(row: InviteCode, now: datetime) -> InviteCodeItem:
     return InviteCodeItem(
         id=row.id,
         code=row.code,
-        status=status,
+        status=status,  # type: ignore[arg-type]
         expires_at=expires_at,
         used_at=row.used_at,
         created_at=row.created_at,

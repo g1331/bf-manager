@@ -333,8 +333,8 @@ async def list_server_groups(game_id: int, db: DbDep, user: CurrentUser) -> Serv
                 group_id=v.group_id,
                 group_name=v.group_name,
                 bound_by_name=v.bound_by_name,
-                bound_via=v.bound_via,
-                status=v.status,
+                bound_via=v.bound_via,  # type: ignore[arg-type]
+                status=v.status,  # type: ignore[arg-type]
                 created_at=v.created_at,
             )
             for v in views

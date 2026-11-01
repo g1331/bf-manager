@@ -46,6 +46,7 @@ chmod 600 "$OUT"
 
 echo "Backup saved: $OUT ($(du -h "$OUT" | cut -f1))"
 
-# 只清理本脚本建的日期目录，手动放进来的文件不动
-find "$BACKUP_ROOT" -mindepth 1 -maxdepth 1 -type d -name "20[0-9][0-9][0-9][0-9][0-9][0-9]_*" \
+# 只清理本脚本建的 YYYYmmdd_HHMMSS 目录，其他文件和目录不动
+d6="[0-9][0-9][0-9][0-9][0-9][0-9]"
+find "$BACKUP_ROOT" -mindepth 1 -maxdepth 1 -type d -name "20${d6}_${d6}" \
     -mtime "+$KEEP_DAYS" -exec rm -rf {} +

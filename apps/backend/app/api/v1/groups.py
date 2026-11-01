@@ -70,7 +70,7 @@ def _member_item(m: GroupMember, me: User) -> GroupMemberItem:
         display_name=binding.display_name if binding else None,
         avatar_url=binding.avatar_url if binding else None,
         persona_id=binding.persona_id if binding else None,
-        role=m.role,
+        role=m.role,  # type: ignore[arg-type]
         pending_binding=m.user.status == "pending_binding",
         joined_at=m.joined_at,
         is_me=m.user_id == me.id,
@@ -86,7 +86,7 @@ async def _detail(db: DbDep, group_id: int, user: User) -> GroupDetailResponse:
         id=group.id,
         name=group.name,
         created_at=group.created_at,
-        my_role=me.role,
+        my_role=me.role,  # type: ignore[arg-type]
         members=[_member_item(m, user) for m in members],
     )
 
@@ -94,7 +94,7 @@ async def _detail(db: DbDep, group_id: int, user: User) -> GroupDetailResponse:
 def _invite_item(invite: GroupInvite, users: dict[int, User]) -> GroupInviteItem:
     return GroupInviteItem(
         id=invite.id,
-        role=invite.role,
+        role=invite.role,  # type: ignore[arg-type]
         max_uses=invite.max_uses,
         uses=invite.uses,
         expires_at=invite.expires_at,
@@ -120,7 +120,7 @@ async def list_groups(user: CurrentUser, db: DbDep) -> GroupListResponse:
             GroupSummaryItem(
                 id=s.group.id,
                 name=s.group.name,
-                my_role=s.role,
+                my_role=s.role,  # type: ignore[arg-type]
                 member_count=s.member_count,
                 created_at=s.group.created_at,
             )
@@ -169,7 +169,7 @@ async def group_presence(user: CurrentUser, db: DbDep) -> GroupPresenceResponse:
         s = servers.get(game_id)
         return MemberServer(
             game_id=game_id,
-            slot=slot,
+            slot=slot,  # type: ignore[arg-type]
             name=s.name if s else None,
             map_display_name=s.map_display_name if s else None,
             mode_display_name=s.mode_display_name if s else None,
@@ -192,7 +192,7 @@ async def group_presence(user: CurrentUser, db: DbDep) -> GroupPresenceResponse:
                     display_name=binding.display_name if binding else None,
                     avatar_url=binding.avatar_url if binding else None,
                     persona_id=persona_id,
-                    role=m.role,
+                    role=m.role,  # type: ignore[arg-type]
                     server=_server(persona_id),
                 )
             )
@@ -347,7 +347,7 @@ async def lookup_invite(payload: InviteTokenRequest, db: DbDep) -> InviteLookupR
         can_register = left is None or left > 0
     return InviteLookupResponse(
         group_name=group.name,
-        role=invite.role,
+        role=invite.role,  # type: ignore[arg-type]
         member_count=int(member_count or 0),
         inviter_name=_display(inviter),
         expires_at=invite.expires_at,
@@ -366,6 +366,6 @@ async def accept_invite(
     result = await group_service.join_with_invite(db, invite, user, ip=client_ip(request))
     return InviteAcceptResponse(
         group_id=result.group_id,
-        role=result.role,
+        role=result.role,  # type: ignore[arg-type]
         already_member=result.already_member,
     )

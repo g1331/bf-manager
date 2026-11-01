@@ -45,7 +45,7 @@ def _build_item(m: ServerMembership, u: User, s: Server) -> MembershipItem:
         game=s.game,
         server_id=s.server_id,
         server_name=s.name,
-        role=m.role,
+        role=m.role,  # type: ignore[arg-type]
         granted_by=m.granted_by,
         granted_at=m.created_at,
     )

@@ -338,7 +338,7 @@ class CardService:
             server_name=job.server_name,
             persona_id=job.persona_id,
             persona_name=job.persona_name,
-            status=job.status,
+            status=job.status,  # type: ignore[arg-type]
             attempts=job.attempts,
             max_attempts=MAX_ATTEMPTS if job.kind == "card" else 0,
             message=job.message,

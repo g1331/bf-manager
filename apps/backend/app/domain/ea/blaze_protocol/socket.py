@@ -1,6 +1,8 @@
 import asyncio
 import contextlib
 import ssl
+from functools import lru_cache
+from pathlib import Path
 from typing import Any, Union
 
 import httpx
@@ -9,10 +11,23 @@ from loguru import logger
 from app.core import ea_metrics
 from app.domain.ea.blaze_protocol.protocol import QType, Blaze, keepalive
 
-context = ssl.create_default_context()
-context.check_hostname = False
-context.verify_mode = ssl.CERT_NONE
-context.set_ciphers("ALL")
+# Blaze 服务器的证书由 EA 私有的「GOS 2015 Certificate Authority」签发（有效期到 2030-01-01），
+# 公共 CA 库里没有它，所以单独信任这一张。指纹 SHA-256
+# CD:80:56:E2:56:84:92:A9:91:D8:AD:7B:CC:25:76:1B:15:B9:B1:E3:AA:DB:1F:BE:A0:A6:82:B3:42:BE:5E:08
+GOS_CA_FILE = Path(__file__).with_name("gos_2015_ca.pem")
+
+
+@lru_cache(maxsize=1)
+def blaze_ssl_context() -> ssl.SSLContext:
+    """连 Blaze 服务器用的 TLS 上下文：只信任 GOS CA，并核对主机名。
+
+    这张 CA 的 Basic Constraints 没标 critical，Python 3.13 起默认开启的 VERIFY_X509_STRICT
+    会因此拒绝整条链，这里显式关掉这一项；其余校验照常。
+    """
+    ctx = ssl.create_default_context(cafile=str(GOS_CA_FILE))
+    ctx.verify_flags &= ~ssl.VERIFY_X509_STRICT
+    ctx.set_ciphers("ALL")
+    return ctx
 
 
 class BlazeServerREQ:
@@ -55,6 +70,8 @@ class BlazeServerREQ:
             'defaultDnsAddress': 0
         }
         """
+        # redirector 的证书 CN 和域名对不上、2026-12-13 到期，不做校验。它只回答该连哪台 Blaze，
+        # 不经手凭据；回来的主机连接时要过 blaze_ssl_context 的证书和主机名校验，被篡改也连不上
         async with httpx.AsyncClient(verify=False) as client:
             response = await client.post(
                 "https://spring18.gosredirector.ea.com:42230/redirector/getServerInstance",
@@ -92,10 +109,7 @@ class BlazeSocket:
         self._buffer = bytearray()
         # 持有后台任务引用，避免被 GC 回收（asyncio.create_task 文档要求）
         self._tasks: set[asyncio.Task] = set()
-        self.ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
-        self.ssl_context.check_hostname = False
-        self.ssl_context.verify_mode = ssl.CERT_NONE
-        self.ssl_context.set_ciphers("ALL")
+        self.ssl_context = blaze_ssl_context()
         self.host = host
         self.port = port
         self.reader: asyncio.StreamReader = None

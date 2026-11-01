@@ -24,7 +24,6 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
-import ssl
 from dataclasses import dataclass, field
 from typing import Literal
 
@@ -506,19 +505,13 @@ class EALoginEngine:
 
     async def _ensure_session(self) -> aiohttp.ClientSession:
         if self._session is None:
-            # 复用 BF1GatewayClient 的 SSL 配置：禁用证书验证以兼容部分网络环境
-            # （EA 在国内偶尔出现证书链与 CDN 不匹配的 526 错误）。
-            ssl_ctx = ssl.create_default_context()
-            ssl_ctx.check_hostname = False
-            ssl_ctx.verify_mode = ssl.CERT_NONE
-            connector = aiohttp.TCPConnector(ssl=ssl_ctx)
+            # EA 账号密码走这条链路，必须校验证书（用系统 CA）
             # trust_env=True 让 aiohttp 读取 HTTP_PROXY / HTTPS_PROXY / NO_PROXY 环境变量，
             # 与 app.core.config.Settings 的 http_proxy / https_proxy / no_proxy 同源（都来自
             # 容器注入的同名环境变量）。部分网络环境必须经代理才能访问 accounts.ea.com；
             # 没有这一项，.env 里配的代理对本登录链路不生效。BF1GatewayClient 走的是显式
             # proxy=_get_proxy()，这里改用 trust_env 是因为它额外尊重 NO_PROXY 白名单。
             self._session = aiohttp.ClientSession(
-                connector=connector,
                 headers=_DEFAULT_HEADERS,
                 timeout=_HTTP_TIMEOUT,
                 trust_env=True,

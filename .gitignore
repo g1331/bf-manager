@@ -74,6 +74,8 @@ secrets/
 *.key
 *.pem
 *.crt
+# EA Blaze 的公开 CA 证书（不是密钥），代码靠它校验 Blaze 服务器
+!apps/backend/app/domain/ea/blaze_protocol/gos_2015_ca.pem
 
 # ===== IDE / 编辑器 / AI 工具 =====
 .idea/

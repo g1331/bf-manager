@@ -263,15 +263,8 @@ class _BF1GatewayBase:
                 "144": "on",
             },
         }
-        # 创建SSL上下文，禁用证书验证以解决526错误
-        import ssl
-
-        ssl_context = ssl.create_default_context()
-        ssl_context.check_hostname = False
-        ssl_context.verify_mode = ssl.CERT_NONE
-
-        connector = aiohttp.TCPConnector(ssl=ssl_context)
-        self.http_session = aiohttp.ClientSession(connector=connector)
+        # 用系统 CA 校验证书：remid/sid、access_token 和账号会话都走这些连接
+        self.http_session = aiohttp.ClientSession()
 
     async def _notify_session_refreshed(self, new_sid: str | None, new_session: str | None) -> None:
         """Cookie 刷新后通知上层持久化（如 EAAccount 表）"""
@@ -351,7 +344,6 @@ class _BF1GatewayBase:
                 headers=await self.get_api_header(),
                 data=json.dumps(body),
                 timeout=10,
-                ssl=False,
                 proxy=_get_proxy(),
             ) as response:
                 # 检查Content-Type是否为JSON
@@ -389,7 +381,7 @@ class _BF1GatewayBase:
         }
         ea_metrics.count("accounts", "connect/auth:token")
         response = await self.http_session.get(
-            url=url, headers=header, timeout=10, ssl=False, proxy=_get_proxy()
+            url=url, headers=header, timeout=10, proxy=_get_proxy()
         )
         try:
             res = json.loads(await response.text())
@@ -430,7 +422,7 @@ class _BF1GatewayBase:
         }
         try:
             ea_metrics.count("accounts", "connect/auth:code")
-            async with httpx.AsyncClient(verify=False) as client:
+            async with httpx.AsyncClient() as client:
                 response2 = await client.get(url2, headers=header2)
             authcode = response2.headers["location"]
             authcode = authcode[authcode.rfind("=") + 1 :]
@@ -535,7 +527,6 @@ class _BF1GatewayBase:
                 headers=header,
                 data=json.dumps(body),
                 timeout=10,
-                ssl=False,
                 proxy=_get_proxy(),
             )
             # 检查Content-Type是否为JSON
@@ -616,7 +607,6 @@ class _BF1GatewayBase:
                 url=url,
                 headers=header,
                 timeout=15,
-                ssl=False,
                 allow_redirects=False,
                 proxy=_get_proxy(),
             ) as response:
@@ -770,7 +760,6 @@ class _BF1GatewayBase:
                 headers=header,
                 data=json.dumps(payload),
                 timeout=15,
-                ssl=False,
                 proxy=_get_proxy(),
             ) as response:
                 body_text = await response.text()

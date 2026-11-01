@@ -317,7 +317,6 @@ function RoundCard({
         <div className="pointer-events-none hidden items-center gap-3 pr-2.5 @2xl:flex">
           <div className="h-[62px] w-24 shrink-0 bg-white/[0.06]">
             {r.map_image_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={r.map_image_url}
                 alt=""

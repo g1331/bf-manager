@@ -185,7 +185,6 @@ function InfoBody({
 function Banner({ image, eyebrow, title }: { image: string; eyebrow: string; title: string }) {
   return (
     <div className="relative aspect-[16/7] overflow-hidden bg-black/40">
-      {/* eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp */}
       <img src={image} alt="" className="size-full object-cover" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
       <div className="absolute inset-x-0 bottom-0 px-4 pb-2.5">

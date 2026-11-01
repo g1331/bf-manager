@@ -85,7 +85,6 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
           )}
         >
           {primary?.avatar_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
             <img src={primary.avatar_url} alt={displayLabel} className="size-full object-cover" />
           ) : (
             <span>{initial}</span>

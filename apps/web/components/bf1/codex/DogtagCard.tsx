@@ -21,7 +21,6 @@ export function DogtagCard({
     >
       <div className="codex-frame relative">
         <div className="flex aspect-square items-center justify-center bg-[radial-gradient(circle_at_50%_40%,rgba(255,236,200,0.07),transparent_70%)]">
-          {/* eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp */}
           <img
             src={dogtagImage(tag.id)}
             alt={tag.name}

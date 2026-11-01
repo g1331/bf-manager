@@ -47,7 +47,7 @@ import { SnapshotPanel } from "@/components/bf1/server-detail/SnapshotPanel";
 import {
   GAP_SECONDS,
   buildMapColors,
-  formatDuration,
+  formatMinutes,
   mapKey,
   toMapSegments,
   useNowSeconds,
@@ -650,7 +650,6 @@ function TeamColumn({
               <th colSpan={3} className="pb-2 text-left">
                 <span className="flex items-center gap-2.5 whitespace-nowrap">
                   {slug ? (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={`/factions/${slug}.png`}
                       alt={title}
@@ -1177,7 +1176,6 @@ function RotationGrid({
           <div className="relative aspect-[16/8] w-full overflow-hidden bg-white/[0.04]">
             {m.map_image_url ? (
               // EA CDN 自带缩放与缓存，不走 next/image
-              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={m.map_image_url}
                 alt={mapLabel}
@@ -1250,7 +1248,7 @@ function RotationGrid({
                     />
                   </div>
                   <div className="mt-1.5 flex flex-wrap gap-x-3 text-[11px] text-white/50 tabular-nums">
-                    <span>{formatDuration(stat.minutes)}</span>
+                    <span>{formatMinutes(stat.minutes)}</span>
                     <span>平均 {stat.avg_players.toFixed(0)} 人</span>
                   </div>
                 </>
@@ -1317,7 +1315,6 @@ function RotationGrid({
                 )}
               >
                 {m.map_image_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={m.map_image_url} alt="" className="h-full w-14 object-cover" />
                 ) : null}
                 <span className="truncate">{label}</span>

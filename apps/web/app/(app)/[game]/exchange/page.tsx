@@ -108,7 +108,6 @@ export default function ExchangePage() {
               >
                 <div className="flex aspect-[2/1] items-center justify-center bg-white/[0.03] p-3">
                   {item.image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={item.image_url}
                       alt=""

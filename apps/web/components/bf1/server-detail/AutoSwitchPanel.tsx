@@ -288,7 +288,6 @@ export function AutoSwitchPanel({
                 <div className="flex shrink-0 gap-1">
                   {chain.map((m) =>
                     m.image_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
                       <img
                         key={m.map_name}
                         src={m.image_url}
@@ -492,10 +491,7 @@ function PoolRow({
             onClick={e.onAdd}
             className="compact-action inline-flex h-8 items-center gap-2 bg-white/[0.05] pr-2.5 text-xs text-white/80 ring-1 ring-white/10 transition-colors hover:bg-white hover:text-black"
           >
-            {e.image ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={e.image} alt="" className="h-full w-12 object-cover" />
-            ) : null}
+            {e.image ? <img src={e.image} alt="" className="h-full w-12 object-cover" /> : null}
             <Plus className="size-3" />
             {e.label}
           </button>

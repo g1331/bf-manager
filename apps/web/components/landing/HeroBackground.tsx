@@ -81,7 +81,6 @@ export function HeroBackground({ images, intervalMs = 7000 }: HeroBackgroundProp
 
   if (reduced) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
       <img
         src={images[0]}
         alt=""

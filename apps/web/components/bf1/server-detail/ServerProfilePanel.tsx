@@ -108,7 +108,6 @@ export function ServerProfilePanel({
         <div className="mt-4 flex items-start gap-3 border-t border-white/10 pt-4">
           {platoon.emblem_url ? (
             // EA 徽章域不在 next/image remotePatterns 内，用原生 img
-            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={platoon.emblem_url}
               alt={platoon.name ?? "战队徽章"}

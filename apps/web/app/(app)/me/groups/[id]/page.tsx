@@ -135,7 +135,6 @@ function MemberRow({
   return (
     <li className="border-border flex items-center gap-3 rounded-sm border p-3">
       {member.avatar_url ? (
-        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={member.avatar_url}
           alt={name}

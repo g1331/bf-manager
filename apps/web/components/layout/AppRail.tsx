@@ -83,7 +83,6 @@ function RailLink({ module: m, active }: { module: RailModule; active: boolean }
         aria-hidden
       />
       {m.kind === "game" && m.image ? (
-        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={m.image}
           alt=""

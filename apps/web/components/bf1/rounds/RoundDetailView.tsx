@@ -61,7 +61,6 @@ export function KitIcon({ kit, className }: { kit: string | null; className?: st
   const src = kit ? KIT_ICONS[kit] : undefined;
   if (src) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
       <img
         src={src}
         alt={kitLabel(kit)}
@@ -161,7 +160,6 @@ function RoundBanner({
   return (
     <div className="relative overflow-hidden border border-white/10 [clip-path:polygon(0_0,100%_0,100%_calc(100%-14px),calc(100%-14px)_100%,0_100%)]">
       {r.map_image_url ? (
-        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={r.map_image_url}
           alt=""
@@ -246,7 +244,6 @@ export function FactionFlag({
   const slug = faction ? FACTION_SLUG[faction] : undefined;
   if (!slug) return null;
   return (
-    // eslint-disable-next-line @next/next/no-img-element
     <img
       src={`/factions/${slug}.png`}
       alt={faction ?? ""}

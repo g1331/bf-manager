@@ -6,13 +6,7 @@ import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
 import { SectionHeading } from "@/components/layout/SectionHeading";
 import type { ServerPlayerCountPoint } from "@/lib/api/bf1";
 import { cn } from "@/lib/utils";
-import {
-  GAP_SECONDS,
-  formatClock,
-  formatDuration,
-  toMapSegments,
-  type MapSegment,
-} from "./history";
+import { GAP_SECONDS, formatClock, formatMinutes, toMapSegments, type MapSegment } from "./history";
 
 /* ---------- 24 小时战况：人数面积 + 排队需求线 + 地图时间轴，悬停联动 ---------- */
 
@@ -160,7 +154,7 @@ export function ServerHistoryPanel({
           <HeadStat label="平均" value={view.avg.toFixed(0)} unit="人" />
           <HeadStat
             label="满员时长"
-            value={formatDuration(view.fullMinutes)}
+            value={formatMinutes(view.fullMinutes)}
             unit={`占 ${Math.round((view.fullMinutes / view.sampledMinutes) * 100)}%`}
           />
         </div>

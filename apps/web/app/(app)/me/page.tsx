@@ -180,7 +180,6 @@ export default function MePage() {
       <section className="flex flex-col gap-4 sm:flex-row sm:items-stretch">
         <div className="border-border bg-card flex flex-1 items-center gap-4 rounded-sm border p-5">
           {primary?.avatar_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={primary.avatar_url}
               alt={primary.display_name ?? user.username}
@@ -266,7 +265,6 @@ export default function MePage() {
               >
                 <div className="flex min-w-0 items-center gap-3">
                   {b.avatar_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={b.avatar_url}
                       alt={b.display_name ?? String(b.persona_id)}

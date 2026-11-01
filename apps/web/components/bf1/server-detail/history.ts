@@ -88,7 +88,8 @@ export function formatClock(ts: number): string {
   return new Date(ts * 1000).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
 }
 
-export function formatDuration(minutes: number): string {
+/** 分钟数 → "x 分钟" / "x 小时 y 分"（秒数请用 lib/utils 的 formatDuration） */
+export function formatMinutes(minutes: number): string {
   if (minutes < 60) return `${Math.max(1, Math.round(minutes))} 分钟`;
   const h = Math.floor(minutes / 60);
   const m = Math.round(minutes % 60);

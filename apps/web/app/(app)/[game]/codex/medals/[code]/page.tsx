@@ -65,7 +65,6 @@ export default async function MedalPage({ params }: Props) {
             sideLabels={{ front: "正面", back: "背面" }}
             className="aspect-square max-h-[min(70vh,560px)] w-full border border-white/[0.06] bg-black/35"
             fallback={
-              // eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp
               <img
                 src={medalImage(medal.code)}
                 alt={medal.name}
@@ -119,7 +118,6 @@ export default async function MedalPage({ params }: Props) {
                     href={`/bf1/codex/dogtags/${t.id}`}
                     className="group compact-action flex w-24 flex-col items-center gap-1.5 text-center"
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp */}
                     <img
                       src={dogtagImage(t.id)}
                       alt={t.name}

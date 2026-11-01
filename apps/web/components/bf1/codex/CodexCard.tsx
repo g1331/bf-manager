@@ -80,7 +80,6 @@ export const CodexCard = memo(function CodexCard({
             className="group-hover:ring-codex/70 group-focus-visible:ring-codex/70 @container relative overflow-hidden rounded-[6px] bg-white/[0.04] shadow-[0_14px_28px_-16px_rgba(0,0,0,0.9)] ring-1 ring-white/10 transition-shadow duration-200"
             style={{ aspectRatio: `${CODEX_IMAGE_WIDTH} / ${CODEX_IMAGE_HEIGHT}` }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp，已按宽度出两档 */}
             <img
               src={codexImage(entry.code, 480)}
               srcSet={codexSrcSet(entry.code)}

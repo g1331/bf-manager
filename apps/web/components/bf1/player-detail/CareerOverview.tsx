@@ -313,7 +313,6 @@ function ClassPanel({
                   )}
                 >
                   <div className="row-span-2 h-12 w-12 overflow-hidden border border-white/10 bg-white/[0.04] sm:row-span-1">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={`/bf1/soldiers/portraits/${r.class}.png`}
                       alt=""
@@ -442,7 +441,6 @@ function GearList({
             <li key={`${it.name}-${i}`} className="flex items-center gap-3">
               <div className="flex h-10 w-20 shrink-0 items-center justify-center bg-white/[0.04]">
                 {(it.skin_image ?? it.image) ? (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={(it.skin_image ?? it.image)!}
                     alt=""

@@ -124,7 +124,6 @@ function RoundCard({
         )}
       >
         {r.map_image_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={r.map_image_url}
             alt=""

@@ -109,7 +109,6 @@ function MobileNavItem({
   const content = (
     <>
       {m.kind === "game" && m.image ? (
-        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={m.image}
           alt=""

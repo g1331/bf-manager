@@ -121,7 +121,6 @@ export function PlayerHeroBanner({
               <div className="mb-1 flex items-center gap-2 text-xs text-white/55">
                 {platoon.emblem_url ? (
                   // EA 徽章域不在 next/image remotePatterns 内
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={platoon.emblem_url} alt="" className="size-5 shrink-0 object-contain" />
                 ) : null}
                 {platoon.guid ? (

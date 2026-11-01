@@ -25,7 +25,6 @@ export function InstallPrompt() {
       aria-label="装到桌面"
       className="fixed inset-x-3 bottom-[calc(3.5rem+env(safe-area-inset-bottom)+0.5rem)] z-40 flex items-center gap-3 border border-white/12 bg-zinc-950/95 p-3 pr-1 shadow-lg shadow-black/40 backdrop-blur-md lg:hidden"
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/icons/icon-192.png" alt="" className="size-10 shrink-0 rounded-md" />
       <div className="min-w-0 flex-1 text-sm">
         <p className="font-medium text-white">装到桌面，像 App 一样打开</p>

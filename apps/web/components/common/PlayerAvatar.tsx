@@ -36,7 +36,6 @@ export function PlayerAvatar({
       style={ring ? { borderColor: ring } : undefined}
     >
       {avatarUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={avatarUrl}
           alt={displayName}

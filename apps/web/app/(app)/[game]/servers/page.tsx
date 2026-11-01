@@ -375,7 +375,6 @@ function ServerRow({ server, onClick }: { server: ServerSummary; onClick: () => 
         <div className="relative h-11 w-16 shrink-0 overflow-hidden rounded-sm bg-white/[0.04] sm:h-14 sm:w-24">
           {server.map_image_url ? (
             // EA CDN 自带缩放与缓存，不走 next/image
-            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={server.map_image_url}
               alt={mapLabel ?? ""}

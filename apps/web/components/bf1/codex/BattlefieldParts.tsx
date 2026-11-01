@@ -25,7 +25,6 @@ export function MapCard({ map, showExpansion }: { map: MapInfo; showExpansion?: 
     >
       <div className="codex-frame relative">
         <div className="relative aspect-[1000/636] overflow-hidden bg-black/40 ring-1 ring-white/10 transition-shadow duration-200 group-hover:ring-amber-400/50 group-focus-visible:ring-amber-400/50">
-          {/* eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp */}
           <img
             src={mapImage(map.id, 480)}
             srcSet={`${mapImage(map.id, 480)} 480w, ${mapImage(map.id)} 1000w`}
@@ -65,7 +64,6 @@ export function ModeCard({ mode }: { mode: GameMode }) {
     >
       <div className="codex-frame relative">
         <div className="relative aspect-[16/9] overflow-hidden bg-black/40 ring-1 ring-white/10 transition-shadow duration-200 group-hover:ring-amber-400/50 group-focus-visible:ring-amber-400/50">
-          {/* eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp */}
           <img
             src={modeImage(mode.id, 480)}
             srcSet={`${modeImage(mode.id, 480)} 480w, ${modeImage(mode.id)} 1000w`}
@@ -105,7 +103,6 @@ export function BattlefieldHero({
 }) {
   return (
     <div className="relative mt-5 overflow-hidden border border-white/[0.06] bg-black/40 lg:mt-6">
-      {/* eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp */}
       <img
         src={image}
         srcSet={srcSet}
@@ -155,7 +152,6 @@ export function CodexStory({ entry, body }: { entry: CodexEntry; body: string })
         >
           <div className="codex-frame relative">
             <div className="group-hover:ring-codex/70 @container relative overflow-hidden rounded-[6px] ring-1 ring-white/10 transition-shadow">
-              {/* eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp */}
               <img
                 src={codexImage(entry.code, 480)}
                 alt={entry.name}

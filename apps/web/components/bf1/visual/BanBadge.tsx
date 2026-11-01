@@ -60,7 +60,6 @@ export function BanBadge({ source, state, size = "md", href }: BanBadgeProps) {
 
   const content = (
     <>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={meta.logoSrc}
         alt={meta.label}

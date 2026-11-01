@@ -11,6 +11,13 @@ const eslintConfig = [
   ...nextTs,
   eslintConfigPrettier,
   {
+    rules: {
+      // 图片几乎都是 public/ 下预先压好尺寸的 webp，走长缓存直接出；next/image 只用在少数远程图上。
+      // 原来每个 <img> 都要单独豁免一次（70 多处），统一关掉
+      "@next/next/no-img-element": "off",
+    },
+  },
+  {
     ignores: ["node_modules/**", ".next/**", "out/**", "build/**", "next-env.d.ts"],
   },
 ];

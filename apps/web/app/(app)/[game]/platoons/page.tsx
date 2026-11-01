@@ -178,7 +178,6 @@ function PlatoonSearch() {
                   >
                     {p.emblem_url ? (
                       // EA 徽章域不在 next/image remotePatterns 内，用原生 img
-                      // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={p.emblem_url}
                         alt=""

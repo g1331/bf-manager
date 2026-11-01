@@ -5,7 +5,7 @@
 .PHONY: help install dev dev-logs dev-down dev-clean \
         deploy prod-pull prod-up prod-down prod-logs prod-restart \
         migrate makemigrations shell-be shell-fe shell-db shell-redis \
-        lint typecheck test fmt secrets-init backup gen-types
+        lint typecheck test fmt secrets-init backup
 
 help: ## 显示可用命令
 	@echo "BF-Manager · Available commands:"
@@ -100,6 +100,3 @@ secrets-init: ## 初始化生产环境密钥到 ./secrets/
 
 backup: ## 备份数据库到 ./backups/
 	bash tools/backup.sh
-
-gen-types: ## 从后端 OpenAPI 生成前端类型
-	bash tools/generate-types.sh

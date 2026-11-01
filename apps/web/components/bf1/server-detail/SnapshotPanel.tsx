@@ -387,7 +387,6 @@ function RosterTable({
     <div className={cn("min-w-0", className)}>
       <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-white">
         {slug ? (
-          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={`/factions/${slug}.png`}
             alt={title}

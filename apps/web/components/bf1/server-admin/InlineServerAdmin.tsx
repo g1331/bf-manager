@@ -45,7 +45,8 @@ import {
   type AdminActionRequest,
 } from "@/hooks/useServerAdminActions";
 import { canDo, hasAnyServerAdmin, type ServerAdminAction } from "@/lib/bf1/server-admin-authz";
-import { bf1Api, type BlazePlayer, type MyServerRole, type VipGrantOptions } from "@/lib/api/bf1";
+import type { BlazePlayer, MyServerRole, VipGrantOptions } from "@/lib/api/bf1";
+import { bf1Queries } from "@/lib/queries/bf1";
 import { cn } from "@/lib/utils";
 import {
   VipDurationPicker,
@@ -292,8 +293,7 @@ export function ServerAdminProvider({ gameId, children }: { gameId: number; chil
       ? pending.kind
       : null;
   const timedVips = useQuery({
-    queryKey: ["bf1-timed-vips", gameId],
-    queryFn: () => bf1Api.getTimedVips(gameId),
+    ...bf1Queries.timedVips(gameId),
     enabled: vipKind !== null && canManage,
     staleTime: 15_000,
   });
@@ -391,8 +391,7 @@ export function ServerAdminProvider({ gameId, children }: { gameId: number; chil
 
   // 换图提示要看行动进度：复用详情页已预取的实时名单，只在打开换图确认时才可能补拉
   const players = useQuery({
-    queryKey: ["bf1-server-players", gameId],
-    queryFn: () => bf1Api.getServerPlayers(gameId),
+    ...bf1Queries.serverPlayers(gameId),
     staleTime: 15_000,
     enabled: pending?.mode === "level",
   });

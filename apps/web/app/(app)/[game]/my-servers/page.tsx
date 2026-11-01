@@ -14,7 +14,8 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, MapPin, RotateCw, Server } from "lucide-react";
 import { ServerSubTabs } from "@/components/bf1/ServerSubTabs";
 import { useSession } from "@/hooks/useSession";
-import { bf1Api, type MyServerItem } from "@/lib/api/bf1";
+import type { MyServerItem } from "@/lib/api/bf1";
+import { bf1Queries } from "@/lib/queries/bf1";
 import { cn } from "@/lib/utils";
 
 const ROLE_LABEL: Record<MyServerItem["role"], string> = {
@@ -38,8 +39,7 @@ export default function MyServersPage() {
   const isLoggedIn = !!session.data;
 
   const q = useQuery({
-    queryKey: ["bf1-my-servers"],
-    queryFn: () => bf1Api.getMyServers(),
+    ...bf1Queries.myServers(),
     enabled: isLoggedIn,
   });
 

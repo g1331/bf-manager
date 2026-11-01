@@ -6,13 +6,8 @@ import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-qu
 import { Search } from "lucide-react";
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
 import { SectionHeading } from "@/components/layout/SectionHeading";
-import {
-  bf1Api,
-  type RosterChange,
-  type RosterPlayer,
-  type RosterSlot,
-  type ServerRosterPoint,
-} from "@/lib/api/bf1";
+import type { RosterChange, RosterPlayer, RosterSlot, ServerRosterPoint } from "@/lib/api/bf1";
+import { bf1Queries } from "@/lib/queries/bf1";
 import { FACTION_SLUG } from "@/lib/bf1/factions";
 import { cn } from "@/lib/utils";
 
@@ -89,10 +84,7 @@ export function SnapshotPanel({
   };
 
   const list = useInfiniteQuery({
-    queryKey: ["bf1-server-snapshots", gameId, jumpTo],
-    queryFn: ({ pageParam }) => bf1Api.getServerSnapshots(gameId, pageParam),
-    initialPageParam: jumpTo,
-    getNextPageParam: (last) => last.next_before,
+    ...bf1Queries.serverSnapshots(gameId, jumpTo),
     refetchInterval: jumpTo == null ? 60_000 : false,
   });
   const items = useMemo(() => list.data?.pages.flatMap((p) => p.items) ?? [], [list.data]);
@@ -246,8 +238,7 @@ function SnapshotRoster({
 }) {
   const [keyword, setKeyword] = useState("");
   const snap = useQuery({
-    queryKey: ["bf1-server-snapshot", gameId, point.ts],
-    queryFn: () => bf1Api.getServerSnapshot(gameId, point.ts),
+    ...bf1Queries.serverSnapshot(gameId, point.ts),
     // 已经过去的时刻，名单不会再变
     staleTime: Infinity,
     // 换时刻时先留着上一份名单，不让区块塌成一行「加载中」（手机端滚到名单时会被这次塌陷截停）

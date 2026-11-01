@@ -3,7 +3,8 @@
 import { useCallback, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { bf1Api, type MyServerRole, type VipGrantOptions } from "@/lib/api/bf1";
+import { bf1Api, type VipGrantOptions } from "@/lib/api/bf1";
+import { bf1Keys, bf1Queries } from "@/lib/queries/bf1";
 import { ApiException } from "@/lib/api-client";
 
 /**
@@ -42,9 +43,9 @@ export function useServerAdminActions(gameId: number) {
   const [loading, setLoading] = useState(false);
 
   const invalidate = useCallback(() => {
-    qc.invalidateQueries({ queryKey: ["bf1-server", gameId] });
-    qc.invalidateQueries({ queryKey: ["bf1-server-players", gameId] });
-    qc.invalidateQueries({ queryKey: ["bf1-timed-vips", gameId] });
+    qc.invalidateQueries({ queryKey: bf1Keys.server(gameId) });
+    qc.invalidateQueries({ queryKey: bf1Keys.serverPlayers(gameId) });
+    qc.invalidateQueries({ queryKey: bf1Keys.timedVips(gameId) });
   }, [qc, gameId]);
 
   const callApi = useCallback(
@@ -131,9 +132,8 @@ export function useServerAdminActions(gameId: number) {
  * enabled 由调用方控制（仅登录态才查），未登录或无权限时返回的 role 为空。
  */
 export function useMyServerRole(gameId: number, enabled: boolean) {
-  return useQuery<MyServerRole>({
-    queryKey: ["bf1-my-server-role", gameId],
-    queryFn: () => bf1Api.getMyServerRole(gameId),
+  return useQuery({
+    ...bf1Queries.myServerRole(gameId),
     enabled,
     staleTime: 5 * 60 * 1000,
   });

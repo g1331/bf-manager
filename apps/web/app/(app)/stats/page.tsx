@@ -14,13 +14,8 @@ import { StatsOverviewSkeleton } from "@/components/layout/PageSkeleton";
 import { SectionHeading } from "@/components/layout/SectionHeading";
 import { ENABLED_GAMES } from "@/lib/game-registry";
 import { pingSiteCountry } from "@/lib/bf1/pingsite";
-import {
-  bf1Api,
-  type BF1Overview,
-  type NamedCount,
-  type ServerSummary,
-  type TrendPoint,
-} from "@/lib/api/bf1";
+import type { BF1Overview, NamedCount, ServerSummary, TrendPoint } from "@/lib/api/bf1";
+import { bf1Queries } from "@/lib/queries/bf1";
 import { cn } from "@/lib/utils";
 
 /**
@@ -33,9 +28,8 @@ import { cn } from "@/lib/utils";
 export default function StatsPage() {
   const game = ENABLED_GAMES[0];
 
-  const overview = useQuery<BF1Overview>({
-    queryKey: ["bf1-overview"],
-    queryFn: bf1Api.getOverview,
+  const overview = useQuery({
+    ...bf1Queries.overview(),
     refetchInterval: 60_000,
   });
 

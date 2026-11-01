@@ -10,7 +10,8 @@ import {
   formatRoundTime,
   roundDuration,
 } from "@/components/bf1/rounds/RoundDetailView";
-import { bf1Api, type RoundSummary } from "@/lib/api/bf1";
+import type { RoundSummary } from "@/lib/api/bf1";
+import { bf1Queries } from "@/lib/queries/bf1";
 import { cn } from "@/lib/utils";
 
 /**
@@ -25,10 +26,7 @@ export function RoundsPanel({ gameId, game }: { gameId: number; game: string }) 
   });
   const [selected, setSelected] = useState<number | null>(linked);
   const list = useInfiniteQuery({
-    queryKey: ["bf1-server-rounds", gameId],
-    queryFn: ({ pageParam }) => bf1Api.getServerRounds(gameId, pageParam),
-    initialPageParam: null as number | null,
-    getNextPageParam: (last) => last.next_before,
+    ...bf1Queries.serverRounds(gameId),
     refetchInterval: 60_000,
   });
   const items = useMemo(() => list.data?.pages.flatMap((p) => p.items) ?? [], [list.data]);

@@ -17,9 +17,9 @@ import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
 import { DarkInput } from "@/components/common/DarkInput";
 import { SectionHeading } from "@/components/layout/SectionHeading";
 import { ApiException } from "@/lib/api-client";
-import { bf1Api } from "@/lib/api/bf1";
 import { cn } from "@/lib/utils";
 import { TipLine } from "@/components/bf1/codex/TipLine";
+import { bf1Queries } from "@/lib/queries/bf1";
 
 const MIN_QUERY = 3;
 
@@ -48,8 +48,7 @@ function PlatoonSearch() {
   }
 
   const search = useQuery({
-    queryKey: ["bf1-platoon-search", q.toLowerCase()],
-    queryFn: () => bf1Api.searchPlatoons(q),
+    ...bf1Queries.platoonSearch(q),
     enabled: q.length >= MIN_QUERY,
     staleTime: 5 * 60_000,
   });

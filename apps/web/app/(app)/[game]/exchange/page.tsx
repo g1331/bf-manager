@@ -10,9 +10,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { bf1Api } from "@/lib/api/bf1";
 import { skinRarityFromName, skinRarityHex } from "@/lib/bf1/rarity";
 import { cn } from "@/lib/utils";
+import { bf1Queries } from "@/lib/queries/bf1";
 
 const RARITY_ORDER: Record<string, number> = { Superior: 0, Enhanced: 1, Standard: 2 };
 const RARITY_LABEL: Record<string, string> = {
@@ -29,14 +29,8 @@ function cnDate(iso: string): string {
 export default function ExchangePage() {
   const [date, setDate] = useState<string | undefined>();
 
-  const periods = useQuery({
-    queryKey: ["bf1-exchange-periods"],
-    queryFn: () => bf1Api.getExchangePeriods(),
-  });
-  const q = useQuery({
-    queryKey: ["bf1-exchange", date ?? "latest"],
-    queryFn: () => bf1Api.getExchange(date),
-  });
+  const periods = useQuery(bf1Queries.exchangePeriods());
+  const q = useQuery(bf1Queries.exchange(date));
 
   const dates = (periods.data ?? []).map(cnDate);
   const current = q.data ? cnDate(q.data.captured_at) : date;

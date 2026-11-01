@@ -17,6 +17,7 @@ import { useMyServerRole } from "@/hooks/useServerAdminActions";
 import { canDo } from "@/lib/bf1/server-admin-authz";
 import { groupsApi, type ServerGroup } from "@/lib/api/groups";
 import { ApiException } from "@/lib/api-client";
+import { bf1Keys, bf1Queries } from "@/lib/queries/bf1";
 
 export function ServerGroupsPanel({ gameId }: { gameId: number }) {
   const session = useSession();
@@ -27,8 +28,7 @@ export function ServerGroupsPanel({ gameId }: { gameId: number }) {
   const [removing, setRemoving] = useState<ServerGroup | null>(null);
 
   const groups = useQuery({
-    queryKey: ["bf1-server-groups", gameId],
-    queryFn: () => groupsApi.serverGroups(gameId),
+    ...bf1Queries.serverGroups(gameId),
     enabled: isOwner,
   });
   const remove = useMutation({
@@ -36,7 +36,7 @@ export function ServerGroupsPanel({ gameId }: { gameId: number }) {
     onSuccess: () => {
       toast.success("已把这台服从群里移出");
       setRemoving(null);
-      qc.invalidateQueries({ queryKey: ["bf1-server-groups", gameId] });
+      qc.invalidateQueries({ queryKey: bf1Keys.serverGroups(gameId) });
     },
     onError: (err) =>
       toast.error(err instanceof ApiException ? err.message : "操作失败，请稍后重试"),

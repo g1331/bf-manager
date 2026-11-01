@@ -25,10 +25,10 @@ import {
   type GroupServer,
   groupsApi,
 } from "@/lib/api/groups";
-import { bf1Api } from "@/lib/api/bf1";
 import { groupLoginActor } from "@/lib/api/ea-login-tasks";
 import { ApiException } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
+import { bf1Keys, bf1Queries } from "@/lib/queries/bf1";
 
 function errorText(err: unknown, fallback: string) {
   return err instanceof ApiException ? err.message : fallback;
@@ -357,8 +357,7 @@ function BindSheet({
   const [gameId, setGameId] = useState<number | null>(null);
   const [accountId, setAccountId] = useState<number | null>(null);
   const mine = useQuery({
-    queryKey: ["bf1-my-servers"],
-    queryFn: () => bf1Api.getMyServers(),
+    ...bf1Queries.myServers(),
     enabled: open,
   });
   // 只能挂自己在 EA 上是服主或管理员的服；经由群组得来的权限不算
@@ -381,7 +380,7 @@ function BindSheet({
       setGameId(null);
       setAccountId(null);
       invalidate();
-      qc.invalidateQueries({ queryKey: ["bf1-my-servers"] });
+      qc.invalidateQueries({ queryKey: bf1Keys.myServers() });
     },
     onError: (err) => toast.error(errorText(err, "挂服失败，请稍后重试")),
   });
@@ -499,7 +498,7 @@ export function ServersSection({ group }: { group: GroupDetail }) {
       toast.success("已从群里移出");
       setUnbinding(null);
       invalidate();
-      qc.invalidateQueries({ queryKey: ["bf1-my-servers"] });
+      qc.invalidateQueries({ queryKey: bf1Keys.myServers() });
     },
     onError: (err) => toast.error(errorText(err, "操作失败，请稍后重试")),
   });

@@ -14,7 +14,8 @@ import { PlayerAvatar } from "@/components/common/PlayerAvatar";
 import { SectionHeading } from "@/components/layout/SectionHeading";
 import { ApiException } from "@/lib/api-client";
 import { useBack } from "@/hooks/useNavigation";
-import { bf1Api, type PlatoonDetail, type PlatoonMember, type PlatoonRole } from "@/lib/api/bf1";
+import type { PlatoonDetail, PlatoonMember, PlatoonRole } from "@/lib/api/bf1";
+import { bf1Queries } from "@/lib/queries/bf1";
 
 const ROLE_LABEL: Record<PlatoonRole, string> = {
   general: "将军",
@@ -28,8 +29,7 @@ export default function PlatoonDetailPage() {
   // 回到真正来的那一页（如带搜索词的战队搜索、玩家页），直接打开时退到战队搜索
   const back = useBack(`/${game}/platoons`);
   const detail = useQuery({
-    queryKey: ["bf1-platoon", guid],
-    queryFn: () => bf1Api.getPlatoonDetail(guid),
+    ...bf1Queries.platoonDetail(guid),
     staleTime: 60_000,
     retry: (count, err) => !(err instanceof ApiException && err.status === 404) && count < 2,
   });
@@ -67,8 +67,7 @@ function PlatoonView({ game, platoon }: { game: string; platoon: PlatoonDetail }
   // EA 成员列表的 avatar 基本为空，与服务器成员名单共用批量头像接口补上（战队最多 100 人）
   const ids = platoon.members.map((m) => m.persona_id);
   const avatars = useQuery({
-    queryKey: ["bf1-avatars", ids],
-    queryFn: () => bf1Api.getAvatars(ids),
+    ...bf1Queries.avatars(ids),
     enabled: ids.length > 0,
     staleTime: 60 * 60_000,
   });

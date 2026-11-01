@@ -5,7 +5,7 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
-import { bf1Api } from "@/lib/api/bf1";
+import { bf1Queries } from "@/lib/queries/bf1";
 
 function remaining(iso: string): string {
   const minutes = Math.max(0, Math.round((new Date(iso).getTime() - Date.now()) / 60000));
@@ -16,7 +16,7 @@ function remaining(iso: string): string {
 }
 
 export default function CampaignPage() {
-  const q = useQuery({ queryKey: ["bf1-campaign"], queryFn: () => bf1Api.getCampaign() });
+  const q = useQuery(bf1Queries.campaign());
   const c = q.data;
 
   return (

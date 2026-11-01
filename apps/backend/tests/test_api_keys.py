@@ -84,7 +84,7 @@ def fake_redis(monkeypatch: pytest.MonkeyPatch) -> _FakeRedis:
 
 
 @pytest.fixture
-def small_limits(monkeypatch: pytest.MonkeyPatch) -> None:
+def small_limits(monkeypatch: pytest.MonkeyPatch, frozen_rate_limit_clock: int) -> None:
     settings = get_settings()
     monkeypatch.setattr(settings, "rate_limit_lookup_per_minute", 3)
     monkeypatch.setattr(settings, "rate_limit_lookup_per_day", 100)

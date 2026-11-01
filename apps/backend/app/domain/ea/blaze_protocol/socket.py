@@ -70,8 +70,10 @@ class BlazeServerREQ:
             'defaultDnsAddress': 0
         }
         """
-        # redirector 的证书 CN 和域名对不上、2026-12-13 到期，不做校验。它只回答该连哪台 Blaze，
-        # 不经手凭据；回来的主机连接时要过 blaze_ssl_context 的证书和主机名校验，被篡改也连不上
+        # redirector 的证书 2026-12-13 到期，强制校验会让到期后的 Blaze 全部断开，所以这里不校验。
+        # 它不经手凭据，回来的主机连接时要过 blaze_ssl_context 的 GOS CA 和主机名校验：普通中间人
+        # 篡改应答只能让连接失败。剩下的风险是攻击者自己握有某台 GOS 签发证书的服务器
+        # 并把应答指过去，要堵住得对 redirector 单独 pin 公钥，暂未做
         async with httpx.AsyncClient(verify=False) as client:
             response = await client.post(
                 "https://spring18.gosredirector.ea.com:42230/redirector/getServerInstance",

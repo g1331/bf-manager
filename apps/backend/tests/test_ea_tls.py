@@ -17,9 +17,9 @@ def test_blaze_context_verifies_against_gos_ca() -> None:
     assert ctx.check_hostname is True
     # GOS CA 的 Basic Constraints 没标 critical，严格模式会拒掉整条链
     assert not ctx.verify_flags & ssl.VERIFY_X509_STRICT
-    subjects = [dict(x[0] for x in ca["subject"]) for ca in ctx.get_ca_certs()]
-    assert {"commonName": "GOS 2015 Certificate Authority"}.items() <= subjects[0].items()
-    assert len(subjects) == 1
+    cas = ctx.get_ca_certs()
+    assert len(cas) == 1
+    assert "'commonName', 'GOS 2015 Certificate Authority'" in str(cas[0]["subject"])
 
 
 def test_gos_ca_file_is_packaged_inside_app() -> None:

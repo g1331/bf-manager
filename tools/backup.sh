@@ -46,7 +46,11 @@ chmod 600 "$OUT"
 
 echo "Backup saved: $OUT ($(du -h "$OUT" | cut -f1))"
 
-# 只清理本脚本建的 YYYYmmdd_HHMMSS 目录，其他文件和目录不动
+# 只清理本脚本建的 YYYYmmdd_HHMMSS 目录，其他文件和目录不动。
+# 最新的 KEEP_DAYS+1 份无论多旧都留着：停机多天后补跑一次，不会把旧备份一次删光
 d6="[0-9][0-9][0-9][0-9][0-9][0-9]"
-find "$BACKUP_ROOT" -mindepth 1 -maxdepth 1 -type d -name "20${d6}_${d6}" \
-    -mtime "+$KEEP_DAYS" -exec rm -rf {} +
+find "$BACKUP_ROOT" -mindepth 1 -maxdepth 1 -type d -name "20${d6}_${d6}" -printf '%f\n' \
+    | sort -r | tail -n "+$((KEEP_DAYS + 2))" \
+    | while read -r name; do
+        find "$BACKUP_ROOT/$name" -maxdepth 0 -mtime "+$KEEP_DAYS" -exec rm -rf {} +
+    done

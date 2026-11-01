@@ -1,5 +1,5 @@
 # ===== 构建阶段 =====
-FROM python:3.12-slim AS builder
+FROM python:3.15-slim AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -26,7 +26,7 @@ COPY alembic.ini /app/
 COPY tools /app/tools
 
 # ===== 运行时阶段 =====
-FROM python:3.12-slim AS runtime
+FROM python:3.15-slim AS runtime
 
 # 版本号注入：由 CI 传入（release.yml 的 APP_VERSION：tag 构建为 vX.Y.Z，main 构建为 7 位 commit）。
 # 默认 0.0.0 与 app/core/config.py 的 app_version 字段占位一致，本地直接 docker build 行为不变。

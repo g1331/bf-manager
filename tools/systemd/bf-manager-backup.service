@@ -2,6 +2,7 @@
 #   install -D -m 755 tools/backup.sh /srv/bf-manager/tools/backup.sh
 #   cp tools/systemd/bf-manager-backup.{service,timer} /etc/systemd/system/
 #   systemctl daemon-reload && systemctl enable --now bf-manager-backup.timer
+# 保留天数：KEEP_DAYS=7 实际会留 8 份（find -mtime +7 是满 8 天才删），单份约 350M（2026-11）
 [Unit]
 Description=BF-Manager Postgres backup
 Requires=docker.service
@@ -11,7 +12,7 @@ After=docker.service
 Type=oneshot
 Environment=PROJECT_DIR=/srv/bf-manager
 Environment=BACKUP_ROOT=/srv/bf-manager/backups/daily
-Environment=KEEP_DAYS=14
+Environment=KEEP_DAYS=7
 ExecStart=/usr/bin/env bash /srv/bf-manager/tools/backup.sh docker-compose.prod.yml
 Nice=10
 IOSchedulingClass=idle

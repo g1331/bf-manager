@@ -7,7 +7,7 @@
 # 环境变量：
 #   PROJECT_DIR  compose 文件所在目录，默认仓库根目录；生产机上指向 /srv/bf-manager
 #   BACKUP_ROOT  备份存放目录，默认 $PROJECT_DIR/backups
-#   KEEP_DAYS    保留天数，默认 14
+#   KEEP_DAYS    保留天数，默认 7
 #
 # 定时执行见 tools/systemd/bf-manager-backup.{service,timer}
 
@@ -16,7 +16,7 @@ set -euo pipefail
 COMPOSE_FILE="${1:-docker-compose.prod.yml}"
 PROJECT_DIR="${PROJECT_DIR:-$(cd "$(dirname "$0")/.." && pwd)}"
 BACKUP_ROOT="${BACKUP_ROOT:-$PROJECT_DIR/backups}"
-KEEP_DAYS="${KEEP_DAYS:-14}"
+KEEP_DAYS="${KEEP_DAYS:-7}"
 POSTGRES_USER="${POSTGRES_USER:-bf}"
 POSTGRES_DB="${POSTGRES_DB:-bf_manager}"
 

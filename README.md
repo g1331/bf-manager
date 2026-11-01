@@ -128,11 +128,14 @@ docker compose exec backend uv run python tools/seed_ea_account.py \
 
 ```bash
 git clone https://github.com/g1331/bf-manager.git && cd bf-manager
-bash tools/deploy.sh               # 或 make deploy
-bash tools/deploy.sh --tag v1.2.3  # 锁定版本
+bash tools/deploy.sh                # 部署 main 的最新构建，或 make deploy
+bash tools/deploy.sh --tag 249526d  # 部署指定 commit 或 vX.Y.Z
+bash tools/deploy.sh --rollback     # 回到上一次部署的版本
 ```
 
-首次运行会生成 secrets、交互填写域名生成 `.env.prod`、拉镜像、启动服务并自动迁移；检测到没有管理员时，会引导创建第一个本地管理员。之后再跑就是拉新镜像滚动更新，可以重复执行。
+首次运行会生成 secrets、交互填写域名生成 `.env.prod`、拉镜像、启动服务并自动迁移；检测到没有管理员时，会引导创建第一个本地管理员。
+
+之后每次部署都锁定到一个 commit，写进 `.env.prod` 的 `IMAGE_TAG`。脚本会先核对本机 `docker-compose.prod.yml` 与该版本仓库里的是否一致，有待执行的迁移时先把数据库备份到 `backups/pre-deploy/`，更新后等 backend、web 通过健康检查，再核对 `/api/v1/healthz` 报的版本并打开首页，最后清掉本项目不再需要的旧镜像（保留当前和上一个版本）。只更新 migrate、backend、web，postgres 和 redis 的镜像不会被顺手升级。
 
 backend 和 web 只监听 `127.0.0.1:8000` 与 `127.0.0.1:3000`，TLS 和反向代理交给宿主机上的 nginx 或 openresty。生产环境默认关闭接口文档，只对外提供 BF1 只读接口的 `/api/v1/openapi.public.json`。
 
@@ -153,7 +156,7 @@ git tag -a v1.2.3 -m "Release v1.2.3"
 git push origin v1.2.3
 ```
 
-`release.yml` 会构建并推送 `ghcr.io/g1331/bf-manager-{backend,web}:v1.2.3`，再用 git-cliff 按 Conventional Commits 生成 GitHub Release。tag 必须打在 main 的提交上。平时合并到 main 不用打 tag：CI 的检查全部通过后，才会构建 `main`、`latest` 和短 SHA 三个 tag 的镜像。回滚就是用 `deploy.sh --tag` 部署旧版本；数据库迁移不会自动回退，回滚前先确认 schema 兼容。变更记录看 [Releases](https://github.com/g1331/bf-manager/releases)。
+`release.yml` 会构建并推送 `ghcr.io/g1331/bf-manager-{backend,web}:v1.2.3`，再用 git-cliff 按 Conventional Commits 生成 GitHub Release。tag 必须打在 main 的提交上。平时合并到 main 不用打 tag：CI 的检查全部通过后，才会构建 `main`、`latest` 和短 SHA 三个 tag 的镜像，版本号是 7 位 commit。回滚用 `deploy.sh --rollback`；数据库迁移不会自动回退，数据库已经迁移到旧代码不认识的版本时脚本会停下，需要先手动 downgrade。变更记录看 [Releases](https://github.com/g1331/bf-manager/releases)。
 
 ## 管理命令
 

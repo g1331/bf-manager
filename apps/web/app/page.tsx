@@ -68,8 +68,8 @@ const CHAPTERS = [
 
 const FINALE_IMAGE = "/bf1/backgrounds/general/general-8.jpg";
 
-// 应用版本号：生产镜像构建时由 CI 注入（NEXT_PUBLIC_APP_VERSION，源自 git tag）；
-// 本地 next dev 无注入时回落 "dev"。展示值直接取注入原文（tag 构建为 vX.Y.Z，main 构建为 main）。
+// 应用版本号：生产镜像构建时由 CI 注入（NEXT_PUBLIC_APP_VERSION）；
+// 本地 next dev 无注入时回落 "dev"。展示值直接取注入原文（tag 构建为 vX.Y.Z，main 构建为 7 位 commit）。
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || "dev";
 
 export default function HomePage() {

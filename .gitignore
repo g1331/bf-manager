@@ -67,6 +67,8 @@ dmypy.json
 .env.development
 .env.production
 .env.prod
+# tools/deploy.sh 记录的上一个部署版本
+.deploy-previous
 !.env.example
 
 # 容器化 secrets（绝不可入库）

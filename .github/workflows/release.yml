@@ -29,9 +29,6 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
-
       - name: Set up Buildx
         uses: docker/setup-buildx-action@v4
 
@@ -53,6 +50,17 @@ jobs:
             type=sha,prefix=,suffix=,format=short
             type=raw,value=latest,enable={{is_default_branch}}
 
+      - name: Resolve app version
+        id: version
+        shell: bash
+        # tag 构建用 tag 名（vX.Y.Z）；main 构建用 7 位 commit，与镜像的 sha 标签一致，/healthz 能看出线上是哪个提交
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            echo "value=${GITHUB_REF_NAME}" >> "${GITHUB_OUTPUT}"
+          else
+            echo "value=${GITHUB_SHA::7}" >> "${GITHUB_OUTPUT}"
+          fi
+
       - name: Build and push
         id: build
         uses: docker/build-push-action@v7
@@ -61,10 +69,9 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # 版本号注入：tag 构建时 meta.outputs.version 即 tag 名（vX.Y.Z），main 构建为 main。
-          # 镜像内 ENV APP_VERSION 被 pydantic-settings 读取，healthz / OpenAPI 显示真实版本。
+          # 镜像内 ENV APP_VERSION 被 pydantic-settings 读取，healthz 显示版本；tools/deploy.sh 部署后据此核对
           build-args: |
-            APP_VERSION=${{ steps.meta.outputs.version }}
+            APP_VERSION=${{ steps.version.outputs.value }}
           cache-from: type=gha,scope=backend
           cache-to: type=gha,scope=backend,mode=max
 
@@ -79,9 +86,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
 
       - name: Set up Buildx
         uses: docker/setup-buildx-action@v4
@@ -104,6 +108,17 @@ jobs:
             type=sha,prefix=,suffix=,format=short
             type=raw,value=latest,enable={{is_default_branch}}
 
+      - name: Resolve app version
+        id: version
+        shell: bash
+        # tag 构建用 tag 名（vX.Y.Z）；main 构建用 7 位 commit，与镜像的 sha 标签一致，/healthz 能看出线上是哪个提交
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            echo "value=${GITHUB_REF_NAME}" >> "${GITHUB_OUTPUT}"
+          else
+            echo "value=${GITHUB_SHA::7}" >> "${GITHUB_OUTPUT}"
+          fi
+
       - name: Build and push
         id: build
         uses: docker/build-push-action@v7
@@ -113,9 +128,9 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # 与后端取同一 meta.outputs.version，保证前后端版本号统一；构建时内联进 bundle。
+          # 与后端取同一版本号，构建时内联进 bundle
           build-args: |
-            NEXT_PUBLIC_APP_VERSION=${{ steps.meta.outputs.version }}
+            NEXT_PUBLIC_APP_VERSION=${{ steps.version.outputs.value }}
           cache-from: type=gha,scope=web
           cache-to: type=gha,scope=web,mode=max
 

@@ -33,10 +33,9 @@ def test_no_disabled_certificate_checks_in_app() -> None:
     pattern = re.compile(r"CERT_NONE|ssl\s*=\s*False|verify\s*=\s*False|check_hostname\s*=\s*False")
     hits = []
     for path in APP_DIR.rglob("*.py"):
-        for no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        for line in path.read_text(encoding="utf-8").splitlines():
             if pattern.search(line):
-                hits.append(f"{path.relative_to(APP_DIR)}:{no}: {line.strip()}")
+                hits.append(f"{path.relative_to(APP_DIR)}: {line.strip()}")
     assert hits == [
-        "domain/ea/blaze_protocol/socket.py:75: "
-        "async with httpx.AsyncClient(verify=False) as client:"
+        "domain/ea/blaze_protocol/socket.py: async with httpx.AsyncClient(verify=False) as client:"
     ]

@@ -5,11 +5,15 @@
 # - migrate 服务作为独立 job，启动后跑一次 alembic upgrade head
 # - backend / web 端口 bind 到 host 127.0.0.1，由 host 上的 openresty / nginx
 #   做 TLS 终止 + path-based 反代（/api/v1/* → backend，其它 → web）
+# - mem_limit / cpus 是生产机上的实际配额，生产目录的 compose 与这里保持一致
+# - IMAGE_TAG 由 tools/deploy.sh 写进 .env.prod，锁定到某个 commit（7 位短 sha）或 vX.Y.Z
 
 services:
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
+    mem_limit: 512m
+    cpus: 0.75
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-bf}
       POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
@@ -28,6 +32,8 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
+    mem_limit: 256m
+    cpus: 0.25
     volumes:
       - redis-data:/data
     healthcheck:
@@ -40,6 +46,8 @@ services:
   migrate:
     image: ghcr.io/g1331/bf-manager-backend:${IMAGE_TAG:-latest}
     restart: "no"
+    mem_limit: 512m
+    cpus: 0.75
     environment:
       ENVIRONMENT: production
     # Settings 通过 secrets_dir=/run/secrets 自动按字段名读取这 3 个 secret 文件
@@ -56,6 +64,8 @@ services:
   backend:
     image: ghcr.io/g1331/bf-manager-backend:${IMAGE_TAG:-latest}
     restart: unless-stopped
+    mem_limit: 512m
+    cpus: 1.0
     environment:
       REDIS_URL: redis://redis:6379/0
       ALLOWED_ORIGINS: https://${DOMAIN:?DOMAIN required}
@@ -89,6 +99,8 @@ services:
   web:
     image: ghcr.io/g1331/bf-manager-web:${IMAGE_TAG:-latest}
     restart: unless-stopped
+    mem_limit: 256m
+    cpus: 0.5
     environment:
       NODE_ENV: production
       BACKEND_API_URL: http://backend:8000

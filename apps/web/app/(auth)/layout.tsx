@@ -11,7 +11,6 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           用 absolute inset-0 置于内容流首位，靠 DOM 顺序压在底层，避免 -z-10 被父背景遮挡 */}
       <div className="absolute inset-0" aria-hidden>
         {/* EA 素材域不在 next/image remotePatterns 内，且为静态首屏图，用原生 img */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/bf1/backgrounds/general/general-3.jpg"
           alt=""

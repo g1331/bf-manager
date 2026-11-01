@@ -38,7 +38,6 @@ export default function RibbonsPage() {
                 >
                   {/* 原图 256 见方，勋带只占中间一条（x 17–239，y 约 90–167），裁出这一条 */}
                   <div className="relative h-[42px] w-[122px] shrink-0 overflow-hidden">
-                    {/* eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp */}
                     <img
                       src={ribbonImage(r.code)}
                       alt={r.name}

@@ -198,7 +198,6 @@ function GearRow<T extends GearItem>({
       </span>
       <div className="flex h-12 items-center justify-center bg-gradient-to-br from-white/[0.07] to-transparent @3xl:h-14">
         {image ? (
-          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={image}
             alt=""

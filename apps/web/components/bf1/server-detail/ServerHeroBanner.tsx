@@ -13,7 +13,7 @@ import type {
 } from "@/lib/api/bf1";
 import { pingSiteCountry } from "@/lib/bf1/pingsite";
 import { cn } from "@/lib/utils";
-import { formatDuration } from "./history";
+import { formatMinutes } from "./history";
 import { nextMap } from "./operation";
 import { OperationTrack } from "./OperationTrack";
 
@@ -71,7 +71,6 @@ export function ServerHeroBanner({
     >
       {summary.map_image_url ? (
         // EA CDN 自带缩放与缓存，不走 next/image
-        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={summary.map_image_url}
           alt=""
@@ -127,7 +126,6 @@ export function ServerHeroBanner({
             {extras.platoon?.tag ? (
               <span className="flex items-center gap-1.5">
                 {extras.platoon.emblem_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={extras.platoon.emblem_url} alt="" className="size-4 object-contain" />
                 ) : null}
                 战队 <span className="text-white/85">[{extras.platoon.tag}]</span>
@@ -210,14 +208,13 @@ export function ServerHeroBanner({
               </span>
             ) : null}
             {elapsedMinutes != null && elapsedMinutes >= 0 ? (
-              <span className="tabular-nums">已进行 {formatDuration(elapsedMinutes)}</span>
+              <span className="tabular-nums">已进行 {formatMinutes(elapsedMinutes)}</span>
             ) : null}
           </div>
           {operation ? <OperationTrack operation={operation} /> : null}
           {next ? (
             <div className="mt-5 flex items-center gap-3 border-t border-white/15 pt-3 lg:flex-row-reverse">
               {next.image ? (
-                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={next.image}
                   alt=""

@@ -93,9 +93,7 @@ apps/
     app/services/            业务编排
     app/api/v1/              路由
   android/    安卓壳 App（全屏 WebView）
-packages/
-  shared-types/   由后端 OpenAPI 生成的 TS 类型
-tools/        部署、备份、类型生成、安卓打包脚本
+tools/        部署、备份、安卓打包脚本
 ```
 
 代码按游戏分层，EA 身份层与具体游戏解耦。目前只实现了 BF1，接入其他游戏的步骤见 [`apps/backend/app/domain/games/README.md`](apps/backend/app/domain/games/README.md)。
@@ -122,7 +120,7 @@ docker compose exec backend uv run python tools/seed_ea_account.py \
 
 只想看界面，可以不起 Docker：后端在 `apps/backend` 下执行 `uv run uvicorn app.main:app --reload`，默认用 SQLite；前端在 `apps/web` 下执行 `pnpm dev`。没有 EA 凭据时，在 `apps/backend/.env` 里设 `BLAZE_MOCK_MODE=true`，服务器玩家名单会返回内置的假数据。
 
-后端 schema 改了之后，执行 `make gen-types` 重新生成前端类型（输出不进 git）。其他命令见 `make help`。
+前端接口类型手写在 `apps/web/lib/api/`，后端 schema 改了要同步改那里。其他命令见 `make help`。
 
 ## 部署
 

@@ -144,7 +144,6 @@ export function ZoomableImage({
         if (lastPointer.current === "mouse") toggle(e);
       }}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp，已按宽度出两档 */}
       <img
         src={src}
         srcSet={srcSet}

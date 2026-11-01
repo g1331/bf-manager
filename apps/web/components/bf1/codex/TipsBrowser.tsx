@@ -236,7 +236,6 @@ function TipRow({ tip, terms }: { tip: Tip; terms?: string[] }) {
     <li className="flex gap-3 border border-white/[0.07] bg-black/35 p-3 backdrop-blur-sm sm:gap-4">
       <div className="h-[46px] w-[72px] shrink-0 overflow-hidden bg-white/[0.04] ring-1 ring-white/10">
         {thumb ? (
-          // eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp
           <img src={thumb} alt="" loading="lazy" className="size-full object-cover" />
         ) : (
           <div className="flex size-full items-center justify-center">
@@ -312,7 +311,6 @@ function TipShowcase() {
     // 正文走文档流：长贴士（最长约 150 字）会把卡片撑高，而不是溢出到图片顶上
     <div className="relative flex min-h-64 items-end overflow-hidden border border-white/[0.07] bg-black/50 sm:aspect-[16/6] sm:min-h-0">
       {map ? (
-        // eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp
         <img
           key={map.id}
           src={mapImage(map.id)}

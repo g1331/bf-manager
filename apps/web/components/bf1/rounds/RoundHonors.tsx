@@ -51,7 +51,6 @@ export function RibbonStrip({ code, height = 20 }: { code: string; height?: numb
       className="relative block shrink-0 overflow-hidden"
       style={{ height, width: Math.round(122 * k) }}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp */}
       <img
         src={ribbonImage(code)}
         alt={r?.name ?? code}

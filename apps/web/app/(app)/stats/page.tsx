@@ -177,7 +177,6 @@ function HeroBanner({ data }: { data: BF1Overview }) {
     >
       {/* 实景铺底：当前人数最多的地图，左侧压暗承载大字，右侧透出画面 */}
       {backdrop ? (
-        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={backdrop}
           alt=""
@@ -593,7 +592,6 @@ function ServerRow({
         {String(rank).padStart(2, "0")}
       </span>
       {s.map_image_url ? (
-        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={s.map_image_url}
           alt=""
@@ -689,7 +687,6 @@ function MapTile({ item, rank, featured }: { item: NamedCount; rank: number; fea
       )}
     >
       {item.image ? (
-        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={item.image}
           alt={map}

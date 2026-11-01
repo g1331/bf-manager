@@ -12,7 +12,6 @@ export function MedalCard({ medal, size = "md" }: { medal: Medal; size?: "sm" | 
     >
       <div className="codex-frame relative">
         <div className="relative flex aspect-square items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_50%_38%,rgba(255,236,200,0.09),rgba(0,0,0,0.35)_70%)] ring-1 ring-white/10 transition-shadow duration-200 group-hover:ring-amber-400/50 group-focus-visible:ring-amber-400/50">
-          {/* eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp */}
           <img
             src={medalImage(medal.code)}
             alt={medal.name}

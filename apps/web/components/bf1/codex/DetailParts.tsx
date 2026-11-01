@@ -55,7 +55,6 @@ function StepLink({ item, dir }: { item: StepItem; dir: "prev" | "next" }) {
       ) : (
         <ChevronLeft className="size-5 shrink-0 text-white/40 group-hover:text-amber-300" />
       )}
-      {/* eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp */}
       <img
         src={item.image}
         alt=""

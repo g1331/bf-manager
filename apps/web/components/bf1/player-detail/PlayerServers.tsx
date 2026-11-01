@@ -108,7 +108,6 @@ function ServerRow({
       )}
     >
       {server.map_image_url ? (
-        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={server.map_image_url}
           alt=""

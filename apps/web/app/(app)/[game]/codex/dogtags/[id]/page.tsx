@@ -110,7 +110,6 @@ export default async function DogtagPage({ params }: Props) {
               href={`/bf1/codex/medals/${medal.code}`}
               className="group mt-6 flex items-center gap-3 border border-white/[0.08] bg-white/[0.03] p-3 transition-colors hover:border-amber-400/50"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp */}
               <img
                 src={medalImage(medal.code)}
                 alt=""
@@ -146,7 +145,6 @@ export default async function DogtagPage({ params }: Props) {
               const current = t.id === tag.id;
               const body = (
                 <>
-                  {/* eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp */}
                   <img
                     src={dogtagImage(t.id)}
                     alt=""

@@ -51,7 +51,6 @@ export function PlayerCollectionView({
                 prefetch={false}
                 className="group compact-action flex items-center gap-3"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp */}
                 <img
                   src={dogtagImage(t.id)}
                   alt=""
@@ -150,7 +149,6 @@ function MedalTile({
       aria-label={label}
       className="group compact-action block"
     >
-      {/* eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp */}
       <img
         src={medalImage(code)}
         alt=""
@@ -195,7 +193,6 @@ function DogtagTile({
       aria-label={label}
       className="group compact-action block"
     >
-      {/* eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp */}
       <img
         src={dogtagImage(id)}
         alt=""

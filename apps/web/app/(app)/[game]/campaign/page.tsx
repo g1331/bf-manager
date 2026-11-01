@@ -62,7 +62,6 @@ export default function CampaignPage() {
                 className="overflow-hidden rounded-sm border border-white/10 bg-black/30"
               >
                 {op.image_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={op.image_url} alt="" className="aspect-[16/9] w-full object-cover" />
                 ) : null}
                 <div className="px-3 py-2.5 text-sm font-medium sm:px-4 sm:py-3 sm:text-base">

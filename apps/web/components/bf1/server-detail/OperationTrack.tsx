@@ -26,7 +26,6 @@ export function OperationTrack({ operation }: { operation: OperationProgress }) 
             {i > 0 ? <span className="mx-0.5 h-px w-2 bg-white/30" aria-hidden /> : null}
             <div className={cn("flex items-center gap-1", i > map_index && "opacity-50")}>
               {m.image_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={m.image_url}
                   alt=""
@@ -77,7 +76,6 @@ function FactionFlag({ faction }: { faction: string | null }) {
   const slug = faction ? FACTION_SLUG[faction] : undefined;
   if (!slug) return null;
   return (
-    // eslint-disable-next-line @next/next/no-img-element
     <img
       src={`/factions/${slug}.png`}
       alt={faction ?? ""}

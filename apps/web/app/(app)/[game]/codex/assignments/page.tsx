@@ -47,7 +47,6 @@ export default function AssignmentsPage() {
                 >
                   <div className="flex items-center gap-3">
                     <div className="flex size-12 shrink-0 items-center justify-center bg-white/[0.05] ring-1 ring-white/10">
-                      {/* eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp */}
                       <img
                         src={assignmentImage(a.image)}
                         alt=""

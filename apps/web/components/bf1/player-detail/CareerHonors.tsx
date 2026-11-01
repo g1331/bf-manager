@@ -178,7 +178,6 @@ export function MapsPanel({ maps, game }: { maps: CareerMap[]; game: string }) {
               className="group compact-action block outline-none"
             >
               <div className="relative aspect-[16/9] overflow-hidden bg-black/40 ring-1 ring-white/10 transition-shadow group-hover:ring-amber-400/50 group-focus-visible:ring-amber-400/50">
-                {/* eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp */}
                 <img
                   src={mapImage(m.map, 480)}
                   alt=""

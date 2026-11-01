@@ -32,7 +32,6 @@ export function mainWeapon(p: RoundPlayer): RoundWeapon | null {
 export function WeaponImage({ weapon, className }: { weapon: RoundWeapon; className?: string }) {
   if (!weapon.image) return <span className={cn("block shrink-0", className)} />;
   return (
-    // eslint-disable-next-line @next/next/no-img-element
     <img
       src={weapon.image}
       alt={weapon.name ?? ""}

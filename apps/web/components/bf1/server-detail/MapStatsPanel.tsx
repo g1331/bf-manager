@@ -5,7 +5,7 @@ import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
 import { SectionHeading } from "@/components/layout/SectionHeading";
 import type { ServerMapStat } from "@/lib/api/bf1";
 import { cn } from "@/lib/utils";
-import { formatDuration } from "./history";
+import { formatMinutes } from "./history";
 
 const LIST_LIMIT = 8;
 
@@ -37,7 +37,7 @@ export function MapStatsPanel({
       <div className="flex items-baseline justify-between gap-3">
         <SectionHeading className="mb-0">热门地图</SectionHeading>
         <span className="text-[11px] text-white/40">
-          近 7 天 · 有人 {formatDuration(totalMinutes)}
+          近 7 天 · 有人 {formatMinutes(totalMinutes)}
         </span>
       </div>
 
@@ -57,7 +57,6 @@ export function MapStatsPanel({
               </span>
               <div className="relative h-11 w-[4.5rem] shrink-0 overflow-hidden [clip-path:polygon(0_0,100%_0,100%_calc(100%-8px),calc(100%-8px)_100%,0_100%)]">
                 {m.map_image_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={m.map_image_url}
                     alt=""
@@ -101,7 +100,7 @@ export function MapStatsPanel({
                   />
                 </div>
                 <div className="mt-1 flex gap-3 text-[11px] text-white/45 tabular-nums">
-                  <span>{formatDuration(m.minutes)}</span>
+                  <span>{formatMinutes(m.minutes)}</span>
                   <span>平均 {m.avg_players.toFixed(0)} 人</span>
                   <span>{m.rounds} 轮</span>
                 </div>

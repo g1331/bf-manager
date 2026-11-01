@@ -98,7 +98,6 @@ export default function BattlefieldPage() {
             {FACTIONS.map((f) => {
               const body = (
                 <>
-                  {/* eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp */}
                   <img
                     src={factionImage(f.id)}
                     alt=""
@@ -160,7 +159,6 @@ function StoryCard({ story, index }: { story: WarStory; index: number }) {
           aria-label={`通关解锁的百科：${finale.name}`}
         >
           <div className="codex-frame relative">
-            {/* eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp */}
             <img
               src={codexImage(finale.code, 480)}
               alt=""

@@ -92,7 +92,6 @@ function PlatoonView({ game, platoon }: { game: string; platoon: PlatoonDetail }
         <div className="flex items-center gap-4 sm:gap-6">
           {platoon.emblem_url ? (
             // EA 徽章域不在 next/image remotePatterns 内，用原生 img
-            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={platoon.emblem_url}
               alt={platoon.name ?? "战队徽章"}

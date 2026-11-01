@@ -73,14 +73,12 @@ export function DogtagStudio({ tag }: { tag: Dogtag }) {
         }}
         className="aspect-square max-h-[min(70vh,560px)] w-full border border-white/[0.06] bg-black/35"
         fallback={
-          // eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp
           <img src={dogtagImage(tag.id)} alt={tag.name} className="size-3/4 rounded-full" />
         }
       />
 
       <div className="mt-3 flex items-center gap-3 border border-white/[0.07] bg-black/35 p-2.5">
         {partner ? (
-          // eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp
           <img src={dogtagImage(partner.id)} alt="" className="size-10 shrink-0 rounded-full" />
         ) : (
           <span className="size-10 shrink-0 rounded-full bg-[radial-gradient(circle_at_35%_30%,#d8d4cc,#8d897f_60%,#5c5952)]" />
@@ -200,7 +198,6 @@ function PartnerPicker({
                 active={current === t.id}
                 onClick={() => onPick(t.id)}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element -- 自托管的静态 webp */}
                 <img
                   src={dogtagImage(t.id)}
                   alt=""

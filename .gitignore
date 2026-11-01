@@ -105,9 +105,6 @@ logs/
 dist/
 *.tsbuildinfo
 
-# ===== 类型生成产物（CI 自动生成） =====
-packages/shared-types/src/api.d.ts
-
 # ===== Docker =====
 .docker/
 

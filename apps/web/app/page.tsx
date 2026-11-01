@@ -277,7 +277,6 @@ function ChapterScene({ chapter }: { chapter: (typeof CHAPTERS)[number] }) {
     <section id={`chapter-${chapter.no}`} ref={ref} className="relative h-[220vh]">
       <div className="sticky top-0 h-screen overflow-hidden">
         <motion.div style={{ scale: imgScale, x: imgX }} className="absolute inset-0">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={chapter.image} alt="" className="h-full w-full object-cover" loading="lazy" />
         </motion.div>
         <div
@@ -388,7 +387,6 @@ function GameCard({ game }: { game: (typeof GAMES)[keyof typeof GAMES] }) {
     >
       {/* 官方封面 key art（图内已含 BATTLEFIELD logo） */}
       <div className="absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-105">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={game.cardImage}
           alt={game.displayName}
@@ -432,7 +430,6 @@ function FinaleSection() {
     <section ref={ref} className="relative overflow-hidden bg-black">
       <div className="relative flex h-screen items-center justify-center overflow-hidden px-6 text-center">
         <motion.div style={{ scale: imgScale }} className="absolute inset-0">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={FINALE_IMAGE} alt="" className="h-full w-full object-cover" loading="lazy" />
         </motion.div>
         <div className="absolute inset-0 bg-black/55" />

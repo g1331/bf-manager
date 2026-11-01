@@ -48,7 +48,6 @@ export function AmbientBackground() {
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
       {/* 战场实景：多图叠放，仅当前图淡入，其余淡出，形成缓慢轮换 */}
       {slides.map((src, i) => (
-        // eslint-disable-next-line @next/next/no-img-element
         <img
           key={src}
           src={src}

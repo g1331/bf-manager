@@ -88,7 +88,13 @@ async def get_bf1_client(db: AsyncSession) -> AsyncIterator[BF1GatewayClient]:
         if not client.access_token and creds.remid and creds.sid:
             await client.login(creds.remid, creds.sid)
         yield client
-        await account_service.mark_used(creds.persona_id)
+        # 调用方拿到 gateway 的错误字符串时常常不抛异常（概况轮询、头像、邮箱反查都是吞掉降级）。
+        # 只看有没有异常的话，session 失效且重登失败的号也会记成功、清零失败计数，永远停不掉。
+        # check_login 只在登录成功时置 True，会话失效后重登没成功就是 False，这才是账号本身的问题
+        if client.check_login:
+            await account_service.mark_used(creds.persona_id)
+        else:
+            await account_service.mark_failure(creds.persona_id)
     except AppError as exc:
         # 玩家不存在、参数不对这类 4xx 是查询本身的结果，说明账号工作正常；
         # 记成失败的话，匿名用户连查几个不存在的 id 就能让账号被停用

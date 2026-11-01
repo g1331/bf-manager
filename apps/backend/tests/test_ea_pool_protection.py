@@ -229,9 +229,9 @@ async def _reload(session, account_id: int) -> EAAccount:
 
 class _LoggedInClient:
     def __init__(self, **kwargs: Any) -> None:
-        # 有 access_token 时工厂不再登录；check_login=False 让工厂不把登录态写进进程缓存
+        # 有 access_token 时工厂不再登录
         self.access_token = "token"
-        self.check_login = False
+        self.check_login = True
         self.http_session = None
 
     async def login(self, remid: str, sid: str) -> str:
@@ -241,6 +241,29 @@ class _LoggedInClient:
 @pytest.fixture
 def fake_pool_client(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(gateway_factory, "BF1GatewayClient", _LoggedInClient)
+    # 假客户端不缓存登录态，免得污染其他用例
+    monkeypatch.setattr(gateway_factory, "_save_login_state", lambda *args: None)
+
+
+async def test_clean_exit_with_live_session_counts_as_success(
+    test_session, fake_pool_client
+) -> None:
+    account = await _seed_account(test_session, failure_count=2)
+    async with gateway_factory.get_bf1_client(test_session):
+        pass
+    refreshed = await _reload(test_session, account.id)
+    assert refreshed.failure_count == 0
+
+
+async def test_clean_exit_after_session_lost_counts_as_failure(
+    test_session, fake_pool_client
+) -> None:
+    """调用方吞掉了 gateway 的错误字符串、没抛异常，但会话已失效且重登失败：记失败"""
+    account = await _seed_account(test_session, failure_count=2)
+    async with gateway_factory.get_bf1_client(test_session) as client:
+        client.check_login = False
+    refreshed = await _reload(test_session, account.id)
+    assert refreshed.failure_count == 3
 
 
 async def test_not_found_inside_pool_client_counts_as_success(

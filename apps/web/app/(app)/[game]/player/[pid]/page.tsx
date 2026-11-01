@@ -34,13 +34,8 @@ import { PlayerRounds } from "@/components/bf1/player-detail/PlayerRounds";
 import { PlayerServers, playerServerCount } from "@/components/bf1/player-detail/PlayerServers";
 import { fmtFixed, fmtFull, perMinute } from "@/components/bf1/player-detail/format";
 import { PlayerDetailSkeleton, RowsSkeleton } from "@/components/layout/PageSkeleton";
-import {
-  bf1Api,
-  type PlayerStatsDetail,
-  type RecentServer,
-  type VehicleStat,
-  type WeaponStat,
-} from "@/lib/api/bf1";
+import type { PlayerStatsDetail, RecentServer, VehicleStat, WeaponStat } from "@/lib/api/bf1";
+import { bf1Queries } from "@/lib/queries/bf1";
 import { pickBackgroundUrl } from "@/lib/bf1/background";
 import { pushRecentPlayer } from "@/lib/bf1/recent-players";
 import { useBack } from "@/hooks/useNavigation";
@@ -95,8 +90,7 @@ export default function Bf1PlayerPage() {
   const enabled = Number.isFinite(personaId) && personaId > 0;
 
   const statsQ = useQuery({
-    queryKey: ["bf1-stats", personaId],
-    queryFn: () => bf1Api.getStats(personaId),
+    ...bf1Queries.stats(personaId),
     enabled,
   });
 
@@ -119,10 +113,7 @@ export default function Bf1PlayerPage() {
 }
 
 function StatsFailedServers({ game, personaId }: { game: string; personaId: number }) {
-  const serversQ = useQuery({
-    queryKey: ["bf1-player-servers", personaId],
-    queryFn: () => bf1Api.getPlayerServers(personaId),
-  });
+  const serversQ = useQuery(bf1Queries.playerServers(personaId));
   if (!playerServerCount(serversQ.data)) return null;
   return <PlayerServers game={game} data={serversQ.data} loading={false} error={false} />;
 }
@@ -141,37 +132,18 @@ function PlayerDetailView({
   // 回到真正来的那一页（战队、服务器排行、带搜索词的战绩查询等），直接打开时退到战绩查询
   const back = useBack(`/${game}/players`);
 
-  const playerQ = useQuery({
-    queryKey: ["bf1-player", personaId],
-    queryFn: () => bf1Api.getPlayer(personaId),
-  });
-  const onlineQ = useQuery({
-    queryKey: ["bf1-online", personaId],
-    queryFn: () => bf1Api.getOnline(personaId),
-  });
-  const platoonQ = useQuery({
-    queryKey: ["bf1-platoon", personaId],
-    queryFn: () => bf1Api.getPlatoon(personaId),
-  });
+  const playerQ = useQuery(bf1Queries.player(personaId));
+  const onlineQ = useQuery(bf1Queries.online(personaId));
+  const platoonQ = useQuery(bf1Queries.playerPlatoon(personaId));
   const displayName = playerQ.data?.display_name || summary.display_name || `Persona ${personaId}`;
   const banQ = useQuery({
-    queryKey: ["bf1-ban", personaId, playerQ.data?.display_name],
-    queryFn: () => bf1Api.getBan(personaId, playerQ.data?.display_name),
+    ...bf1Queries.ban(personaId, playerQ.data?.display_name),
     enabled: !!playerQ.data,
   });
-  const weaponsQ = useQuery({
-    queryKey: ["bf1-weapons", personaId],
-    queryFn: () => bf1Api.getWeapons(personaId),
-  });
-  const vehiclesQ = useQuery({
-    queryKey: ["bf1-vehicles", personaId],
-    queryFn: () => bf1Api.getVehicles(personaId),
-  });
+  const weaponsQ = useQuery(bf1Queries.weapons(personaId));
+  const vehiclesQ = useQuery(bf1Queries.vehicles(personaId));
   // 只读库，进页就拉，分区标签上显示条数
-  const serversQ = useQuery({
-    queryKey: ["bf1-player-servers", personaId],
-    queryFn: () => bf1Api.getPlayerServers(personaId),
-  });
+  const serversQ = useQuery(bf1Queries.playerServers(personaId));
 
   const weapons = weaponsQ.data?.weapons;
   const vehicles = vehiclesQ.data?.vehicles;
@@ -189,15 +161,13 @@ function PlayerDetailView({
   const [tab, setTab] = useTabHash(TAB_KEYS, TAB_KEYS);
 
   const recentQ = useQuery({
-    queryKey: ["bf1-recent", personaId],
-    queryFn: () => bf1Api.getRecentServers(personaId),
+    ...bf1Queries.recent(personaId),
     enabled: tab === "recent",
   });
 
   // 3 个 Gateway 请求，切到这个分区才查
   const collectionQ = useQuery({
-    queryKey: ["bf1-collection", personaId],
-    queryFn: () => bf1Api.getCollection(personaId),
+    ...bf1Queries.collection(personaId),
     enabled: tab === "collection",
     staleTime: 10 * 60_000,
   });

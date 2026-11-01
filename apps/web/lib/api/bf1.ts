@@ -831,50 +831,62 @@ export interface Campaign {
   operations: { name: string; image_url: string | null }[];
 }
 
-export const bf1Api = {
-  searchPlayers: (name: string) =>
-    api.get<PersonaSearchResult>(`/bf1/players/search?name=${encodeURIComponent(name)}`),
+/** 读接口的可选项：signal 交给 React Query，组件卸载或查询被取代时取消请求 */
+export interface RequestOpts {
+  signal?: AbortSignal;
+}
 
-  getPlayer: (personaId: number) => api.get<PersonaBrief>(`/bf1/players/${personaId}`),
+export const bf1Api = {
+  searchPlayers: (name: string, opts?: RequestOpts) =>
+    api.get<PersonaSearchResult>(`/bf1/players/search?name=${encodeURIComponent(name)}`, opts),
+
+  getPlayer: (personaId: number, opts?: RequestOpts) =>
+    api.get<PersonaBrief>(`/bf1/players/${personaId}`, opts),
 
   /** 批量取头像（persona_id → URL，取不到为 null），最多 200 个 */
-  getAvatars: (personaIds: number[]) =>
+  getAvatars: (personaIds: number[], opts?: RequestOpts) =>
     api.get<Record<string, string | null>>(
       `/bf1/players/avatars?${personaIds.map((id) => `ids=${id}`).join("&")}`,
+      opts,
     ),
 
-  getStats: (personaId: number) => api.get<PlayerStatsDetail>(`/bf1/stats/${personaId}`),
+  getStats: (personaId: number, opts?: RequestOpts) =>
+    api.get<PlayerStatsDetail>(`/bf1/stats/${personaId}`, opts),
 
-  getWeapons: (personaId: number) => api.get<WeaponStats>(`/bf1/stats/${personaId}/weapons`),
+  getWeapons: (personaId: number, opts?: RequestOpts) =>
+    api.get<WeaponStats>(`/bf1/stats/${personaId}/weapons`, opts),
 
-  getVehicles: (personaId: number) => api.get<VehicleStats>(`/bf1/stats/${personaId}/vehicles`),
+  getVehicles: (personaId: number, opts?: RequestOpts) =>
+    api.get<VehicleStats>(`/bf1/stats/${personaId}/vehicles`, opts),
 
-  getRecentServers: (personaId: number) =>
-    api.get<RecentServers>(`/bf1/stats/${personaId}/recent-servers`),
+  getRecentServers: (personaId: number, opts?: RequestOpts) =>
+    api.get<RecentServers>(`/bf1/stats/${personaId}/recent-servers`, opts),
 
-  getCollection: (personaId: number) =>
-    api.get<PlayerCollection>(`/bf1/stats/${personaId}/collection`),
+  getCollection: (personaId: number, opts?: RequestOpts) =>
+    api.get<PlayerCollection>(`/bf1/stats/${personaId}/collection`, opts),
 
-  getPlayerServers: (personaId: number) =>
-    api.get<PlayerRspServers>(`/bf1/stats/${personaId}/servers`),
+  getPlayerServers: (personaId: number, opts?: RequestOpts) =>
+    api.get<PlayerRspServers>(`/bf1/stats/${personaId}/servers`, opts),
 
-  getOnline: (personaId: number) => api.get<OnlineStatus>(`/bf1/stats/${personaId}/online`),
+  getOnline: (personaId: number, opts?: RequestOpts) =>
+    api.get<OnlineStatus>(`/bf1/stats/${personaId}/online`, opts),
 
-  getPlatoon: (personaId: number) =>
-    api.get<PlayerPlatoon | null>(`/bf1/stats/${personaId}/platoon`),
+  getPlatoon: (personaId: number, opts?: RequestOpts) =>
+    api.get<PlayerPlatoon | null>(`/bf1/stats/${personaId}/platoon`, opts),
 
   /** 关键字少于 3 个字符时后端返回空列表 */
-  searchPlatoons: (name: string) =>
-    api.get<PlatoonSearchItem[]>(`/bf1/platoons?name=${encodeURIComponent(name)}`),
-  getPlatoonDetail: (guid: string) =>
-    api.get<PlatoonDetail>(`/bf1/platoons/${encodeURIComponent(guid)}`),
+  searchPlatoons: (name: string, opts?: RequestOpts) =>
+    api.get<PlatoonSearchItem[]>(`/bf1/platoons?name=${encodeURIComponent(name)}`, opts),
+  getPlatoonDetail: (guid: string, opts?: RequestOpts) =>
+    api.get<PlatoonDetail>(`/bf1/platoons/${encodeURIComponent(guid)}`, opts),
 
-  getBan: (personaId: number, name?: string) =>
+  getBan: (personaId: number, name?: string, opts?: RequestOpts) =>
     api.get<BanStatus>(
       `/bf1/stats/${personaId}/ban${name ? `?name=${encodeURIComponent(name)}` : ""}`,
+      opts,
     ),
 
-  listServers: (query: ServerListQuery = {}) => {
+  listServers: (query: ServerListQuery = {}, opts?: RequestOpts) => {
     const params = new URLSearchParams();
     if (query.name) params.set("name", query.name);
     // maps/modes/regions/sizes 作为重复 query 参数交后端筛选
@@ -884,50 +896,58 @@ export const bf1Api = {
     query.sizes?.forEach((s) => params.append("sizes", String(s)));
     if (query.includeEmpty) params.set("include_empty", "true");
     params.set("limit", String(query.limit ?? 200));
-    return api.get<ServerListResponse>(`/bf1/servers?${params.toString()}`);
+    return api.get<ServerListResponse>(`/bf1/servers?${params.toString()}`, opts);
   },
 
-  getServer: (gameId: number) => api.get<ServerDetail>(`/bf1/servers/${gameId}`),
+  getServer: (gameId: number, opts?: RequestOpts) =>
+    api.get<ServerDetail>(`/bf1/servers/${gameId}`, opts),
 
-  getServerPlayerCounts: (gameId: number) =>
-    api.get<ServerPlayerCountPoint[]>(`/bf1/servers/${gameId}/player-counts`),
-  getServerMapStats: (gameId: number, days = 7) =>
-    api.get<ServerMapStat[]>(`/bf1/servers/${gameId}/map-stats?days=${days}`),
-  getServerLeaderboard: (gameId: number, days = 7) =>
-    api.get<ServerLeaderboard>(`/bf1/servers/${gameId}/leaderboard?days=${days}`),
-  getServerSnapshots: (gameId: number, before?: number | null) =>
+  getServerPlayerCounts: (gameId: number, opts?: RequestOpts) =>
+    api.get<ServerPlayerCountPoint[]>(`/bf1/servers/${gameId}/player-counts`, opts),
+  getServerMapStats: (gameId: number, days = 7, opts?: RequestOpts) =>
+    api.get<ServerMapStat[]>(`/bf1/servers/${gameId}/map-stats?days=${days}`, opts),
+  getServerLeaderboard: (gameId: number, days = 7, opts?: RequestOpts) =>
+    api.get<ServerLeaderboard>(`/bf1/servers/${gameId}/leaderboard?days=${days}`, opts),
+  getServerSnapshots: (gameId: number, before?: number | null, opts?: RequestOpts) =>
     api.get<ServerRosterPage>(
       `/bf1/servers/${gameId}/snapshots${before ? `?before=${before}` : ""}`,
+      opts,
     ),
-  getServerSnapshot: (gameId: number, ts: number) =>
-    api.get<ServerRosterSnapshot>(`/bf1/servers/${gameId}/snapshots/${ts}`),
+  getServerSnapshot: (gameId: number, ts: number, opts?: RequestOpts) =>
+    api.get<ServerRosterSnapshot>(`/bf1/servers/${gameId}/snapshots/${ts}`, opts),
 
-  getServerRounds: (gameId: number, before?: number | null) =>
-    api.get<RoundPage>(`/bf1/servers/${gameId}/rounds${before ? `?before=${before}` : ""}`),
-  getRound: (roundId: number) => api.get<RoundDetail>(`/bf1/rounds/${roundId}`),
-  getPlayerRounds: (personaId: number, before?: number | null) =>
-    api.get<PlayerRoundPage>(`/bf1/stats/${personaId}/rounds${before ? `?before=${before}` : ""}`),
+  getServerRounds: (gameId: number, before?: number | null, opts?: RequestOpts) =>
+    api.get<RoundPage>(`/bf1/servers/${gameId}/rounds${before ? `?before=${before}` : ""}`, opts),
+  getRound: (roundId: number, opts?: RequestOpts) =>
+    api.get<RoundDetail>(`/bf1/rounds/${roundId}`, opts),
+  getPlayerRounds: (personaId: number, before?: number | null, opts?: RequestOpts) =>
+    api.get<PlayerRoundPage>(
+      `/bf1/stats/${personaId}/rounds${before ? `?before=${before}` : ""}`,
+      opts,
+    ),
 
-  getServerPlayers: (gameId: number, includeStats = true) =>
+  getServerPlayers: (gameId: number, includeStats = true, opts?: RequestOpts) =>
     api.get<ServerPlayersResponse>(
       `/bf1/servers/${gameId}/players?include_stats=${includeStats ? "true" : "false"}`,
+      opts,
     ),
 
-  getOverview: () => api.get<BF1Overview>(`/bf1/overview`),
+  getOverview: (opts?: RequestOpts) => api.get<BF1Overview>(`/bf1/overview`, opts),
 
   /** date 为北京时间 YYYY-MM-DD，取当天生效的那一期；不传为最新一期 */
-  getExchange: (date?: string) =>
-    api.get<ExchangeSnapshot>(`/bf1/exchange${date ? `?date=${date}` : ""}`),
+  getExchange: (date?: string, opts?: RequestOpts) =>
+    api.get<ExchangeSnapshot>(`/bf1/exchange${date ? `?date=${date}` : ""}`, opts),
   /** 全部历史期的开始时间，新的在前 */
-  getExchangePeriods: () => api.get<string[]>(`/bf1/exchange/periods`),
+  getExchangePeriods: (opts?: RequestOpts) => api.get<string[]>(`/bf1/exchange/periods`, opts),
   /** 当前行动；没有进行中的行动时为 null */
-  getCampaign: () => api.get<Campaign | null>(`/bf1/campaign`),
+  getCampaign: (opts?: RequestOpts) => api.get<Campaign | null>(`/bf1/campaign`, opts),
 
   // 当前登录用户对该服务器的角色，供前端按角色 gating 内联服管入口
-  getMyServerRole: (gameId: number) => api.get<MyServerRole>(`/bf1/server-admin/${gameId}/my-role`),
+  getMyServerRole: (gameId: number, opts?: RequestOpts) =>
+    api.get<MyServerRole>(`/bf1/server-admin/${gameId}/my-role`, opts),
 
   // 当前登录用户有服管角色的服务器列表（自动识别的服主 / 管理员 + 人工授权）
-  getMyServers: () => api.get<MyServersResponse>(`/bf1/server-admin/mine`),
+  getMyServers: (opts?: RequestOpts) => api.get<MyServersResponse>(`/bf1/server-admin/mine`, opts),
 
   // ===== 服管操作（需登录 + 权限）=====
   adminKick: (gameId: number, personaId: number, reason: string) =>
@@ -982,13 +1002,14 @@ export const bf1Api = {
       `/bf1/server-admin/${gameId}/admin/${personaId}`,
     ),
 
-  getTimedVips: (gameId: number) => api.get<TimedVipView>(`/bf1/server-admin/${gameId}/vip/timed`),
+  getTimedVips: (gameId: number, opts?: RequestOpts) =>
+    api.get<TimedVipView>(`/bf1/server-admin/${gameId}/vip/timed`, opts),
   /** checkvip：先下掉过期的再按顺序补空位；restart 为真时有变动就重开当前地图 */
   applyVips: (gameId: number, restart: boolean) =>
     api.post<VipApplyResult>(`/bf1/server-admin/${gameId}/vip/apply`, { restart }),
 
-  getAutoSwitch: (gameId: number) =>
-    api.get<AutoSwitchView>(`/bf1/server-admin/${gameId}/auto-switch`),
+  getAutoSwitch: (gameId: number, opts?: RequestOpts) =>
+    api.get<AutoSwitchView>(`/bf1/server-admin/${gameId}/auto-switch`, opts),
   saveAutoSwitchPlan: (gameId: number, plan: AutoSwitchPlan) =>
     api.put<AutoSwitchView>(`/bf1/server-admin/${gameId}/auto-switch/plan`, plan),
   enableAutoSwitch: (gameId: number) =>
@@ -1133,8 +1154,8 @@ export const cardApi = {
       { ...creds, game_id: gameId, kind },
       { timeoutMs: 45_000 },
     ),
-  get: (id: number, token: string | null) =>
-    api.get<CardJob>(`/bf1/card/jobs/${id}`, { headers: cardHeaders(token) }),
+  get: (id: number, token: string | null, opts?: RequestOpts) =>
+    api.get<CardJob>(`/bf1/card/jobs/${id}`, { headers: cardHeaders(token), signal: opts?.signal }),
   cancel: (id: number, token: string | null) =>
     api.post<CardJob>(`/bf1/card/jobs/${id}/cancel`, undefined, {
       headers: cardHeaders(token),

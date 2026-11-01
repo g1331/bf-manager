@@ -24,6 +24,7 @@ import { ConfirmSheet } from "@/components/common/ConfirmSheet";
 import { useServerAdmin } from "@/components/bf1/server-admin/InlineServerAdmin";
 import { VipBadge, formatSpan, vipStatusOf } from "@/components/bf1/server-admin/vip";
 import { bf1Api, type ServerExtras, type TimedVipItem, type TimedVipView } from "@/lib/api/bf1";
+import { bf1Keys, bf1Queries } from "@/lib/queries/bf1";
 import { ApiException } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
@@ -127,16 +128,14 @@ export function MembersPanel({
   const canRemove = can(meta.removeKind);
   // RSP 名单不带头像，另行批量查询；查到前显示首字母
   const avatars = useQuery({
-    queryKey: ["bf1-avatars", members.map((m) => m.persona_id)],
-    queryFn: () => bf1Api.getAvatars(members.map((m) => m.persona_id)),
+    ...bf1Queries.avatars(members.map((m) => m.persona_id)),
     enabled: members.length > 0,
     staleTime: 60 * 60_000,
   });
 
   // 计时信息只对服管可见（查询会用操作者的凭据拉 EA 名单对账）
   const timed = useQuery({
-    queryKey: ["bf1-timed-vips", gameId],
-    queryFn: () => bf1Api.getTimedVips(gameId),
+    ...bf1Queries.timedVips(gameId),
     enabled: kind === "vips" && canManage,
     staleTime: 15_000,
   });
@@ -411,9 +410,9 @@ function VipQueueSection({
       toast.error(err instanceof ApiException ? err.message : "操作失败，请稍后重试");
     } finally {
       setApplying(false);
-      qc.invalidateQueries({ queryKey: ["bf1-timed-vips", gameId] });
-      qc.invalidateQueries({ queryKey: ["bf1-server", gameId] });
-      qc.invalidateQueries({ queryKey: ["bf1-server-players", gameId] });
+      qc.invalidateQueries({ queryKey: bf1Keys.timedVips(gameId) });
+      qc.invalidateQueries({ queryKey: bf1Keys.server(gameId) });
+      qc.invalidateQueries({ queryKey: bf1Keys.serverPlayers(gameId) });
     }
   };
 

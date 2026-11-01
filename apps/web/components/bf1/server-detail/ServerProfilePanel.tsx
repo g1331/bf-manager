@@ -7,7 +7,8 @@ import { Check, Copy, ShieldCheck } from "lucide-react";
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
 import { SectionHeading } from "@/components/layout/SectionHeading";
 import { PlayerAvatar } from "@/components/common/PlayerAvatar";
-import { bf1Api, type ServerExtras } from "@/lib/api/bf1";
+import type { ServerExtras } from "@/lib/api/bf1";
+import { bf1Queries } from "@/lib/queries/bf1";
 import { cn } from "@/lib/utils";
 
 /** 服务器档案：服主、战队、租期与各类 ID */
@@ -31,8 +32,7 @@ export function ServerProfilePanel({
   // RSP 返回的服主头像为空，与成员名单共用批量头像接口补上
   const ownerId = owner?.persona_id;
   const ownerAvatar = useQuery({
-    queryKey: ["bf1-avatars", [ownerId]],
-    queryFn: () => bf1Api.getAvatars([ownerId!]),
+    ...bf1Queries.avatars([ownerId!]),
     enabled: !!ownerId && !owner?.avatar_url,
     staleTime: 60 * 60_000,
   });

@@ -15,6 +15,7 @@ import {
   type MapRotationItem,
   type OperationMap,
 } from "@/lib/api/bf1";
+import { bf1Keys, bf1Queries } from "@/lib/queries/bf1";
 import { cn } from "@/lib/utils";
 
 const CONFIRM_SECONDS = 5;
@@ -65,10 +66,9 @@ export function AutoSwitchPanel({
   canEdit: boolean;
 }) {
   const qc = useQueryClient();
-  const key = ["bf1-auto-switch", gameId];
+  const key = bf1Keys.autoSwitch(gameId);
   const view = useQuery({
-    queryKey: key,
-    queryFn: () => bf1Api.getAutoSwitch(gameId),
+    ...bf1Queries.autoSwitch(gameId),
     refetchInterval: (q) => (q.state.data?.enabled ? 10_000 : false),
   });
 

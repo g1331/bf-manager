@@ -1,5 +1,6 @@
 /** 群组：成员与角色、邀请链接、服务账号与绑服、群组记录 */
 import { api } from "@/lib/api-client";
+import type { RequestOpts } from "@/lib/api/bf1";
 
 /** 群主 / 管理员两级，和 tenko v3 的服主 / 管理员一致 */
 export type GroupRole = "owner" | "admin";
@@ -236,8 +237,8 @@ export const groupsApi = {
   recheckServers: (id: number) =>
     api.post<{ items: GroupServer[] }>(`/groups/${id}/servers/recheck`),
   /** 服主视图（BF1）：挂着这台服的群 */
-  serverGroups: (gameId: number) =>
-    api.get<{ items: ServerGroup[] }>(`/bf1/server-admin/${gameId}/groups`),
+  serverGroups: (gameId: number, opts?: RequestOpts) =>
+    api.get<{ items: ServerGroup[] }>(`/bf1/server-admin/${gameId}/groups`, opts),
   removeServerFromGroup: (gameId: number, groupId: number) =>
     api.delete<void>(`/bf1/server-admin/${gameId}/groups/${groupId}`),
   lookupInvite: (token: string) => api.post<InviteLookup>("/group-invites/lookup", { token }),

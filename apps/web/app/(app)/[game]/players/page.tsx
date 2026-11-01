@@ -19,7 +19,8 @@ import { PlayerAvatar } from "@/components/common/PlayerAvatar";
 import { SectionHeading } from "@/components/layout/SectionHeading";
 import { useSession } from "@/hooks/useSession";
 import { ApiException } from "@/lib/api-client";
-import { bf1Api, type PersonaBrief } from "@/lib/api/bf1";
+import type { PersonaBrief } from "@/lib/api/bf1";
+import { bf1Queries } from "@/lib/queries/bf1";
 import { clearRecentPlayers, useRecentPlayers } from "@/lib/bf1/recent-players";
 import { cn } from "@/lib/utils";
 import { TipLine } from "@/components/bf1/codex/TipLine";
@@ -51,8 +52,7 @@ function PlayerSearch() {
   }
 
   const search = useQuery({
-    queryKey: ["bf1-player-search", q.toLowerCase()],
-    queryFn: () => bf1Api.searchPlayers(q),
+    ...bf1Queries.playerSearch(q),
     enabled: q.length >= MIN_QUERY,
     staleTime: 5 * 60_000,
   });

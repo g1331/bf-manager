@@ -4,10 +4,10 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
 import { SectionHeading } from "@/components/layout/SectionHeading";
-import { bf1Api } from "@/lib/api/bf1";
 import { cn } from "@/lib/utils";
 import { usePageState } from "@/hooks/useNavigation";
 import { useNowSeconds } from "@/components/bf1/server-detail/history";
+import { bf1Queries } from "@/lib/queries/bf1";
 
 const WINDOWS = [
   { days: 1, label: "近 24 小时" },
@@ -35,8 +35,7 @@ function fmtAgo(ts: number, now: number): string {
 export function LeaderboardPanel({ gameId, game }: { gameId: number; game: string }) {
   const [days, setDays] = usePageState<number>("server-leaderboard-days", 7);
   const board = useQuery({
-    queryKey: ["bf1-server-leaderboard", gameId, days],
-    queryFn: () => bf1Api.getServerLeaderboard(gameId, days),
+    ...bf1Queries.serverLeaderboard(gameId, days),
     staleTime: 60_000,
   });
   const items = board.data?.items ?? [];

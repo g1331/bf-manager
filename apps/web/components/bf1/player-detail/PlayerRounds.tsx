@@ -17,7 +17,8 @@ import {
 import { HonorBadges, boardScore } from "@/components/bf1/rounds/RoundHonors";
 import { mainWeapon } from "@/components/bf1/rounds/RoundPlayerBreakdown";
 import { RowsSkeleton } from "@/components/layout/PageSkeleton";
-import { bf1Api, type PlayerRound } from "@/lib/api/bf1";
+import type { PlayerRound } from "@/lib/api/bf1";
+import { bf1Queries } from "@/lib/queries/bf1";
 import { cn } from "@/lib/utils";
 
 /**
@@ -27,10 +28,7 @@ import { cn } from "@/lib/utils";
 export function PlayerRounds({ personaId, game }: { personaId: number; game: string }) {
   const [open, setOpen] = useState<number | null>(null);
   const list = useInfiniteQuery({
-    queryKey: ["bf1-player-rounds", personaId],
-    queryFn: ({ pageParam }) => bf1Api.getPlayerRounds(personaId, pageParam),
-    initialPageParam: null as number | null,
-    getNextPageParam: (last) => last.next_before,
+    ...bf1Queries.playerRounds(personaId),
   });
   const items = useMemo(() => list.data?.pages.flatMap((p) => p.items) ?? [], [list.data]);
   const groups = useMemo(() => groupByDay(items), [items]);

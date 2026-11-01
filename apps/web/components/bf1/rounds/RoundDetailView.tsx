@@ -4,7 +4,8 @@ import { Fragment, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
-import { bf1Api, type RoundDetail, type RoundPlayer, type RoundSummary } from "@/lib/api/bf1";
+import type { RoundDetail, RoundPlayer, RoundSummary } from "@/lib/api/bf1";
+import { bf1Queries } from "@/lib/queries/bf1";
 import { classLabel } from "@/components/bf1/player-detail/format";
 import { RoundPlayerBreakdown } from "@/components/bf1/rounds/RoundPlayerBreakdown";
 import { HonorBadges, boardScore } from "@/components/bf1/rounds/RoundHonors";
@@ -104,8 +105,7 @@ export function RoundDetailView({
   highlight?: number;
 }) {
   const q = useQuery({
-    queryKey: ["bf1-round", roundId],
-    queryFn: () => bf1Api.getRound(roundId),
+    ...bf1Queries.round(roundId),
     // 对局结束后不会再变
     staleTime: Infinity,
   });

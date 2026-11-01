@@ -59,16 +59,16 @@ import { auditApi, type AuditLogItem } from "@/lib/api/audit";
 import { FACTION_SLUG } from "@/lib/bf1/factions";
 import { canDo } from "@/lib/bf1/server-admin-authz";
 import { cn } from "@/lib/utils";
-import {
-  bf1Api,
-  type ServerDetail,
-  type ServerSettings,
-  type MapRotationItem,
-  type ServerMapStat,
-  type BlazePlayer,
-  type BlazeTeamGroup,
-  type ServerPlayersResponse,
+import type {
+  ServerDetail,
+  ServerSettings,
+  MapRotationItem,
+  ServerMapStat,
+  BlazePlayer,
+  BlazeTeamGroup,
+  ServerPlayersResponse,
 } from "@/lib/api/bf1";
+import { bf1Queries } from "@/lib/queries/bf1";
 
 const ACTION_LABEL: Record<string, string> = {
   kick_player: "踢人",
@@ -111,8 +111,7 @@ export default function ServerDetailPage() {
   const gameId = Number(id);
 
   const detail = useQuery({
-    queryKey: ["bf1-server", gameId],
-    queryFn: () => bf1Api.getServer(gameId),
+    ...bf1Queries.server(gameId),
     enabled: Number.isFinite(gameId),
   });
 
@@ -158,8 +157,7 @@ function ServerDetailView({
 
   // 实时名单要等 Blaze 与战绩好几秒，进页就在后台预取，切到「玩家」分区时直接可用
   const players = useQuery({
-    queryKey: ["bf1-server-players", gameId],
-    queryFn: () => bf1Api.getServerPlayers(gameId),
+    ...bf1Queries.serverPlayers(gameId),
     staleTime: 15_000,
     // 行动服的区域进度随对局推进，页面可见时定时刷新；战绩后端按玩家缓存 10 分钟，刷新多半命中缓存
     refetchInterval: (q) => (q.state.data?.operation ? 30_000 : false),
@@ -196,13 +194,11 @@ function ServerDetailView({
 
   // 人数采样每分钟一次，刚开的服还没有点；空列表时战况与热门地图整块不渲染
   const counts = useQuery({
-    queryKey: ["bf1-server-player-counts", gameId],
-    queryFn: () => bf1Api.getServerPlayerCounts(gameId),
+    ...bf1Queries.serverPlayerCounts(gameId),
     refetchInterval: 60_000,
   });
   const mapStats = useQuery({
-    queryKey: ["bf1-server-map-stats", gameId],
-    queryFn: () => bf1Api.getServerMapStats(gameId),
+    ...bf1Queries.serverMapStats(gameId),
     staleTime: 5 * 60_000,
   });
   const points = useMemo(() => counts.data ?? [], [counts.data]);
@@ -459,8 +455,7 @@ function Panel({ children }: { children: React.ReactNode }) {
  */
 function PlayersList({ gameId, game }: { gameId: number; game: string }) {
   const query = useQuery({
-    queryKey: ["bf1-server-players", gameId],
-    queryFn: () => bf1Api.getServerPlayers(gameId),
+    ...bf1Queries.serverPlayers(gameId),
     enabled: Number.isFinite(gameId),
     // 实时名单变动频繁，缓存短时即可；窗口聚焦时自动刷新交给 react-query 默认行为。
     staleTime: 15_000,

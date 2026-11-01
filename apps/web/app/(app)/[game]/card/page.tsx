@@ -27,6 +27,7 @@ import {
   type CardJobStatus,
   type CardPrecheck,
 } from "@/lib/api/bf1";
+import { bf1Keys, bf1Queries } from "@/lib/queries/bf1";
 import { mapLabel, modeLabel } from "@/lib/bf1/catalog";
 import { cn } from "@/lib/utils";
 
@@ -143,13 +144,12 @@ function CardOperation() {
   const remember = writeStored;
 
   const job = useQuery({
-    queryKey: ["bf1-card-job", stored?.id],
-    queryFn: () => cardApi.get(stored!.id, stored!.token),
+    ...bf1Queries.cardJob(stored),
     enabled: stored != null,
     refetchInterval: (q) => (q.state.data?.status === "running" ? POLL_MS : false),
     retry: (count, e) => !(e instanceof ApiException && [403, 404].includes(e.status)) && count < 2,
   });
-  const setJob = (j: CardJob) => qc.setQueryData(["bf1-card-job", j.id], j);
+  const setJob = (j: CardJob) => qc.setQueryData(bf1Keys.cardJob(j.id), j);
 
   const precheck = useMutation({
     mutationFn: () => cardApi.precheck(gid, creds),

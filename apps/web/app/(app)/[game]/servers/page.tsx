@@ -36,7 +36,8 @@ import {
   modeLabel,
   regionLabel,
 } from "@/lib/bf1/catalog";
-import { bf1Api, type ServerSummary } from "@/lib/api/bf1";
+import type { ServerSummary } from "@/lib/api/bf1";
+import { bf1Queries } from "@/lib/queries/bf1";
 import { TipLine } from "@/components/bf1/codex/TipLine";
 
 const PAGE_SIZE = 50;
@@ -125,17 +126,7 @@ export default function ServerListPage() {
   const debouncedName = useDebouncedValue(filters.nameFilter.trim(), 450);
 
   const servers = useQuery({
-    queryKey: ["bf1-servers", debouncedSelection, debouncedName],
-    queryFn: () =>
-      bf1Api.listServers({
-        name: debouncedName || undefined,
-        maps: debouncedSelection.maps.length ? debouncedSelection.maps : undefined,
-        modes: debouncedSelection.modes.length ? debouncedSelection.modes : undefined,
-        regions: debouncedSelection.regions.length ? debouncedSelection.regions : undefined,
-        sizes: debouncedSelection.sizes.length ? debouncedSelection.sizes : undefined,
-        includeEmpty: debouncedSelection.includeEmpty || undefined,
-        limit: 500,
-      }),
+    ...bf1Queries.servers(debouncedSelection, debouncedName),
     // 刷新 / 切换筛选期间保留上一次结果，避免请求期间 servers.data 变 undefined 导致列表与筛选面板闪断。
     placeholderData: keepPreviousData,
   });

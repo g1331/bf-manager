@@ -232,6 +232,8 @@ class _LoggedInClient:
         # 有 access_token 时工厂不再登录
         self.access_token = "token"
         self.check_login = True
+        self.credentials_rejected = False
+        self.session_rejected = False
         self.http_session = None
 
     async def login(self, remid: str, sid: str) -> str:
@@ -255,15 +257,27 @@ async def test_clean_exit_with_live_session_counts_as_success(
     assert refreshed.failure_count == 0
 
 
-async def test_clean_exit_after_session_lost_counts_as_failure(
+@pytest.mark.parametrize("flag", ["session_rejected", "credentials_rejected"])
+async def test_clean_exit_after_ea_rejection_counts_as_failure(
+    test_session, fake_pool_client, flag: str
+) -> None:
+    """调用方吞掉了 gateway 的错误字符串、没抛异常，但 EA 明确拒绝了这个号：记失败"""
+    account = await _seed_account(test_session, failure_count=2)
+    async with gateway_factory.get_bf1_client(test_session) as client:
+        setattr(client, flag, True)
+    refreshed = await _reload(test_session, account.id)
+    assert refreshed.failure_count == 3
+
+
+async def test_clean_exit_without_gateway_session_counts_as_success(
     test_session, fake_pool_client
 ) -> None:
-    """调用方吞掉了 gateway 的错误字符串、没抛异常，但会话已失效且重登失败：记失败"""
+    """authcode 一步失败、gateway 会话没建起来，但只走 SAL 的查询成功了：不算账号的问题"""
     account = await _seed_account(test_session, failure_count=2)
     async with gateway_factory.get_bf1_client(test_session) as client:
         client.check_login = False
     refreshed = await _reload(test_session, account.id)
-    assert refreshed.failure_count == 3
+    assert refreshed.failure_count == 0
 
 
 async def test_not_found_inside_pool_client_counts_as_success(

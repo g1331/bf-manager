@@ -96,3 +96,91 @@ async def test_post_jsonrpc_classifies_failures(
     res = await client._post_jsonrpc({"method": "X"})
     assert isinstance(res, EAGatewayError)
     assert res.kind == kind
+
+
+SESSION_INVALID = {"error": {"code": -32501, "message": "Invalid Params: no valid session"}}
+
+
+async def test_replay_still_invalid_marks_session_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+    """首次 -32501 → 重登成功 → 重放仍 -32501：记为被拒，并让登录态失效"""
+    client = BF1GatewayClient(pid=7, remid="r", sid="s")
+    client.check_login = True
+    posts: list[str] = []
+    logins: list[str] = []
+
+    async def _post(body: dict[str, Any]) -> dict[str, Any]:
+        posts.append(body["method"])
+        return SESSION_INVALID
+
+    async def _login(remid: str, sid: str) -> str:
+        logins.append(remid)
+        client.check_login = True
+        client.session_rejected = False
+        return "session"
+
+    monkeypatch.setattr(client, "_post_jsonrpc", _post)
+    monkeypatch.setattr(client, "login", _login)
+    res = await client.api_call({"method": "X"})
+    assert isinstance(res, EAGatewayError)
+    assert res.code == -32501
+    assert posts == ["X", "X"]
+    assert logins == ["r"]  # 只在 api_call 里重登一次，error_handle 不再重登
+    assert client.session_rejected is True
+    assert client.check_login is False
+
+
+async def test_replay_success_is_not_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = BF1GatewayClient(pid=7, remid="r", sid="s")
+    client.check_login = True
+    responses = [SESSION_INVALID, {"result": {"ok": True}}]
+
+    async def _post(body: dict[str, Any]) -> dict[str, Any]:
+        return responses.pop(0)
+
+    async def _login(remid: str, sid: str) -> str:
+        client.check_login = True
+        return "session"
+
+    monkeypatch.setattr(client, "_post_jsonrpc", _post)
+    monkeypatch.setattr(client, "login", _login)
+    assert await client.api_call({"method": "X"}) == {"result": {"ok": True}}
+    assert client.session_rejected is False
+
+
+class _Resp:
+    def __init__(self, text: str, headers: dict[str, str] | None = None) -> None:
+        self._text = text
+        self.headers = headers or {}
+
+    async def text(self) -> str:
+        return self._text
+
+
+async def test_login_required_marks_credentials_rejected() -> None:
+    client = BF1GatewayClient(pid=7)
+
+    async def _get(**kwargs: Any) -> _Resp:
+        return _Resp('{"error":"login_required"}')
+
+    client.http_session = SimpleNamespace(get=_get)
+    await client.login("r", "s")
+    assert client.credentials_rejected is True
+
+
+async def test_authcode_failure_is_not_a_rejection(monkeypatch: pytest.MonkeyPatch) -> None:
+    """拿到 access_token 后 authcode 一步失败：没建起 gateway 会话，但不算 EA 拒绝了账号"""
+    client = BF1GatewayClient(pid=7)
+
+    async def _get(**kwargs: Any) -> _Resp:
+        return _Resp('{"access_token":"t","expires_in":3600}', {"Set-Cookie": "sid=new; Path=/"})
+
+    class _NoNetwork:
+        def __init__(self, **kwargs: Any) -> None:
+            raise ConnectionError("network disabled in unit test")
+
+    client.http_session = SimpleNamespace(get=_get)
+    monkeypatch.setattr("app.domain.games.bf1.gateway.httpx.AsyncClient", _NoNetwork)
+    assert await client.login("r", "s") is None
+    assert client.check_login is False
+    assert client.credentials_rejected is False
+    assert client.session_rejected is False

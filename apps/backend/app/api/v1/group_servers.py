@@ -51,18 +51,18 @@ def _server_item(v: gss.GroupServerView) -> GroupServerItem:
         game_id=server.game_id,
         name=server.name,
         bound_by_name=v.bound_by_name,
-        bound_via=gs.bound_via,  # type: ignore[arg-type]
+        bound_via=gs.bound_via,
         executor=(
             GroupServerExecutor(
                 id=executor.id,
                 persona_id=executor.persona_id,
                 display_name=executor.display_name,
-                status=executor.status,  # type: ignore[arg-type]
+                status=executor.status,
             )
             if executor
             else None
         ),
-        status=gs.status,  # type: ignore[arg-type]
+        status=gs.status,
         status_reason=gs.status_reason,
         executor_problem=gs.executor_problem,
         last_verified_at=gs.last_verified_at,

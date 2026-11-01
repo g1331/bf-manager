@@ -331,9 +331,9 @@ class EALoginEngine:
 
         redirect_url = extract_redirect_url(resp_text)
         if not redirect_url:
-            page_err = extract_page_error(resp_text)
-            if page_err:
-                raise Invalid2FACodeError(page_err, stage="2fa_submit")
+            err = extract_page_error(resp_text)
+            if err:
+                raise Invalid2FACodeError(err, stage="2fa_submit")
             raise FormStructureChangedError(page_diagnostic(resp_text), stage="2fa_submit")
 
         cookies = await self._handle_redirect(session, redirect_url, stage="finalize")

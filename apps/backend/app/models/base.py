@@ -44,4 +44,4 @@ def _repr(self: Any) -> str:
     return f"<{cls} id={pk}>"
 
 
-Base.__repr__ = _repr  # type: ignore[assignment]
+Base.__repr__ = _repr  # type: ignore[method-assign]

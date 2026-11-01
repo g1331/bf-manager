@@ -14,8 +14,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from typing import Any
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -57,7 +58,7 @@ async def list_users(
     if q:
         text = q.strip()
         like = f"%{text}%"
-        conds = [
+        conds: list[ColumnElement[bool]] = [
             User.username.ilike(like),
             User.email.ilike(like),
             User.id.in_(select(EaBinding.user_id).where(EaBinding.display_name.ilike(like))),
@@ -118,7 +119,12 @@ async def list_users(
 
 
 async def _audit(
-    db: AsyncSession, actor: User, target: User, action: str, payload: dict, ip: str | None
+    db: AsyncSession,
+    actor: User,
+    target: User,
+    action: str,
+    payload: dict[str, Any],
+    ip: str | None,
 ) -> None:
     actor_binding = primary_binding(actor)
     target_binding = primary_binding(target)

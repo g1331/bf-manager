@@ -83,16 +83,15 @@ lint: ## 运行前后端 lint
 	pnpm -r lint
 
 typecheck: ## 运行前后端类型检查
-	cd apps/backend && uv run ruff check . --select=ANN
+	cd apps/backend && uv run mypy app
 	pnpm -r typecheck
 
 fmt: ## 格式化前后端代码
 	cd apps/backend && uv run ruff format .
 	pnpm -r format
 
-test: ## 运行测试
+test: ## 运行后端测试（前端暂无测试）
 	cd apps/backend && uv run pytest
-	pnpm -r test
 
 # ===== 工具 =====
 secrets-init: ## 初始化生产环境密钥到 ./secrets/

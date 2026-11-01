@@ -37,6 +37,10 @@ pre-push:
       root: apps/backend/
       run: uv run ruff check . && uv run ruff format --check .
 
+    - name: backend-mypy
+      root: apps/backend/
+      run: uv run mypy app
+
     - name: frontend-lint
       root: apps/web/
       run: pnpm lint

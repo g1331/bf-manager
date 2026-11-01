@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import builtins
+
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -43,7 +45,7 @@ def _build_item(m: ServerMembership, u: User, s: Server) -> MembershipItem:
         game=s.game,
         server_id=s.server_id,
         server_name=s.name,
-        role=m.role,  # type: ignore[arg-type]
+        role=m.role,
         granted_by=m.granted_by,
         granted_at=m.created_at,
     )
@@ -78,7 +80,7 @@ class MembershipService:
         items = [_build_item(m, u, s) for m, u, s in rows]
         return items, int(total)
 
-    async def list_mine(self, *, user_id: int, game: str) -> list[MyServerItem]:
+    async def list_mine(self, *, user_id: int, game: str) -> builtins.list[MyServerItem]:
         """当前用户有服管角色的服务器列表（供「我的服务器」页面），最近授予在前。"""
         rows = (
             await self.db.execute(

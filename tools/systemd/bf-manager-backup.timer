@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily BF-Manager Postgres backup
+
+[Timer]
+# 凌晨 4 点在线人数最少；错过（关机）就在开机后补跑
+OnCalendar=*-*-* 04:00:00
+RandomizedDelaySec=10m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

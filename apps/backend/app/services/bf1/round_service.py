@@ -18,7 +18,17 @@ from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 from loguru import logger
-from sqlalchemy import LargeBinary, Table, bindparam, cast, delete, select, tuple_, update
+from sqlalchemy import (
+    ColumnElement,
+    LargeBinary,
+    Table,
+    bindparam,
+    cast,
+    delete,
+    select,
+    tuple_,
+    update,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.errors import NotFoundError
@@ -321,7 +331,8 @@ async def _servers(db: AsyncSession, game_ids: set[int]) -> dict[int, tuple[str,
                 .order_by(Bf1GameInstance.last_seen.desc())
             )
         ).tuples():
-            latest.setdefault(sid, gid)
+            if sid is not None:
+                latest.setdefault(sid, gid)
     return {gid: (name, latest.get(sid, gid) if sid else gid) for gid, name, sid in rows}
 
 
@@ -342,7 +353,7 @@ def _summary(r: Bf1Round, servers: dict[int, tuple[str, int]]) -> RoundSummary:
         ended_at=_ts(r.ended_at),
         observed_start=r.observed_start,
         settled=r.settled,
-        winner=r.winner if r.winner in (1, 2) else None,  # type: ignore[arg-type]
+        winner=r.winner if r.winner in (1, 2) else None,
         team1_faction=teams.get("Team1"),
         team2_faction=teams.get("Team2"),
         player_count=r.player_count,
@@ -384,7 +395,7 @@ def _weapons(
         c = (career or {}).get(key, {})
         out.append(
             RoundWeapon(
-                kind=kind,  # type: ignore[arg-type]
+                kind=kind,
                 name=entry.get("name"),
                 category=entry.get("category"),
                 image=normalize_map_image_url(entry.get("image")),
@@ -405,7 +416,7 @@ def _stars(stars: dict[int, int]) -> list[RoundStar]:
         kind, entry = _item(rw.items()[idx])
         out.append(
             RoundStar(
-                kind=kind,  # type: ignore[arg-type]
+                kind=kind,
                 name=entry.get("name"),
                 image=normalize_map_image_url(entry.get("image")),
                 stars=n,
@@ -534,7 +545,7 @@ def _player(
     return RoundPlayer(
         persona_id=pid,
         name=name,
-        team=team,  # type: ignore[arg-type]
+        team=team,
         status="finished" if status == FINISHED else "left" if status == LEFT_EARLY else "suspect",
         won=won,
         kills=kills,
@@ -582,7 +593,7 @@ async def list_server_rounds(
 ) -> RoundPage:
     """某服（重启前后的实例合在一起）结束时间在 before 之前的对局，按结束时间倒序。"""
     game_ids = await server_game_ids(db, game_id)
-    cond = Bf1Round.game_id.in_(game_ids)
+    cond: ColumnElement[bool] = Bf1Round.game_id.in_(game_ids)
     if before is not None:
         cond &= Bf1Round.ended_at < _dt(before)
     rows = list(

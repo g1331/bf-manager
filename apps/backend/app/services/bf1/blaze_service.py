@@ -240,7 +240,9 @@ async def fetch_stats(
         for i in range(0, len(pids), STATS_BATCH_SIZE)
     ]
 
-    async def _one(cat: str, stat_names: list[str], batch: list[int]) -> list[tuple[int, dict]]:
+    async def _one(
+        cat: str, stat_names: list[str], batch: list[int]
+    ) -> list[tuple[int, dict[str, Any]]]:
         packet = {
             "method": "Stats.getStats",
             "type": "Command",
@@ -363,7 +365,7 @@ async def _fetch_registered_ids(db: AsyncSession, pids: Iterable[int]) -> set[in
 
 
 def _build_player(
-    raw_player: dict,
+    raw_player: dict[str, Any],
     *,
     admin_ids: set[int],
     vip_ids: set[int],
@@ -380,7 +382,7 @@ def _build_player(
         persona_id=pid,
         display_name=raw_player.get("display_name") or "",
         rank=rank,
-        team=int(raw_player.get("team") if raw_player.get("team") is not None else TEAM_SENTINEL),
+        team=int(team if (team := raw_player.get("team")) is not None else TEAM_SENTINEL),
         latency=int(raw_player.get("latency") or 0),
         language=raw_player.get("language"),
         join_time=raw_player.get("join_time"),
@@ -567,7 +569,7 @@ async def get_server_players(
     # 3. 平台已绑定用户标记（db 此时已空闲）。
     registered_ids = await _fetch_registered_ids(db, all_pids)
 
-    def _make(raw_player: dict) -> BlazePlayer:
+    def _make(raw_player: dict[str, Any]) -> BlazePlayer:
         return _build_player(
             raw_player,
             admin_ids=admin_ids,
@@ -674,9 +676,7 @@ async def fetch_game_list_snapshot(db: AsyncSession) -> list[dict[str, Any]]:
         socket.callback = _on_packet  # type: ignore[method-assign]
         try:
             async with asyncio.timeout(GAME_LIST_SNAPSHOT_TIMEOUT):
-                response = await socket.send(  # type: ignore[no-untyped-call]
-                    packet, timeout=GAME_LIST_SNAPSHOT_TIMEOUT
-                )
+                response = await socket.send(packet, timeout=GAME_LIST_SNAPSHOT_TIMEOUT)
                 if response.get("type") == "Error":
                     errc = (response.get("data") or {}).get("ERRC")
                     errc_text = hex(errc) if isinstance(errc, int) else errc

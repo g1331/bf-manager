@@ -921,7 +921,8 @@ def _seat_out(seat: Seat) -> dict[str, Any]:
 
 
 def _seat_in(d: dict[str, Any]) -> Seat:
-    return Seat(**{k: _unb64(v) if k in _SEAT_BLOBS else v for k, v in d.items()})
+    fields: dict[str, Any] = {k: _unb64(v) if k in _SEAT_BLOBS else v for k, v in d.items()}
+    return Seat(**fields)
 
 
 tracker = MatchTracker()

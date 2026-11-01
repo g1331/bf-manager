@@ -119,23 +119,3 @@ class EALoginTaskConflictError(EALoginTaskError):
 
     def __init__(self, message: str = "当前任务状态不允许此操作") -> None:
         super().__init__(status.HTTP_409_CONFLICT, "EA_LOGIN_TASK_INVALID_STATE", message)
-
-
-class EALoginTaskInvalidInputError(EALoginTaskError):
-    """用户提交了形式上合法但内容被 EA 拒绝的输入（如验证码错误、2FA 方式不在列表中）。"""
-
-    def __init__(
-        self,
-        message: str = "提交的内容被 EA 拒绝",
-        details: dict[str, Any] | None = None,
-    ) -> None:
-        super().__init__(
-            status.HTTP_400_BAD_REQUEST, "EA_LOGIN_TASK_INVALID_INPUT", message, details
-        )
-
-
-class EALoginTaskUnavailableError(EALoginTaskError):
-    """任务依赖的运行时资源不可用（如 Redis 整体故障且无降级路径）。"""
-
-    def __init__(self, message: str = "登录任务服务暂不可用，请稍后重试") -> None:
-        super().__init__(status.HTTP_503_SERVICE_UNAVAILABLE, "EA_LOGIN_TASK_UNAVAILABLE", message)

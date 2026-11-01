@@ -106,7 +106,7 @@ async def resolve_server_ids(db: AsyncSession, summaries: list[ServerSummary]) -
         await cache.set(
             key, server_id or 0, ttl=SERVER_ID_TTL if server_id else MISSING_SERVER_ID_TTL
         )
-        if not server_id:
+        if got is None or not server_id:
             continue
         resolved[gid] = server_id
         # 同一次请求里的名单顺手存下，天眼查不必再为它单独拉一次

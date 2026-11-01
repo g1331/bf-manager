@@ -277,6 +277,7 @@ async def read_roster(db: AsyncSession, game_id: int, ts: int) -> list[dict[str,
             if at <= sec:
                 after = state
         if after != LEFT:
+            change: str | None
             if before == LEFT:
                 change = "joined"
             elif before in (QUEUE, SPECTATOR) and after in (TEAM1, TEAM2):

@@ -312,7 +312,7 @@ async def _execute_plan(
                     VipApplyFailure(
                         persona_id=pid,
                         display_name=ledger.name(pid),
-                        action=action,  # type: ignore[arg-type]
+                        action=action,
                         message=str(res)[:256],
                     )
                 )
@@ -350,7 +350,7 @@ class TimedVipService(BF1ServerAdminService):
             TimedVipItem(
                 persona_id=pid,
                 display_name=ledger.name(pid),
-                status=e.status,  # type: ignore[arg-type]
+                status=e.status,
                 expires_at=e.expires_at,
                 remaining_seconds=_seconds_left(e, now),
                 expired=engine.is_expired(e, now),
@@ -720,7 +720,7 @@ async def _tick(db: AsyncSession) -> None:
         rows = by_server[server.id]
         game_id = game_ids.get(server.id)
         info = states.get(game_id) if game_id else None
-        if info is None:
+        if game_id is None or info is None:
             _mark_failed(rows, "找不到这台服当前的 gameId（可能已关服），没法自动下 V", now)
             await db.commit()
             continue

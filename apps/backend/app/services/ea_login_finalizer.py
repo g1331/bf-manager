@@ -22,6 +22,7 @@ from collections.abc import Iterator
 
 from loguru import logger
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.api.errors import AppError
@@ -81,7 +82,7 @@ class EALoginFinalizer:
 
     async def _run(
         self,
-        db,
+        db: AsyncSession,
         actor_kind: ActorKind,
         actor_id: int,
         cookies: LoginCookies,
@@ -161,7 +162,7 @@ class EALoginFinalizer:
 
     async def _save_group_account(
         self,
-        db,
+        db: AsyncSession,
         actor_id: int,
         group_id: int | None,
         *,

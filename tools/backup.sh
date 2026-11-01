@@ -7,7 +7,7 @@
 # 环境变量：
 #   PROJECT_DIR  compose 文件所在目录，默认仓库根目录；生产机上指向 /srv/bf-manager
 #   BACKUP_ROOT  备份存放目录，默认 $PROJECT_DIR/backups
-#   KEEP_DAYS    保留天数，默认 14
+#   KEEP_DAYS    保留天数，默认 7
 #
 # 定时执行见 tools/systemd/bf-manager-backup.{service,timer}
 
@@ -16,7 +16,8 @@ set -euo pipefail
 COMPOSE_FILE="${1:-docker-compose.prod.yml}"
 PROJECT_DIR="${PROJECT_DIR:-$(cd "$(dirname "$0")/.." && pwd)}"
 BACKUP_ROOT="${BACKUP_ROOT:-$PROJECT_DIR/backups}"
-KEEP_DAYS="${KEEP_DAYS:-14}"
+KEEP_DAYS="${KEEP_DAYS:-7}"
+[[ "$KEEP_DAYS" =~ ^[1-9][0-9]*$ ]] || { echo "KEEP_DAYS 必须是正整数: $KEEP_DAYS" >&2; exit 1; }
 POSTGRES_USER="${POSTGRES_USER:-bf}"
 POSTGRES_DB="${POSTGRES_DB:-bf_manager}"
 
@@ -46,7 +47,20 @@ chmod 600 "$OUT"
 
 echo "Backup saved: $OUT ($(du -h "$OUT" | cut -f1))"
 
-# 只清理本脚本建的 YYYYmmdd_HHMMSS 目录，其他文件和目录不动
+# 只清理本脚本建的 YYYYmmdd_HHMMSS 目录，其他文件和目录不动。
+# 最新的 KEEP_DAYS+1 份完整备份无论多旧都留着：停机多天后补跑一次，不会把旧备份一次删光。
+# 中途被杀留下的半截目录不占保底名额，过期后照常删除
 d6="[0-9][0-9][0-9][0-9][0-9][0-9]"
-find "$BACKUP_ROOT" -mindepth 1 -maxdepth 1 -type d -name "20${d6}_${d6}" \
-    -mtime "+$KEEP_DAYS" -exec rm -rf {} +
+expired_candidates() {
+    local name kept=0
+    while read -r name; do
+        if [[ -f "$BACKUP_ROOT/$name/${POSTGRES_DB}.sql.gz" ]] && ((kept <= KEEP_DAYS)); then
+            kept=$((kept + 1))
+        else
+            echo "$name"
+        fi
+    done < <(find "$BACKUP_ROOT" -mindepth 1 -maxdepth 1 -type d -name "20${d6}_${d6}" -printf '%f\n' | sort -r)
+}
+expired_candidates | while read -r name; do
+    find "$BACKUP_ROOT/$name" -maxdepth 0 -mtime "+$KEEP_DAYS" -exec rm -rf {} +
+done

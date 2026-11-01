@@ -219,7 +219,7 @@ log "执行数据库迁移..."
 # 以前 up 留下的一次性 migrate 容器会一直占着旧镜像，删掉它旧镜像才清得掉
 "${COMPOSE[@]}" rm -f migrate >/dev/null 2>&1 || true
 log "更新 backend / web..."
-"${COMPOSE[@]}" up -d --no-deps backend web
+"${COMPOSE[@]}" up -d --no-deps backend web || die "更新 backend / web 失败。需要的话：$rollback_hint"
 
 # ===== 10. 等健康检查，核对线上确实是目标 commit，首页能打开 =====
 wait_healthy() {
@@ -251,7 +251,7 @@ done
 backend_addr="$("${COMPOSE[@]}" port backend 8000)"
 web_addr="$("${COMPOSE[@]}" port web 3000)"
 health="$(curl -fsS --max-time 10 "http://$backend_addr/api/v1/healthz")" || die "后端 /api/v1/healthz 请求失败。需要的话：$rollback_hint"
-web_code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 "http://$web_addr/")"
+web_code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 "http://$web_addr/" || true)"
 [[ "$web_code" == "200" ]] || die "前端首页返回 $web_code。需要的话：$rollback_hint"
 log "backend / web 都是 ${TARGET_REV:0:7}，healthz 版本 $(sed -nE 's/.*"version":"([^"]*)".*/\1/p' <<<"$health")，首页 200"
 

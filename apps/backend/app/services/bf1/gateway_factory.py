@@ -88,7 +88,13 @@ async def get_bf1_client(db: AsyncSession) -> AsyncIterator[BF1GatewayClient]:
         if not client.access_token and creds.remid and creds.sid:
             await client.login(creds.remid, creds.sid)
         yield client
-        await account_service.mark_used(creds.persona_id)
+        # 调用方拿到 gateway 的错误字符串时常常不抛异常（概况轮询、头像、邮箱反查都是吞掉降级）。
+        # 只看有没有异常的话，被 EA 拒绝的号也会记成功、清零失败计数，永远停不掉。
+        # 这里只认 EA 明确拒绝的信号；暂时性故障、只走 SAL 的成功查询照常记成功
+        if client.credentials_rejected or client.session_rejected:
+            await account_service.mark_failure(creds.persona_id)
+        else:
+            await account_service.mark_used(creds.persona_id)
     except AppError as exc:
         # 玩家不存在、参数不对这类 4xx 是查询本身的结果，说明账号工作正常；
         # 记成失败的话，匿名用户连查几个不存在的 id 就能让账号被停用

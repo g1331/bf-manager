@@ -27,6 +27,7 @@ import httpx
 from loguru import logger
 
 from app.core import ea_metrics
+from app.domain.games.bf1.gateway_errors import EAGatewayError
 from app.core.config import get_settings
 from app.domain.games.bf1.profile import BF1Profile
 
@@ -65,6 +66,11 @@ class _BF1GatewayBase:
         self.sid = sid
         self.session = session
         self.check_login = False
+        # EA 明确拒绝这个账号的两种情况，供号池记账：remid/sid 被作废（login_required），
+        # 以及 JSON-RPC 最终仍回 session 无效（重登没成功，或重登后重放还是无效）。
+        # 网络抖动、authcode 一步失败这类暂时性问题不算
+        self.credentials_rejected = False
+        self.session_rejected = False
         self.access_token: str | None = None
         self.authcode: str | None = None
         # 获取 token 的时间
@@ -333,7 +339,7 @@ class _BF1GatewayBase:
             return await self.error_handle(data)
         except Exception as e:
             logger.exception(f"EA API请求异常: {e}")
-            return "EA API请求时发生未知错误"
+            return EAGatewayError("EA API请求时发生未知错误", kind="internal")
 
     async def _post_jsonrpc(self, body: dict[str, Any]) -> Any:
         """发送 JSON-RPC 请求，返回原始 JSON；网络或格式错误返回错误描述字符串。"""
@@ -352,14 +358,17 @@ class _BF1GatewayBase:
                     logger.error(f"EA API返回非JSON响应，Content-Type: {content_type}")
                     response_text = await response.text()
                     logger.debug(f"响应内容: {response_text[:500]}...")
-                    return "EA API返回格式错误"
+                    return EAGatewayError("EA API返回格式错误", kind="bad_response")
 
                 return await response.json()
         except asyncio.exceptions.TimeoutError:
-            return "网络超时!"
+            return EAGatewayError("网络超时!", kind="network")
+        except aiohttp.ClientError as e:
+            logger.warning(f"EA API连接失败: {type(e).__name__}: {e}")
+            return EAGatewayError("EA API请求时发生未知错误", kind="network")
         except Exception as e:
             logger.exception(f"EA API请求异常: {e}")
-            return "EA API请求时发生未知错误"
+            return EAGatewayError("EA API请求时发生未知错误", kind="internal")
 
     # 玩家信息相关
     async def login(self, remid: str, sid: str) -> str | None:
@@ -403,6 +412,7 @@ class _BF1GatewayBase:
                 error = json.loads(text).get("error", "")
             if error == "login_required":
                 # remid/sid 已被 EA 作废，只能人工重新登录；本项目不在磁盘上保存密码
+                self.credentials_rejected = True
                 logger.error(f"BF1账号{self.pid}账号凭据失效，需要在后台用邮箱密码重新登录")
             else:
                 logger.error(
@@ -442,6 +452,8 @@ class _BF1GatewayBase:
         self.pid = login_info.get("result", {}).get("personaId")
         self.access_token_time = time.time()
         self.check_login = True
+        self.credentials_rejected = False
+        self.session_rejected = False
         logger.success(f"BF1账号{self.pid}登录并获取session成功!")
         # 自动设置语言
         if isinstance(await self.setLocale(), dict):
@@ -904,21 +916,31 @@ class _BF1GatewayBase:
         """
         if not (error_data := data.get("error")):
             return data
-        if error_msg := self.error_msg_dict.get(
-            str(error_data.get("message")), error_data.get("message")
-        ):
-            return error_msg
-        elif error_msg := self.error_code_dict.get(error_data.get("code"), error_data.get("code")):
-            if error_data.get("code") == -32501:
-                self.check_login = False
-                logger.warning(f"BF1账号{self.pid}session失效,尝试重新登录")
-                await self.login(self.remid, self.sid)
+        raw_code = error_data.get("code")
+        code = raw_code if isinstance(raw_code, int) else None
+        ea_message = error_data.get("message")
+        ea_message = str(ea_message) if ea_message is not None else None
+
+        def _err(text) -> EAGatewayError:
+            return EAGatewayError(str(text), kind="ea", code=code, ea_message=ea_message)
+
+        # session 无效要先于文案翻译处理：这条错误的 message 在 error_msg_dict 里，原来走不到
+        # 下面的 code 分支，登录态一直留着 True。重登和重放由 api_call 统一做，这里只记状态，
+        # 不再重登（登录流程里的 getEnvIdViaAuthCode 也走这里，重登会递归）
+        if raw_code == -32501 or ea_message == "Invalid Params: no valid session":
+            self.check_login = False
+            self.session_rejected = True
+            logger.warning(f"BF1账号{self.pid}session无效")
+
+        if error_msg := self.error_msg_dict.get(str(ea_message), ea_message):
+            return _err(error_msg)
+        elif error_msg := self.error_code_dict.get(raw_code, raw_code):
             logger.error(error_msg)
-            return error_msg
+            return _err(error_msg)
         else:
-            error_msg = f"未知错误!code:{error_data.get('code')},msg:{error_data.get('message')}"
+            error_msg = f"未知错误!code:{raw_code},msg:{ea_message}"
             logger.error(error_msg)
-            return error_msg
+            return _err(error_msg)
 
 
 class Game(_BF1GatewayBase):

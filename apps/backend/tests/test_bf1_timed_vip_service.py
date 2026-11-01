@@ -15,6 +15,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from app.api.errors import AppError, EAApiError
 from app.domain.games.bf1.client_provider import ExecutorUnavailableError
+from app.domain.games.bf1.gateway_errors import ALREADY_VIP, EAGatewayError
 from app.models import AuditLog, Server, ServerMembership
 from app.models.bf1 import Bf1GameInstance, Bf1ServerVip
 from app.services.bf1 import timed_vip_service as svc
@@ -79,7 +80,7 @@ class FakeClient:
         if "add" in self.ea.fail:
             return self.ea.fail["add"]
         if personaId in self.ea.vips:
-            return "玩家已经是VIP了"
+            return EAGatewayError("玩家已经是VIP了", kind="ea", code=-32603, ea_message=ALREADY_VIP)
         self.ea.vips[personaId] = f"P{personaId}"
         return {"env": {}}
 

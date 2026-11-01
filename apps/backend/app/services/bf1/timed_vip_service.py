@@ -31,6 +31,7 @@ from app.domain.games.bf1.client_provider import (
     ExecutorUnavailableError,
     GroupFirstBF1ClientProvider,
 )
+from app.domain.games.bf1.gateway_errors import ALREADY_VIP, EAGatewayError
 from app.domain.games.bf1.maps import operation_maps
 from app.models import GroupMember, GroupServer, Server, ServerMembership, User
 from app.models.bf1 import Bf1ServerVip
@@ -93,7 +94,7 @@ def _seconds_left(entry: engine.Entry, now: datetime) -> int | None:
 
 
 def _already_vip(res: Any) -> bool:
-    return isinstance(res, str) and ("已经是VIP" in res or "AlreadyVip" in res)
+    return isinstance(res, EAGatewayError) and res.ea_message == ALREADY_VIP
 
 
 def _rule_error(err: engine.VipRuleError) -> AppError:

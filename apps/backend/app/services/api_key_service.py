@@ -67,7 +67,7 @@ async def resolve(db: AsyncSession, raw: str) -> ResolvedKey | None:
     if cached is not None:
         if cached == _INVALID:
             return None
-        key_id, multiplier = cached.split(":")
+        key_id, multiplier = str(cached).split(":")
         return ResolvedKey(int(key_id), int(multiplier))
 
     row = await db.scalar(

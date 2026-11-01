@@ -304,7 +304,7 @@ async def _fetch_overview_by_search(db: AsyncSession) -> tuple[BF1Overview, list
         ]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        deduped: dict[str, dict] = {}
+        deduped: dict[str, dict[str, Any]] = {}
         sample_pulls = 0
         raw_count = 0
         for res in results:

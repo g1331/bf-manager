@@ -21,9 +21,13 @@ from __future__ import annotations
 import logging
 import re
 import sys
-from typing import Any
+from types import FrameType
+from typing import TYPE_CHECKING
 
 from loguru import logger
+
+if TYPE_CHECKING:
+    from loguru import Record
 
 from app.core.config import get_settings
 
@@ -69,7 +73,7 @@ def _redact_text(text: str) -> str:
     return _SENSITIVE_KV_PATTERN.sub(_replace, text)
 
 
-def _pii_patcher(record: dict[str, Any]) -> None:
+def _pii_patcher(record: Record) -> None:
     """全局 loguru patcher。
 
     被 ``logger.configure(patcher=...)`` 注册后，对每一条 log record 在到达 sink 之前
@@ -109,7 +113,8 @@ class InterceptHandler(logging.Handler):
         except ValueError:
             level = record.levelno
 
-        frame, depth = logging.currentframe(), 2
+        frame: FrameType | None = logging.currentframe()
+        depth = 2
         while frame and frame.f_code.co_filename == logging.__file__:
             frame = frame.f_back
             depth += 1

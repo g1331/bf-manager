@@ -481,14 +481,14 @@ Commands = {
         },
     },
 }
-flat_list = []
+flat_list: list[tuple[str, list[int]]] = []
 for cid, component in Components.items():
     if component in Commands:
         for command_type, command in Commands[component].items():
             flat_list += [
-                [f"{component}.{name}", [int(cid), int(mid)]] for mid, name in command.items()
+                (f"{component}.{name}", [int(cid), int(mid)]) for mid, name in command.items()
             ]
-Methods = dict(flat_list)
+Methods: dict[str, list[int]] = dict(flat_list)
 
 Command2Hex = {
     "Authentication.login": "1.10",

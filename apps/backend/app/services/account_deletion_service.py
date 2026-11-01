@@ -16,6 +16,7 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from loguru import logger
 from sqlalchemy import delete, func, or_, select, update
@@ -68,7 +69,7 @@ def _audit(
     *,
     actor_id: int | None,
     action: str,
-    payload: dict,
+    payload: dict[str, Any],
     ip: str | None,
     persona_id: int = 0,
 ) -> None:

@@ -31,11 +31,7 @@ dependencies = [
     "loguru>=0.7.3",
     # 工具
     "python-multipart>=0.0.19",
-    "orjson>=3.10.0",
-    "tenacity>=9.0.0",
-    # 数据处理（武器列表 HTML 解析、地名归一化等）
-    "beautifulsoup4>=4.12.0",
-    "rapidfuzz>=3.10.0",
+    # 繁简转换（交换商品名、皮肤名）
     "zhconv>=1.4.3",
     # EA 邮箱密码登录链路的 XPath 解析（form_parser）
     "lxml>=5.3.0",
@@ -120,5 +116,23 @@ addopts = "-v --strict-markers"
 [tool.mypy]
 python_version = "3.12"
 strict = true
+plugins = ["pydantic.mypy"]
+# 全量检查时 models 有循环导入，db.scalar(select(User)) 这类返回会退化成 Any，单文件检查却是准的；
+# 这类告警全是噪音，先关掉
+warn_return_any = false
 ignore_missing_imports = true
 exclude = ["alembic/versions/"]
+
+# 和 ruff 一样整文件豁免的遗留 EA 协议封装：类型错误占全仓九成，等拆分 gateway、
+# 改错误模型时分批收紧。新代码不要往这里加
+[[tool.mypy.overrides]]
+module = [
+    "app.domain.ea.blaze_protocol.protocol",
+    "app.domain.ea.blaze_protocol.socket",
+    "app.domain.games.bf1.gateway",
+]
+ignore_errors = true
+
+[tool.pydantic-mypy]
+# 默认把模型构造参数当 Any，会放过 mode="typo" 这类运行时才报的错
+init_typed = true

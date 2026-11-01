@@ -720,7 +720,7 @@ async def _tick(db: AsyncSession) -> None:
         rows = by_server[server.id]
         game_id = game_ids.get(server.id)
         info = states.get(game_id) if game_id else None
-        if info is None:
+        if game_id is None or info is None:
             _mark_failed(rows, "找不到这台服当前的 gameId（可能已关服），没法自动下 V", now)
             await db.commit()
             continue

@@ -1,0 +1,17 @@
+# 生产库每日备份。安装：
+#   install -D -m 755 tools/backup.sh /srv/bf-manager/tools/backup.sh
+#   cp tools/systemd/bf-manager-backup.{service,timer} /etc/systemd/system/
+#   systemctl daemon-reload && systemctl enable --now bf-manager-backup.timer
+[Unit]
+Description=BF-Manager Postgres backup
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+Environment=PROJECT_DIR=/srv/bf-manager
+Environment=BACKUP_ROOT=/srv/bf-manager/backups/daily
+Environment=KEEP_DAYS=14
+ExecStart=/usr/bin/env bash /srv/bf-manager/tools/backup.sh docker-compose.prod.yml
+Nice=10
+IOSchedulingClass=idle

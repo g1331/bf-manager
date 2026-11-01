@@ -317,7 +317,7 @@ async def _consume_group_invite_quota(db: AsyncSession, invite_id: int, user: Us
     """靠群邀请注册的新账号计入发链接人的邀请码名额：记一条已使用的邀请码"""
     invite = await db.get(GroupInvite, invite_id)
     creator = await lock_user(db, invite.created_by) if invite and invite.created_by else None
-    if creator is None:
+    if invite is None or creator is None:
         raise AccountError("INVITE_INVALID", "群邀请链接已失效，请向群管理要新链接后重新注册")
     left = await invite_quota_left(db, creator)
     if left is not None and left <= 0:
@@ -801,8 +801,8 @@ async def _finish_register(db: AsyncSession, row: EmailVerification, password: s
         raise AccountError("INVITE_REQUIRED", "现在注册需要邀请码，请带上邀请码重新注册", 403)
     now = _now()
     mode = payload.get("mode")
-    persona_id = payload.get("persona_id")
-    if mode == "ea" and await _active_binding(db, int(persona_id)) is not None:
+    persona_id = int(payload["persona_id"]) if mode == "ea" else None
+    if persona_id is not None and await _active_binding(db, persona_id) is not None:
         raise AccountError("ACCOUNT_CONFLICT", "这个 EA 账号已经绑定在其他账号上，请直接登录")
     user = User(
         username=await _unique_username(db, f"persona_{persona_id}" if mode == "ea" else None),
@@ -817,11 +817,11 @@ async def _finish_register(db: AsyncSession, row: EmailVerification, password: s
     )
     db.add(user)
     await db.flush()
-    if mode == "ea":
+    if persona_id is not None:
         db.add(
             EaBinding(
                 user_id=user.id,
-                persona_id=int(persona_id),
+                persona_id=persona_id,
                 ea_user_id=payload.get("ea_user_id"),
                 display_name=payload.get("display_name"),
                 verified_via="email",

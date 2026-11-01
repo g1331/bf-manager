@@ -22,6 +22,7 @@ from app.core.cache import close_redis, get_redis
 from app.core.config import get_settings
 from app.core.ea_metrics import ea_metrics_flusher
 from app.core.logging import setup_logging
+from app.core.security import check_production_secrets
 from app.db.session import close_engine, get_sessionmaker
 from app.domain.ea.login.task_manager import close_task_manager, init_task_manager
 
@@ -44,6 +45,7 @@ from app.services.metrics_service import classify_path, record_request, user_id_
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     setup_logging()
+    check_production_secrets()
     settings = get_settings()
     logger.info(
         "Starting {} v{} (env={}, games={})",

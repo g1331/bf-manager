@@ -14,10 +14,6 @@ class ApiError(BaseModel):
     request_id: str | None = None
 
 
-class ErrorEnvelope(BaseModel):
-    error: ApiError
-
-
 class Page[T](BaseModel):
     items: list[T]
     total: int

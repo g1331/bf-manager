@@ -1,7 +1,7 @@
 import asyncio
 import contextlib
 import ssl
-from typing import Union
+from typing import Any, Union
 
 import httpx
 from loguru import logger
@@ -173,7 +173,7 @@ class BlazeSocket:
             if not future.done():
                 future.set_exception(ConnectionError(reason))
 
-    async def close(self):
+    async def close(self) -> None:
         # 关闭连接。先让等待中的请求立即失败，再等 TLS 关闭握手：对端被 EA 注销会话后常常不回
         # close_notify，wait_closed 会一直挂着，曾让所有 Blaze 查询连同重连一起卡住近一分钟
         self.connect = False
@@ -216,7 +216,7 @@ class BlazeSocket:
                 self._mark_disconnected("writer 无效")
                 break
 
-    async def send(self, packet, timeout=60):
+    async def send(self, packet: bytes | dict[str, Any], timeout: float = 60) -> Any:
         # 发送数据包
         if not self.connect:
             raise ConnectionError("连接已关闭")

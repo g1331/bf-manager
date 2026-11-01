@@ -669,12 +669,6 @@ async def record_account_result(
 # ===== 复核 =====
 
 
-@dataclass
-class _GroupReport:
-    group: Group
-    lines: list[str]
-
-
 async def _check_account(db: AsyncSession, account: GroupEaAccount) -> bool:
     """用凭据登录一次，看还能不能用"""
     try:

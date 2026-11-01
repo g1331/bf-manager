@@ -172,17 +172,7 @@ class BindingFirstBF1ClientProvider:
         return cm, client
 
     async def _probe_rsp(self, client: BF1GatewayClient) -> bool:
-        """用发起者凭据探测目标服详情，rspInfo.server.serverId 存在才算 RSP 管理员。"""
-        try:
-            res = await client.getFullServerDetails(self.game_id)
-        except Exception as exc:
-            logger.warning("binding 凭据探测服务器详情异常 game_id={}: {}", self.game_id, exc)
-            return False
-        if not isinstance(res, dict):
-            return False
-        raw = res.get("result") or {}
-        rsp_server = (raw.get("rspInfo") or {}).get("server") or {}
-        return bool(rsp_server.get("serverId"))
+        return await _probe_rsp(client, self.game_id)
 
 
 class ExecutorUnavailableError(ForbiddenError):

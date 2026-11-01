@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import AsyncGenerator
+from typing import Any
 
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -22,7 +23,7 @@ def get_engine() -> AsyncEngine:
     if _engine is None:
         settings = get_settings()
         # sqlite (aiosqlite) 走默认 StaticPool，不接受 pool_size / max_overflow
-        kwargs: dict = {"echo": settings.debug, "pool_pre_ping": True}
+        kwargs: dict[str, Any] = {"echo": settings.debug, "pool_pre_ping": True}
         if not settings.database_url.startswith("sqlite"):
             kwargs["pool_size"] = 10
             kwargs["max_overflow"] = 20

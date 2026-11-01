@@ -71,7 +71,7 @@ def _to_summary(raw: dict[str, Any]) -> ServerSummary:
     )
     return ServerSummary(
         server_id=int(server_info.get("serverId") or raw.get("serverId") or 0),
-        game_id=int(server_info.get("gameId")) if server_info.get("gameId") else None,
+        game_id=int(gid) if (gid := server_info.get("gameId")) else None,
         persisted_game_id=server_info.get("persistedGameId") or raw.get("persistedGameId"),
         name=server_info.get("name") or raw.get("name") or "",
         map_name=map_name,
@@ -448,10 +448,11 @@ async def current_game_ids(db: AsyncSession, servers: list[Server]) -> dict[int,
         .order_by(Bf1GameInstance.last_seen.desc())
     )
     for sid, gid in rows.tuples():
-        latest.setdefault(sid, gid)
+        if sid is not None:
+            latest.setdefault(sid, gid)
     out: dict[int, int] = {}
     for s in servers:
-        gid = latest.get(s.server_id) or s.game_id
-        if gid:
-            out[s.id] = gid
+        current = latest.get(s.server_id) or s.game_id
+        if current:
+            out[s.id] = current
     return out

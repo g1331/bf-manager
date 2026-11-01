@@ -11,6 +11,7 @@ REFRESH_INTERVAL 刷新一次。服务器详情页拉到的名单也会写回来
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from loguru import logger
 from sqlalchemy import delete, func, select
@@ -44,9 +45,9 @@ def _aware(ts: datetime) -> datetime:
     return ts.replace(tzinfo=ts.tzinfo or UTC)
 
 
-def _member_rows(server_id: int, extras: ServerExtras) -> list[dict]:
-    rows: dict[tuple[str, int], dict] = {}
-    groups = {
+def _member_rows(server_id: int, extras: ServerExtras) -> list[dict[str, Any]]:
+    rows: dict[tuple[str, int], dict[str, Any]] = {}
+    groups: dict[str, list[Any]] = {
         "owner": [extras.owner] if extras.owner and extras.owner.persona_id else [],
         "admin": extras.admins,
         "vip": extras.vips,

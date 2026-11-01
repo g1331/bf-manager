@@ -64,6 +64,9 @@ jobs:
       - name: Ruff format check
         run: uv run ruff format --check .
 
+      - name: Mypy
+        run: uv run mypy app
+
       - name: Pytest
         env:
           DATABASE_URL: postgresql+asyncpg://bf:bf@localhost:5432/bf_manager_test

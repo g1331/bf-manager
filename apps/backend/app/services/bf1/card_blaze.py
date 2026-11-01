@@ -105,7 +105,7 @@ class CardBlazeSession:
 
     async def _send(
         self, method: str, data: dict[str, Any], timeout: float = REQUEST_TIMEOUT
-    ) -> dict:
+    ) -> dict[str, Any]:
         if self._socket is None:
             raise ConnectionError("Blaze 未连接")
         res = await self._socket.send(

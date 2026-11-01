@@ -52,6 +52,26 @@ def get_cipher() -> CredentialCipher:
     return _cipher
 
 
+# ===== 启动自检 =====
+
+# 生成脚本给的是 64 位 hex；HS256 密钥至少要 256 位（RFC 7518 §3.2），长度够不代表随机，只挡空值和明显的短密钥
+_JWT_SECRET_MIN_LEN = 32
+
+
+def check_production_secrets() -> None:
+    """生产环境密钥缺失或不合格时拒绝启动。
+
+    jwt_secret_key 为空时 jose 照样能签发、验证 token，任何人都能伪造登录态；
+    ea_cred_encryption_key 只在第一次加解密时才构造，配错要等到有人绑 EA 才暴露。
+    """
+    settings = get_settings()
+    if not settings.is_production:
+        return
+    if len(settings.jwt_secret_key) < _JWT_SECRET_MIN_LEN:
+        raise RuntimeError(f"JWT_SECRET_KEY 未配置或短于 {_JWT_SECRET_MIN_LEN} 字符，拒绝启动")
+    get_cipher()
+
+
 # ===== JWT =====
 
 
@@ -83,6 +103,7 @@ def decode_access_token(token: str) -> dict[str, Any]:
 __all__ = [
     "CredentialCipher",
     "JWTError",
+    "check_production_secrets",
     "create_access_token",
     "decode_access_token",
     "get_cipher",

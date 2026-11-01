@@ -49,6 +49,9 @@ jobs:
             type=ref,event=branch
             type=sha,prefix=,suffix=,format=short
             type=raw,value=latest,enable={{is_default_branch}}
+          # latest 只给 main 构建；不关的话 tag 构建也会自动打 latest，deploy.sh 解析 latest 时会拿到 tag 构建
+          flavor: |
+            latest=false
 
       - name: Resolve app version
         id: version
@@ -107,6 +110,9 @@ jobs:
             type=ref,event=branch
             type=sha,prefix=,suffix=,format=short
             type=raw,value=latest,enable={{is_default_branch}}
+          # latest 只给 main 构建；不关的话 tag 构建也会自动打 latest，deploy.sh 解析 latest 时会拿到 tag 构建
+          flavor: |
+            latest=false
 
       - name: Resolve app version
         id: version

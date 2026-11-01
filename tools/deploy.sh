@@ -2,8 +2,8 @@
 # 生产环境部署 / 更新 / 回滚脚本
 #
 # 首次运行：备齐 secrets、准备 .env.prod（交互填 DOMAIN）、拉镜像、起服务、无管理员时交互创建第一个管理员。
-# 后续运行：把镜像锁定到某个 commit，有待执行的迁移先备份数据库，更新后等健康检查和冒烟通过，
-#           再清掉本项目不再需要的旧镜像。幂等，可重复执行。
+# 后续运行：把镜像锁定到某个 commit，有待执行的迁移先备份数据库，单独跑迁移后只更新 backend / web，
+#           等健康检查和冒烟通过，再清掉本项目不再需要的旧镜像。幂等，可重复执行。
 #
 # 镜像由 CI 构建推送到 GHCR：push main 时 ci.yml 检查全过后调用 release.yml（标签为 7 位 commit 和 latest），
 # 打 tag 时 release.yml 直接跑（标签为 vX.Y.Z）。本机只 pull，不 build。
@@ -30,7 +30,8 @@ REQUIRED_SECRETS=(postgres_password database_url ea_cred_encryption_key jwt_secr
 DOMAIN_PLACEHOLDER="bf-manager.example.com"
 BACKEND_IMAGE="ghcr.io/g1331/bf-manager-backend"
 WEB_IMAGE="ghcr.io/g1331/bf-manager-web"
-# 只拉、只更新应用服务；postgres / redis 用浮动标签，顺手 pull 会在 up 时把数据库换成新的小版本
+# 只拉、只更新应用服务；postgres / redis 用浮动标签，顺手 pull 或 up 会把数据库换成新的小版本、重启数据库。
+# 基础服务的配置改了（资源配额等）要手动 docker compose ... up -d postgres redis
 APP_SERVICES=(migrate backend web)
 HEALTH_TIMEOUT=180
 
@@ -119,19 +120,20 @@ COMPOSE=(docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE")
 
 image_label() { docker image inspect "$1" --format "{{index .Config.Labels \"$2\"}}" 2>/dev/null || true; }
 
-# 线上正在跑的版本：.env.prod 已锁定就用它，否则（还是 latest）读运行中容器镜像的 commit
+# 线上正在跑的版本：取运行中 backend 容器镜像的 commit（7 位）；没有容器时退回 .env.prod 的记录
 running_version() {
-    local pinned container image rev
-    pinned="$(env_get IMAGE_TAG)"
-    if [[ -n "$pinned" && "$pinned" != "latest" ]]; then
-        echo "$pinned"
-        return
-    fi
+    local container image rev pinned
     container="$("${COMPOSE[@]}" ps -q backend 2>/dev/null || true)"
-    [[ -n "$container" ]] || return 0
-    image="$(docker inspect "$container" --format '{{.Image}}')"
-    rev="$(image_label "$image" org.opencontainers.image.revision)"
-    [[ -n "$rev" ]] && echo "${rev:0:7}"
+    if [[ -n "$container" ]]; then
+        image="$(docker inspect "$container" --format '{{.Image}}')"
+        rev="$(image_label "$image" org.opencontainers.image.revision)"
+        if [[ -n "$rev" ]]; then
+            echo "${rev:0:7}"
+            return 0
+        fi
+    fi
+    pinned="$(env_get IMAGE_TAG)"
+    [[ -n "$pinned" && "$pinned" != "latest" ]] && echo "$pinned"
     return 0
 }
 
@@ -153,21 +155,25 @@ fi
 [[ "$TARGET" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]] || die "非法的镜像标签: $TARGET"
 [[ "$TARGET" == "latest" ]] && die "不再部署浮动的 latest，请指定 commit 或 vX.Y.Z"
 export IMAGE_TAG="$TARGET"
-log "目标版本: $TARGET（当前: ${FROM_VERSION:-未部署}）"
 
-# ===== 4. 拉镜像 =====
+# ===== 4. 拉镜像，确认前后端是同一个 commit =====
 log "拉取 $TARGET 的镜像..."
 "${COMPOSE[@]}" pull -q "${APP_SERVICES[@]}"
+TARGET_REV="$(image_label "$BACKEND_IMAGE:$TARGET" org.opencontainers.image.revision)"
+web_rev="$(image_label "$WEB_IMAGE:$TARGET" org.opencontainers.image.revision)"
+[[ -n "$TARGET_REV" ]] || die "$BACKEND_IMAGE:$TARGET 没有 revision 标签"
+[[ "$TARGET_REV" == "$web_rev" ]] || die "$TARGET 的后端（${TARGET_REV:0:7}）和前端（${web_rev:0:7}）不是同一个 commit"
+log "目标版本: $TARGET（commit ${TARGET_REV:0:7}），当前: ${FROM_VERSION:-未部署}"
 
 # ===== 5. 核对生产 compose 与该版本仓库里的是否一致（回滚时跳过，compose 保持现状）=====
 if [[ $ROLLBACK -eq 0 ]]; then
-    revision="$(image_label "$BACKEND_IMAGE:$TARGET" org.opencontainers.image.revision)"
     source_url="$(image_label "$BACKEND_IMAGE:$TARGET" org.opencontainers.image.source)"
-    raw_url="${source_url/https:\/\/github.com/https://raw.githubusercontent.com}/${revision}/${COMPOSE_FILE}"
-    if [[ -n "$revision" && -n "$source_url" ]] && repo_compose="$(curl -fsSL --max-time 15 "$raw_url" 2>/dev/null)"; then
-        if ! drift="$(diff <(printf '%s\n' "$repo_compose") "$COMPOSE_FILE")"; then
-            printf '%s\n' "$drift" >&2
-            die "本机 $COMPOSE_FILE 与 ${revision:0:7} 仓库里的不一致（上面 < 是仓库，> 是本机）。先同步再部署：curl -fsSL $raw_url -o $COMPOSE_FILE"
+    raw_url="${source_url/https:\/\/github.com/https://raw.githubusercontent.com}/${TARGET_REV}/${COMPOSE_FILE}"
+    repo_compose="$(mktemp)"
+    trap 'rm -f "$repo_compose"' EXIT
+    if [[ -n "$source_url" ]] && curl -fsSL --max-time 15 "$raw_url" -o "$repo_compose" 2>/dev/null; then
+        if ! diff "$repo_compose" "$COMPOSE_FILE" >&2; then
+            die "本机 $COMPOSE_FILE 与 ${TARGET_REV:0:7} 仓库里的不一致（上面 < 是仓库，> 是本机）。先同步再部署：curl -fsSL $raw_url -o $COMPOSE_FILE"
         fi
         log "compose 与仓库一致"
     else
@@ -175,34 +181,51 @@ if [[ $ROLLBACK -eq 0 ]]; then
     fi
 fi
 
-# ===== 6. 有待执行的迁移先备份数据库 =====
-if [[ -n "$("${COMPOSE[@]}" ps -q --status running postgres 2>/dev/null)" ]]; then
-    if ! alembic_out="$("${COMPOSE[@]}" run --rm --no-deps -T migrate alembic current 2>&1)"; then
-        printf '%s\n' "$alembic_out" | tail -5 >&2
-        if grep -q "Can't locate revision" <<<"$alembic_out"; then
-            die "数据库已经迁移到 $TARGET 不认识的版本。回滚到迁移之前的代码需要先手动 downgrade，脚本不自动做"
-        fi
-        die "读取数据库迁移版本失败"
+# ===== 6. 起基础服务：postgres / redis 没在跑就启动，已在跑的不重建 =====
+log "确认 postgres / redis 在运行..."
+"${COMPOSE[@]}" up -d --no-recreate --wait postgres redis
+
+# ===== 7. 迁移检查：数据库比目标代码新就停下；有待执行的迁移先备份 =====
+# 同一容器里先后打印 current 和 heads，用 --- 分隔；只取形如 "<revision>" 或 "<revision> (head)" 的行
+if ! alembic_out="$("${COMPOSE[@]}" run --rm --no-deps -T migrate sh -c 'alembic current && echo --- && alembic heads' 2>&1)"; then
+    printf '%s\n' "$alembic_out" | tail -5 >&2
+    if grep -q "Can't locate revision" <<<"$alembic_out"; then
+        die "数据库已经迁移到 $TARGET 不认识的版本。回滚到迁移之前的代码需要先手动 downgrade，脚本不自动做"
     fi
-    if grep -q "(head)" <<<"$alembic_out"; then
-        log "没有待执行的迁移"
-    else
-        log "有待执行的迁移，先备份数据库..."
-        PROJECT_DIR="$PWD" BACKUP_ROOT="$PWD/backups/pre-deploy" bash tools/backup.sh "$COMPOSE_FILE"
-    fi
+    die "读取数据库迁移版本失败"
+fi
+rev_lines() { grep -E '^[A-Za-z0-9_]+( \(.*\))?$' | cut -d' ' -f1 | sort -u; }
+db_revs="$(sed -n '1,/^---$/p' <<<"$alembic_out" | rev_lines || true)"
+head_revs="$(sed -n '/^---$/,$p' <<<"$alembic_out" | rev_lines || true)"
+if [[ -z "$db_revs" ]]; then
+    log "数据库还没有任何迁移（新库），跳过迁移前备份"
+elif [[ "$db_revs" == "$head_revs" ]]; then
+    log "没有待执行的迁移（$(tr '\n' ' ' <<<"$db_revs")）"
 else
-    log "数据库还没在运行（首次部署），跳过迁移前备份"
+    log "有待执行的迁移（$(tr '\n' ' ' <<<"$db_revs")→ $(tr '\n' ' ' <<<"$head_revs")），先备份数据库..."
+    PROJECT_DIR="$PWD" BACKUP_ROOT="$PWD/backups/pre-deploy" bash tools/backup.sh "$COMPOSE_FILE"
 fi
 
-# ===== 7. 更新服务（migrate job 在 up 时自动 alembic upgrade head）=====
-log "启动 / 更新服务..."
-"${COMPOSE[@]}" up -d
+# ===== 8. 先记下部署前的版本，失败时 --rollback 回到它 =====
+if [[ -n "$FROM_VERSION" && "$FROM_VERSION" != "${TARGET_REV:0:7}" && "$FROM_VERSION" != "$TARGET" ]]; then
+    echo "$FROM_VERSION" >"$PREVIOUS_FILE"
+fi
+rollback_hint="bash tools/deploy.sh --rollback"
+[[ -f "$PREVIOUS_FILE" ]] && rollback_hint+="（回到 $(<"$PREVIOUS_FILE")）"
 
-# ===== 8. 等健康检查 =====
+# ===== 9. 跑迁移，再只更新 backend / web =====
+log "执行数据库迁移..."
+"${COMPOSE[@]}" run --rm --no-deps -T migrate || die "迁移失败，backend / web 未更新。备份在 backups/pre-deploy/"
+# 以前 up 留下的一次性 migrate 容器会一直占着旧镜像，删掉它旧镜像才清得掉
+"${COMPOSE[@]}" rm -f migrate >/dev/null 2>&1 || true
+log "更新 backend / web..."
+"${COMPOSE[@]}" up -d --no-deps backend web
+
+# ===== 10. 等健康检查，核对线上确实是目标 commit，首页能打开 =====
 wait_healthy() {
     local service="$1" container status waited=0
     container="$("${COMPOSE[@]}" ps -q "$service")"
-    [[ -n "$container" ]] || die "$service 没有在运行"
+    [[ -n "$container" ]] || die "$service 没有在运行。需要的话：$rollback_hint"
     while :; do
         status="$(docker inspect "$container" --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}')"
         case "$status" in
@@ -214,34 +237,26 @@ wait_healthy() {
         waited=$((waited + 3))
     done
     "${COMPOSE[@]}" logs --tail 30 "$service" >&2 || true
-    die "$service 状态 $status，未通过健康检查。需要的话：bash tools/deploy.sh --rollback"
+    die "$service 状态 $status，未通过健康检查。需要的话：$rollback_hint"
 }
 log "等待 backend / web 健康检查..."
 wait_healthy backend
 wait_healthy web
 
-# ===== 9. 冒烟：后端报的版本对得上，前端首页能打开 =====
+for service in backend web; do
+    container="$("${COMPOSE[@]}" ps -q "$service")"
+    rev="$(image_label "$(docker inspect "$container" --format '{{.Image}}')" org.opencontainers.image.revision)"
+    [[ "$rev" == "$TARGET_REV" ]] || die "$service 跑的是 ${rev:0:7}，不是目标 ${TARGET_REV:0:7}。需要的话：$rollback_hint"
+done
 backend_addr="$("${COMPOSE[@]}" port backend 8000)"
 web_addr="$("${COMPOSE[@]}" port web 3000)"
-health="$(curl -fsS --max-time 10 "http://$backend_addr/api/v1/healthz")" || die "后端 /api/v1/healthz 请求失败"
-reported="$(sed -nE 's/.*"version":"([^"]*)".*/\1/p' <<<"$health")"
-if [[ "$reported" == "$TARGET" ]]; then
-    log "后端版本 $reported"
-elif [[ "$reported" == "main" ]]; then
-    warn "后端镜像是旧构建，版本号只有 main，无法核对 commit"
-else
-    die "后端报告版本 $reported，与目标 $TARGET 不符"
-fi
+health="$(curl -fsS --max-time 10 "http://$backend_addr/api/v1/healthz")" || die "后端 /api/v1/healthz 请求失败。需要的话：$rollback_hint"
 web_code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 "http://$web_addr/")"
-[[ "$web_code" == "200" ]] || die "前端首页返回 $web_code"
-log "前端首页 200"
+[[ "$web_code" == "200" ]] || die "前端首页返回 $web_code。需要的话：$rollback_hint"
+log "backend / web 都是 ${TARGET_REV:0:7}，healthz 版本 $(sed -nE 's/.*"version":"([^"]*)".*/\1/p' <<<"$health")，首页 200"
 
-# ===== 10. 记录版本 =====
 env_set IMAGE_TAG "$TARGET"
-if [[ -n "$FROM_VERSION" && "$FROM_VERSION" != "$TARGET" ]]; then
-    echo "$FROM_VERSION" >"$PREVIOUS_FILE"
-fi
-log "已锁定 IMAGE_TAG=$TARGET${FROM_VERSION:+，上一个版本 $FROM_VERSION 可用 --rollback 回去}"
+log "已锁定 IMAGE_TAG=$TARGET${FROM_VERSION:+；回到 $FROM_VERSION 用 --rollback}"
 
 # ===== 11. 首个管理员检测（list-admins 同时充当后端 + DB 就绪探测）=====
 if [[ $SKIP_ADMIN -eq 1 ]]; then

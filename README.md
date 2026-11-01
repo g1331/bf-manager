@@ -135,7 +135,7 @@ bash tools/deploy.sh --rollback     # 回到上一次部署的版本
 
 首次运行会生成 secrets、交互填写域名生成 `.env.prod`、拉镜像、启动服务并自动迁移；检测到没有管理员时，会引导创建第一个本地管理员。
 
-之后每次部署都锁定到一个 commit，写进 `.env.prod` 的 `IMAGE_TAG`。脚本会先核对本机 `docker-compose.prod.yml` 与该版本仓库里的是否一致，有待执行的迁移时先把数据库备份到 `backups/pre-deploy/`，更新后等 backend、web 通过健康检查，再核对 `/api/v1/healthz` 报的版本并打开首页，最后清掉本项目不再需要的旧镜像（保留当前和上一个版本）。只更新 migrate、backend、web，postgres 和 redis 的镜像不会被顺手升级。
+之后每次部署都锁定到一个 commit，写进 `.env.prod` 的 `IMAGE_TAG`。脚本会先核对本机 `docker-compose.prod.yml` 与该版本仓库里的是否一致，有待执行的迁移时先把数据库备份到 `backups/pre-deploy/`，更新后等 backend、web 通过健康检查，再核对 `/api/v1/healthz` 报的版本并打开首页，最后清掉本项目不再需要的旧镜像（保留当前和上一个版本）。迁移单独执行，之后只更新 backend 和 web；postgres、redis 不会被顺手升级或重启，它们的配置改了要手动 `docker compose --env-file .env.prod -f docker-compose.prod.yml up -d postgres redis`。部署失败时提示的 `--rollback` 会回到这次部署之前的版本。
 
 backend 和 web 只监听 `127.0.0.1:8000` 与 `127.0.0.1:3000`，TLS 和反向代理交给宿主机上的 nginx 或 openresty。生产环境默认关闭接口文档，只对外提供 BF1 只读接口的 `/api/v1/openapi.public.json`。
 

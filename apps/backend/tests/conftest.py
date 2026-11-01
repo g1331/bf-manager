@@ -11,8 +11,10 @@
 from __future__ import annotations
 
 import os
+import time
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
+from types import SimpleNamespace
 
 # 在 import app 之前先把测试用的密钥与 DB URL 注入环境
 os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
@@ -21,17 +23,20 @@ os.environ.setdefault("EA_CRED_ENCRYPTION_KEY", "ZGV2LW9ubHktY2hhbmdlLW1lLWluLXB
 os.environ.setdefault("JWT_SECRET_KEY", "test-jwt-secret-not-secure-but-deterministic")
 os.environ.setdefault("ENVIRONMENT", "test")
 
+import pytest
 import pytest_asyncio
+from app.api import rate_limit as rate_limit_module
 from app.api.deps import (
     get_current_user,
     get_current_user_any_status,
     get_current_user_optional,
     get_session_factory,
 )
+from app.core import ea_budget
 from app.db.session import get_db
 from app.main import create_app
 from app.models import Base, EaBinding, User
-from app.services import account_service
+from app.services import account_service, api_key_service
 from app.services.account_service import EaEmailMatch
 from app.services.mail import LogMailSender, set_mail_sender
 from httpx import ASGITransport, AsyncClient
@@ -237,3 +242,30 @@ async def env(test_session, monkeypatch):
         yield ac, outbox, directory
     app.dependency_overrides.clear()
     set_mail_sender(None)
+
+
+class _FrozenDatetime(datetime):
+    """只冻结 now()，其余行为照常；按日用量的写入和读取共用同一个时刻"""
+
+    frozen_at: datetime
+
+    @classmethod
+    def now(cls, tz=None):  # type: ignore[no-untyped-def, override]
+        return cls.frozen_at if tz is None else cls.frozen_at.astimezone(tz)
+
+
+@pytest.fixture
+def frozen_rate_limit_clock(monkeypatch: pytest.MonkeyPatch) -> int:
+    """限流和 EA 预算的分钟窗口按整分钟对齐，用例刚好跨过整分钟时计数会清零，偶发拿不到 429 / 503；
+    API Key 按 UTC 日期记用量、读 used_today，跨午夜时两边会落在不同的日子。
+    把这几个模块看到的时间固定在某个整分钟后 30 秒，用例内窗口和日期都不会滚动"""
+    now = int(time.time()) // 60 * 60 + 30
+    frozen = SimpleNamespace(time=lambda: now)
+    monkeypatch.setattr(rate_limit_module, "time", frozen)
+    monkeypatch.setattr(ea_budget, "time", frozen)
+    monkeypatch.setattr(
+        _FrozenDatetime, "frozen_at", datetime.fromtimestamp(now, UTC), raising=False
+    )
+    monkeypatch.setattr(rate_limit_module, "datetime", _FrozenDatetime)
+    monkeypatch.setattr(api_key_service, "datetime", _FrozenDatetime)
+    return now

@@ -50,6 +50,7 @@ from app.services.bf1.server_service import operation_map_list
 from app.services.ea_account_service import (
     EAAccountService,
     gateway_personas,
+    pick_lock,
     set_blaze_persona,
 )
 
@@ -125,25 +126,20 @@ class _BlazeConnectionPool:
             await self._close_locked()
 
             if self._creds is None:
-                # 避开 Gateway 正拿在手里的号：在途请求随后刷新令牌或完整登录会把新会话踢掉
-                accounts = EAAccountService(db)
-                self._creds = await accounts.pick_available(avoid=gateway_personas())
-                # 挑完立刻登记，再看 Gateway 有没有在我们查库的同时拿走同一个号（进程刚启动时两边
-                # 几乎同时挑号，2026-11-02 14:30 生产就撞上了：Gateway 完整登录 90 秒后 Blaze 被注销）。
-                # 两边都是「挑完、登记、再检查」，中间没有 await，后返回的一方一定看得到先返回的
-                # 一方的登记，只有它重挑
-                set_blaze_persona(self._creds.persona_id)
-                if self._creds.persona_id in gateway_personas():
-                    self._creds = await accounts.pick_available(
-                        avoid=gateway_personas() | {self._creds.persona_id}
-                    )
+                # 避开 Gateway 正拿在手里的号：在途请求随后刷新令牌或完整登录会把新会话踢掉。
+                # 挑号和登记在同一把锁里，Gateway 不会在我们查库的同时拿走同一个号
+                async with pick_lock():
+                    creds = await EAAccountService(db).pick_available(avoid=gateway_personas())
+                    set_blaze_persona(creds.persona_id)
+                self._creds = creds
             # 登录前就登记，Gateway 从这时起避开这个号，免得登录刚完成就被它刷新令牌踢掉
             set_blaze_persona(self._creds.persona_id)
 
             try:
                 new_socket = await self._connect_and_login(self._creds)
-            except Exception:
-                # 建连或登录失败可能是该账号凭据失效，清空 sticky 凭据使下次换号重试。
+            except BaseException:
+                # 建连或登录失败可能是该账号凭据失效，清空 sticky 凭据使下次换号重试；被取消时
+                # 也清掉，下次重新挑号，不留没有连接的登记
                 self._creds = None
                 set_blaze_persona(None)
                 raise

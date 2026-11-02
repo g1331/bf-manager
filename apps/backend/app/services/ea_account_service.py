@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import contextlib
+import weakref
 from collections import Counter
 from collections.abc import Collection, Iterator
 from datetime import UTC, datetime
@@ -51,8 +53,24 @@ _verifying: set[int] = set()
 # 会话注销（2026-10-28、11-02 生产复现：刷新后 2–4 秒掉线，掉线那一两分钟的跟踪器查询全部失败），
 # 所以 Gateway 挑号时让这个账号排在同等健康度的其它账号之后；反过来 Blaze 选号时也避开 Gateway
 # 正拿在手里的号，免得在途请求紧接着刷新令牌把刚登录的会话踢掉。都只在本进程内（单 worker）。
+#
+# 两边的「挑号 + 登记」都要在 pick_lock 里做完：挑号要 await 查库，不加锁时进程刚启动那一刻两边
+# 同时挑号、互相看不到登记，会撞到同一个号（2026-11-02 14:30 生产复现：Gateway 完整登录 90 秒后
+# Blaze 被注销）。锁里只有一次查库，登录和业务请求都在锁外。
 _blaze_account: dict[str, int] = {}
 _gateway_in_use: Counter[int] = Counter()
+# 每个事件循环一把（测试里每个用例一个循环，asyncio.Lock 不能跨循环用）
+_pick_locks: weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, asyncio.Lock] = (
+    weakref.WeakKeyDictionary()
+)
+
+
+def pick_lock() -> asyncio.Lock:
+    loop = asyncio.get_running_loop()
+    lock = _pick_locks.get(loop)
+    if lock is None:
+        lock = _pick_locks[loop] = asyncio.Lock()
+    return lock
 
 
 def set_blaze_persona(persona_id: int | None) -> None:

@@ -15,7 +15,12 @@ from app.core import ea_budget
 from app.core.security import get_cipher
 from app.domain.games.bf1.gateway import BF1GatewayClient
 from app.models import EaBinding, GroupEaAccount
-from app.services.ea_account_service import EAAccountService, blaze_persona, gateway_using
+from app.services.ea_account_service import (
+    EAAccountService,
+    blaze_persona,
+    gateway_using,
+    pick_lock,
+)
 from app.services.ea_binding_service import EaBindingService
 
 # access_token 到期前提前这么多秒视为过期，避免请求途中失效。
@@ -67,15 +72,13 @@ async def get_bf1_client(db: AsyncSession) -> AsyncIterator[BF1GatewayClient]:
     # 公共查询先过全站 EA 预算，超了直接 503，不再去占池子里的账号
     await ea_budget.acquire()
     account_service = EAAccountService(db)
-    # 避开 Blaze 正在用的号：Gateway 给它刷新 desktop token 会把 Blaze 会话踢掉
-    blaze = blaze_persona()
-    creds = await account_service.pick_available(avoid=() if blaze is None else (blaze,))
-    if creds.persona_id == blaze_persona():
-        # Blaze 在我们查库的同时登记了同一个号（见 blaze_service 选号处）：带着避让再挑一次。
-        # 只剩这个号可用时重挑的结果不变，照常用它
-        creds = await account_service.pick_available(avoid=(creds.persona_id,))
-    # 拿着号的这段时间登记为在用，Blaze 选号时避开它
-    with gateway_using(creds.persona_id):
+    with contextlib.ExitStack() as held:
+        # 避开 Blaze 正在用的号：Gateway 给它刷新 desktop token 会把 Blaze 会话踢掉。挑号和「在用」
+        # 登记在同一把锁里（见 ea_account_service.pick_lock），拿着号的这段时间 Blaze 选号会避开它
+        async with pick_lock():
+            blaze = blaze_persona()
+            creds = await account_service.pick_available(avoid=() if blaze is None else (blaze,))
+            held.enter_context(gateway_using(creds.persona_id))
 
         async def _on_refresh(pid: int, new_sid: str | None, new_session: str | None) -> None:
             await account_service.update_session(pid, sid=new_sid, session=new_session)

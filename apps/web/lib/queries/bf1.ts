@@ -15,6 +15,10 @@ export interface ServerListSelection {
   modes: string[];
   regions: string[];
   sizes: number[];
+  serverTypes: string[];
+  /** 已按键排序的 vehicles.L:off 形式 */
+  rules: string[];
+  slots: string[];
   includeEmpty: boolean;
 }
 
@@ -22,6 +26,7 @@ export const bf1Keys = {
   // 服务器
   servers: (selection: ServerListSelection, name: string) =>
     ["bf1-servers", selection, name] as const,
+  serverFilterOptions: () => ["bf1-server-filter-options"] as const,
   server: (gameId: number) => ["bf1-server", gameId] as const,
   serverPlayers: (gameId: number) => ["bf1-server-players", gameId] as const,
   serverPlayerCounts: (gameId: number) => ["bf1-server-player-counts", gameId] as const,
@@ -81,11 +86,22 @@ export const bf1Queries = {
             modes: selection.modes.length ? selection.modes : undefined,
             regions: selection.regions.length ? selection.regions : undefined,
             sizes: selection.sizes.length ? selection.sizes : undefined,
+            serverTypes: selection.serverTypes.length ? selection.serverTypes : undefined,
+            rules: selection.rules.length ? selection.rules : undefined,
+            slots: selection.slots.length ? selection.slots : undefined,
             includeEmpty: selection.includeEmpty || undefined,
             limit: 500,
           },
           { signal },
         ),
+    }),
+  /** 筛选目录是静态的，拿一次就够 */
+  serverFilterOptions: () =>
+    queryOptions({
+      queryKey: bf1Keys.serverFilterOptions(),
+      queryFn: ({ signal }) => bf1Api.getServerFilterOptions({ signal }),
+      staleTime: Infinity,
+      gcTime: Infinity,
     }),
   server: (gameId: number) =>
     queryOptions({

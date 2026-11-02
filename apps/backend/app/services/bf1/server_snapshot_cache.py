@@ -25,7 +25,11 @@ async def write_server_snapshot(summaries: list[ServerSummary], *, source: str, 
         {
             "updated_at": datetime.now(UTC).isoformat(),
             "source": source,
-            "items": [s.model_dump() for s in summaries],
+            # masks 不进接口（exclude），缓存里要留着给服务器浏览器本地筛选
+            "items": [
+                {**s.model_dump(), "masks": s.masks.model_dump() if s.masks else None}
+                for s in summaries
+            ],
         },
         ttl=ttl,
     )

@@ -9,6 +9,7 @@ from app.api.rate_limit import rate_limit
 from app.schemas.bf1.rounds import RoundPage
 from app.schemas.bf1.server import (
     ServerDetail,
+    ServerFilterOptions,
     ServerLeaderboard,
     ServerListResponse,
     ServerMapStat,
@@ -20,6 +21,7 @@ from app.schemas.bf1.server import (
 from app.services.bf1.blaze_service import get_server_players
 from app.services.bf1.round_service import list_server_rounds
 from app.services.bf1.rsp_list_service import remember_detail_lists
+from app.services.bf1.server_filters import server_filter_options
 from app.services.bf1.server_player_count_service import (
     get_leaderboard,
     get_roster_snapshot,
@@ -47,22 +49,39 @@ async def list_servers(
     modes: list[str] | None = Query(None, description="模式代号，多值取并集"),
     regions: list[str] | None = Query(None, description="地区代号，多值取并集"),
     sizes: list[int] | None = Query(None, description="服务器最大人数档位，多值取并集"),
+    server_types: list[str] | None = Query(
+        None, description="服务器类型 OFFICIAL / RANKED / PRIVATE，多值取并集"
+    ),
+    rules: list[str] | None = Query(
+        None,
+        description="玩法开关，形如 vehicles.L:off，多条取交集；可选键见 /filter-options",
+    ),
+    slots: list[str] | None = Query(None, description="空位档位 none / 1-5 / 6-10 / 10+"),
     limit: int = Query(200, ge=1, le=500),
     include_empty: bool = Query(
         False, description="包含 0 人的空服；全服快照不含空服，开启后改走 EA searchServers"
     ),
 ) -> ServerListResponse:
-    # 默认在全服快照缓存上本地筛选，缓存缺失或要空服时下推 EA searchServers。空位
-    # （emptySlots）由前端二次过滤。接口没有 offset，前端走客户端分批渲染。
+    # 默认在全服快照缓存上本地筛选并给出各选项计数，缓存缺失、按名称搜或要空服时下推
+    # EA searchServers。接口没有 offset，前端走客户端分批渲染。
     return await BF1ServerService(db).search(
         keyword=name,
         maps=maps,
         modes=modes,
         regions=regions,
         sizes=sizes,
+        server_types=server_types,
+        rules=rules,
+        slots=slots,
         limit=limit,
         include_empty=include_empty,
     )
+
+
+@router.get("/filter-options", dependencies=[_read], response_model=ServerFilterOptions)
+async def get_filter_options() -> ServerFilterOptions:
+    # 静态目录，前端据此渲染筛选面板；必须声明在 /{game_id} 之前
+    return server_filter_options()
 
 
 @router.get("/{game_id}", dependencies=[_lookup], response_model=ServerDetail)

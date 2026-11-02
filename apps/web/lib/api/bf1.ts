@@ -325,21 +325,51 @@ export interface ServerSummary {
   is_official: boolean;
   is_ranked: boolean;
   has_password: boolean;
+  /** OFFICIAL / RANKED / PRIVATE / UNRANKED */
+  server_type: string | null;
   description: string | null;
+}
+
+/** 各筛选项选中后的结果数；某一维度的计数忽略该维度自身的条件 */
+export interface ServerFacets {
+  server_types: Record<string, number>;
+  /** 规则键 → {取值: 台数}，开关取值 on / off，倍率取值是选项键（BD3） */
+  rules: Record<string, Record<string, number>>;
+  presets: Record<string, number>;
 }
 
 export interface ServerListResponse {
   total: number;
   items: ServerSummary[];
+  /** 只在全服快照上筛选时有；走 EA 搜索（按名称、含空服）时为 null */
+  facets: ServerFacets | null;
 }
 
-/** 服务器搜索查询参数：maps/modes/regions/sizes 交后端筛选；空位由前端二次过滤 */
+export interface ServerFilterRule {
+  key: string;
+  label: string;
+  default: string;
+  options: { value: string; label: string }[];
+}
+
+export interface ServerFilterOptions {
+  server_types: { id: string; label: string }[];
+  presets: { id: string; label: string; rules: Record<string, string> }[];
+  groups: { id: string; label: string; rules: ServerFilterRule[] }[];
+}
+
+/** 服务器搜索查询参数，全部交后端筛选 */
 export interface ServerListQuery {
   name?: string;
   maps?: string[];
   modes?: string[];
   regions?: string[];
   sizes?: number[];
+  serverTypes?: string[];
+  /** 玩法规则，形如 vehicles.L:off、scales.BD:BD3 */
+  rules?: string[];
+  /** 空位档位 none / 1-5 / 6-10 / 10+ */
+  slots?: string[];
   /** 包含 0 人空服：全服快照不含空服，开启后后端改走 EA searchServers 抽样 */
   includeEmpty?: boolean;
   limit?: number;
@@ -889,10 +919,16 @@ export const bf1Api = {
     query.modes?.forEach((m) => params.append("modes", m));
     query.regions?.forEach((r) => params.append("regions", r));
     query.sizes?.forEach((s) => params.append("sizes", String(s)));
+    query.serverTypes?.forEach((t) => params.append("server_types", t));
+    query.rules?.forEach((r) => params.append("rules", r));
+    query.slots?.forEach((s) => params.append("slots", s));
     if (query.includeEmpty) params.set("include_empty", "true");
     params.set("limit", String(query.limit ?? 200));
     return api.get<ServerListResponse>(`/bf1/servers?${params.toString()}`, opts);
   },
+
+  getServerFilterOptions: (opts?: RequestOpts) =>
+    api.get<ServerFilterOptions>("/bf1/servers/filter-options", opts),
 
   getServer: (gameId: number, opts?: RequestOpts) =>
     api.get<ServerDetail>(`/bf1/servers/${gameId}`, opts),

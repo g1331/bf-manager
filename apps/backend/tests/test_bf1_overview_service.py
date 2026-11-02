@@ -301,6 +301,47 @@ def test_snapshot_summary_fills_list_fields() -> None:
     assert not overview_service._snapshot_summary(game).has_owner
 
 
+async def test_snapshot_summary_keeps_masks_in_cache_only(monkeypatch: pytest.MonkeyPatch) -> None:
+    game = _game(9, servertype="PRIVATE")
+    game["ATTR"].update(
+        {
+            "vehiclemask": "3",
+            "weaponmask": "781",
+            "kitmask": "15",
+            "settingmask": "54715",
+            "scalemask": "9362",
+        }
+    )
+    s = overview_service._snapshot_summary(game)
+    assert s.has_password and s.server_type == "PRIVATE"
+    assert s.masks is not None and (s.masks.weapon, s.masks.kit) == (781, 15)
+    # 掩码不进接口
+    assert "masks" not in s.model_dump()
+    # 缺失或非数字的掩码记为 None
+    game["ATTR"]["weaponmask"] = "x"
+    del game["ATTR"]["kitmask"]
+    s2 = overview_service._snapshot_summary(game)
+    assert s2.masks is not None and (s2.masks.weapon, s2.masks.kit) == (None, None)
+
+    # 写进缓存再读回来，掩码还在
+    store: dict = {}
+
+    class _Cache:
+        async def set(self, key: str, value: object, ttl: int | None = None) -> None:
+            store[key] = value
+
+        async def get(self, key: str) -> object:
+            return store.get(key)
+
+    async def fake_get_cache() -> _Cache:
+        return _Cache()
+
+    monkeypatch.setattr(server_snapshot_cache, "get_cache", fake_get_cache)
+    await server_snapshot_cache.write_server_snapshot([s], source="snapshot", ttl=60)
+    back = await server_snapshot_cache.read_server_snapshot()
+    assert back is not None and back[0].masks == s.masks
+
+
 async def test_refresh_writes_server_snapshot_and_spawns_counts(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

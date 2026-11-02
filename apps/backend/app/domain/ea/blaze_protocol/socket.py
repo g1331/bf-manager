@@ -1,11 +1,14 @@
 import asyncio
 import contextlib
+import hashlib
 import ssl
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Union
 
 import httpx
+from cryptography import x509
+from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from loguru import logger
 
 from app.core import ea_metrics
@@ -15,6 +18,37 @@ from app.domain.ea.blaze_protocol.protocol import QType, Blaze, keepalive
 # 公共 CA 库里没有它，所以单独信任这一张。指纹 SHA-256
 # CD:80:56:E2:56:84:92:A9:91:D8:AD:7B:CC:25:76:1B:15:B9:B1:E3:AA:DB:1F:BE:A0:A6:82:B3:42:BE:5E:08
 GOS_CA_FILE = Path(__file__).with_name("gos_2015_ca.pem")
+
+
+# redirector 证书公钥（SubjectPublicKeyInfo）的 SHA-256。证书 CN 是 winter15.gosredirector.ea.com，
+# 和连接用的 spring18 对不上，2026-12-13 到期，所以连接时不做 TLS 校验，只拿这个指纹对照：
+# 对不上就告警、照常连接。EA 正常换证书后核实无误，把新指纹换上来即可
+REDIRECTOR_SPKI_SHA256 = "0c878cfc1d7907f5bb4975517d71c79e7cdd12e53371928c6061488508555911"
+
+# 已告警过的指纹，每个进程每个陌生指纹只告警一次
+_reported_redirector_keys: set[str] = set()
+
+
+def check_redirector_key(response: httpx.Response) -> None:
+    """核对 redirector 的公钥指纹，变了只打告警，不影响连接。"""
+    try:
+        ssl_object = response.extensions["network_stream"].get_extra_info("ssl_object")
+        der = ssl_object.getpeercert(binary_form=True)
+        cert = x509.load_der_x509_certificate(der)
+        spki = cert.public_key().public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo)
+    except Exception as e:  # noqa: BLE001 —— 只是监测，取不到证书也不能挡住连接
+        logger.debug(f"取 redirector 证书失败，跳过指纹核对：{e!r}")
+        return
+    fingerprint = hashlib.sha256(spki).hexdigest()
+    if fingerprint == REDIRECTOR_SPKI_SHA256 or fingerprint in _reported_redirector_keys:
+        return
+    _reported_redirector_keys.add(fingerprint)
+    logger.warning(
+        f"redirector 公钥指纹变了：{fingerprint}（记录的是 {REDIRECTOR_SPKI_SHA256}）。"
+        f"证书 {cert.subject.rfc4514_string()}，签发 {cert.issuer.rfc4514_string()}，"
+        f"有效期到 {cert.not_valid_after_utc:%Y-%m-%d}。EA 换了证书就核实后更新指纹；"
+        f"否则可能有人改了 redirector 的应答"
+    )
 
 
 @lru_cache(maxsize=1)
@@ -70,10 +104,10 @@ class BlazeServerREQ:
             'defaultDnsAddress': 0
         }
         """
-        # redirector 的证书 2026-12-13 到期，强制校验会让到期后的 Blaze 全部断开，所以这里不校验。
+        # redirector 的证书主机名对不上、2026-12-13 到期，严格校验会让 Blaze 全部断开，所以这里不校验。
         # 它不经手凭据，回来的主机连接时要过 blaze_ssl_context 的 GOS CA 和主机名校验：普通中间人
         # 篡改应答只能让连接失败。剩下的风险是攻击者自己握有某台 GOS 签发证书的服务器
-        # 并把应答指过去，要堵住得对 redirector 单独 pin 公钥，暂未做
+        # 并把应答指过去；不 pin（EA 换证就会全站断线），改为公钥指纹变化时告警
         async with httpx.AsyncClient(verify=False) as client:
             response = await client.post(
                 "https://spring18.gosredirector.ea.com:42230/redirector/getServerInstance",
@@ -83,6 +117,7 @@ class BlazeServerREQ:
                 },
                 data=game_code,
             )
+            check_redirector_key(response)
             response.raise_for_status()
             host = response.json()["address"]["ipAddress"]["hostname"]
             port = response.json()["address"]["ipAddress"]["port"]

@@ -32,6 +32,7 @@ from app.domain.ea.login.login_engine import LoginCookies
 from app.domain.ea.login.schemas import EALoginTaskResultData
 from app.domain.ea.login.task_manager import ActorKind
 from app.domain.games.bf1.gateway import BF1GatewayClient
+from app.domain.games.bf1.gateway_errors import gateway_failure
 from app.models import User
 from app.services import group_server_service
 from app.services.ea_account_service import EAAccountService
@@ -228,7 +229,7 @@ class EALoginFinalizer:
         try:
             with _silence_gateway_logs():
                 personas = await client.getPersonasByIds([persona_id])
-            if isinstance(personas, dict):
+            if gateway_failure(personas) is None:
                 pmap = personas.get("result", {}).get("personas", {})
                 info = pmap.get(str(persona_id), {})
                 display_name = info.get("displayName")

@@ -15,6 +15,8 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
+from app.domain.games.bf1.gateway_errors import gateway_failure
+
 TARGET_MODE = "BreakthroughLarge"
 # 抽中的行动图池是 24 张图
 MIN_MAPS = 24
@@ -198,12 +200,12 @@ def update_error(res: Any) -> str | None:
     不带 updateServerBanner 的 ERR_AUTHORIZATION_REQUIRED 照样返回，由调用方回读设置判断
     是 banner 噪音还是写入真被拒（needs_verify）。
     """
-    if isinstance(res, dict):
+    err = gateway_failure(res)
+    if err is None:
         return None
-    text = str(res)
-    if "updateServerBanner" in text:
+    if "updateServerBanner" in f"{err} {err.ea_message or ''}":
         return None
-    return text[:200] or "未知错误"
+    return str(err)[:200] or "未知错误"
 
 
 def needs_verify(err: str) -> bool:

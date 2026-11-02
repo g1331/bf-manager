@@ -9,12 +9,13 @@ import httpx
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.errors import EAApiError, NotFoundError
+from app.api.errors import NotFoundError
 from app.core.cache import get_cache
 from app.domain.games.bf1.gateway import BF1GatewayClient
 from app.schemas.bf1.player import PersonaBrief, PersonaSearchResult
 from app.services.bf1 import blaze_service
 from app.services.bf1.gateway_factory import get_bf1_client
+from app.services.bf1.gateway_result import expect_ok
 
 
 async def _fetch_sal_avatar(
@@ -144,12 +145,11 @@ class BF1PlayerService:
 
     async def search_by_name(self, name: str) -> PersonaSearchResult:
         async with get_bf1_client(self.db) as client:
-            res = await client.getPersonasByName(name)
-            if not isinstance(res, dict):
-                raise EAApiError(
-                    code="EA_PERSONA_SEARCH_FAILED",
-                    message=f"EA Gateway 查询失败: {res}",
-                )
+            res = expect_ok(
+                await client.getPersonasByName(name),
+                code="EA_PERSONA_SEARCH_FAILED",
+                action="搜索玩家",
+            )
             personas_raw = res.get("personas", []) or []
             personas = [
                 PersonaBrief(
@@ -196,12 +196,12 @@ class BF1PlayerService:
 
     async def get_by_id(self, persona_id: int) -> PersonaBrief:
         async with get_bf1_client(self.db) as client:
-            res = await client.getPersonasByIds([persona_id])
-            if not isinstance(res, dict):
-                raise EAApiError(
-                    code="EA_PERSONA_FETCH_FAILED",
-                    message=f"EA Gateway 查询失败: {res}",
-                )
+            res = expect_ok(
+                await client.getPersonasByIds([persona_id]),
+                code="EA_PERSONA_FETCH_FAILED",
+                action="查询玩家",
+                not_found=f"persona {persona_id}",
+            )
             result = res.get("result", {}) or {}
             info = result.get(str(persona_id)) or result.get("personas", {}).get(str(persona_id))
             if not info:

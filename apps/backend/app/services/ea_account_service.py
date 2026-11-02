@@ -13,6 +13,7 @@ from app.api.errors import EAApiError, NotFoundError, ValidationError
 from app.core.security import get_cipher
 from app.domain.ea.account_pool import EACredentials
 from app.domain.ea.login.exceptions import PersonaMismatchError, TargetAccountNotFoundError
+from app.domain.games.bf1.gateway_errors import gateway_failure
 from app.models import EAAccount
 from app.schemas.ea_account import (
     EAAccountCreate,
@@ -400,8 +401,8 @@ class EAAccountService:
            已失效，因此第 1 步通过不代表按昵称查询能用，必须再检 access_token，
            否则会留下「verify 通过、按昵称查询 5xx」的盲区。
 
-        复用各战绩接口共用的判定约定：gateway 认证类方法成功返回 dict，失败返回
-        错误字符串。结果只反映调用时刻 EA 服务器的响应，不保证与并发写入原子一致。
+        gateway 失败返回 EAGatewayError：EA 暂时不可用时只报没验成，不计失败；其他失败计失败。
+        结果只反映调用时刻 EA 服务器的响应，不保证与并发写入原子一致。
         """
         # 惰性导入：gateway 的导入链经 gateway_factory 回指本模块，顶层导入会构成循环。
         from app.domain.games.bf1.gateway import BF1GatewayClient  # noqa: PLC0415
@@ -424,12 +425,19 @@ class EAAccountService:
         )
         try:
             servers_res = await client.getServersByPersonaIds([persona_id])
-            if not isinstance(servers_res, dict):
+            if (err := gateway_failure(servers_res)) is not None:
+                if err.retryable and not (client.credentials_rejected or client.session_rejected):
+                    # EA 暂时不可用：说明不了账号失效，不计失败、也不因此停用
+                    return EAAccountVerifyResult(
+                        success=False,
+                        persona_id=persona_id,
+                        message=f"EA 暂时不可用，没能验证：{str(err)[:200]}",
+                    )
                 await self.mark_failure(persona_id, verify_before_disable=False)
                 return EAAccountVerifyResult(
                     success=False,
                     persona_id=persona_id,
-                    message=f"session 链路失败：{str(servers_res)[:200]}",
+                    message=f"session 链路失败：{str(err)[:200]}",
                 )
 
             access_token = await client._ensure_desktop_token()

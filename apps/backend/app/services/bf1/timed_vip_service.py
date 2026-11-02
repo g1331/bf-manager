@@ -31,7 +31,7 @@ from app.domain.games.bf1.client_provider import (
     ExecutorUnavailableError,
     GroupFirstBF1ClientProvider,
 )
-from app.domain.games.bf1.gateway_errors import ALREADY_VIP, EAGatewayError
+from app.domain.games.bf1.gateway_errors import gateway_failure, is_already_vip
 from app.domain.games.bf1.maps import operation_maps
 from app.models import GroupMember, GroupServer, Server, ServerMembership, User
 from app.models.bf1 import Bf1ServerVip
@@ -47,6 +47,7 @@ from app.services.bf1 import vip_engine as engine
 from app.services.bf1.blaze_service import get_operation_states
 from app.services.bf1.card_engine import parse_state
 from app.services.bf1.card_service import active_game_ids
+from app.services.bf1.gateway_result import expect_ok, to_ea_error
 from app.services.bf1.server_admin_service import BF1ServerAdminService
 from app.services.bf1.server_service import current_game_ids
 
@@ -93,10 +94,6 @@ def _seconds_left(entry: engine.Entry, now: datetime) -> int | None:
     return int(entry.remaining.total_seconds()) if entry.remaining is not None else None
 
 
-def _already_vip(res: Any) -> bool:
-    return isinstance(res, EAGatewayError) and res.ea_message == ALREADY_VIP
-
-
 def _rule_error(err: engine.VipRuleError) -> AppError:
     code = status.HTTP_409_CONFLICT if err.code == "VIP_IS_PERMANENT" else 400
     return AppError(code, err.code, err.message)
@@ -126,9 +123,11 @@ class VipContext:
 
 
 async def fetch_context(client: Any, game_id: int) -> VipContext:
-    res = await client.getFullServerDetails(game_id)
-    if not isinstance(res, dict):
-        raise EAApiError(code="EA_SERVER_DETAIL_FAILED", message=str(res)[:256])
+    res = expect_ok(
+        await client.getFullServerDetails(game_id),
+        code="EA_SERVER_DETAIL_FAILED",
+        action="查询服务器详情",
+    )
     raw = res.get("result") or {}
     info = raw.get("serverInfo") or {}
     rsp = raw.get("rspInfo") or {}
@@ -291,21 +290,25 @@ async def _execute_plan(
     now: datetime,
     failures: list[VipApplyFailure],
 ) -> tuple[list[int], list[int]]:
-    """按 checkvip 计划逐个下 V / 加 V，单个失败记下来接着做。"""
+    """按 checkvip 计划逐个下 V / 加 V，单个玩家的失败记下来接着做。
+
+    执行账号没有权限或 EA 暂时不可用时，后面的写入也会失败，就此停下，没做的留给下一次。
+    """
     removed: list[int] = []
     added: list[int] = []
     for action, pids in (("remove", plan.remove), ("add", plan.add)):
         for pid in pids:
             if action == "remove":
                 res = await client.removeServerVip(pid, ctx.server_id)
-                ok = isinstance(res, dict)
             else:
                 res = await client.addServerVip(pid, ctx.server_id)
-                ok = isinstance(res, dict) or _already_vip(res)
-            if ok and action == "remove":
+            err = gateway_failure(res)
+            if err is not None and action == "add" and is_already_vip(err):
+                err = None
+            if err is None and action == "remove":
                 removed.append(pid)
                 ledger.set(pid, None)
-            elif ok:
+            elif err is None:
                 added.append(pid)
                 ledger.set(pid, engine.activate(ledger.entries[pid], now))
             else:
@@ -314,9 +317,11 @@ async def _execute_plan(
                         persona_id=pid,
                         display_name=ledger.name(pid),
                         action=action,  # type: ignore[arg-type]
-                        message=str(res)[:256],
+                        message=str(err)[:256],
                     )
                 )
+                if err.no_permission or err.retryable:
+                    return removed, added
             await asyncio.sleep(EA_WRITE_INTERVAL)
     return removed, added
 
@@ -409,8 +414,8 @@ class TimedVipService(BF1ServerAdminService):
                         raise _rule_error(err) from err
                     if change.add:
                         res = await client.addServerVip(persona_id, ctx.server_id)
-                        if not isinstance(res, dict) and not _already_vip(res):
-                            raise EAApiError(code="EA_ADD_VIP_FAILED", message=str(res)[:256])
+                        if not is_already_vip(res):
+                            expect_ok(res, code="EA_ADD_VIP_FAILED")
                     name = (
                         ctx.vips.get(persona_id)
                         or display_name
@@ -457,9 +462,10 @@ class TimedVipService(BF1ServerAdminService):
                         await self.db.commit()
                         raise _rule_error(err) from err
                     if change.remove:
-                        res = await client.removeServerVip(persona_id, ctx.server_id)
-                        if not isinstance(res, dict):
-                            raise EAApiError(code="EA_REMOVE_VIP_FAILED", message=str(res)[:256])
+                        expect_ok(
+                            await client.removeServerVip(persona_id, ctx.server_id),
+                            code="EA_REMOVE_VIP_FAILED",
+                        )
                     name = ctx.vips.get(persona_id) or ledger.name(persona_id) or str(persona_id)
                     ledger.set(persona_id, change.entry, name=name, granted_by=self.user.id)
                     await ledger.flush()
@@ -540,11 +546,11 @@ class TimedVipService(BF1ServerAdminService):
             "vip_apply": True,
         }
         self._tag_credential_source(payload)
-        res = await client.chooseLevel(ctx.persisted_game_id, index)
-        if isinstance(res, dict):
+        failure = gateway_failure(await client.chooseLevel(ctx.persisted_game_id, index))
+        if failure is None:
             await self._audit_success("choose_level", payload)
             return True
-        err = EAApiError(code="EA_CHOOSE_LEVEL_FAILED", message=str(res)[:256])
+        err = to_ea_error(failure, code="EA_CHOOSE_LEVEL_FAILED")
         await self._audit_failure("choose_level", payload, err)
         failures.append(
             VipApplyFailure(persona_id=0, action="restart", message=f"重开失败：{err.message}")
@@ -602,6 +608,10 @@ async def _executors(db: AsyncSession, server: Server, rows: list[Bf1ServerVip])
     return [users[i] for i in ids if i in users]
 
 
+class _ExecutorNoPermissionError(Exception):
+    """执行账号在 EA 上没有这台服的管理权限"""
+
+
 async def _expire_with(
     db: AsyncSession,
     client: Any,
@@ -632,8 +642,13 @@ async def _expire_with(
                 "executor_user_id": user.id,
                 "credential_source": provider.credential_source,
             }
-            res = await client.removeServerVip(pid, ctx.server_id)
-            if isinstance(res, dict):
+            err = gateway_failure(await client.removeServerVip(pid, ctx.server_id))
+            if err is not None and err.no_permission:
+                # 这个人的服务账号在 EA 上已经不是管理员：前面下掉的先落库，换下一个候选人
+                await ledger.flush()
+                await db.commit()
+                raise _ExecutorNoPermissionError(str(err))
+            if err is None:
                 ledger.set(pid, None)
                 await ledger.flush()
                 await audit.record(
@@ -647,7 +662,7 @@ async def _expire_with(
                     executor_persona_id=provider.executor_persona_id,
                 )
             else:
-                _mark_failed([row], f"到期自动下 V 失败：{str(res)[:200]}", now)
+                _mark_failed([row], f"到期自动下 V 失败：{str(err)[:200]}", now)
                 await audit.record(
                     user_id=None,
                     acting_persona_id=persona,
@@ -658,9 +673,11 @@ async def _expire_with(
                     payload=payload,
                     result="failure",
                     error_code="EA_REMOVE_VIP_FAILED",
-                    error_message=str(res)[:256],
+                    error_message=str(err)[:256],
                     executor_persona_id=provider.executor_persona_id,
                 )
+                if err.retryable:
+                    break  # EA 暂时不可用，剩下的等下一轮
             await asyncio.sleep(EA_WRITE_INTERVAL)
         await ledger.flush()
         await db.commit()
@@ -680,7 +697,7 @@ async def _expire_server(
             async with provider.acquire() as client:
                 await _expire_with(db, client, server, game_id, user, now, provider)
             return
-        except ExecutorUnavailableError:
+        except (ExecutorUnavailableError, _ExecutorNoPermissionError):
             continue
         except EAApiError as err:
             _mark_failed(rows, f"到期自动下 V 失败：{err.message}", now)

@@ -6,17 +6,15 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.errors import EAApiError, ForbiddenError
+from app.api.errors import EAApiError, ForbiddenError, ValidationError
 from app.domain.games.bf1.client_provider import BF1ClientProvider, PooledBF1ClientProvider
 from app.models import User
 from app.services.audit_service import AuditService
 from app.services.authz_service import ServerAuthzService
+from app.services.bf1.gateway_result import expect_ok
 
-
-def _ensure_dict_or_raise(data: Any, error_code: str) -> dict[str, Any]:
-    if isinstance(data, dict):
-        return data
-    raise EAApiError(code=error_code, message=str(data)[:256])
+# RSP.kickPlayer 的原因 EA 限 32 字节
+KICK_REASON_MAX_BYTES = 32
 
 
 async def resolve_ea_ids(client: Any, game_id: int) -> tuple[int | None, str | None]:
@@ -28,7 +26,7 @@ async def resolve_ea_ids(client: Any, game_id: int) -> tuple[int | None, str | N
     不信任客户端传值，横向越权结构性消除。
     """
     res = await client.getFullServerDetails(game_id)
-    data = _ensure_dict_or_raise(res, "EA_SERVER_DETAIL_FAILED")
+    data = expect_ok(res, code="EA_SERVER_DETAIL_FAILED", action="查询服务器详情")
     raw = data.get("result") or {}
     server_info = raw.get("serverInfo") or {}
     rsp_server = (raw.get("rspInfo") or {}).get("server") or {}
@@ -143,12 +141,16 @@ class BF1ServerAdminService:
         return server_id
 
     async def kick_player(self, persona_id: int, reason: str) -> dict[str, Any]:
+        if len(reason.encode("utf-8")) > KICK_REASON_MAX_BYTES:
+            raise ValidationError(
+                f"踢出原因太长：EA 限 {KICK_REASON_MAX_BYTES} 字节（约 10 个汉字）"
+            )
         payload = {"persona_id": persona_id, "reason": reason}
         try:
             async with self.client_provider.acquire() as client:
                 self._tag_credential_source(payload)
                 res = await client.kickPlayer(self.game_id, persona_id, reason)
-                data = _ensure_dict_or_raise(res, "EA_KICK_FAILED")
+                data = expect_ok(res, code="EA_KICK_FAILED")
             await self._audit_success("kick_player", payload, target_persona_id=persona_id)
             return data
         except EAApiError as err:
@@ -169,7 +171,7 @@ class BF1ServerAdminService:
             async with self.client_provider.acquire() as client:
                 self._tag_credential_source(payload)
                 res = await client.movePlayer(self.game_id, persona_id, rsp_team)
-                data = _ensure_dict_or_raise(res, "EA_MOVE_FAILED")
+                data = expect_ok(res, code="EA_MOVE_FAILED")
             await self._audit_success("move_player", payload, target_persona_id=persona_id)
             return data
         except EAApiError as err:
@@ -191,7 +193,7 @@ class BF1ServerAdminService:
                 ea_server_id = await self._resolve_rsp_server_id(client)
                 payload["server_id"] = ea_server_id
                 res = await getattr(client, ea_method)(persona_id, ea_server_id)
-                data = _ensure_dict_or_raise(res, error_code)
+                data = expect_ok(res, code=error_code)
             await self._audit_success(action, payload, target_persona_id=persona_id)
             return data
         except EAApiError as err:
@@ -239,7 +241,7 @@ class BF1ServerAdminService:
                     raise ForbiddenError(message="服务器尚未完成初始化，无法执行换图操作")
                 payload["persisted_game_id"] = persisted_game_id
                 res = await client.chooseLevel(persisted_game_id, level_index)
-                data = _ensure_dict_or_raise(res, "EA_CHOOSE_LEVEL_FAILED")
+                data = expect_ok(res, code="EA_CHOOSE_LEVEL_FAILED")
             await self._audit_success("choose_level", payload)
             return data
         except EAApiError as err:

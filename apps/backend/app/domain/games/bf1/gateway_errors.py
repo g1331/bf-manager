@@ -1,26 +1,43 @@
 """BF1 gateway 调用失败时的返回值
 
-gateway 的方法历来是「成功返回 dict、失败返回中文说明」，六十多处调用方靠
-``isinstance(res, dict)`` 判成败，并把字符串直接展示给用户。EAGatewayError 继承 str，
-这些老写法照常工作；需要按错误种类分支的地方改看 ``kind`` / ``code`` / ``ea_message``，
-不再去匹配中文文案。
+gateway 的方法「成功返回 EA 的 JSON、失败返回 EAGatewayError」。EAGatewayError 继承 str，
+文案可以直接展示；判成败用 :func:`gateway_failure`，按失败种类分支看 ``kind`` 和下面几个
+派生属性，不去匹配中文文案。
 """
 
 from __future__ import annotations
 
 from typing import Literal
 
-ErrorKind = Literal["network", "bad_response", "ea", "internal"]
+ErrorKind = Literal["network", "bad_response", "auth", "ea", "internal"]
+
+# EA 拒绝重复添加 VIP 时的原文
+ALREADY_VIP = "RspErrUserIsAlreadyVip()"
+
+# EA 自己超时、会话失效（api_call 已重登重放过一次仍失效），换个时间或账号再试可能就好
+_TRANSIENT_EA_CODES = frozenset({-32501, -32504})
+_TRANSIENT_EA_MESSAGES = frozenset(
+    {
+        "Internal Error: se.dice.operations.commons.rx.time.TimeoutNamedException",
+        "Internal Error: com.ea.sparta.hachiko.generated.thrift.InvocationException",
+        "Invalid Params: no valid session",
+    }
+)
+# 找不到服务器 / 服务器不存在或已过期 / 玩家不存在 / 战队不存在
+_NOT_FOUND_EA_CODES = frozenset({-34501, -32851, -32856, -35150})
+_NO_PERMISSION_EA_CODES = frozenset({-35160})
+_NO_PERMISSION_EA_MESSAGES = frozenset({"Internal Error: org.apache.thrift.TApplicationException"})
 
 
 class EAGatewayError(str):
     """gateway 调用失败。
 
-    - ``network``：超时、连不上，属于暂时性故障
-    - ``bad_response``：EA 返回了非 JSON 等无法解析的内容
+    - ``network``：超时、连不上
+    - ``bad_response``：EA 返回了非 JSON、非 200 等无法解析的内容
+    - ``auth``：本站这次用的 EA 账号拿不到可用凭据（EA Desktop token 缺失或被作废）
     - ``ea``：EA 返回了 JSON-RPC error；``code`` 是 EA 的错误码，``ea_message`` 是原文
       （如 ``RspErrUserIsAlreadyVip()``）
-    - ``internal``：处理响应时本地代码出错
+    - ``internal``：本地代码出错，或调用前的本地校验没过
     """
 
     kind: ErrorKind
@@ -48,6 +65,31 @@ class EAGatewayError(str):
         # str 子类默认按 cls.__new__(cls, text) 重建，缺关键字参数会让 copy / pickle 直接报错
         return (_rebuild, (str(self), self.kind, self.code, self.ea_message))
 
+    @property
+    def retryable(self) -> bool:
+        """暂时性故障：过一会儿或换个账号重试可能成功"""
+        if self.kind in ("network", "bad_response", "auth"):
+            return True
+        if self.kind == "ea":
+            return self.code in _TRANSIENT_EA_CODES or self.ea_message in _TRANSIENT_EA_MESSAGES
+        return False
+
+    @property
+    def rejected(self) -> bool:
+        """EA 明确拒绝了这次请求（玩家不存在、没有权限、名单已满……），原样重试不会变"""
+        return self.kind == "ea" and not self.retryable
+
+    @property
+    def not_found(self) -> bool:
+        return self.kind == "ea" and self.code in _NOT_FOUND_EA_CODES
+
+    @property
+    def no_permission(self) -> bool:
+        """执行账号不是这台服的管理员"""
+        return self.kind == "ea" and (
+            self.code in _NO_PERMISSION_EA_CODES or self.ea_message in _NO_PERMISSION_EA_MESSAGES
+        )
+
 
 def _rebuild(
     text: str, kind: ErrorKind, code: int | None, ea_message: str | None
@@ -55,5 +97,21 @@ def _rebuild(
     return EAGatewayError(text, kind=kind, code=code, ea_message=ea_message)
 
 
-# EA 拒绝重复添加 VIP 时的原文
-ALREADY_VIP = "RspErrUserIsAlreadyVip()"
+def gateway_failure(res: object) -> EAGatewayError | None:
+    """gateway 返回的是失败就给出错误，成功返回 None。
+
+    成功的返回是 EA 的 JSON（dict）；遗留的纯字符串错误按 internal 处理，其他形状按
+    bad_response 处理。
+    """
+    if isinstance(res, dict):
+        return None
+    if isinstance(res, EAGatewayError):
+        return res
+    if isinstance(res, str):
+        return EAGatewayError(res, kind="internal")
+    return EAGatewayError("EA 返回了意外的数据", kind="bad_response")
+
+
+def is_already_vip(res: object) -> bool:
+    err = gateway_failure(res)
+    return err is not None and err.ea_message == ALREADY_VIP

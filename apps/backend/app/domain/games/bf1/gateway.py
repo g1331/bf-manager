@@ -27,7 +27,7 @@ import httpx
 from loguru import logger
 
 from app.core import ea_metrics
-from app.domain.games.bf1.gateway_errors import EAGatewayError
+from app.domain.games.bf1.gateway_errors import EAGatewayError, gateway_failure
 from app.core.config import get_settings
 from app.domain.games.bf1.profile import BF1Profile
 
@@ -288,7 +288,7 @@ class _BF1GatewayBase:
             return True
         if (not self.remid) or (not self.pid):
             data = await self.Companion_isLoggedIn()
-            if not data.get("result").get("isLoggedIn"):
+            if gateway_failure(data) or not (data.get("result") or {}).get("isLoggedIn"):
                 self.check_login = False
                 return True
             else:
@@ -547,14 +547,17 @@ class _BF1GatewayBase:
                 logger.error(f"EA API返回非JSON响应，Content-Type: {content_type}")
                 response_text = await response.text()
                 logger.debug(f"响应内容: {response_text[:500]}...")
-                return "EA API返回格式错误"
+                return EAGatewayError("EA API返回格式错误", kind="bad_response")
 
             return await self.error_handle(await response.json())
         except asyncio.exceptions.TimeoutError:
-            return "网络超时!"
+            return EAGatewayError("网络超时!", kind="network")
+        except aiohttp.ClientError as e:
+            logger.warning(f"EA API连接失败: {type(e).__name__}: {e}")
+            return EAGatewayError("EA API请求时发生未知错误", kind="network")
         except Exception as e:
             logger.error(f"EA API请求异常: {e}")
-            return f"EA API请求异常: {str(e)}"
+            return EAGatewayError("EA API请求时发生未知错误", kind="internal")
 
     async def Onboarding_welcomeMessage(self) -> dict:
         """
@@ -677,7 +680,7 @@ class _BF1GatewayBase:
         """
         token = await self._ensure_desktop_token()
         if not token:
-            return "EA Desktop 通道未获取到 access_token"
+            return EAGatewayError("EA Desktop 通道未获取到 access_token", kind="auth")
 
         graphql_query = (
             "query SearchPlayer($searchText: String!, $pageNumber: Int!, $pageSize: Int!) {\n"
@@ -782,18 +785,23 @@ class _BF1GatewayBase:
                     logger.warning(
                         f"SAL GraphQL 返回 401，已重置 desktop_access_token: {body_text[:200]}"
                     )
-                    return "EA Desktop token 已失效"
+                    return EAGatewayError("EA Desktop token 已失效", kind="auth")
                 if response.status != 200:
                     logger.error(
                         f"SAL GraphQL 请求失败 status={response.status} body={body_text[:300]}"
                     )
-                    return f"按昵称查询失败: HTTP {response.status}"
+                    return EAGatewayError(
+                        f"按昵称查询失败: HTTP {response.status}", kind="bad_response"
+                    )
                 data = json.loads(body_text)
         except asyncio.exceptions.TimeoutError:
-            return "网络超时!"
+            return EAGatewayError("网络超时!", kind="network")
+        except aiohttp.ClientError as e:
+            logger.warning(f"按昵称查询连接失败: {type(e).__name__}: {e}")
+            return EAGatewayError("按昵称查询失败: 连接 EA 失败", kind="network")
         except Exception as e:
             logger.exception(f"按昵称查询玩家异常: {e}")
-            return f"按昵称查询失败: {e}"
+            return EAGatewayError("按昵称查询失败: 处理返回数据出错", kind="internal")
 
         if isinstance(data, dict) and data.get("errors"):
             logger.warning(f"按昵称查询返回错误: {data['errors']}")
@@ -1589,7 +1597,7 @@ class RSP(_BF1GatewayBase):
             }
         """
         if len(reason.encode("utf-8")) > 32:
-            return "原因字数过长!(限32字节)"
+            return EAGatewayError("原因字数过长!(限32字节)", kind="internal")
         return await self.api_call(
             {
                 "jsonrpc": "2.0",

@@ -27,28 +27,48 @@ REDIRECTOR_SPKI_SHA256 = "0c878cfc1d7907f5bb4975517d71c79e7cdd12e53371928c606148
 
 # 已告警过的指纹，每个进程每个陌生指纹只告警一次
 _reported_redirector_keys: set[str] = set()
+# 取不到证书时只告警一次：监测失效要让人看得见，但不能每次连接都刷屏
+_redirector_cert_unavailable_reported = False
+
+
+def _redirector_cert(response: httpx.Response) -> x509.Certificate:
+    ssl_object = response.extensions["network_stream"].get_extra_info("ssl_object")
+    return x509.load_der_x509_certificate(ssl_object.getpeercert(binary_form=True))
+
+
+def _cert_summary(cert: x509.Certificate) -> str:
+    """证书主体、签发方、到期日；字段异常时返回空串，不影响告警本身"""
+    try:
+        return (
+            f"证书 {cert.subject.rfc4514_string()}，签发 {cert.issuer.rfc4514_string()}，"
+            f"有效期到 {cert.not_valid_after_utc:%Y-%m-%d}。"
+        )
+    except Exception:  # noqa: BLE001 —— 字段解析不了也要把指纹告警发出去
+        return "证书字段解析失败。"
 
 
 def check_redirector_key(response: httpx.Response) -> None:
-    """核对 redirector 的公钥指纹，变了只打告警，不影响连接。"""
+    """核对 redirector 的公钥指纹，变了只打告警；任何异常都不能挡住连接。"""
+    global _redirector_cert_unavailable_reported  # noqa: PLW0603 —— 进程级的一次性告警标记
     try:
-        ssl_object = response.extensions["network_stream"].get_extra_info("ssl_object")
-        der = ssl_object.getpeercert(binary_form=True)
-        cert = x509.load_der_x509_certificate(der)
-        spki = cert.public_key().public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo)
-    except Exception as e:  # noqa: BLE001 —— 只是监测，取不到证书也不能挡住连接
-        logger.debug(f"取 redirector 证书失败，跳过指纹核对：{e!r}")
-        return
-    fingerprint = hashlib.sha256(spki).hexdigest()
-    if fingerprint == REDIRECTOR_SPKI_SHA256 or fingerprint in _reported_redirector_keys:
-        return
-    _reported_redirector_keys.add(fingerprint)
-    logger.warning(
-        f"redirector 公钥指纹变了：{fingerprint}（记录的是 {REDIRECTOR_SPKI_SHA256}）。"
-        f"证书 {cert.subject.rfc4514_string()}，签发 {cert.issuer.rfc4514_string()}，"
-        f"有效期到 {cert.not_valid_after_utc:%Y-%m-%d}。EA 换了证书就核实后更新指纹；"
-        f"否则可能有人改了 redirector 的应答"
-    )
+        try:
+            cert = _redirector_cert(response)
+            spki = cert.public_key().public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo)
+        except Exception as e:  # noqa: BLE001
+            if not _redirector_cert_unavailable_reported:
+                _redirector_cert_unavailable_reported = True
+                logger.warning(f"取不到 redirector 证书，公钥指纹监测本进程内失效：{e!r}")
+            return
+        fingerprint = hashlib.sha256(spki).hexdigest()
+        if fingerprint == REDIRECTOR_SPKI_SHA256 or fingerprint in _reported_redirector_keys:
+            return
+        logger.warning(
+            f"redirector 公钥指纹变了：{fingerprint}（记录的是 {REDIRECTOR_SPKI_SHA256}）。"
+            f"{_cert_summary(cert)}EA 换了证书就核实后更新指纹；否则可能有人改了 redirector 的应答"
+        )
+        _reported_redirector_keys.add(fingerprint)
+    except Exception as e:  # noqa: BLE001 —— 只是监测
+        logger.warning(f"redirector 指纹核对出错：{e!r}")
 
 
 @lru_cache(maxsize=1)

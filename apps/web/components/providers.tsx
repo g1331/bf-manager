@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { ApiException } from "@/lib/api-client";
 import { initPwa } from "@/lib/pwa";
 import { accountKeys } from "@/lib/queries/account";
+import { shouldRetryQuery } from "@/lib/query-retry";
 
 /**
  * 登录态中途失效（token 过期、被冻结）时任意请求会回 401：把 session 置空，
@@ -41,14 +42,7 @@ export function Providers({ children }: { children: ReactNode }) {
           staleTime: 30 * 1000,
           gcTime: 5 * 60 * 1000,
           refetchOnWindowFocus: false,
-          retry: (failureCount, error) => {
-            if (error instanceof ApiException) {
-              if (error.status >= 400 && error.status < 500) return false;
-              // 查询繁忙和超时自动重试只会加重负担或让用户多等，交给页面上的「重试」按钮
-              if (error.code === "EA_BUSY" || error.code === "TIMEOUT") return false;
-            }
-            return failureCount < 2;
-          },
+          retry: shouldRetryQuery,
         },
       },
     });

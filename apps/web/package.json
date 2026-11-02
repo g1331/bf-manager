@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\" --ignore-path ../../.gitignore"
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\" --ignore-path ../../.gitignore",
+    "test": "vitest run"
   },
   "dependencies": {
     "@hookform/resolvers": "^6.0.0",
@@ -49,6 +50,7 @@
     "prettier": "^3.9.10",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^5.0.5"
   }
 }

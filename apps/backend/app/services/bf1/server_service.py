@@ -38,7 +38,13 @@ from app.schemas.bf1.server import (
 )
 from app.services.bf1.gateway_factory import get_bf1_client
 from app.services.bf1.gateway_result import expect_ok, to_ea_error
-from app.services.bf1.server_filters import build_search_filter, filter_summaries
+from app.services.bf1.server_filters import (
+    build_search_filter,
+    compute_facets,
+    filter_summaries,
+    parse_rules,
+    validate_slots,
+)
 from app.services.bf1.server_snapshot_cache import read_server_snapshot
 
 
@@ -109,6 +115,7 @@ def _to_summary(raw: dict[str, Any]) -> ServerSummary:
         is_official=server_type == "OFFICIAL",
         is_ranked=bool(server_info.get("ranked") or raw.get("ranked") or False),
         has_password=bool(server_info.get("hasPassword") or raw.get("hasPassword") or False),
+        server_type=server_type or None,
         description=server_info.get("description") or raw.get("description"),
     )
 
@@ -306,28 +313,52 @@ class BF1ServerService:
         modes: list[str] | None = None,
         regions: list[str] | None = None,
         sizes: list[int] | None = None,
+        server_types: list[str] | None = None,
+        rules: list[str] | None = None,
+        slots: list[str] | None = None,
         limit: int = 50,
         include_empty: bool = False,
     ) -> ServerListResponse:
-        # 构造 filter_dict 同时校验各维度取值，快照与 EA 两条路径共用。
-        # 空位（emptySlots）不在此处理：EA 不按实时空位过滤，交前端二次过滤。
+        # 先校验全部条件，快照与 EA 两条路径共用同一份 filter_dict 与规则
+        rule_map = parse_rules(rules)
+        validate_slots(slots)
         filter_dict = build_search_filter(
             name=keyword,
             maps=maps,
             modes=modes,
             regions=regions,
             sizes=sizes,
+            server_types=server_types,
+            rules=rule_map,
         )
-        # 浏览（无关键词）时在全服摘要缓存上本地筛选：结果完整且不请求 EA。快照只含有人的服，
-        # 所以按名称搜索（常见于找自己的空服）、要空服或缓存缺失 / 过期时回退 EA searchServers。
+        criteria: dict[str, Any] = {
+            "name": keyword,
+            "maps": maps,
+            "modes": modes,
+            "regions": regions,
+            "sizes": sizes,
+            "server_types": server_types,
+            "rules": rule_map,
+            "slots": slots,
+        }
+        # 浏览（无关键词）时在全服摘要缓存上本地筛选：结果完整、能给出各选项计数，且不请求 EA。
+        # 快照只含有人的服，所以按名称搜索（常见于找自己的空服）、要空服、缓存缺失 / 过期，
+        # 或缓存来自 searchServers 回退（没有掩码与服务器类型）时改走 EA searchServers。
         use_cache = not include_empty and not (keyword or "").strip()
         cached = await read_server_snapshot() if use_cache else None
+        if cached is not None and (
+            (rule_map and not any(s.masks for s in cached))
+            or (server_types and not any(s.server_type for s in cached))
+        ):
+            cached = None
         if cached is not None:
-            matched = filter_summaries(
-                cached, name=keyword, maps=maps, modes=modes, regions=regions, sizes=sizes
-            )
+            matched = filter_summaries(cached, **criteria)
             matched.sort(key=lambda s: s.player_count, reverse=True)
-            return ServerListResponse(total=len(matched), items=matched[:limit])
+            return ServerListResponse(
+                total=len(matched),
+                items=matched[:limit],
+                facets=compute_facets(cached, **criteria),
+            )
         async with get_bf1_client(self.db) as client:
             res = expect_ok(
                 await client.searchServers(
@@ -341,7 +372,9 @@ class BF1ServerService:
             raw = res.get("result", {})
             game_servers = raw.get("gameservers") or []
             items = [_to_summary(s) for s in game_servers]
-            return ServerListResponse(total=len(items), items=items)
+        # 开关规则只能信 EA（返回项没有设置明细）；空位 EA 不过滤，类型顺手再核一遍
+        items = filter_summaries(items, server_types=server_types, slots=slots)
+        return ServerListResponse(total=len(items), items=items)
 
     async def get_admin_identity(
         self, game_id: int

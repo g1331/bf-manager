@@ -32,7 +32,7 @@ from app.domain.games.bf1.maps import (
     translate_region,
 )
 from app.schemas.bf1.overview import BF1Overview, CountBreakdown, NamedCount, TrendPoint
-from app.schemas.bf1.server import ServerSummary
+from app.schemas.bf1.server import ServerMasks, ServerSummary
 from app.services.bf1.blaze_service import fetch_game_list_snapshot
 from app.services.bf1.gateway_factory import get_bf1_client
 from app.services.bf1.presence_cache import write_presence
@@ -242,8 +242,18 @@ def _snapshot_summary(game: dict[str, Any]) -> ServerSummary:
         tick_rate=_int_or_none(attrs.get("tickRate")),
         is_official=server_type == "OFFICIAL",
         is_ranked=server_type == "RANKED",
+        # 私人服就是带密码的服（游戏自己的类型说明）
+        has_password=server_type == "PRIVATE",
+        server_type=server_type or None,
         description=description or None,
         has_owner=_int_or_none(attrs.get("owner")) not in (None, 0),
+        masks=ServerMasks(
+            vehicle=_int_or_none(attrs.get("vehiclemask")),
+            weapon=_int_or_none(attrs.get("weaponmask")),
+            kit=_int_or_none(attrs.get("kitmask")),
+            setting=_int_or_none(attrs.get("settingmask")),
+            scale=_int_or_none(attrs.get("scalemask")),
+        ),
     )
 
 

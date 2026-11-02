@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { usePageState } from "@/hooks/useNavigation";
 import { useParams, useRouter } from "next/navigation";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
@@ -13,6 +13,7 @@ import {
   Search,
   SlidersHorizontal,
   Users,
+  X,
 } from "lucide-react";
 import { DarkInput } from "@/components/common/DarkInput";
 import { CountryFlag } from "@/components/common/CountryFlag";
@@ -36,56 +37,26 @@ import {
   modeLabel,
   regionLabel,
 } from "@/lib/bf1/catalog";
-import type { ServerSummary } from "@/lib/api/bf1";
-import { bf1Queries } from "@/lib/queries/bf1";
+import type { ServerFacets, ServerFilterOptions, ServerSummary } from "@/lib/api/bf1";
+import { bf1Queries, type ServerListSelection } from "@/lib/queries/bf1";
+import {
+  DEFAULT_FILTERS,
+  EMPTY_SLOT_OPTIONS,
+  SIZE_OPTIONS,
+  filtersFromSearch,
+  filtersToSearch,
+  loadStoredFilters,
+  presetActive,
+  rulesToParams,
+  setRule,
+  storeFilters,
+  togglePreset,
+  type FilterState,
+  type RuleValue,
+} from "@/lib/bf1/server-filters";
 import { TipLine } from "@/components/bf1/codex/TipLine";
 
 const PAGE_SIZE = 50;
-
-/** 服务器规模（最大人数）固定档位，复刻游戏「遊戲規模」筛选项 */
-const SIZE_OPTIONS = [10, 16, 24, 32, 40, 48, 64];
-
-/** 空位（剩余席位）分档，复刻游戏「空位」筛选项 */
-const EMPTY_SLOT_OPTIONS: { id: string; label: string }[] = [
-  { id: "none", label: "无" },
-  { id: "1-5", label: "1-5" },
-  { id: "6-10", label: "6-10" },
-  { id: "10+", label: "10+" },
-];
-
-interface FilterState {
-  modes: string[]; // game_mode 代号
-  maps: string[]; // map_name 代号
-  regions: string[]; // region 代号
-  emptySlots: string[]; // EMPTY_SLOT_OPTIONS.id
-  sizes: number[]; // max_player_count 档位
-  includeEmpty: boolean; // 含 0 人空服：全服快照不含空服，开启后后端改走 EA 抽样搜索
-  nameFilter: string; // 结果内按名称二次筛选
-}
-
-const DEFAULT_FILTERS: FilterState = {
-  modes: [],
-  maps: [],
-  regions: [],
-  emptySlots: [],
-  sizes: [],
-  includeEmpty: false,
-  nameFilter: "",
-};
-
-/** 剩余席位分档 id；无人数上限的服务器归入空串（不参与分档筛选） */
-function emptyBucket(s: ServerSummary): string {
-  if (s.max_player_count <= 0) return "";
-  const free = s.max_player_count - s.player_count;
-  if (free <= 0) return "none";
-  if (free <= 5) return "1-5";
-  if (free <= 10) return "6-10";
-  return "10+";
-}
-
-function toggle<T>(arr: T[], val: T): T[] {
-  return arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val];
-}
 
 /** 防抖取值：value 停止变化 delayMs 后才返回新值，用于把高频筛选改动合并为一次请求 */
 function useDebouncedValue<T>(value: T, delayMs: number): T {
@@ -97,28 +68,81 @@ function useDebouncedValue<T>(value: T, delayMs: number): T {
   return debounced;
 }
 
+function toggle<T>(arr: T[], val: T): T[] {
+  return arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val];
+}
+
+const noopSubscribe = () => () => {};
+
+/**
+ * 筛选条件先从 URL（分享链接、返回上一页）或 localStorage（上次的选择）读出来再渲染列表，
+ * 免得先按默认条件请求一次。服务端渲染与水合时还读不到，渲染空白；客户端跳转进来时首帧就能读到。
+ */
 export default function ServerListPage() {
   const params = useParams<{ game: string }>();
-  const router = useRouter();
-  // 进详情再返回时保留筛选与已展开的条数
-  const [visibleCount, setVisibleCount] = usePageState(`${params.game}-servers-count`, PAGE_SIZE);
-  const [filters, setFilters] = usePageState<FilterState>(
-    `${params.game}-servers-filters`,
-    DEFAULT_FILTERS,
+  const onClient = useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false,
   );
+  const initial = useMemo(
+    () =>
+      onClient
+        ? (filtersFromSearch(window.location.search) ?? loadStoredFilters() ?? DEFAULT_FILTERS)
+        : null,
+    [onClient],
+  );
+  if (!initial) return null;
+  return <ServerBrowser game={params.game} initial={initial} />;
+}
 
-  // 地图 / 模式 / 区域 / 规模四个维度作为查询参数交后端筛选（默认在全服快照上筛，含空服时走
-  // EA 检索），而非仅在已加载的前若干条结果内过滤，避免冷门条件被结果上限截断。
+/** 条件摘要里的一项，带撤销动作 */
+interface SummaryChip {
+  id: string;
+  label: string;
+  remove: () => void;
+}
+
+function ServerBrowser({ game, initial }: { game: string; initial: FilterState }) {
+  const router = useRouter();
+  // 进详情再返回时保留已展开的条数
+  const [visibleCount, setVisibleCount] = usePageState(`${game}-servers-count`, PAGE_SIZE);
+  const [filters, setFilters] = useState<FilterState>(initial);
+
+  // 筛选写回 URL 与 localStorage。名称与「含空服」只放 URL：前者容易忘了清，后者每次都要请求 EA
+  useEffect(() => {
+    storeFilters({ ...filters, nameFilter: "", includeEmpty: false });
+    const qs = filtersToSearch(filters);
+    const url = `${window.location.pathname}${qs ? `?${qs}` : ""}`;
+    if (url !== `${window.location.pathname}${window.location.search}`) {
+      window.history.replaceState(null, "", url);
+    }
+  }, [filters]);
+
+  // 全部条件交后端筛选（默认在全服快照上筛并给出各选项计数，按名称搜或含空服时走 EA 检索），
+  // 而非仅在已加载的前若干条结果内过滤，避免冷门条件被结果上限截断。
   // 勾选合并 300ms 防抖，避免连续勾选产生多次请求；排序保证勾选顺序不同不产生多份缓存。
-  const selection = useMemo(
+  const selection = useMemo<ServerListSelection>(
     () => ({
       maps: [...filters.maps].sort(),
       modes: [...filters.modes].sort(),
       regions: [...filters.regions].sort(),
       sizes: [...filters.sizes].sort((a, b) => a - b),
+      serverTypes: [...filters.serverTypes].sort(),
+      rules: rulesToParams(filters.rules),
+      slots: [...filters.emptySlots].sort(),
       includeEmpty: filters.includeEmpty,
     }),
-    [filters.maps, filters.modes, filters.regions, filters.sizes, filters.includeEmpty],
+    [
+      filters.maps,
+      filters.modes,
+      filters.regions,
+      filters.sizes,
+      filters.serverTypes,
+      filters.rules,
+      filters.emptySlots,
+      filters.includeEmpty,
+    ],
   );
   const debouncedSelection = useDebouncedValue(selection, 300);
   // 名称同样下推到 EA（包含匹配、大小写不敏感）以补全前若干条之外的同名服务器，打字停止
@@ -130,46 +154,25 @@ export default function ServerListPage() {
     // 刷新 / 切换筛选期间保留上一次结果，避免请求期间 servers.data 变 undefined 导致列表与筛选面板闪断。
     placeholderData: keepPreviousData,
   });
+  const filterOptions = useQuery(bf1Queries.serverFilterOptions());
 
   // servers.data 为 undefined 时回落空数组；包进 useMemo 保持引用稳定，
   // 避免每次 render 生成新数组导致下游 filtered useMemo 失效（exhaustive-deps）。
   const allItems = useMemo(() => servers.data?.items ?? [], [servers.data?.items]);
+  const facets = servers.data?.facets ?? null;
 
-  // 服务端已按地图 / 模式 / 区域 / 规模 / 名称检索，这里只做 EA 无法下推的二次过滤：
-  // 空位是实时人数状态、EA searchServers 不支持按其过滤；名称做即时包含过滤以提供打字反馈。
-  const filtered = useMemo(() => {
+  // 名称做即时包含过滤以提供打字反馈，其余条件都已在服务端生效
+  const sorted = useMemo(() => {
     const nameNeedle = filters.nameFilter.trim().toLowerCase();
-    return allItems.filter((s) => {
-      if (filters.emptySlots.length && !filters.emptySlots.includes(emptyBucket(s))) return false;
-      if (nameNeedle && !s.name.toLowerCase().includes(nameNeedle)) return false;
-      return true;
-    });
-  }, [allItems, filters.emptySlots, filters.nameFilter]);
-
-  const sorted = useMemo(
-    () => [...filtered].sort((a, b) => b.player_count - a.player_count),
-    [filtered],
-  );
+    const items = nameNeedle
+      ? allItems.filter((s) => s.name.toLowerCase().includes(nameNeedle))
+      : allItems;
+    return [...items].sort((a, b) => b.player_count - a.player_count);
+  }, [allItems, filters.nameFilter]);
 
   const visibleItems = sorted.slice(0, visibleCount);
   const hasMore = visibleCount < sorted.length;
-  const filtersActive =
-    filters.modes.length > 0 ||
-    filters.maps.length > 0 ||
-    filters.regions.length > 0 ||
-    filters.emptySlots.length > 0 ||
-    filters.sizes.length > 0 ||
-    filters.includeEmpty ||
-    filters.nameFilter.trim().length > 0;
 
-  // 手机端「筛选」按钮上的角标：名称以外生效的条件数（名称有单独的搜索框）
-  const optionCount =
-    filters.modes.length +
-    filters.maps.length +
-    filters.regions.length +
-    filters.emptySlots.length +
-    filters.sizes.length +
-    (filters.includeEmpty ? 1 : 0);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
 
   const resetFilters = () => {
@@ -181,16 +184,12 @@ export default function ServerListPage() {
     setVisibleCount(PAGE_SIZE);
   };
 
-  // 顶部「筛选条件」摘要：当前生效条件概览，复刻游戏标题行右侧
-  const summaryChips: string[] = [
-    ...filters.modes.map(modeLabel),
-    ...filters.maps.map(mapLabel),
-    ...filters.regions.map(regionLabel),
-    ...filters.emptySlots.map((id) => EMPTY_SLOT_OPTIONS.find((o) => o.id === id)?.label ?? id),
-    ...filters.sizes.map((n) => `${n} 人`),
-    ...(filters.includeEmpty ? ["含空服"] : []),
-    ...(filters.nameFilter.trim() ? [`名称含「${filters.nameFilter.trim()}」`] : []),
-  ];
+  const summaryChips = buildSummaryChips(filters, patch, filterOptions.data);
+  const filtersActive = summaryChips.length > 0;
+  // 手机端「筛选」按钮上的角标：名称以外生效的条件数（名称有单独的搜索框）
+  const optionCount = summaryChips.filter((c) => c.id !== "name").length;
+
+  const ui: FilterUI = { filters, patch, options: filterOptions.data, facets };
 
   return (
     <main className="flex flex-col gap-4 py-6 text-white lg:h-full lg:min-h-0">
@@ -207,7 +206,7 @@ export default function ServerListPage() {
           <span className="hidden items-center gap-1.5 sm:inline-flex">
             <span className="text-white/40">筛选条件：</span>
             <span className="max-w-[28rem] truncate text-white/75">
-              {summaryChips.length ? summaryChips.join("、") : "无"}
+              {summaryChips.length ? summaryChips.map((c) => c.label).join("、") : "无"}
             </span>
           </span>
           <button
@@ -223,7 +222,7 @@ export default function ServerListPage() {
       </header>
 
       {/* 子标签：游戏（本页）/ 您的服务器（可点）；我的最爱 / 最近游玩 暂未接入置灰 */}
-      <ServerSubTabs game={params.game} active="browse" />
+      <ServerSubTabs game={game} active="browse" />
 
       {/* 手机端工具栏：搜索框 + 筛选按钮（筛选面板改成底部抽屉，不再排在整张列表后面） */}
       <div className="flex gap-2 lg:hidden">
@@ -257,7 +256,7 @@ export default function ServerListPage() {
             <DrawerTitle className="text-base">筛选服务器</DrawerTitle>
           </DrawerHeader>
           <div className="min-h-0 flex-1 overflow-y-auto px-4">
-            <FilterSheetBody filters={filters} patch={patch} />
+            <FilterSheetBody ui={ui} summaryChips={summaryChips} />
           </div>
           <DrawerFooter className="flex-row border-t border-white/10">
             <Button
@@ -277,16 +276,16 @@ export default function ServerListPage() {
 
       {/* 主体：左密集表格 + 右筛选面板。桌面端整块填满剩余高度，仅列表内部滚动 */}
       <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_300px]">
-        <section className="flex min-w-0 flex-col lg:min-h-0">
+        <section className="@container/list flex min-w-0 flex-col lg:min-h-0">
           {servers.isLoading ? (
             <ServerListSkeleton />
           ) : sorted.length > 0 ? (
             <>
               {/* 表头常驻，不随列表滚动 */}
-              <div className="hidden items-center gap-4 border-b border-white/10 px-3 pb-2 text-[11px] font-semibold tracking-[0.16em] text-white/40 uppercase sm:flex lg:shrink-0">
+              <div className="hidden items-center gap-4 border-b border-white/10 px-3 pb-2 text-[11px] font-semibold tracking-[0.16em] text-white/40 uppercase lg:shrink-0 @[28rem]/list:flex">
                 <span className="flex-1">名称</span>
                 <span className="w-28 text-right">玩家</span>
-                <span className="hidden w-24 text-right sm:block">节点</span>
+                <span className="hidden w-24 text-right @[36rem]/list:block">节点</span>
               </div>
               {/* 列表滚动区：桌面端唯一的内部滚动容器 */}
               <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
@@ -297,16 +296,13 @@ export default function ServerListPage() {
                     <ServerRow
                       key={s.game_id ?? `idx-${i}`}
                       server={s}
-                      onClick={() =>
-                        s.game_id && router.push(`/${params.game}/server/${s.game_id}`)
-                      }
+                      onClick={() => s.game_id && router.push(`/${game}/server/${s.game_id}`)}
                     />
                   ))}
                 </ul>
                 <div className="flex flex-col items-center gap-2 pt-4 text-sm text-white/45">
                   <span className="tabular-nums">
                     已显示 {visibleItems.length} / {sorted.length} 条
-                    {filtersActive ? `（共 ${allItems.length} 条，已筛选）` : null}
                   </span>
                   {hasMore ? (
                     <Button
@@ -333,8 +329,7 @@ export default function ServerListPage() {
         {/* 筛选面板常驻，复刻游戏右侧固定筛选栏；自身满高，条目过多时仅面板内部滚动。
             手机端改由工具栏的「筛选」按钮打开底部抽屉 */}
         <FilterPanel
-          filters={filters}
-          patch={patch}
+          ui={ui}
           reset={resetFilters}
           filtersActive={filtersActive}
           summaryChips={summaryChips}
@@ -342,6 +337,75 @@ export default function ServerListPage() {
       </div>
     </main>
   );
+}
+
+/** 当前生效的条件，逐项可撤销。快捷标签的规则全部生效时合成一项，不把几十个开关逐个列出 */
+function buildSummaryChips(
+  f: FilterState,
+  patch: (p: Partial<FilterState>) => void,
+  options: ServerFilterOptions | undefined,
+): SummaryChip[] {
+  const chips: SummaryChip[] = [];
+  const typeLabel = (id: string) => options?.server_types.find((t) => t.id === id)?.label ?? id;
+  f.serverTypes.forEach((id) =>
+    chips.push({
+      id: `type:${id}`,
+      label: typeLabel(id),
+      remove: () => patch({ serverTypes: f.serverTypes.filter((x) => x !== id) }),
+    }),
+  );
+  const covered = new Set<string>();
+  options?.presets.forEach((p) => {
+    if (!presetActive(f.rules, p.rules) || Object.keys(p.rules).some((k) => covered.has(k))) return;
+    Object.keys(p.rules).forEach((k) => covered.add(k));
+    chips.push({
+      id: `preset:${p.id}`,
+      label: p.label,
+      remove: () => patch({ rules: togglePreset(f.rules, p.rules) }),
+    });
+  });
+  const toggleLabel = new Map(
+    options?.groups.flatMap((g) => g.toggles.map((t) => [t.key, t.label] as const)) ?? [],
+  );
+  Object.entries(f.rules).forEach(([key, value]) => {
+    if (covered.has(key)) return;
+    chips.push({
+      id: `rule:${key}`,
+      label: `${toggleLabel.get(key) ?? key}：${value === "on" ? "开" : "关"}`,
+      remove: () => patch({ rules: setRule(f.rules, key, null) }),
+    });
+  });
+  const list = <K extends "modes" | "maps" | "regions" | "emptySlots">(
+    key: K,
+    label: (v: string) => string,
+  ) =>
+    (f[key] as string[]).forEach((v) =>
+      chips.push({
+        id: `${key}:${v}`,
+        label: label(v),
+        remove: () => patch({ [key]: (f[key] as string[]).filter((x) => x !== v) }),
+      }),
+    );
+  list("modes", modeLabel);
+  list("maps", mapLabel);
+  list("regions", regionLabel);
+  list("emptySlots", (id) => `空位 ${EMPTY_SLOT_OPTIONS.find((o) => o.id === id)?.label ?? id}`);
+  f.sizes.forEach((n) =>
+    chips.push({
+      id: `size:${n}`,
+      label: `${n} 人`,
+      remove: () => patch({ sizes: f.sizes.filter((x) => x !== n) }),
+    }),
+  );
+  if (f.includeEmpty)
+    chips.push({ id: "empty", label: "含空服", remove: () => patch({ includeEmpty: false }) });
+  if (f.nameFilter.trim())
+    chips.push({
+      id: "name",
+      label: `名称含「${f.nameFilter.trim()}」`,
+      remove: () => patch({ nameFilter: "" }),
+    });
+  return chips;
 }
 
 /* ----------------------------- 服务器表行 ----------------------------- */
@@ -360,10 +424,10 @@ function ServerRow({ server, onClick }: { server: ServerSummary; onClick: () => 
       <button
         type="button"
         onClick={onClick}
-        className="group flex w-full items-center gap-3 border-b border-white/[0.06] px-2 py-2.5 text-left transition-colors hover:bg-white/[0.06] sm:gap-4 sm:px-3"
+        className="group flex w-full items-center gap-3 border-b border-white/[0.06] px-2 py-2.5 text-left transition-colors hover:bg-white/[0.06] @[28rem]/list:gap-4 @[28rem]/list:px-3"
       >
-        {/* 地图缩略图：手机上缩小，把宽度让给服务器名 */}
-        <div className="relative h-11 w-16 shrink-0 overflow-hidden rounded-sm bg-white/[0.04] sm:h-14 sm:w-24">
+        {/* 地图缩略图：列表窄时（手机、1024 宽旁边还有筛选栏）缩小，把宽度让给服务器名 */}
+        <div className="relative h-11 w-16 shrink-0 overflow-hidden rounded-sm bg-white/[0.04] @[36rem]/list:h-14 @[36rem]/list:w-24">
           {server.map_image_url ? (
             // EA CDN 自带缩放与缓存，不走 next/image
             <img
@@ -406,8 +470,8 @@ function ServerRow({ server, onClick }: { server: ServerSummary; onClick: () => 
         </div>
 
         {/* 玩家数：满员叠加排队人数（如 64 / 64 [1]）时内容偏长，固定列宽并禁止折行 */}
-        <div className="flex shrink-0 items-center justify-end gap-1.5 text-sm whitespace-nowrap tabular-nums sm:w-28">
-          <Users className="hidden size-3.5 text-white/35 sm:block" />
+        <div className="flex shrink-0 items-center justify-end gap-1.5 text-sm whitespace-nowrap tabular-nums @[28rem]/list:w-28">
+          <Users className="hidden size-3.5 text-white/35 @[28rem]/list:block" />
           <span className={cn(fill >= 100 ? "text-amber-300" : "text-white")}>
             {server.player_count}
           </span>
@@ -418,7 +482,7 @@ function ServerRow({ server, onClick }: { server: ServerSummary; onClick: () => 
         </div>
 
         {/* 节点（数据中心）：EA 不返回 ping 数值，展示节点城市，对应游戏内 ping 所测目标 */}
-        <div className="hidden w-24 shrink-0 justify-end text-right text-xs text-white/55 sm:flex">
+        <div className="hidden w-24 shrink-0 justify-end text-right text-xs text-white/55 @[36rem]/list:flex">
           <span className="truncate" title={server.ping_site ?? undefined}>
             {node ?? "—"}
           </span>
@@ -428,38 +492,203 @@ function ServerRow({ server, onClick }: { server: ServerSummary; onClick: () => 
   );
 }
 
+/* ----------------------------- 筛选面板共用 ----------------------------- */
+
+interface FilterUI {
+  filters: FilterState;
+  patch: (p: Partial<FilterState>) => void;
+  options: ServerFilterOptions | undefined;
+  /** 走 EA 搜索时没有计数，为 null */
+  facets: ServerFacets | null;
+}
+
+/** 选项旁的结果数；没有计数时不显示 */
+function CountBadge({ count }: { count: number | undefined }) {
+  if (count === undefined) return null;
+  return <span className="ml-auto pl-2 text-xs text-white/35 tabular-nums">{count}</span>;
+}
+
+/** 已选条件：每项可单独撤销 */
+function SummaryChipList({ chips }: { chips: SummaryChip[] }) {
+  if (!chips.length) return <p className="text-xs text-white/35">未设置筛选条件</p>;
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {chips.map((c) => (
+        <button
+          key={c.id}
+          type="button"
+          onClick={c.remove}
+          aria-label={`移除 ${c.label}`}
+          className="compact-action inline-flex h-7 items-center gap-1 rounded-sm bg-white/8 pr-1.5 pl-2 text-xs text-white/75 transition-colors hover:bg-white/15 hover:text-white"
+        >
+          {c.label}
+          <X className="size-3 text-white/45" />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** 快捷标签：一次叠加一组开关，可多选 */
+function PresetChips({ ui, large }: { ui: FilterUI; large?: boolean }) {
+  const { filters, patch, options, facets } = ui;
+  if (!options) return null;
+  return (
+    <div className="flex flex-wrap gap-2">
+      {options.presets.map((p) => (
+        <Chip
+          key={p.id}
+          large={large}
+          selected={presetActive(filters.rules, p.rules)}
+          count={facets?.presets[p.id]}
+          onClick={() => patch({ rules: togglePreset(filters.rules, p.rules) })}
+        >
+          {p.label}
+        </Chip>
+      ))}
+    </div>
+  );
+}
+
+/** 更多玩法设置：按载具 / 兵种 / 武器 / 规则分组的三态开关，默认都是「不限」 */
+function RuleGroups({ ui, large }: { ui: FilterUI; large?: boolean }) {
+  const { filters, patch, options, facets } = ui;
+  if (!options) return null;
+  return (
+    <>
+      {options.groups.map((g) => (
+        <FilterSection
+          key={g.id}
+          title={g.label}
+          count={g.toggles.filter((t) => filters.rules[t.key]).length}
+          scroll={!large}
+        >
+          <ul className="space-y-1">
+            {g.toggles.map((t) => (
+              <li key={t.key} className="flex items-center gap-2">
+                <span className="min-w-0 flex-1 truncate text-sm text-white/75" title={t.label}>
+                  {t.label}
+                </span>
+                <TriState
+                  large={large}
+                  value={filters.rules[t.key] ?? null}
+                  facet={facets?.rules[t.key]}
+                  onChange={(v) => patch({ rules: setRule(filters.rules, t.key, v) })}
+                />
+              </li>
+            ))}
+          </ul>
+        </FilterSection>
+      ))}
+    </>
+  );
+}
+
+/** 不限 / 开 / 关 三段选择，开和关旁边是选上后的结果数 */
+function TriState({
+  value,
+  facet,
+  onChange,
+  large,
+}: {
+  value: RuleValue | null;
+  facet: { on: number; off: number } | undefined;
+  onChange: (v: RuleValue | null) => void;
+  large?: boolean;
+}) {
+  const segs: { v: RuleValue | null; label: string; count?: number }[] = [
+    { v: null, label: "不限" },
+    { v: "on", label: "开", count: facet?.on },
+    { v: "off", label: "关", count: facet?.off },
+  ];
+  return (
+    <div className="flex shrink-0 overflow-hidden rounded-sm border border-white/12">
+      {segs.map((seg) => {
+        const selected = value === seg.v;
+        const empty = seg.count === 0 && !selected;
+        return (
+          <button
+            key={seg.label}
+            type="button"
+            aria-pressed={selected}
+            onClick={() => onChange(seg.v)}
+            className={cn(
+              "compact-action flex items-center justify-center gap-1 border-l border-white/12 text-xs transition-colors first:border-l-0",
+              // 固定宽度，计数位数不同时各行也能对齐
+              large ? "h-11 w-16" : "h-7 w-12",
+              selected
+                ? seg.v === null
+                  ? "bg-white/10 text-white"
+                  : "bg-amber-400/20 text-amber-200"
+                : empty
+                  ? "text-white/25 hover:bg-white/5"
+                  : "text-white/70 hover:bg-white/8 hover:text-white",
+            )}
+          >
+            {seg.label}
+            {seg.count !== undefined ? (
+              <span
+                className={cn("tabular-nums", selected ? "text-amber-200/70" : "text-white/35")}
+              >
+                {seg.count}
+              </span>
+            ) : null}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 /* ----------------------------- 右侧筛选面板 ----------------------------- */
 
 function FilterPanel({
-  filters,
-  patch,
+  ui,
   reset,
   filtersActive,
   summaryChips,
 }: {
-  filters: FilterState;
-  patch: (p: Partial<FilterState>) => void;
+  ui: FilterUI;
   reset: () => void;
   filtersActive: boolean;
-  summaryChips: string[];
+  summaryChips: SummaryChip[];
 }) {
+  const { filters, patch, options, facets } = ui;
   return (
     <aside className="hidden space-y-5 lg:block lg:min-h-0 lg:self-stretch lg:overflow-y-auto lg:pr-1">
-      {/* 您的筛选条件：当前生效条件的标签集 */}
+      {/* 您的筛选条件：当前生效条件的标签集，点一下撤销 */}
       <section>
         <PanelTitle>您的筛选条件</PanelTitle>
-        {summaryChips.length ? (
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {summaryChips.map((c) => (
-              <span key={c} className="rounded-sm bg-white/8 px-2 py-1 text-xs text-white/70">
-                {c}
-              </span>
+        <div className="mt-3">
+          <SummaryChipList chips={summaryChips} />
+        </div>
+      </section>
+
+      {options ? (
+        <section>
+          <PanelTitle>服务器类型</PanelTitle>
+          <div className="mt-1">
+            {options.server_types.map((t) => (
+              <GameCheckbox
+                key={t.id}
+                checked={filters.serverTypes.includes(t.id)}
+                onChange={() => patch({ serverTypes: toggle(filters.serverTypes, t.id) })}
+                label={t.label}
+                count={facets?.server_types[t.id]}
+              />
             ))}
           </div>
-        ) : (
-          <p className="mt-3 text-xs text-white/35">未设置筛选条件</p>
-        )}
-      </section>
+        </section>
+      ) : null}
+
+      {options ? (
+        <section>
+          <PanelTitle>玩法</PanelTitle>
+          <div className="mt-3">
+            <PresetChips ui={ui} />
+          </div>
+        </section>
+      ) : null}
 
       {/* 快速筛选：可折叠多选分区 */}
       <section>
@@ -530,6 +759,15 @@ function FilterPanel({
         </div>
       </section>
 
+      {options ? (
+        <section>
+          <PanelTitle>更多玩法设置</PanelTitle>
+          <div className="mt-1">
+            <RuleGroups ui={ui} />
+          </div>
+        </section>
+      ) : null}
+
       {/* 以名称筛选：结果内二次过滤 */}
       <DarkInput
         value={filters.nameFilter}
@@ -551,16 +789,33 @@ function FilterPanel({
 
 /* ----------------------------- 手机端筛选抽屉 ----------------------------- */
 
-/** 手机端底部抽屉里的筛选：各分组平铺、选项做成可点选的标签块，只有抽屉本身一层滚动 */
-function FilterSheetBody({
-  filters,
-  patch,
-}: {
-  filters: FilterState;
-  patch: (p: Partial<FilterState>) => void;
-}) {
+/** 手机端底部抽屉里的筛选：常用分组平铺成标签块，开关类收进可折叠分组，只有抽屉本身一层滚动 */
+function FilterSheetBody({ ui, summaryChips }: { ui: FilterUI; summaryChips: SummaryChip[] }) {
+  const { filters, patch, options, facets } = ui;
   return (
     <div className="space-y-5 pb-4">
+      {summaryChips.length ? <SummaryChipList chips={summaryChips} /> : null}
+      {options ? (
+        <ChipGroup title="服务器类型">
+          {options.server_types.map((t) => (
+            <Chip
+              key={t.id}
+              large
+              selected={filters.serverTypes.includes(t.id)}
+              count={facets?.server_types[t.id]}
+              onClick={() => patch({ serverTypes: toggle(filters.serverTypes, t.id) })}
+            >
+              {t.label}
+            </Chip>
+          ))}
+        </ChipGroup>
+      ) : null}
+      {options ? (
+        <section>
+          <h3 className="mb-2.5 text-[13px] font-medium text-white/55">玩法</h3>
+          <PresetChips ui={ui} large />
+        </section>
+      ) : null}
       <ChipGroup title="游戏模式">
         {BF1_MODES.map((m) => (
           <Chip
@@ -625,6 +880,12 @@ function FilterSheetBody({
         </Chip>
         <p className="w-full text-xs text-white/40">EA 抽样返回，结果不全</p>
       </ChipGroup>
+      {options ? (
+        <section>
+          <h3 className="mb-1 text-[13px] font-medium text-white/55">更多玩法设置</h3>
+          <RuleGroups ui={ui} large />
+        </section>
+      ) : null}
     </div>
   );
 }
@@ -641,25 +902,42 @@ function ChipGroup({ title, children }: { title: string; children: React.ReactNo
 function Chip({
   selected,
   onClick,
+  count,
+  large,
   children,
 }: {
   selected: boolean;
   onClick: () => void;
+  /** 选上后的结果数；为 0 且未选中时置灰 */
+  count?: number;
+  /** 手机抽屉里的主要选项用 44px 触控高度 */
+  large?: boolean;
   children: React.ReactNode;
 }) {
+  const empty = count === 0 && !selected;
   return (
     <button
       type="button"
       onClick={onClick}
       aria-pressed={selected}
       className={cn(
-        "compact-action h-9 rounded-sm border px-3 text-sm transition-colors",
+        "compact-action inline-flex items-center gap-1.5 rounded-sm border px-3 text-sm transition-colors",
+        large ? "h-11" : "h-9",
         selected
           ? "border-amber-400/70 bg-amber-400/15 text-amber-200"
-          : "border-white/12 bg-white/[0.03] text-white/75 active:bg-white/10",
+          : empty
+            ? "border-white/8 text-white/30"
+            : "border-white/12 bg-white/[0.03] text-white/75 hover:bg-white/8 active:bg-white/10",
       )}
     >
       {children}
+      {count !== undefined ? (
+        <span
+          className={cn("text-xs tabular-nums", selected ? "text-amber-200/70" : "text-white/35")}
+        >
+          {count}
+        </span>
+      ) : null}
     </button>
   );
 }
@@ -677,11 +955,14 @@ function FilterSection({
   title,
   count,
   defaultOpen,
+  scroll = true,
   children,
 }: {
   title: string;
   count: number;
   defaultOpen?: boolean;
+  /** 展开后限高内部滚动；手机抽屉里关掉，免得滚动套滚动 */
+  scroll?: boolean;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(!!defaultOpen);
@@ -698,7 +979,9 @@ function FilterSection({
         </span>
         <ChevronDown className={cn("size-4 transition-transform", open && "rotate-180")} />
       </button>
-      {open ? <div className="max-h-72 overflow-y-auto pb-2">{children}</div> : null}
+      {open ? (
+        <div className={cn("pb-2", scroll && "max-h-72 overflow-y-auto")}>{children}</div>
+      ) : null}
     </div>
   );
 }
@@ -708,16 +991,23 @@ function GameCheckbox({
   checked,
   onChange,
   label,
+  count,
 }: {
   checked: boolean;
   onChange: () => void;
   label: string;
+  /** 选上后的结果数；为 0 且未选中时置灰 */
+  count?: number;
 }) {
   return (
     <button
       type="button"
       onClick={onChange}
-      className="flex w-full items-center gap-2.5 py-1 text-left text-sm text-white/75 transition-colors hover:text-white"
+      aria-pressed={checked}
+      className={cn(
+        "flex w-full items-center gap-2.5 py-1 text-left text-sm transition-colors hover:text-white",
+        count === 0 && !checked ? "text-white/30" : "text-white/75",
+      )}
     >
       <span
         className={cn(
@@ -728,6 +1018,7 @@ function GameCheckbox({
         {checked ? <Check className="size-3 text-black" strokeWidth={3} /> : null}
       </span>
       <span className="truncate">{label}</span>
+      <CountBadge count={count} />
     </button>
   );
 }

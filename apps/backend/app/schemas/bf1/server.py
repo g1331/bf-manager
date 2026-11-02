@@ -10,6 +10,16 @@ from pydantic import BaseModel, Field, field_validator
 from app.core.literals import RosterSlot
 
 
+class ServerMasks(BaseModel):
+    """快照 ATTR 里的玩法开关掩码，位序见 domain/games/bf1/server_filter_catalog.py"""
+
+    vehicle: int | None = None
+    weapon: int | None = None
+    kit: int | None = None
+    setting: int | None = None
+    scale: int | None = None
+
+
 class ServerSummary(BaseModel):
     """服务器列表项"""
 
@@ -38,10 +48,27 @@ class ServerSummary(BaseModel):
     is_official: bool = False
     is_ranked: bool = False
     has_password: bool = False
+    # OFFICIAL / RANKED / PRIVATE / UNRANKED
+    server_type: str | None = None
     description: str | None = None
     # 快照 ATTR.owner 非 0：有服主、能解析出 RSP serverId。servertype 为 OFFICIAL 的服里也有这种
     # 租用服，owner 为 0 的才是真官服。只供采集归并用，不进接口与缓存；searchServers 回退时恒为 False
     has_owner: bool = Field(False, exclude=True)
+    # 玩法开关掩码，只在快照来源里有，供服务器浏览器本地筛选。不进接口，缓存单独写入
+    masks: ServerMasks | None = Field(None, exclude=True)
+
+
+class RuleFacet(BaseModel):
+    on: int = 0
+    off: int = 0
+
+
+class ServerFacets(BaseModel):
+    """各筛选项选中后的结果数。某一维度的计数忽略该维度自身的条件，其余条件照常生效"""
+
+    server_types: dict[str, int]
+    rules: dict[str, RuleFacet]
+    presets: dict[str, int]
 
 
 class ServerListResponse(BaseModel):
@@ -49,6 +76,39 @@ class ServerListResponse(BaseModel):
 
     total: int
     items: list[ServerSummary]
+    # 只在全服快照上筛选时给出；走 EA 搜索时为空（EA 只返回抽样结果，数不准）
+    facets: ServerFacets | None = None
+
+
+class FilterToggleOption(BaseModel):
+    key: str  # 规则键，例如 vehicles.L
+    label: str
+    default: bool
+
+
+class FilterGroupOption(BaseModel):
+    id: str
+    label: str
+    toggles: list[FilterToggleOption]
+
+
+class FilterPresetOption(BaseModel):
+    id: str
+    label: str
+    rules: dict[str, Literal["on", "off"]]
+
+
+class FilterServerTypeOption(BaseModel):
+    id: str
+    label: str
+
+
+class ServerFilterOptions(BaseModel):
+    """服务器浏览器的筛选目录：服务器类型、快捷标签与玩法开关"""
+
+    server_types: list[FilterServerTypeOption]
+    presets: list[FilterPresetOption]
+    groups: list[FilterGroupOption]
 
 
 class ServerPlayerCountPoint(BaseModel):

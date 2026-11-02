@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import contextlib
+from collections import Counter
+from collections.abc import Collection, Iterator
 from datetime import UTC, datetime
 
 from loguru import logger
@@ -47,8 +49,10 @@ FAILURE_DISABLE_THRESHOLD = 10
 _verifying: set[int] = set()
 # Blaze 长连接当前登录的账号。同一账号在 Gateway 一侧刷新 desktop token 时，EA 会把它的 Blaze
 # 会话注销（2026-10-28、11-02 生产复现：刷新后 2–4 秒掉线，掉线那一两分钟的跟踪器查询全部失败），
-# 所以 Gateway 挑号时让这个账号排在同等健康度的其它账号之后。
+# 所以 Gateway 挑号时让这个账号排在同等健康度的其它账号之后；反过来 Blaze 选号时也避开 Gateway
+# 正拿在手里的号，免得在途请求紧接着刷新令牌把刚登录的会话踢掉。都只在本进程内（单 worker）。
 _blaze_account: dict[str, int] = {}
+_gateway_in_use: Counter[int] = Counter()
 
 
 def set_blaze_persona(persona_id: int | None) -> None:
@@ -63,23 +67,39 @@ def blaze_persona() -> int | None:
     return _blaze_account.get("persona_id")
 
 
+@contextlib.contextmanager
+def gateway_using(persona_id: int) -> Iterator[None]:
+    """Gateway client 持有账号期间登记，Blaze 选号时据此避开。"""
+    _gateway_in_use[persona_id] += 1
+    try:
+        yield
+    finally:
+        _gateway_in_use[persona_id] -= 1
+        if _gateway_in_use[persona_id] <= 0:
+            del _gateway_in_use[persona_id]
+
+
+def gateway_personas() -> set[int]:
+    return set(_gateway_in_use)
+
+
 class EAAccountService:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
-    async def pick_available(self, *, avoid: int | None = None) -> EACredentials:
+    async def pick_available(self, *, avoid: Collection[int] = ()) -> EACredentials:
         """取一个可用 EA 账号：失败计数最低者优先，同分取最久未使用。
 
         只按最久未使用挑号时，一个凭据失效的账号（失败后 last_used_at 不更新）会被
         每个请求反复选中，直到累计 10 次失败被自动停用，期间全部 EA 请求失败。
         失败计数优先后，它失败一次就让位给健康账号。
 
-        avoid 指定的账号失败计数按多 1 次排：都健康时总挑别的号；别的号失败过一次时两者同分、
-        按最久未使用轮换，别的号成功一次就清零回到首选，失败两次才整体让给 avoid。
+        avoid 里的账号失败计数按多 1 次排：都健康时总挑别的号；别的号失败过一次时两者同分、
+        按最久未使用轮换，别的号成功一次就清零回到首选，失败两次才整体让给 avoid 里的号。
         """
         rank = (
-            EAAccount.failure_count + case((EAAccount.persona_id == avoid, 1), else_=0)
-            if avoid is not None
+            EAAccount.failure_count + case((EAAccount.persona_id.in_(list(avoid)), 1), else_=0)
+            if avoid
             else EAAccount.failure_count
         )
         stmt = (

@@ -464,19 +464,29 @@ class MatchTracker:
         这 3 个数，合成一次、探测人选一次带齐，每轮少 1–2 个请求。查询失败时两者都留到下一轮。
         """
         candidates = self._probe_candidates(now)
-        due = self._recheck_targets(now)
-        pids = sorted({p for ps in candidates.values() for p in ps}.union(due))
+        pids = {p for ps in candidates.values() for p in ps}.union(self._recheck_targets(now))
         if not pids:
             return
         try:
             with ea_metrics.ea_source("tracker_probe"):
-                values = await fetch(pids, RECHECK_NAMES)
+                values = await fetch(sorted(pids), RECHECK_NAMES)
         except Exception as e:
             logger.warning("BF1 match tracker probe/recheck failed, retry next round: {}", e)
             return
         # 先判结算：同一轮探测出结算的服不再复查，此时局数变了是这一局自己的结算
         self._settle_from_probe(candidates, values, now)
-        self._apply_recheck(due, values, now)
+        # 复查名单在判完结算后重选：刚结算的服让出的名额由其它服到期的人补上。补上的人不在刚才的
+        # 请求里（只有到期超过 MAX_QUERY_PER_TICK 人、又恰好有服结算时才会出现），补查一次；
+        # 补查失败的人留到下一轮
+        due = self._recheck_targets(now)
+        if extra := [p for p in due if p not in pids]:
+            try:
+                with ea_metrics.ea_source("tracker_probe"):
+                    values = values | await fetch(extra, RECHECK_NAMES)
+                pids.update(extra)
+            except Exception as e:
+                logger.warning("BF1 match tracker recheck failed, retry next round: {}", e)
+        self._apply_recheck([p for p in due if p in pids], values, now)
 
     def _probe_candidates(self, now: int) -> dict[int, list[int]]:
         """每台没在收尾的服挑基线最旧的至多 PROBE_SIZE 个在服玩家。

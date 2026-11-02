@@ -459,6 +459,34 @@ async def test_tracker_probe_failure_keeps_recheck_for_next_round() -> None:
     assert tr.rounds[1].seats[1].recheck_at is None
 
 
+async def test_tracker_recheck_slots_freed_by_settling_server_go_to_others(monkeypatch) -> None:
+    """复查名额满了、其中一台服本轮探测出结算：它让出的名额要给其它服到期的人，不能空着。"""
+    from app.services.bf1 import match_tracker
+
+    monkeypatch.setattr(match_tracker, "MAX_QUERY_PER_TICK", 2)
+    career, tr = Career(), MatchTracker()
+    for p in (1, 2, 3, 4):
+        career.add(p)
+    t0 = 1_800_000_000
+    maps = {1: MAP[1], 2: MAP[1]}
+    rosters = {
+        1: {1: (TEAM1, "p1"), 2: (TEAM2, "p2")},
+        2: {3: (TEAM1, "p3"), 4: (TEAM2, "p4")},
+    }
+    for t in range(t0, t0 + RECHECK_AFTER, 60):
+        await tr.tick(rosters, maps, t, career.fetch)
+    # 1 号服结算；2 号服的 4 带着别处迟到的结算（只有他一人 +1，2 号服不算结算）
+    career.settle(winners=[1], losers=[2])
+    career.add(4, w=1, r=1)
+    await tr.tick(rosters, maps, t0 + RECHECK_AFTER, career.fetch)
+    assert tr.rounds[1].settle_seen_at == t0 + RECHECK_AFTER
+    assert tr.rounds[2].settle_seen_at is None
+    # 原先先截到 2 人（1、2）再判结算，2 号服这一轮无人复查；现在 3、4 补上，4 当轮换基线
+    assert tr.rounds[2].seats[3].recheck_at is None
+    assert tr.rounds[2].seats[4].base == career.vec[4]
+    assert tr.rounds[2].seats[4].rebase is False
+
+
 async def test_tracker_reuses_vector_after_hop_and_rechecks_lightly(monkeypatch) -> None:
     events: Counter[str] = Counter()
     monkeypatch.setattr(ea_metrics, "count_event", lambda name, n=1: events.update({name: n}))

@@ -15,7 +15,7 @@ from app.core import ea_budget
 from app.core.security import get_cipher
 from app.domain.games.bf1.gateway import BF1GatewayClient
 from app.models import EaBinding, GroupEaAccount
-from app.services.ea_account_service import EAAccountService, blaze_persona
+from app.services.ea_account_service import EAAccountService, blaze_persona, gateway_using
 from app.services.ea_binding_service import EaBindingService
 
 # access_token 到期前提前这么多秒视为过期，避免请求途中失效。
@@ -68,56 +68,59 @@ async def get_bf1_client(db: AsyncSession) -> AsyncIterator[BF1GatewayClient]:
     await ea_budget.acquire()
     account_service = EAAccountService(db)
     # 避开 Blaze 正在用的号：Gateway 给它刷新 desktop token 会把 Blaze 会话踢掉
-    creds = await account_service.pick_available(avoid=blaze_persona())
+    blaze = blaze_persona()
+    creds = await account_service.pick_available(avoid=() if blaze is None else (blaze,))
+    # 拿着号的这段时间登记为在用，Blaze 选号时避开它
+    with gateway_using(creds.persona_id):
 
-    async def _on_refresh(pid: int, new_sid: str | None, new_session: str | None) -> None:
-        await account_service.update_session(pid, sid=new_sid, session=new_session)
+        async def _on_refresh(pid: int, new_sid: str | None, new_session: str | None) -> None:
+            await account_service.update_session(pid, sid=new_sid, session=new_session)
 
-    client = BF1GatewayClient(
-        pid=creds.persona_id,
-        remid=creds.remid,
-        sid=creds.sid,
-        session=creds.session,
-        on_session_refreshed=_on_refresh,
-    )
-    # BF1GatewayClient 每次请求新建，先从进程缓存恢复登录态；
-    # 走 api_call() 的 JSON-RPC 方法靠 get_session() 自动登录，但走独立 HTTP
-    # GET 的 getPersonasByName 等会直接判 access_token 为空返回错误。
-    # 在工厂层统一确保拿到 client 时已经登录过一次。
-    _restore_login_state(client, creds.persona_id, creds.remid)
+        client = BF1GatewayClient(
+            pid=creds.persona_id,
+            remid=creds.remid,
+            sid=creds.sid,
+            session=creds.session,
+            on_session_refreshed=_on_refresh,
+        )
+        # BF1GatewayClient 每次请求新建，先从进程缓存恢复登录态；
+        # 走 api_call() 的 JSON-RPC 方法靠 get_session() 自动登录，但走独立 HTTP
+        # GET 的 getPersonasByName 等会直接判 access_token 为空返回错误。
+        # 在工厂层统一确保拿到 client 时已经登录过一次。
+        _restore_login_state(client, creds.persona_id, creds.remid)
 
-    async def _settle() -> None:
-        # 调用方拿到 gateway 的错误时常常不抛异常（概况轮询、头像、邮箱反查都是吞掉降级）。
-        # 只看有没有异常的话，被 EA 拒绝的号也会记成功、清零失败计数，永远停不掉。
-        # 这里只认 EA 明确拒绝这个账号的信号；暂时性故障、只走 SAL 的成功查询照常记成功
-        if client.credentials_rejected or client.session_rejected:
-            await account_service.mark_failure(creds.persona_id)
-        else:
-            await account_service.mark_used(creds.persona_id)
+        async def _settle() -> None:
+            # 调用方拿到 gateway 的错误时常常不抛异常（概况轮询、头像、邮箱反查都是吞掉降级）。
+            # 只看有没有异常的话，被 EA 拒绝的号也会记成功、清零失败计数，永远停不掉。
+            # 这里只认 EA 明确拒绝这个账号的信号；暂时性故障、只走 SAL 的成功查询照常记成功
+            if client.credentials_rejected or client.session_rejected:
+                await account_service.mark_failure(creds.persona_id)
+            else:
+                await account_service.mark_used(creds.persona_id)
 
-    try:
-        if not client.access_token and creds.remid and creds.sid:
-            await client.login(creds.remid, creds.sid)
-        yield client
-        await _settle()
-    except AppError as exc:
-        # 玩家不存在、参数不对这类 4xx 是查询本身的结果；网络、EA 超时这类暂时性故障（retryable）
-        # 也不是账号的问题。两者都按账号自身的信号记账：匿名用户连查几个不存在的 id、或 EA
-        # 抖一下，都不该让账号攒失败次数
-        if exc.status_code < 500 or getattr(exc, "retryable", False):
+        try:
+            if not client.access_token and creds.remid and creds.sid:
+                await client.login(creds.remid, creds.sid)
+            yield client
             await _settle()
-        else:
+        except AppError as exc:
+            # 玩家不存在、参数不对这类 4xx 是查询本身的结果；网络、EA 超时这类暂时性故障（retryable）
+            # 也不是账号的问题。两者都按账号自身的信号记账：匿名用户连查几个不存在的 id、或 EA
+            # 抖一下，都不该让账号攒失败次数
+            if exc.status_code < 500 or getattr(exc, "retryable", False):
+                await _settle()
+            else:
+                await account_service.mark_failure(creds.persona_id)
+            raise
+        except Exception:
             await account_service.mark_failure(creds.persona_id)
-        raise
-    except Exception:
-        await account_service.mark_failure(creds.persona_id)
-        raise
-    finally:
-        _save_login_state(client, creds.persona_id, creds.remid)
-        with contextlib.suppress(Exception):
-            http_session = getattr(client, "http_session", None)
-            if http_session is not None:
-                await http_session.close()
+            raise
+        finally:
+            _save_login_state(client, creds.persona_id, creds.remid)
+            with contextlib.suppress(Exception):
+                http_session = getattr(client, "http_session", None)
+                if http_session is not None:
+                    await http_session.close()
 
 
 @asynccontextmanager

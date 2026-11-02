@@ -47,7 +47,11 @@ from app.schemas.bf1.server import (
     ServerPlayersSummary,
 )
 from app.services.bf1.server_service import operation_map_list
-from app.services.ea_account_service import EAAccountService, set_blaze_persona
+from app.services.ea_account_service import (
+    EAAccountService,
+    gateway_personas,
+    set_blaze_persona,
+)
 
 # Blaze 单条连接的最大存活时间（秒）。连接平时每分钟都有快照和跟踪器在用，EA 端断开、登出或
 # 查询超时都会让连接失效并在下次使用时重建，所以不必频繁主动重登；只留一个长上限兜底未知的
@@ -121,7 +125,8 @@ class _BlazeConnectionPool:
             await self._close_locked()
 
             if self._creds is None:
-                self._creds = await EAAccountService(db).pick_available()
+                # 避开 Gateway 正拿在手里的号：在途请求随后刷新 desktop token 会把新会话踢掉
+                self._creds = await EAAccountService(db).pick_available(avoid=gateway_personas())
             # 登录前就登记，Gateway 从这时起避开这个号，免得登录刚完成就被它刷新令牌踢掉
             set_blaze_persona(self._creds.persona_id)
 

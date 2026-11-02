@@ -68,10 +68,12 @@ async def test_pool_registers_blaze_account_and_clears_it(monkeypatch) -> None:
         def __init__(self, db: Any) -> None:
             pass
 
-        async def pick_available(self) -> EACredentials:
+        async def pick_available(self, *, avoid: Any = ()) -> EACredentials:
+            avoided.append(set(avoid))
             return creds
 
     seen: list[int | None] = []
+    avoided: list[set[int]] = []
 
     async def login_ok(self: Any, c: EACredentials) -> _Socket:
         seen.append(ea_account_service.blaze_persona())
@@ -81,7 +83,11 @@ async def test_pool_registers_blaze_account_and_clears_it(monkeypatch) -> None:
     monkeypatch.setattr(_BlazeConnectionPool, "_connect_and_login", login_ok)
     pool = _BlazeConnectionPool()
     try:
-        await pool.get_socket(None)  # type: ignore[arg-type]
+        # Gateway 正拿着 99 号：Blaze 选号时避开它
+        with ea_account_service.gateway_using(99):
+            await pool.get_socket(None)  # type: ignore[arg-type]
+        assert avoided == [{99}]
+        assert ea_account_service.gateway_personas() == set()
         # 登录前就已登记，Gateway 从登录那一刻起避开这个号
         assert seen == [4242]
         assert ea_account_service.blaze_persona() == 4242
@@ -111,8 +117,8 @@ async def test_gateway_client_avoids_current_blaze_account(monkeypatch) -> None:
         def __init__(self, db: Any) -> None:
             pass
 
-        async def pick_available(self, *, avoid: int | None = None) -> EACredentials:
-            asked.append(avoid)
+        async def pick_available(self, *, avoid: Any = ()) -> EACredentials:
+            asked.append(tuple(avoid))
             raise _StopError
 
     monkeypatch.setattr(gateway_factory, "EAAccountService", _Service)
@@ -123,4 +129,42 @@ async def test_gateway_client_avoids_current_blaze_account(monkeypatch) -> None:
                 pass
     finally:
         ea_account_service.set_blaze_persona(None)
-    assert asked == [777]
+    assert asked == [(777,)]
+
+
+async def test_gateway_client_registers_account_while_held(monkeypatch) -> None:
+    from app.services.bf1 import gateway_factory
+
+    creds = EACredentials(persona_id=55, display_name="g", remid="r", sid="s")
+
+    class _Service:
+        def __init__(self, db: Any) -> None:
+            pass
+
+        async def pick_available(self, *, avoid: Any = ()) -> EACredentials:
+            return creds
+
+        async def mark_used(self, persona_id: int) -> None:
+            pass
+
+        async def mark_failure(self, persona_id: int) -> None:
+            pass
+
+    class _Client:
+        access_token = "t"
+        credentials_rejected = session_rejected = False
+        check_login = False
+        http_session = None
+
+        def __init__(self, **kw: Any) -> None:
+            pass
+
+    monkeypatch.setattr(gateway_factory, "EAAccountService", _Service)
+    monkeypatch.setattr(gateway_factory, "BF1GatewayClient", _Client)
+    async with gateway_factory.get_bf1_client(None):  # type: ignore[arg-type]
+        assert ea_account_service.gateway_personas() == {55}
+    assert ea_account_service.gateway_personas() == set()
+    with pytest.raises(RuntimeError):
+        async with gateway_factory.get_bf1_client(None):  # type: ignore[arg-type]
+            raise RuntimeError("boom")
+    assert ea_account_service.gateway_personas() == set()

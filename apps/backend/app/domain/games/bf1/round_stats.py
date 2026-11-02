@@ -193,9 +193,8 @@ STAR_BASE = AWARD_BASE + 256
 WITH_WEAPONS = 1 << 4
 WITH_AWARDS = 1 << 5
 
-# 结算探测只看完成局数，一个统计名的请求最轻
-PROBE_NAMES: dict[str, list[str]] = {STAT: ["c___roo_g"]}
-# 进服后复查只看局数和胜负（迟到的结算只改这几项），都在同一个类别里，一个请求就够
+# 进服后复查只看局数和胜负（迟到的结算只改这几项），结算探测只看其中的局数；都在同一个类别里，
+# 两者合成一个请求
 RECHECK_FIELDS = (ROUNDS, WINS, LOSSES)
 RECHECK_NAMES: dict[str, list[str]] = {STAT: [ROUND_STATS[i][1] for i in RECHECK_FIELDS]}
 

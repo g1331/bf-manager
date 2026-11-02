@@ -47,7 +47,7 @@ from app.schemas.bf1.server import (
     ServerPlayersSummary,
 )
 from app.services.bf1.server_service import operation_map_list
-from app.services.ea_account_service import EAAccountService
+from app.services.ea_account_service import EAAccountService, set_blaze_persona
 
 # Blaze 单条连接的最大存活时间（秒）。连接平时每分钟都有快照和跟踪器在用，EA 端断开、登出或
 # 查询超时都会让连接失效并在下次使用时重建，所以不必频繁主动重登；只留一个长上限兜底未知的
@@ -55,10 +55,15 @@ from app.services.ea_account_service import EAAccountService
 CONNECTION_MAX_AGE_SECONDS = 6 * 3600
 # 单次 Blaze 查询（含大体量 roster 解码）的超时。
 BLAZE_QUERY_TIMEOUT = 20
-# Blaze Stats.getStats 单个请求带多少个 personaId。2026-10-29 实测核心 1024 人、武器类别 512 人都能
-# 一次返回，值与 64 人一批逐人一致；EA 每个请求有固定开销（武器 64 人约 1s、256 人不到 2s），
-# 批越大总耗时越省。取 256，离测过的上限留一倍余量。
-STATS_BATCH_SIZE = 256
+# Blaze Stats.getStats 单个请求带多少个 personaId。2026-10-29 实测核心 1 项 1024 人、武器类别全部
+# 550 项 512 人都能一次返回，值与 64 人一批逐人一致；EA 每个请求有固定开销（武器 64 人约 1s、
+# 256 人不到 2s、512 人 2.7s），批越大总耗时越省。对局跟踪器的请求数主要由「类别数 × 批数」决定，
+# 取测过的 512。
+STATS_BATCH_SIZE = 512
+# 统计名不超过 LIGHT_STATS_MAX_NAMES 个的类别（结算探测与复查、冷门武器类别、两个小勋带类别）
+# 每个请求的数据量只有武器类别的百分之一，按 LIGHT_STATS_BATCH_SIZE 人一批。
+LIGHT_STATS_MAX_NAMES = 16
+LIGHT_STATS_BATCH_SIZE = 1024
 # 生涯战绩按 personaId 缓存的时长（秒）。生涯数据只在回合结束时更新，刷新同一服务器时
 # 大部分玩家直接命中缓存。
 STATS_CACHE_TTL_SECONDS = 600
@@ -117,12 +122,15 @@ class _BlazeConnectionPool:
 
             if self._creds is None:
                 self._creds = await EAAccountService(db).pick_available()
+            # 登录前就登记，Gateway 从这时起避开这个号，免得登录刚完成就被它刷新令牌踢掉
+            set_blaze_persona(self._creds.persona_id)
 
             try:
                 new_socket = await self._connect_and_login(self._creds)
             except Exception:
                 # 建连或登录失败可能是该账号凭据失效，清空 sticky 凭据使下次换号重试。
                 self._creds = None
+                set_blaze_persona(None)
                 raise
 
             self._socket = new_socket
@@ -167,6 +175,7 @@ class _BlazeConnectionPool:
         async with self._lock:
             await self._close_locked()
             self._creds = None
+            set_blaze_persona(None)
 
     async def invalidate(self) -> None:
         """标记当前连接失效（查询期间网络异常时调用），下次查询触发重建。"""
@@ -223,21 +232,27 @@ async def _fetch_blaze_authcode(creds: EACredentials) -> str:
     return code
 
 
+def stats_batch_size(name_count: int) -> int:
+    """一个类别读 name_count 个统计名时，每个 Stats.getStats 请求带多少人"""
+    return LIGHT_STATS_BATCH_SIZE if name_count <= LIGHT_STATS_MAX_NAMES else STATS_BATCH_SIZE
+
+
 async def fetch_stats(
     db: AsyncSession, pids: list[int], names: dict[str, list[str]]
 ) -> dict[int, dict[str, float]]:
     """Blaze ``Stats.getStats`` 批量取生涯统计，返回 {pid: {统计名: 数值}}。
 
-    names 为 {类别: 统计名列表}；每类每 STATS_BATCH_SIZE 人一个请求，全部并发发在同一条连接上。没有生涯数据
-    的 pid 不在结果里。统计名写错会让整个请求报错，所以名单只来自已验证的映射与武器目录。
+    names 为 {类别: 统计名列表}；每类按 :func:`stats_batch_size` 人一个请求，全部并发发在同一条连接上。
+    没有生涯数据的 pid 不在结果里。统计名写错会让整个请求报错，所以名单只来自已验证的映射与武器目录。
     """
     await ea_budget.acquire()
     socket = await _pool.get_socket(db)
     batches = [
-        (cat, stat_names, pids[i : i + STATS_BATCH_SIZE])
+        (cat, stat_names, pids[i : i + size])
         for cat, stat_names in names.items()
         if stat_names
-        for i in range(0, len(pids), STATS_BATCH_SIZE)
+        for size in (stats_batch_size(len(stat_names)),)
+        for i in range(0, len(pids), size)
     ]
 
     async def _one(

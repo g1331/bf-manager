@@ -8,6 +8,7 @@
   等下一轮（约一分钟，让整服写完）再把在服的人全查一遍，作为这一局的终值、下一局的基线；
 - 进服后过一阵复查一次局数和胜负：之前打过的局的结算可能在进服后几分钟才写入（实测从离线
   直接进服的人也有 3–4%），变了就重查全量换成新的基线，免得算进这一局；
+  探测和复查读的是同一组 3 个统计名，合成一个请求发出；
 - 刚从别的服过来、离开那台服之后已经查到过值的人，直接拿这个值当基线，不再重查；
 - EA 没返回某人的数据时（多半是还没有生涯记录的号），隔 MISSING_RETRY 再查，不再每轮重查。
 
@@ -54,7 +55,6 @@ from app.domain.games.bf1.round_stats import (
     KILLS,
     LEFT_EARLY,
     LOSSES,
-    PROBE_NAMES,
     RECHECK_FIELDS,
     RECHECK_NAMES,
     ROUND_STATS,
@@ -91,15 +91,15 @@ class SnapshotStore(Protocol):
 
 # 进服后多久复查基线；实测别的服的结算最晚在进服 8 分钟后才写入
 RECHECK_AFTER = 600
-# 每台服每轮先探测 2 人，结论不一致时同一轮补到 4 人；要过半 +1 才算结算，至少 2 人
-# （只剩 1 个可探测的人时 1 人即可）
+# 每台服每轮探测至多 4 人（一次带齐，和复查同一个轻请求）：先看前 2 人，结论不一致时按 4 人
+# 判断；要过半 +1 才算结算，至少 2 人（只剩 1 个可探测的人时 1 人即可）
 PROBE_FIRST = 2
 PROBE_SIZE = 4
 # 基线至少要这么旧才拿来探测，刚查到的值还没机会变
 PROBE_MIN_AGE = 50
 # 两轮间隔超过它（重启、快照失败）就丢掉全部状态，与名单时间线的断档阈值一致
 MAX_GAP = 420
-# 每轮最多查这么多人的核心生涯（每 256 人、每个类别一个请求，即 8 个请求）。刚启动时几千人都要
+# 每轮最多查这么多人的核心生涯（每 STATS_BATCH_SIZE 人、每个类别一个请求，即 4 个请求）。刚启动时几千人都要
 # 查基线，分几轮查完；平时每分钟进出、结算加复查约七百人
 MAX_QUERY_PER_TICK = 1024
 # 进服前这么久之内在别的服出现过，算换服过来的（可能带着上一台服迟到的结算）
@@ -108,14 +108,14 @@ HOP_WINDOW = 900
 VECTOR_KEEP = 600
 # EA 没返回某人的数据时，隔这么久再查他的基线
 MISSING_RETRY = 600
-# 每轮最多给这么多人读武器类别（每 256 人每类一个请求）；超出的人这一局没有武器载具数据，结算、
-# 离开和重查基线的人优先
-MAX_WEAPONS_PER_TICK = 768
+# 每轮最多给这么多人读武器类别（每 STATS_BATCH_SIZE 人每类一个请求，取它的整数倍免得切出零头
+# 批次）；超出的人这一局没有武器载具数据，结算、离开和重查基线的人优先
+MAX_WEAPONS_PER_TICK = 1024
 # 冷门类别哨兵没变时跳过不读，每这么多个跳过的人抽一个照读，核对哨兵有没有漏。轰炸机的哨兵
 # 是现成的分类合计，2026-10-28/29 抽查 2.7 万次零遗漏，抽得稀一些
 AUDIT_EVERY: dict[str, int] = {"player_statcategory3": 16, "player_statcategory4": 64}
 # 每轮最多给这么多人读勋带类别，优先级同武器
-MAX_AWARDS_PER_TICK = 768
+MAX_AWARDS_PER_TICK = 1024
 # 勋带门控没变时跳过不读，每这么多个跳过的人抽一个照读
 AWARDS_AUDIT_EVERY = 32
 
@@ -358,8 +358,7 @@ class MatchTracker:
         closed: list[ClosedRound] = []
 
         self._sync(rosters, maps, now)
-        await self._probe(now, fetch)
-        await self._recheck(now, fetch)
+        await self._light(now, fetch)
 
         settling = {
             gid
@@ -458,11 +457,30 @@ class MatchTracker:
             if seat.left and seat.base is None:
                 del rnd.seats[pid]  # 没查到基线就走了，算不出增量
 
-    async def _probe(self, now: int, fetch: Fetch) -> None:
-        """每台服挑基线最旧的几个在服玩家，只查完成局数，过半 +1 就记下结算时刻。
+    async def _light(self, now: int, fetch: Fetch) -> None:
+        """结算探测和到点复查合成一个轻请求：两者都只看局数和胜负，是同一个类别的 3 个统计名。
 
-        分两段：先查 2 人，两人都 +1 就算结算、都没变就算没结算；只有一人 +1 时同一轮再补查
-        2 人，按 4 人过半判断。正常结算全服局数一起 +1，绝大多数服第一段就有结论。
+        合并前两者各发一次，探测还常要补查第二段；EA 那边每个请求的固定开销远大于多带几百人的
+        这 3 个数，合成一次、探测人选一次带齐，每轮少 1–2 个请求。查询失败时两者都留到下一轮。
+        """
+        candidates = self._probe_candidates(now)
+        due = self._recheck_targets(now)
+        pids = sorted({p for ps in candidates.values() for p in ps}.union(due))
+        if not pids:
+            return
+        try:
+            with ea_metrics.ea_source("tracker_probe"):
+                values = await fetch(pids, RECHECK_NAMES)
+        except Exception as e:
+            logger.warning("BF1 match tracker probe/recheck failed, retry next round: {}", e)
+            return
+        # 先判结算：同一轮探测出结算的服不再复查，此时局数变了是这一局自己的结算
+        self._settle_from_probe(candidates, values, now)
+        self._apply_recheck(due, values, now)
+
+    def _probe_candidates(self, now: int) -> dict[int, list[int]]:
+        """每台没在收尾的服挑基线最旧的至多 PROBE_SIZE 个在服玩家。
+
         刚进服的人可能带着别的服迟到的结算，但那是零星个别人，过半且至少 2 人的门槛挡得住；
         不要求已复查，否则刚启动的 10 分钟里谁都不能探测，这期间的结算会漏掉。
         """
@@ -477,51 +495,33 @@ class MatchTracker:
             )
             if stable:
                 candidates[gid] = [pid for _, pid in stable[:PROBE_SIZE]]
-        if not candidates:
-            return
-        picks = {gid: ps[:PROBE_FIRST] for gid, ps in candidates.items()}
-        hits = await self._probe_hits(picks, fetch)
-        if hits is None:
-            return
-        more = {
-            gid: ps[PROBE_FIRST:]
-            for gid, ps in candidates.items()
-            if len(ps) > PROBE_FIRST and 0 < hits[gid] < PROBE_FIRST
-        }
-        if more and (extra := await self._probe_hits(more, fetch)) is not None:
-            for gid, ps in more.items():
-                picks[gid] = picks[gid] + ps
-                hits[gid] += extra[gid]
-        for gid, ps in picks.items():
-            h = hits[gid]
-            if h * 2 > len(ps) and (h >= 2 or len(ps) == 1):
-                self.rounds[gid].settle_seen_at = now
+        return candidates
 
-    async def _probe_hits(self, picks: dict[int, list[int]], fetch: Fetch) -> dict[int, int] | None:
-        """查这些人的完成局数，返回每台服有几人比基线多；查询失败返回 None。"""
-        pids = sorted({p for ps in picks.values() for p in ps})
-        try:
-            with ea_metrics.ea_source("tracker_probe"):
-                values = await fetch(pids, PROBE_NAMES)
-        except Exception as e:
-            logger.warning("BF1 match tracker probe failed: {}", e)
-            return None
-        name = PROBE_NAMES[next(iter(PROBE_NAMES))][0]
-        out: dict[int, int] = {}
-        for gid, ps in picks.items():
+    def _settle_from_probe(
+        self, candidates: dict[int, list[int]], values: dict[int, dict[str, float]], now: int
+    ) -> None:
+        """完成局数过半 +1 的服记下结算时刻，下一轮收尾。
+
+        先看前 PROBE_FIRST 人：都 +1 就算结算、都没变就算没结算；只有一人 +1 时按全部候选过半
+        判断。正常结算全服局数一起 +1，绝大多数服看前两人就有结论。
+        """
+        name = ROUND_STATS[ROUNDS][1]
+        for gid, ps in candidates.items():
             rnd = self.rounds[gid]
-            out[gid] = sum(
-                1
-                for pid in ps
-                if pid in values
+            hits = [
+                pid in values
                 and (base := rnd.seats[pid].base) is not None
                 and round(values[pid][name]) > base[ROUNDS]
-            )
-        return out
+                for pid in ps
+            ]
+            h, n = sum(hits[:PROBE_FIRST]), len(hits[:PROBE_FIRST])
+            if len(hits) > PROBE_FIRST and 0 < h < PROBE_FIRST:
+                h, n = sum(hits), len(hits)
+            if h * 2 > n and (h >= 2 or n == 1):
+                rnd.settle_seen_at = now
 
-    async def _recheck(self, now: int, fetch: Fetch) -> None:
-        """到点复查：只查局数和胜负，变了的标记 rebase，本轮的全量查询里重查基线。"""
-        due = sorted(
+    def _recheck_targets(self, now: int) -> list[int]:
+        return sorted(
             {
                 pid
                 for rnd in self.rounds.values()
@@ -529,15 +529,10 @@ class MatchTracker:
                 if not s.left and s.base is not None and self._recheck_due(rnd, s, now)
             }
         )[:MAX_QUERY_PER_TICK]
-        if not due:
-            return
-        try:
-            values = await fetch(due, RECHECK_NAMES)
-        except Exception as e:
-            logger.warning("BF1 match tracker recheck failed, retry next round: {}", e)
-            return
-        ea_metrics.count_event("recheck_light", len(due))
-        wanted = set(due)
+
+    def _apply_recheck(self, due: list[int], values: dict[int, dict[str, float]], now: int) -> None:
+        """到点复查：局数或胜负变了的标记 rebase，本轮的全量查询里重查基线。"""
+        wanted, checked = set(due), set()
         for rnd in self.rounds.values():
             for pid, s in rnd.seats.items():
                 if (
@@ -552,9 +547,11 @@ class MatchTracker:
                     round(v[ROUND_STATS[i][1]]) != s.base[i] for i in RECHECK_FIELDS
                 )
                 s.recheck_at, s.rebase = None, changed
+                checked.add(pid)
                 ea_metrics.count_event(
                     f"recheck_{'changed' if changed else 'same'}_{'hop' if s.hop else 'fresh'}"
                 )
+        ea_metrics.count_event("recheck_light", len(checked))
 
     def _wanted(self, now: int, settling: set[int]) -> set[int]:
         """本轮要查的人，超过上限时按优先级截断，其余留到下一轮。

@@ -6,7 +6,7 @@ import contextlib
 from datetime import UTC, datetime
 
 from loguru import logger
-from sqlalchemy import select, update
+from sqlalchemy import case, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.errors import EAApiError, NotFoundError, ValidationError
@@ -45,23 +45,47 @@ def _to_item(account: EAAccount) -> EAAccountItem:
 FAILURE_DISABLE_THRESHOLD = 10
 # 正在做阈值验证的账号 id：并发请求同时撞上阈值时只验证一次
 _verifying: set[int] = set()
+# Blaze 长连接当前登录的账号。同一账号在 Gateway 一侧刷新 desktop token 时，EA 会把它的 Blaze
+# 会话注销（2026-10-28、11-02 生产复现：刷新后 2–4 秒掉线，掉线那一两分钟的跟踪器查询全部失败），
+# 所以 Gateway 挑号时让这个账号排在同等健康度的其它账号之后。
+_blaze_account: dict[str, int] = {}
+
+
+def set_blaze_persona(persona_id: int | None) -> None:
+    """Blaze 连接池选定或放弃账号时调用。"""
+    if persona_id is None:
+        _blaze_account.pop("persona_id", None)
+    else:
+        _blaze_account["persona_id"] = persona_id
+
+
+def blaze_persona() -> int | None:
+    return _blaze_account.get("persona_id")
 
 
 class EAAccountService:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
-    async def pick_available(self) -> EACredentials:
+    async def pick_available(self, *, avoid: int | None = None) -> EACredentials:
         """取一个可用 EA 账号：失败计数最低者优先，同分取最久未使用。
 
         只按最久未使用挑号时，一个凭据失效的账号（失败后 last_used_at 不更新）会被
         每个请求反复选中，直到累计 10 次失败被自动停用，期间全部 EA 请求失败。
         失败计数优先后，它失败一次就让位给健康账号。
+
+        avoid 指定的账号失败计数按多 1 次排：都健康时总挑别的号；别的号失败过一次时两者同分、
+        按最久未使用轮换，别的号成功一次就清零回到首选，失败两次才整体让给 avoid。
         """
+        rank = (
+            EAAccount.failure_count + case((EAAccount.persona_id == avoid, 1), else_=0)
+            if avoid is not None
+            else EAAccount.failure_count
+        )
         stmt = (
             select(EAAccount)
             .where(EAAccount.enabled.is_(True))
-            .order_by(EAAccount.failure_count.asc(), EAAccount.last_used_at.asc().nulls_first())
+            .order_by(rank.asc(), EAAccount.last_used_at.asc().nulls_first())
             .limit(1)
         )
         account = await self.db.scalar(stmt)

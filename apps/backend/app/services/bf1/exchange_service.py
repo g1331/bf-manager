@@ -30,6 +30,7 @@ from app.schemas.bf1.exchange import (
     ExchangeSnapshot,
 )
 from app.services.bf1.gateway_factory import get_bf1_client
+from app.services.bf1.gateway_result import expect_ok
 
 # 交换按北京时间的日期查询，旧存档的文件名也是北京时间日期
 CN_TZ = ZoneInfo("Asia/Shanghai")
@@ -91,10 +92,12 @@ async def save_exchange_if_changed(
 
 async def refresh_exchange(db: AsyncSession) -> bool:
     async with get_bf1_client(db) as client:
-        res = await client.getOffers()
-    items = (res.get("result") or {}).get("items") if isinstance(res, dict) else None
+        res = expect_ok(
+            await client.getOffers(), code="EA_EXCHANGE_FETCH_FAILED", action="查询交换"
+        )
+    items = (res.get("result") or {}).get("items")
     if not items:
-        raise EAApiError(code="EA_EXCHANGE_FETCH_FAILED", message=f"EA 交换查询失败: {res}")
+        raise EAApiError(code="EA_EXCHANGE_FETCH_FAILED", message="查询交换失败：EA 没有返回商品")
     return await save_exchange_if_changed(db, items, datetime.now(UTC))
 
 
@@ -157,9 +160,11 @@ async def get_campaign(db: AsyncSession) -> Campaign | None:
     if cached is not None:
         return Campaign.model_validate(cached) if cached else None
     async with get_bf1_client(db) as client:
-        res = await client.getPlayerCampaignStatus()
-    if not isinstance(res, dict):
-        raise EAApiError(code="EA_CAMPAIGN_FETCH_FAILED", message=f"EA 行动查询失败: {res}")
+        res = expect_ok(
+            await client.getPlayerCampaignStatus(),
+            code="EA_CAMPAIGN_FETCH_FAILED",
+            action="查询行动",
+        )
     result = res.get("result")
     campaign = to_campaign(result, datetime.now(UTC)) if result else None
     await cache.set(

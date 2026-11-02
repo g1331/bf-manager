@@ -84,22 +84,27 @@ async def get_bf1_client(db: AsyncSession) -> AsyncIterator[BF1GatewayClient]:
     # GET 的 getPersonasByName 等会直接判 access_token 为空返回错误。
     # 在工厂层统一确保拿到 client 时已经登录过一次。
     _restore_login_state(client, creds.persona_id, creds.remid)
-    try:
-        if not client.access_token and creds.remid and creds.sid:
-            await client.login(creds.remid, creds.sid)
-        yield client
-        # 调用方拿到 gateway 的错误字符串时常常不抛异常（概况轮询、头像、邮箱反查都是吞掉降级）。
+
+    async def _settle() -> None:
+        # 调用方拿到 gateway 的错误时常常不抛异常（概况轮询、头像、邮箱反查都是吞掉降级）。
         # 只看有没有异常的话，被 EA 拒绝的号也会记成功、清零失败计数，永远停不掉。
-        # 这里只认 EA 明确拒绝的信号；暂时性故障、只走 SAL 的成功查询照常记成功
+        # 这里只认 EA 明确拒绝这个账号的信号；暂时性故障、只走 SAL 的成功查询照常记成功
         if client.credentials_rejected or client.session_rejected:
             await account_service.mark_failure(creds.persona_id)
         else:
             await account_service.mark_used(creds.persona_id)
+
+    try:
+        if not client.access_token and creds.remid and creds.sid:
+            await client.login(creds.remid, creds.sid)
+        yield client
+        await _settle()
     except AppError as exc:
-        # 玩家不存在、参数不对这类 4xx 是查询本身的结果，说明账号工作正常；
-        # 记成失败的话，匿名用户连查几个不存在的 id 就能让账号被停用
-        if exc.status_code < 500:
-            await account_service.mark_used(creds.persona_id)
+        # 玩家不存在、参数不对这类 4xx 是查询本身的结果；网络、EA 超时这类暂时性故障（retryable）
+        # 也不是账号的问题。两者都按账号自身的信号记账：匿名用户连查几个不存在的 id、或 EA
+        # 抖一下，都不该让账号攒失败次数
+        if exc.status_code < 500 or getattr(exc, "retryable", False):
+            await _settle()
         else:
             await account_service.mark_failure(creds.persona_id)
         raise

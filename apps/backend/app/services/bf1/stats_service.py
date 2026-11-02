@@ -39,6 +39,7 @@ from app.schemas.bf1.stats import (
 )
 from app.services.bf1.blaze_service import fetch_stats
 from app.services.bf1.gateway_factory import get_bf1_client
+from app.services.bf1.gateway_result import expect_ok
 
 logger = logging.getLogger(__name__)
 
@@ -432,8 +433,13 @@ class BF1StatsService:
             return _parse_online(res, persona_id)
 
     async def get_platoon(self, persona_id: int) -> PlayerPlatoon | None:
+        """玩家当前战队；没加战队返回 None。EA 出错时抛错，不能当成「没有战队」"""
         async with get_bf1_client(self.db) as client:
-            res = await client.getActivePlatoon(persona_id)
+            res = expect_ok(
+                await client.getActivePlatoon(persona_id),
+                code="EA_PLAYER_PLATOON_FETCH_FAILED",
+                action="查询玩家战队",
+            )
             return _build_platoon(res)
 
     async def get_weapons(self, persona_id: int) -> WeaponStats:
@@ -470,12 +476,11 @@ class BF1StatsService:
 
     async def get_recent_servers(self, persona_id: int) -> RecentServers:
         async with get_bf1_client(self.db) as client:
-            res = await client.mostRecentServers(persona_id)
-            if not isinstance(res, dict):
-                raise EAApiError(
-                    code="EA_RECENT_SERVERS_FETCH_FAILED",
-                    message=f"EA Gateway 查询失败: {res}",
-                )
+            res = expect_ok(
+                await client.mostRecentServers(persona_id),
+                code="EA_RECENT_SERVERS_FETCH_FAILED",
+                action="查询最近游玩的服务器",
+            )
             raw = res.get("result") or []
             servers: list[RecentServer] = []
             for entry in raw:

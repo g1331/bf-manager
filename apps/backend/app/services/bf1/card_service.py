@@ -41,6 +41,7 @@ from app.core import ea_metrics
 from app.core.security import get_cipher
 from app.db.session import get_sessionmaker
 from app.domain.games.bf1.gateway import BF1GatewayClient
+from app.domain.games.bf1.gateway_errors import EAGatewayError, gateway_failure
 from app.domain.games.bf1.maps import translate_map_name, translate_mode_name
 from app.models import User
 from app.models.bf1 import Bf1AutoSwitch, Bf1CardJob
@@ -48,6 +49,7 @@ from app.schemas.bf1.card import CardCredentials, CardEvent, CardJobView, CardPr
 from app.services.audit_service import AuditService
 from app.services.bf1 import card_engine as engine
 from app.services.bf1.card_blaze import CardBlazeSession
+from app.services.bf1.gateway_result import to_ea_error
 from app.services.bf1.server_service import _to_member
 from app.services.ea_binding_service import EaBindingService
 
@@ -143,8 +145,9 @@ async def _close(client: BF1GatewayClient) -> None:
 
 
 def _result(res: Any, what: str) -> dict[str, Any]:
-    if not isinstance(res, dict):
-        raise EAApiError(code="CARD_EA_FAILED", message=f"{what}失败：{str(res)[:120]}")
+    err = gateway_failure(res)
+    if err is not None:
+        raise to_ea_error(err, code="CARD_EA_FAILED", action=what)
     return res.get("result") or {}
 
 
@@ -482,10 +485,10 @@ class _Runner:
     def ok(self) -> None:
         self.errors = 0
 
-    async def fail(self, message: str) -> None:
+    async def fail(self, message: str, err: EAGatewayError | None = None) -> None:
         """记一次非噪音错误；权限错误或连续出错太多就中止"""
         await self.log("error", message)
-        if engine.is_permission_error(message):
+        if (err is not None and err.no_permission) or engine.is_permission_error(message):
             raise _AbortError(f"EA 拒绝了操作：{message}")
         self.errors += 1
         if self.errors >= MAX_CONSECUTIVE_ERRORS:
@@ -506,16 +509,17 @@ class _Runner:
 
     async def state(self) -> engine.ServerState | None:
         res = await self.client.getServerDetails(self.game_id)
-        if not isinstance(res, dict) or not res.get("result"):
-            await self.fail(f"查询服务器状态失败：{str(res)[:120]}")
+        err = gateway_failure(res)
+        if err is not None or not res.get("result"):
+            await self.fail(f"查询服务器状态失败：{str(err or '没有返回服务器信息')[:120]}", err)
             return None
         self.ok()
         return engine.parse_state(res["result"])
 
     async def choose_level(self, guid: str) -> None:
-        res = await self.client.chooseLevel(guid, 0)
-        if not isinstance(res, dict):
-            await self.fail(f"切图失败：{str(res)[:120]}")
+        err = gateway_failure(await self.client.chooseLevel(guid, 0))
+        if err is not None:
+            await self.fail(f"切图失败：{str(err)[:120]}", err)
 
     async def open_blaze(self) -> None:
         if self.blaze is None:

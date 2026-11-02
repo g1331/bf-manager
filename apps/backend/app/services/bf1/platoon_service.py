@@ -12,7 +12,7 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.errors import EAApiError, NotFoundError
+from app.api.errors import NotFoundError
 from app.core.cache import get_cache
 from app.domain.games.bf1.maps import normalize_emblem_url
 from app.schemas.bf1.platoon import (
@@ -23,6 +23,7 @@ from app.schemas.bf1.platoon import (
     PlatoonServer,
 )
 from app.services.bf1.gateway_factory import get_bf1_client
+from app.services.bf1.gateway_result import expect_ok
 from app.services.bf1.server_service import _to_summary
 from app.services.bf1.stats_service import _build_platoon
 
@@ -106,11 +107,12 @@ async def get_platoon_detail(db: AsyncSession, guid: str) -> PlatoonDetail:
     if cached := await cache.get(key):
         return PlatoonDetail.model_validate(cached)
     async with get_bf1_client(db) as client:
-        info = await client.getPlatoon(guid)
-        if isinstance(info, str):
-            if "找不到" in info:
-                raise NotFoundError(resource="战队")
-            raise EAApiError(code="EA_PLATOON_FETCH_FAILED", message=f"EA Gateway 查询失败: {info}")
+        info = expect_ok(
+            await client.getPlatoon(guid),
+            code="EA_PLATOON_FETCH_FAILED",
+            action="查询战队",
+            not_found="战队",
+        )
         # 同一个 client 串行调用：并发时 session 失效会触发两次重新登录
         members = await client.getMembers(guid)
         servers = await client.getServersWithPlayers(guid)
@@ -144,9 +146,11 @@ async def search_platoons(db: AsyncSession, name: str) -> list[PlatoonSearchItem
     if (cached := await cache.get(key)) is not None:
         return [PlatoonSearchItem.model_validate(i) for i in cached]
     async with get_bf1_client(db) as client:
-        res = await client.findByPartialName(name, page_size=SEARCH_PAGE_SIZE)
-    if isinstance(res, str):
-        raise EAApiError(code="EA_PLATOON_SEARCH_FAILED", message=f"EA Gateway 查询失败: {res}")
+        res = expect_ok(
+            await client.findByPartialName(name, page_size=SEARCH_PAGE_SIZE),
+            code="EA_PLATOON_SEARCH_FAILED",
+            action="搜索战队",
+        )
     items = build_search(res)
     await cache.set(key, [i.model_dump() for i in items], ttl=SEARCH_TTL)
     return items

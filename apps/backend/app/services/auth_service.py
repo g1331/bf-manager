@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.errors import AppError, EAApiError, UnauthorizedError
 from app.domain.games.bf1.gateway import BF1GatewayClient
+from app.domain.games.bf1.gateway_errors import gateway_failure
 from app.models import User
 from app.services.user_service import UserService
 
@@ -41,7 +42,7 @@ class AuthService:
             avatar_url: str | None = None
             try:
                 personas = await client.getPersonasByIds([persona_id])
-                if isinstance(personas, dict):
+                if gateway_failure(personas) is None:
                     persona_map = personas.get("result", {}).get("personas", {})
                     persona_info = persona_map.get(str(persona_id), {})
                     display_name = persona_info.get("displayName")

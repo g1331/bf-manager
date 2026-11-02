@@ -35,6 +35,7 @@ from app.services.authz_service import ROLE_LEVEL, ServerAuthzService
 from app.services.bf1 import auto_switch_engine as engine
 from app.services.bf1.blaze_service import get_operation_states
 from app.services.bf1.card_service import active_game_ids
+from app.services.bf1.gateway_result import expect_ok
 from app.services.bf1.server_admin_service import resolve_ea_ids
 from app.services.bf1.server_service import BF1ServerService
 
@@ -117,12 +118,12 @@ class AutoSwitchService:
         # 换图要用 RSP 管理员凭据：开启时就确认开启人能用的服务账号（或自己的老凭据）有权限
         provider = GroupFirstBF1ClientProvider(self.db, user=user, game_id=game_id)
         async with provider.acquire() as client:
-            res = await client.getFullServerDetails(game_id)
-        rsp_server = (
-            ((res.get("result") or {}).get("rspInfo") or {}).get("server")
-            if isinstance(res, dict)
-            else None
-        )
+            res = expect_ok(
+                await client.getFullServerDetails(game_id),
+                code="EA_SERVER_DETAIL_FAILED",
+                action="查询服务器详情",
+            )
+        rsp_server = ((res.get("result") or {}).get("rspInfo") or {}).get("server")
         if not (rsp_server or {}).get("serverId"):
             raise ForbiddenError("能用的 EA 账号都不是这台服的 RSP 管理员，无法自动换图")
         now = time.time()
@@ -210,9 +211,10 @@ async def _choose(db: AsyncSession, row: Bf1AutoSwitch, choose: engine.Choose) -
                     raise EAApiError(
                         code="EA_SERVER_NOT_INITIALIZED", message="服务器尚未完成初始化"
                     )
-                res = await client.chooseLevel(persisted_game_id, choose.level_index)
-                if not isinstance(res, dict):
-                    raise EAApiError(code="EA_CHOOSE_LEVEL_FAILED", message=str(res)[:256])
+                expect_ok(
+                    await client.chooseLevel(persisted_game_id, choose.level_index),
+                    code="EA_CHOOSE_LEVEL_FAILED",
+                )
         except ExecutorUnavailableError as e:
             raise EAApiError(code="AUTO_SWITCH_NO_EXECUTOR", message=e.message) from e
     except EAApiError as err:
@@ -277,8 +279,13 @@ async def _step(db: AsyncSession, row: Bf1AutoSwitch, info: dict[str, Any]) -> N
         try:
             await _choose(db, row, d.choose)
         except EAApiError as err:
-            events.append(("error", f"换图失败：{err.message}，停止自动换图"))
-            d.stop = "error"
+            if err.retryable:
+                # 换图可能没发出去，也可能 EA 已经执行只是没回上话：状态照常记下待确认，
+                # 确认期过了还没换到，引擎会重试一次，再不行才停
+                events.append(("retry", f"换图请求没成功（{err.message}），稍后确认"))
+            else:
+                events.append(("error", f"换图失败：{err.message}，停止自动换图"))
+                d.stop = "error"
     row.state = d.state
     if events:
         row.events = engine.append_events(row.events or [], events, now)

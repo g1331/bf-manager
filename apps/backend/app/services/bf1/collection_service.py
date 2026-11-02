@@ -14,6 +14,7 @@ from app.api.errors import EAApiError
 from app.core.cache import get_cache
 from app.schemas.bf1.collection import CollectionDogtag, CollectionMedal, PlayerCollection
 from app.services.bf1.gateway_factory import get_bf1_client
+from app.services.bf1.gateway_result import expect_ok
 
 logger = logging.getLogger(__name__)
 
@@ -42,9 +43,11 @@ def _list(value: Any, method: str) -> list[Any]:
 def _groups(res: Any, items_key: str, method: str) -> list[dict[str, Any]]:
     """Gateway 返回 {"result": [{"name": 分类, items_key: [...]}, ...]}，展开成条目列表。
 
-    EA 出错时 Gateway 客户端返回的是错误字符串而不是异常，这里统一转成 EAApiError。
+    EA 出错时按失败种类转成 HTTP 错误；返回结构不对报上游错误。
     """
-    result = res.get("result") if isinstance(res, dict) else None
+    result = expect_ok(
+        res, code="EA_COLLECTION_FETCH_FAILED", action=f"EA Gateway {method} 查询"
+    ).get("result")
     if not isinstance(result, list):
         raise _failed(method)
     return [

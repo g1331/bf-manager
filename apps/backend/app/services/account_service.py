@@ -31,9 +31,11 @@ from app.api.errors import AppError, NotFoundError, UnauthorizedError, Validatio
 from app.core.cache import get_redis
 from app.core.config import get_settings
 from app.core.passwords import hash_password, verify_password, verify_password_timing_safe
+from app.domain.games.bf1.gateway_errors import gateway_failure
 from app.models import EaBinding, EmailVerification, Group, GroupInvite, InviteCode, User
 from app.services import group_service, site_settings_service
 from app.services.bf1.gateway_factory import get_bf1_client
+from app.services.bf1.gateway_result import to_ea_error
 from app.services.mail import MailMessage, get_mail_sender, templates
 from app.services.mail.templates import RequestMeta
 from app.services.user_service import bump_token_version, lock_user
@@ -110,7 +112,12 @@ async def lookup_ea_by_email(db: AsyncSession, email: str) -> EaEmailMatch | Non
     async with get_bf1_client(db) as client:
         res = await client.getPersonasByName(email)
     if not isinstance(res, dict):
-        logger.warning("EA 邮箱反查失败: {}", res)
+        err = gateway_failure(res)
+        assert err is not None
+        logger.warning("EA 邮箱反查失败: {!r}", err)
+        if err.retryable:
+            # EA 抖动时别回「不是 EA 账号邮箱」，让用户稍后再试
+            raise to_ea_error(err, code="EA_EMAIL_LOOKUP_FAILED", action="查询 EA 账号")
         return None
     items = [p for p in res.get("personas") or [] if p.get("personaId")]
     if len(items) != 1:

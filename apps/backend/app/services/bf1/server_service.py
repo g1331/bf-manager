@@ -8,7 +8,8 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.errors import EAApiError, NotFoundError
+from app.api.errors import NotFoundError
+from app.domain.games.bf1.gateway_errors import gateway_failure
 from app.domain.games.bf1.maps import (
     OPERATION_SECTORS,
     MapData,
@@ -36,6 +37,7 @@ from app.schemas.bf1.server import (
     ServerSummary,
 )
 from app.services.bf1.gateway_factory import get_bf1_client
+from app.services.bf1.gateway_result import expect_ok, to_ea_error
 from app.services.bf1.server_filters import build_search_filter, filter_summaries
 from app.services.bf1.server_snapshot_cache import read_server_snapshot
 
@@ -327,16 +329,15 @@ class BF1ServerService:
             matched.sort(key=lambda s: s.player_count, reverse=True)
             return ServerListResponse(total=len(matched), items=matched[:limit])
         async with get_bf1_client(self.db) as client:
-            res = await client.searchServers(
-                server_name=keyword or "",
-                limit=limit,
-                filter_dict=filter_dict,
+            res = expect_ok(
+                await client.searchServers(
+                    server_name=keyword or "",
+                    limit=limit,
+                    filter_dict=filter_dict,
+                ),
+                code="EA_SERVER_SEARCH_FAILED",
+                action="搜索服务器",
             )
-            if not isinstance(res, dict):
-                raise EAApiError(
-                    code="EA_SERVER_SEARCH_FAILED",
-                    message=f"EA Gateway 服务器搜索失败: {res}",
-                )
             raw = res.get("result", {})
             game_servers = raw.get("gameservers") or []
             items = [_to_summary(s) for s in game_servers]
@@ -359,10 +360,16 @@ class BF1ServerService:
         return owner_pid, admin_pids, extras.server_id, name
 
     async def get_extras(self, game_id: int) -> tuple[ServerExtras, str | None] | None:
-        """拉一次 getFullServerDetails，返回 (扩展信息, 服名)；EA 不可用或无结果时返回 None。"""
+        """拉一次 getFullServerDetails，返回 (扩展信息, 服名)；EA 拒绝或无结果时返回 None。
+
+        EA 暂时不可用时抛 EAApiError（retryable），调用方别把它当成「这台服没有名单」缓存下来。
+        """
         async with get_bf1_client(self.db) as client:
             res = await client.getFullServerDetails(game_id)
-            if not isinstance(res, dict):
+            err = gateway_failure(res)
+            if err is not None:
+                if err.retryable:
+                    raise to_ea_error(err, code="EA_SERVER_DETAIL_FAILED", action="查询服务器详情")
                 return None
             raw = res.get("result") or {}
             if not raw:
@@ -373,14 +380,15 @@ class BF1ServerService:
     async def get_detail(self, game_id: int) -> ServerDetail:
         async with get_bf1_client(self.db) as client:
             res = await client.getFullServerDetails(game_id)
-            if not isinstance(res, dict):
+            if gateway_failure(res) is not None:
                 # 退化到 getServerDetails
                 res = await client.getServerDetails(game_id)
-            if not isinstance(res, dict):
-                raise EAApiError(
-                    code="EA_SERVER_DETAIL_FAILED",
-                    message=f"EA Gateway 服务器详情失败: {res}",
-                )
+            res = expect_ok(
+                res,
+                code="EA_SERVER_DETAIL_FAILED",
+                action="查询服务器详情",
+                not_found=f"服务器 gameId={game_id}",
+            )
             raw = res.get("result") or {}
             if not raw:
                 raise NotFoundError(resource=f"服务器 gameId={game_id}")

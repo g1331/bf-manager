@@ -96,6 +96,20 @@ class FakeClient:
         return {"env": {}}
 
 
+NO_PERMISSION = EAGatewayError(
+    "账号无权限",
+    kind="ea",
+    code=-32603,
+    ea_message="Internal Error: org.apache.thrift.TApplicationException",
+)
+
+
+class DeniedClient(FakeClient):
+    async def removeServerVip(self, personaId, serverId):  # noqa: N802, N803
+        self.ea.calls.append(("denied", personaId, serverId))
+        return NO_PERMISSION
+
+
 class FakeProvider:
     credential_source = "binding"
 
@@ -300,8 +314,10 @@ def _patch_tick(
     mode: str = "Conquest",
     usable: set[int] | None = None,
     demoted: set[int] | None = None,
+    ea_denied: set[int] | None = None,
 ):
-    """usable：哪些人拿得到能用的凭据（None 表示都能）；demoted：哪些人已经没有本服管理权限"""
+    """usable：哪些人拿得到能用的凭据（None 表示都能）；demoted：哪些人已经没有本服管理权限；
+    ea_denied：哪些人的服务账号在 EA 上已经不是管理员（下 V 时 EA 回无权限）"""
 
     async def states(db, game_ids):
         return {g: {"mode": mode, "map": ea.map_name} for g in game_ids}
@@ -321,7 +337,7 @@ def _patch_tick(
             tried.append(self.user.id)
             if usable is not None and self.user.id not in usable:
                 raise ExecutorUnavailableError()
-            yield FakeClient(ea)
+            yield DeniedClient(ea) if ea_denied and self.user.id in ea_denied else FakeClient(ea)
 
     class Authz:
         def __init__(self, db):
@@ -411,3 +427,72 @@ async def test_tick_without_usable_credentials_backs_off(admin_client, test_sess
     # 退避期内不再重试
     await svc._tick(test_session)
     assert tried == [admin.id]
+
+
+async def test_tick_hands_off_when_executor_lost_ea_admin(
+    admin_client, user_client, test_session, monkeypatch
+):
+    """授予人的服务账号在 EA 上被撤了管理员：换下一个候选人，不记失败"""
+    _, admin = admin_client
+    _, other = user_client
+    ea = FakeEA()
+    server = await _seed_expired(test_session, admin, ea)
+    test_session.add(ServerMembership(user_id=other.id, server_pk=server.id, role="admin"))
+    await test_session.commit()
+
+    tried = _patch_tick(monkeypatch, ea, ea_denied={admin.id})
+    await svc._tick(test_session)
+
+    assert tried == [admin.id, other.id]
+    assert ("denied", 111, RSP_SERVER_ID) in ea.calls and 111 not in ea.vips
+    assert await _rows(test_session) == {}
+
+
+async def test_tick_transient_failure_backs_off(admin_client, test_session, monkeypatch):
+    _, admin = admin_client
+    ea = FakeEA()
+    await _seed_expired(test_session, admin, ea)
+    ea.fail["remove"] = EAGatewayError("网络超时!", kind="network")
+    _patch_tick(monkeypatch, ea)
+
+    await svc._tick(test_session)
+
+    row = (await _rows(test_session))[111]
+    assert row.attempts == 1 and "网络超时" in (row.last_error or "")
+
+
+async def test_checkvip_stops_once_executor_has_no_permission(admin_client, test_session):
+    """没权限时后面的写入注定失败：第一个失败就停，没做的留给下一次"""
+    _, admin = admin_client
+    ea = _operation_ea(vips={500: "Old", 501: "Older"})
+    service = _service(test_session, admin, ea)
+    await service.revoke(500)
+    await service.revoke(501)
+    ea.fail["remove"] = NO_PERMISSION
+
+    result = await service.apply(restart=False)
+
+    assert len([c for c in ea.calls if c[0] == "remove"]) == 1
+    assert result.removed == 0 and len(result.failures) == 1
+    assert result.failures[0].message == "账号无权限"
+
+
+async def test_checkvip_skips_player_hit_by_ea_backend_error(admin_client, test_session):
+    """EA 对某个玩家报后端内部异常：跳过他接着做，不能让一个人卡住整张名单"""
+    _, admin = admin_client
+    ea = _operation_ea(vips={500: "Old", 501: "Older"})
+    service = _service(test_session, admin, ea)
+    await service.revoke(500)
+    await service.revoke(501)
+    npe = EAGatewayError(
+        "EA后端未知错误",
+        kind="ea",
+        code=-32603,
+        ea_message="Internal Error: java.lang.NullPointerException",
+    )
+    ea.fail["remove"] = npe
+
+    result = await service.apply(restart=False)
+
+    assert len([c for c in ea.calls if c[0] == "remove"]) == 2
+    assert len(result.failures) == 2

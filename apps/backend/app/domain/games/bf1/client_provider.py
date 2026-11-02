@@ -28,8 +28,9 @@ from typing import Protocol, runtime_checkable
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.errors import ForbiddenError
+from app.api.errors import EAApiError, ForbiddenError
 from app.domain.games.bf1.gateway import BF1GatewayClient
+from app.domain.games.bf1.gateway_errors import EAGatewayError, gateway_failure
 from app.models import GroupEaAccount, User
 from app.services import group_server_service
 from app.services.bf1.gateway_factory import (
@@ -98,6 +99,7 @@ class BindingFirstBF1ClientProvider:
         self.game_id = game_id
         self.pool_fallback = pool_fallback
         self.credential_source: str | None = None
+        self.probe_error: EAGatewayError | None = None
 
     @asynccontextmanager
     async def acquire(self) -> AsyncIterator[BF1GatewayClient]:
@@ -158,12 +160,22 @@ class BindingFirstBF1ClientProvider:
                 )
                 await cm.__aexit__(None, None, None)
                 return None
-            if not await self._probe_rsp(client):
-                logger.info(
-                    "发起者 persona_id={} 不是服务器 game_id={} 的 RSP 管理员，降级账号池",
-                    binding.persona_id,
-                    self.game_id,
-                )
+            probe = await self._probe_rsp(client)
+            if probe is not True:
+                if isinstance(probe, EAGatewayError):
+                    self.probe_error = probe
+                    logger.warning(
+                        "发起者 persona_id={} 探测服务器 game_id={} 失败，降级账号池: {!r}",
+                        binding.persona_id,
+                        self.game_id,
+                        probe,
+                    )
+                else:
+                    logger.info(
+                        "发起者 persona_id={} 不是服务器 game_id={} 的 RSP 管理员，降级账号池",
+                        binding.persona_id,
+                        self.game_id,
+                    )
                 await cm.__aexit__(None, None, None)
                 return None
         except BaseException:
@@ -171,7 +183,7 @@ class BindingFirstBF1ClientProvider:
             raise
         return cm, client
 
-    async def _probe_rsp(self, client: BF1GatewayClient) -> bool:
+    async def _probe_rsp(self, client: BF1GatewayClient) -> bool | EAGatewayError:
         return await _probe_rsp(client, self.game_id)
 
 
@@ -184,18 +196,31 @@ class ExecutorUnavailableError(ForbiddenError):
         )
 
 
-async def _probe_rsp(client: BF1GatewayClient, game_id: int) -> bool:
-    """rspInfo.server.serverId 存在才算这个凭据是本服 RSP 管理员（serverInfo 里的非管理员也能看到）"""
+async def _probe_rsp(client: BF1GatewayClient, game_id: int) -> bool | EAGatewayError:
+    """rspInfo.server.serverId 存在才算这个凭据是本服 RSP 管理员（serverInfo 里的非管理员也能看到）。
+
+    EA 暂时不可用时返回那个错误：分不清是不是管理员，调用方别把它当成「不是」。
+    """
     try:
         res = await client.getFullServerDetails(game_id)
     except Exception as exc:
         logger.warning("探测服务器详情异常 game_id={}: {}", game_id, exc)
         return False
-    if not isinstance(res, dict):
-        return False
+    err = gateway_failure(res)
+    if err is not None:
+        return err if err.retryable else False
     raw = res.get("result") or {}
     rsp_server = (raw.get("rspInfo") or {}).get("server") or {}
     return bool(rsp_server.get("serverId"))
+
+
+def _probe_unavailable(err: EAGatewayError) -> EAApiError:
+    return EAApiError(
+        code="EA_EXECUTOR_PROBE_FAILED",
+        message=f"EA 暂时不可用，没能确认执行账号的管理员身份：{err}",
+        details={"kind": err.kind, "ea_code": err.code, "ea_message": err.ea_message},
+        retryable=True,
+    )
 
 
 class GroupFirstBF1ClientProvider:
@@ -228,9 +253,12 @@ class GroupFirstBF1ClientProvider:
         self.pool_fallback = pool_fallback
         self.credential_source: str | None = None
         self.executor_persona_id: int | None = None
+        # 探测时遇到的暂时性故障：没有账号可用时据此报「EA 暂时不可用」而不是「没有管理员账号」
+        self._probe_error: EAGatewayError | None = None
 
     @asynccontextmanager
     async def acquire(self) -> AsyncIterator[BF1GatewayClient]:
+        self._probe_error = None
         entered = await self._try_group_accounts()
         if entered is not None:
             self.credential_source = "group_account"
@@ -239,6 +267,7 @@ class GroupFirstBF1ClientProvider:
                 self.db, user=self.user, game_id=self.game_id, pool_fallback=False
             )
             via_binding = await binding_provider._try_enter_binding()
+            self._probe_error = self._probe_error or binding_provider.probe_error
             if via_binding is not None:
                 cm, client = via_binding
                 entered = (cm, client, int(client.pid or 0))
@@ -255,6 +284,8 @@ class GroupFirstBF1ClientProvider:
                 await cm.__aexit__(None, None, None)
             return
         if not self.pool_fallback:
+            if self._probe_error is not None:
+                raise _probe_unavailable(self._probe_error)
             raise ExecutorUnavailableError()
         self.credential_source = "pool"
         async with get_bf1_client(self.db) as client:
@@ -280,7 +311,18 @@ class GroupFirstBF1ClientProvider:
                     await self._record_failure(account, "登录失败")
                     continue
                 await group_server_service.record_account_result(self.db, account, True)
-                if not await _probe_rsp(client, self.game_id):
+                probe = await _probe_rsp(client, self.game_id)
+                if isinstance(probe, EAGatewayError):
+                    logger.warning(
+                        "服务账号 {} 探测服务器 game_id={} 失败，换下一个: {!r}",
+                        account.persona_id,
+                        self.game_id,
+                        probe,
+                    )
+                    self._probe_error = probe
+                    await cm.__aexit__(None, None, None)
+                    continue
+                if not probe:
                     logger.info(
                         "服务账号 {} 不是服务器 game_id={} 的 RSP 管理员，换下一个",
                         account.persona_id,

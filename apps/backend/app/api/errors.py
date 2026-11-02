@@ -49,10 +49,32 @@ class EAApiError(AppError):
     状态码用 503 而非语义上更贴切的 502：生产外层的 Cloudflare 会把源站的 502/504
     响应整体替换为自家 HTML 错误页（Origin Error Page Passthru 仅企业版可用），
     JSON 错误体到不了浏览器，前端只能展示空白报错；503 可原样穿透。
+
+    retryable 表示暂时性故障（网络、EA 超时），后台任务据此决定下一轮重试还是放弃。
+    """
+
+    def __init__(
+        self,
+        code: str,
+        message: str,
+        details: dict[str, Any] | None = None,
+        *,
+        retryable: bool = False,
+    ) -> None:
+        super().__init__(status.HTTP_503_SERVICE_UNAVAILABLE, code, message, details)
+        self.retryable = retryable
+
+
+class EARejectedError(EAApiError):
+    """EA 明确拒绝了这次请求（玩家不存在、没有权限、名单已满……）。
+
+    结果不会因重试改变，回 4xx：前端不自动重试，号池也不把它记成账号失败。继承 EAApiError，
+    服管审计等按 EAApiError 捕获的地方照常记失败。
     """
 
     def __init__(self, code: str, message: str, details: dict[str, Any] | None = None) -> None:
-        super().__init__(status.HTTP_503_SERVICE_UNAVAILABLE, code, message, details)
+        AppError.__init__(self, status.HTTP_422_UNPROCESSABLE_CONTENT, code, message, details)
+        self.retryable = False
 
 
 class TooManyRequestsError(AppError):

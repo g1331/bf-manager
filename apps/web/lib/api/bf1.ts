@@ -333,7 +333,8 @@ export interface ServerSummary {
 /** 各筛选项选中后的结果数；某一维度的计数忽略该维度自身的条件 */
 export interface ServerFacets {
   server_types: Record<string, number>;
-  rules: Record<string, { on: number; off: number }>;
+  /** 规则键 → {取值: 台数}，开关取值 on / off，倍率取值是选项键（BD3） */
+  rules: Record<string, Record<string, number>>;
   presets: Record<string, number>;
 }
 
@@ -344,14 +345,17 @@ export interface ServerListResponse {
   facets: ServerFacets | null;
 }
 
+export interface ServerFilterRule {
+  key: string;
+  label: string;
+  default: string;
+  options: { value: string; label: string }[];
+}
+
 export interface ServerFilterOptions {
   server_types: { id: string; label: string }[];
-  presets: { id: string; label: string; rules: Record<string, "on" | "off"> }[];
-  groups: {
-    id: string;
-    label: string;
-    toggles: { key: string; label: string; default: boolean }[];
-  }[];
+  presets: { id: string; label: string; rules: Record<string, string> }[];
+  groups: { id: string; label: string; rules: ServerFilterRule[] }[];
 }
 
 /** 服务器搜索查询参数，全部交后端筛选 */
@@ -362,7 +366,7 @@ export interface ServerListQuery {
   regions?: string[];
   sizes?: number[];
   serverTypes?: string[];
-  /** 玩法开关，形如 vehicles.L:off */
+  /** 玩法规则，形如 vehicles.L:off、scales.BD:BD3 */
   rules?: string[];
   /** 空位档位 none / 1-5 / 6-10 / 10+ */
   slots?: string[];

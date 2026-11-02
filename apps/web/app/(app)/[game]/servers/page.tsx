@@ -37,7 +37,12 @@ import {
   modeLabel,
   regionLabel,
 } from "@/lib/bf1/catalog";
-import type { ServerFacets, ServerFilterOptions, ServerSummary } from "@/lib/api/bf1";
+import type {
+  ServerFacets,
+  ServerFilterOptions,
+  ServerFilterRule,
+  ServerSummary,
+} from "@/lib/api/bf1";
 import { bf1Queries, type ServerListSelection } from "@/lib/queries/bf1";
 import {
   DEFAULT_FILTERS,
@@ -364,14 +369,14 @@ function buildSummaryChips(
       remove: () => patch({ rules: togglePreset(f.rules, p.rules) }),
     });
   });
-  const toggleLabel = new Map(
-    options?.groups.flatMap((g) => g.toggles.map((t) => [t.key, t.label] as const)) ?? [],
-  );
+  const ruleByKey = new Map(options?.groups.flatMap((g) => g.rules.map((r) => [r.key, r])) ?? []);
   Object.entries(f.rules).forEach(([key, value]) => {
     if (covered.has(key)) return;
+    const rule = ruleByKey.get(key);
+    const valueLabel = rule?.options.find((o) => o.value === value)?.label ?? value;
     chips.push({
       id: `rule:${key}`,
-      label: `${toggleLabel.get(key) ?? key}：${value === "on" ? "开" : "关"}`,
+      label: `${rule?.label ?? key}：${valueLabel}`,
       remove: () => patch({ rules: setRule(f.rules, key, null) }),
     });
   });
@@ -550,7 +555,7 @@ function PresetChips({ ui, large }: { ui: FilterUI; large?: boolean }) {
   );
 }
 
-/** 更多玩法设置：按载具 / 兵种 / 武器 / 规则分组的三态开关，默认都是「不限」 */
+/** 更多玩法设置：载具 / 兵种 / 武器 / 进阶四组开关和「规则」组的倍率，默认都是「不限」 */
 function RuleGroups({ ui, large }: { ui: FilterUI; large?: boolean }) {
   const { filters, patch, options, facets } = ui;
   if (!options) return null;
@@ -560,22 +565,19 @@ function RuleGroups({ ui, large }: { ui: FilterUI; large?: boolean }) {
         <FilterSection
           key={g.id}
           title={g.label}
-          count={g.toggles.filter((t) => filters.rules[t.key]).length}
+          count={g.rules.filter((r) => filters.rules[r.key]).length}
           scroll={!large}
         >
-          <ul className="space-y-1">
-            {g.toggles.map((t) => (
-              <li key={t.key} className="flex items-center gap-2">
-                <span className="min-w-0 flex-1 truncate text-sm text-white/75" title={t.label}>
-                  {t.label}
-                </span>
-                <TriState
-                  large={large}
-                  value={filters.rules[t.key] ?? null}
-                  facet={facets?.rules[t.key]}
-                  onChange={(v) => patch({ rules: setRule(filters.rules, t.key, v) })}
-                />
-              </li>
+          <ul className="space-y-1.5">
+            {g.rules.map((r) => (
+              <RuleRow
+                key={r.key}
+                rule={r}
+                large={large}
+                value={filters.rules[r.key] ?? null}
+                counts={facets?.rules[r.key]}
+                onChange={(v) => patch({ rules: setRule(filters.rules, r.key, v) })}
+              />
             ))}
           </ul>
         </FilterSection>
@@ -584,59 +586,74 @@ function RuleGroups({ ui, large }: { ui: FilterUI; large?: boolean }) {
   );
 }
 
-/** 不限 / 开 / 关 三段选择，开和关旁边是选上后的结果数 */
-function TriState({
+/**
+ * 一条规则的单选：「不限」加上各取值，取值旁边是选上后的结果数。开关只有开 / 关两档，和名称排一行；
+ * 倍率最多五档，名称单独一行、档位平分整行。
+ */
+function RuleRow({
+  rule,
   value,
-  facet,
+  counts,
   onChange,
   large,
 }: {
+  rule: ServerFilterRule;
   value: RuleValue | null;
-  facet: { on: number; off: number } | undefined;
+  counts: Record<string, number> | undefined;
   onChange: (v: RuleValue | null) => void;
   large?: boolean;
 }) {
+  const stacked = rule.options.length > 2;
   const segs: { v: RuleValue | null; label: string; count?: number }[] = [
     { v: null, label: "不限" },
-    { v: "on", label: "开", count: facet?.on },
-    { v: "off", label: "关", count: facet?.off },
+    ...rule.options.map((o) => ({ v: o.value, label: o.label, count: counts?.[o.value] })),
   ];
   return (
-    <div className="flex shrink-0 overflow-hidden rounded-sm border border-white/12">
-      {segs.map((seg) => {
-        const selected = value === seg.v;
-        const empty = seg.count === 0 && !selected;
-        return (
-          <button
-            key={seg.label}
-            type="button"
-            aria-pressed={selected}
-            onClick={() => onChange(seg.v)}
-            className={cn(
-              "compact-action flex items-center justify-center gap-1 border-l border-white/12 text-xs transition-colors first:border-l-0",
-              // 固定宽度，计数位数不同时各行也能对齐
-              large ? "h-11 w-16" : "h-7 w-12",
-              selected
-                ? seg.v === null
-                  ? "bg-white/10 text-white"
-                  : "bg-amber-400/20 text-amber-200"
-                : empty
-                  ? "text-white/25 hover:bg-white/5"
-                  : "text-white/70 hover:bg-white/8 hover:text-white",
-            )}
-          >
-            {seg.label}
-            {seg.count !== undefined ? (
-              <span
-                className={cn("tabular-nums", selected ? "text-amber-200/70" : "text-white/35")}
-              >
-                {seg.count}
-              </span>
-            ) : null}
-          </button>
-        );
-      })}
-    </div>
+    <li className={cn("flex gap-x-2 gap-y-1.5", stacked ? "flex-col" : "items-center")}>
+      <span className="min-w-0 flex-1 truncate text-sm text-white/75" title={rule.label}>
+        {rule.label}
+      </span>
+      <div className="flex shrink-0 overflow-hidden rounded-sm border border-white/12">
+        {segs.map((seg) => {
+          const selected = value === seg.v;
+          const empty = seg.count === 0 && !selected;
+          return (
+            <button
+              key={seg.label}
+              type="button"
+              aria-pressed={selected}
+              onClick={() => onChange(seg.v)}
+              className={cn(
+                "compact-action flex items-center justify-center gap-x-1 border-l border-white/12 text-xs transition-colors first:border-l-0",
+                // 固定宽度或平分整行，计数位数不同时各行也能对齐
+                stacked ? "min-w-0 flex-1 flex-wrap" : large ? "w-16" : "w-12",
+                large ? "h-11" : stacked ? "h-9" : "h-7",
+                selected
+                  ? seg.v === null
+                    ? "bg-white/10 text-white"
+                    : "bg-amber-400/20 text-amber-200"
+                  : empty
+                    ? "text-white/25 hover:bg-white/5"
+                    : "text-white/70 hover:bg-white/8 hover:text-white",
+              )}
+            >
+              {seg.label}
+              {seg.count !== undefined ? (
+                <span
+                  className={cn(
+                    "tabular-nums",
+                    stacked && "w-full text-center text-[10px] leading-none",
+                    selected ? "text-amber-200/70" : "text-white/35",
+                  )}
+                >
+                  {seg.count}
+                </span>
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
+    </li>
   );
 }
 

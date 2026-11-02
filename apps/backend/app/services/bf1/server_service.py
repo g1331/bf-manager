@@ -20,7 +20,7 @@ from app.domain.games.bf1.maps import (
     translate_mode_name,
     translate_region,
 )
-from app.domain.games.bf1.server_settings import localize_settings
+from app.domain.games.bf1.server_settings import localize_settings, settings_from_masks
 from app.models import Server
 from app.models.bf1 import Bf1GameInstance
 from app.schemas.bf1.server import (
@@ -301,6 +301,12 @@ def _to_extras(raw: dict[str, Any]) -> ServerExtras:
     )
 
 
+async def _settings_from_snapshot(game_id: int) -> tuple[dict[str, Any], dict[str, str]]:
+    cached = await read_server_snapshot() or []
+    hit = next((s for s in cached if s.game_id == game_id and s.masks is not None), None)
+    return settings_from_masks(hit.masks) if hit else ({}, {})
+
+
 class BF1ServerService:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
@@ -468,6 +474,9 @@ class BF1ServerService:
                 or {}
             )
             extras = _to_extras(raw)
+            if not any(settings.values()):
+                # 官服的 EA 详情不带设置，改用全服快照里的掩码补上（只有有人的服在快照里）
+                settings, setting_descriptions = await _settings_from_snapshot(game_id)
             return ServerDetail(
                 summary=summary,
                 description=summary.description,

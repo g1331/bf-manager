@@ -58,16 +58,12 @@ class ServerSummary(BaseModel):
     masks: ServerMasks | None = Field(None, exclude=True)
 
 
-class RuleFacet(BaseModel):
-    on: int = 0
-    off: int = 0
-
-
 class ServerFacets(BaseModel):
     """各筛选项选中后的结果数。某一维度的计数忽略该维度自身的条件，其余条件照常生效"""
 
     server_types: dict[str, int]
-    rules: dict[str, RuleFacet]
+    # 规则键 → {取值: 台数}，开关的取值是 on / off，倍率的取值是选项键
+    rules: dict[str, dict[str, int]]
     presets: dict[str, int]
 
 
@@ -80,22 +76,28 @@ class ServerListResponse(BaseModel):
     facets: ServerFacets | None = None
 
 
-class FilterToggleOption(BaseModel):
-    key: str  # 规则键，例如 vehicles.L
+class FilterValueOption(BaseModel):
+    value: str
     label: str
-    default: bool
+
+
+class FilterRuleOption(BaseModel):
+    key: str  # 规则键，例如 vehicles.L、scales.BD
+    label: str
+    default: str  # 游戏默认取值
+    options: list[FilterValueOption]
 
 
 class FilterGroupOption(BaseModel):
     id: str
     label: str
-    toggles: list[FilterToggleOption]
+    rules: list[FilterRuleOption]
 
 
 class FilterPresetOption(BaseModel):
     id: str
     label: str
-    rules: dict[str, Literal["on", "off"]]
+    rules: dict[str, str]
 
 
 class FilterServerTypeOption(BaseModel):
@@ -104,7 +106,7 @@ class FilterServerTypeOption(BaseModel):
 
 
 class ServerFilterOptions(BaseModel):
-    """服务器浏览器的筛选目录：服务器类型、快捷标签与玩法开关"""
+    """服务器浏览器的筛选目录：服务器类型、快捷标签、玩法开关与倍率"""
 
     server_types: list[FilterServerTypeOption]
     presets: list[FilterPresetOption]

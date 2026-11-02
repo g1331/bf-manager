@@ -8,18 +8,23 @@
 - weaponmask：bit0..9 依次为 M S H E LMG SMG SAR SR KG SIR
 - kitmask：bit0..3 为兵种 1..4，bit9 为精英兵种 HERO
 - settingmask：bit0..20 与 Misc 清单同序
+- scalemask：每项倍率按选项一位、恰好一位为 1，从低位起依次是兵力值 TC1..3（bit0..2）、
+  重生时间 SR1..3（bit3..5）、载具重置时间 VR1..3（bit6..8）、子弹伤害 BD1..4（bit9..12）、
+  回合时限 RT1..5（bit13..17）。默认 9362 即 TC2 SR2 VR2 BD2 RT1
 
-同一套开关也能写进 EA searchServers 的 filterJson：组内列出的 key 设 on 即要求开、off 即
-要求关，没列出的不约束，组内多个 key 取交集。
+开关与倍率统称「规则」，键形如 ``vehicles.L`` / ``scales.BD``，取值分别是 on/off 与选项键（BD3）。
+同一套规则也能写进 EA searchServers 的 filterJson：开关组里列出的 key 设 on 即要求开、off 即
+要求关，没列出的不约束；scales 组列出的选项都必须满足（同一项列两个档位会返回 0 台），
+所以倍率按单选处理。各组之间取交集。
 """
 
 from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Literal
 
-RuleValue = Literal["on", "off"]
+# 开关的取值是 on / off，倍率的取值是选项键（BD3），统一按字符串处理
+RuleValue = str
 
 
 @dataclass(frozen=True)
@@ -92,7 +97,7 @@ SETTING_GROUPS: tuple[SettingGroup, ...] = (
     ),
     _group(
         "misc",
-        "规则",
+        "进阶",
         "misc",
         "setting",
         [
@@ -126,6 +131,50 @@ GROUPS: dict[str, SettingGroup] = {g.id: g for g in SETTING_GROUPS}
 
 
 @dataclass(frozen=True)
+class ScaleOption:
+    key: str  # 游戏选项键，例如 BD3
+    value: float
+    bit: int
+
+
+@dataclass(frozen=True)
+class ScaleSetting:
+    key: str  # 选项键前缀，例如 BD
+    name: str  # gamedata 里的 filterKey，例如 BulletDamage
+    label: str
+    default: str
+    options: tuple[ScaleOption, ...]  # 按倍率从小到大
+
+    @property
+    def rule_key(self) -> str:
+        return f"scales.{self.key}"
+
+
+def _scale(
+    key: str, name: str, label: str, default: str, offset: int, values: list[float]
+) -> ScaleSetting:
+    opts = [ScaleOption(f"{key}{i + 1}", v, offset + i) for i, v in enumerate(values)]
+    return ScaleSetting(key, name, label, default, tuple(sorted(opts, key=lambda o: o.value)))
+
+
+# 顺序同游戏设置界面
+SCALE_SETTINGS: tuple[ScaleSetting, ...] = (
+    _scale("BD", "BulletDamage", "子弹伤害", "BD2", 9, [0.5, 1.0, 2.0, 1.25]),
+    _scale("TC", "TicketCount", "兵力值", "TC2", 0, [0.5, 1.0, 2.0]),
+    _scale("SR", "SoldierRespawnTime", "重生时间", "SR2", 3, [0.5, 1.0, 2.0]),
+    _scale("VR", "VehicleRespawnTime", "载具重置时间", "VR2", 6, [0.5, 1.0, 2.0]),
+    _scale("RT", "RoundTimeLimit", "回合时限", "RT1", 13, [0.0, 0.5, 1.0, 2.0, 5.0]),
+)
+SCALES: dict[str, ScaleSetting] = {s.rule_key: s for s in SCALE_SETTINGS}
+
+# 规则键 → 允许的取值
+RULE_VALUES: dict[str, frozenset[str]] = {
+    **{key: frozenset({"on", "off"}) for key in TOGGLES},
+    **{key: frozenset(o.key for o in s.options) for key, s in SCALES.items()},
+}
+
+
+@dataclass(frozen=True)
 class SettingPreset:
     id: str
     label: str
@@ -136,7 +185,10 @@ PRESETS: tuple[SettingPreset, ...] = (
     SettingPreset(
         "vanilla",
         "原版设置",
-        {key: ("on" if t.default else "off") for key, t in TOGGLES.items()},
+        {
+            **{key: ("on" if t.default else "off") for key, t in TOGGLES.items()},
+            **{key: s.default for key, s in SCALES.items()},
+        },
     ),
     SettingPreset("hardcore", "硬核", {"misc.FF": "on", "misc.KC": "off", "misc.MM": "off"}),
     SettingPreset("no_vehicles", "无载具", {"vehicles.L": "off", "vehicles.A": "off"}),
@@ -154,6 +206,8 @@ PRESETS: tuple[SettingPreset, ...] = (
         },
     ),
     SettingPreset("unlimited_mags", "无限弹匣", {"misc.UM": "on"}),
+    SettingPreset("double_damage", "双倍伤害", {"scales.BD": "BD3"}),
+    SettingPreset("double_tickets", "双倍兵力", {"scales.TC": "TC3"}),
 )
 
 
@@ -165,10 +219,34 @@ def toggle_state(masks: object, toggle: SettingToggle) -> bool | None:
     return bool((mask >> toggle.bit) & 1)
 
 
-def to_ea_filter(rules: Mapping[str, RuleValue]) -> dict[str, dict[str, RuleValue]]:
-    """把开关规则转成 filterJson 里的分组：{"vehicles": {"L": "off"}, ...}。"""
-    out: dict[str, dict[str, RuleValue]] = {}
+def scale_state(masks: object, scale: ScaleSetting) -> ScaleOption | None:
+    """按掩码读出某项倍率当前的档位；掩码缺失或该项不是恰好一位为 1 时返回 None。"""
+    mask: int | None = getattr(masks, "scale", None)
+    if mask is None:
+        return None
+    hits = [o for o in scale.options if (mask >> o.bit) & 1]
+    return hits[0] if len(hits) == 1 else None
+
+
+def rule_state(masks: object, rule_key: str) -> str | None:
+    """某条规则在这台服上的取值（on / off 或选项键）；读不出来时返回 None。"""
+    if masks is None:
+        return None
+    toggle = TOGGLES.get(rule_key)
+    if toggle is not None:
+        state = toggle_state(masks, toggle)
+        return None if state is None else ("on" if state else "off")
+    option = scale_state(masks, SCALES[rule_key])
+    return option.key if option else None
+
+
+def to_ea_filter(rules: Mapping[str, RuleValue]) -> dict[str, dict[str, str]]:
+    """把规则转成 filterJson 里的分组：{"vehicles": {"L": "off"}, "scales": {"BD3": "on"}}。"""
+    out: dict[str, dict[str, str]] = {}
     for rule_key, value in rules.items():
+        if rule_key in SCALES:
+            out.setdefault("scales", {})[value] = "on"
+            continue
         toggle = TOGGLES[rule_key]
         out.setdefault(GROUPS[toggle.group].ea_key, {})[toggle.key] = value
     return out

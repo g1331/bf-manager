@@ -8,7 +8,8 @@
 
 import { BF1_MAPS, BF1_MODES, BF1_REGIONS } from "@/lib/bf1/catalog";
 
-export type RuleValue = "on" | "off";
+/** 开关取值 on / off，倍率取值是选项键（BD3） */
+export type RuleValue = string;
 
 export interface FilterState {
   modes: string[]; // game_mode 代号
@@ -17,7 +18,7 @@ export interface FilterState {
   emptySlots: string[]; // EMPTY_SLOT_OPTIONS.id
   sizes: number[]; // max_player_count 档位
   serverTypes: string[]; // OFFICIAL / RANKED / PRIVATE
-  rules: Record<string, RuleValue>; // 玩法开关，键形如 vehicles.L
+  rules: Record<string, RuleValue>; // 玩法规则，键形如 vehicles.L、scales.BD
   includeEmpty: boolean; // 含 0 人空服：全服快照不含空服，开启后后端改走 EA 抽样搜索
   nameFilter: string;
 }
@@ -47,7 +48,8 @@ export const EMPTY_SLOT_OPTIONS: { id: string; label: string }[] = [
 
 export const SERVER_TYPE_IDS = ["OFFICIAL", "RANKED", "PRIVATE"];
 
-const RULE_KEY = /^(vehicles|kits|weapons|misc)\.[A-Za-z0-9]{1,8}$/;
+const RULE_KEY = /^(vehicles|kits|weapons|misc|scales)\.[A-Za-z0-9]{1,8}$/;
+const RULE_VALUE = /^(on|off|[A-Z]{2}[1-5])$/;
 
 const MODE_CODES = new Set(BF1_MODES.map((m) => m.code));
 const MAP_CODES = new Set(BF1_MAPS.map((m) => m.code));
@@ -63,7 +65,7 @@ function pick(values: unknown, allowed: Set<string> | string[]): string[] {
 function pickRules(entries: [string, unknown][]): Record<string, RuleValue> {
   const out: Record<string, RuleValue> = {};
   for (const [key, value] of entries) {
-    if (RULE_KEY.test(key) && (value === "on" || value === "off")) out[key] = value;
+    if (RULE_KEY.test(key) && typeof value === "string" && RULE_VALUE.test(value)) out[key] = value;
   }
   return out;
 }
@@ -176,7 +178,7 @@ export function togglePreset(
   return { ...rules, ...preset };
 }
 
-/** 设置单个开关；value 为 null 即「不限」 */
+/** 设置单条规则；value 为 null 即「不限」 */
 export function setRule(
   rules: Record<string, RuleValue>,
   key: string,

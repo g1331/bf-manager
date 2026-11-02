@@ -2,7 +2,8 @@
 
 EA filterJson 的语义经部署机实测确认：地图 / 模式 / 地区这类多选维度只列选中项设 "on"，
 多项取并集，未选中的维度整体省略即不约束；玩法开关组（vehicles / weaponClasses / kits /
-misc）里列出的 key 设 on 即要求开、off 即要求关，没列出的不约束，组内多个 key 取交集。
+misc）里列出的 key 设 on 即要求开、off 即要求关，没列出的不约束，组内多个 key 取交集；
+scales 组列出的倍率档位都必须满足，所以每项倍率只能选一个档位。
 
 空位（slots）不能下推：EA searchServers 不按实时空位过滤，无论档位怎么设返回集都和无筛选
 一致，所以两条路径都在拿到结果后本地过滤。
@@ -17,18 +18,19 @@ from app.api.errors import ValidationError
 from app.domain.games.bf1.maps import MapData
 from app.domain.games.bf1.server_filter_catalog import (
     PRESETS,
+    RULE_VALUES,
+    SCALE_SETTINGS,
     SETTING_GROUPS,
-    TOGGLES,
     RuleValue,
+    rule_state,
     to_ea_filter,
-    toggle_state,
 )
 from app.schemas.bf1.server import (
     FilterGroupOption,
     FilterPresetOption,
+    FilterRuleOption,
     FilterServerTypeOption,
-    FilterToggleOption,
-    RuleFacet,
+    FilterValueOption,
     ServerFacets,
     ServerFilterOptions,
     ServerSummary,
@@ -58,20 +60,18 @@ def _reject_unknown(values: Iterable[Any], allowed: Iterable[Any], field: str) -
 
 
 def parse_rules(raw: list[str] | None) -> dict[str, RuleValue]:
-    """把 ``vehicles.L:off`` 形式的规则解析成 {规则键: on/off}；同一开关给了相反的值时拒绝。"""
-    if raw and len(raw) > len(TOGGLES):
+    """把 ``vehicles.L:off`` / ``scales.BD:BD3`` 形式的规则解析成 {规则键: 取值}；
+    同一条规则给了不同的值时拒绝（开关不能既开又关，倍率是单选）。"""
+    if raw and len(raw) > len(RULE_VALUES):
         raise ValidationError("rules 条数过多", details={"field": "rules"})
     rules: dict[str, RuleValue] = {}
     bad: list[str] = []
     for item in raw or []:
         key, sep, value = item.partition(":")
-        if not sep or key not in TOGGLES or value not in ("on", "off"):
+        if not sep or value not in RULE_VALUES.get(key, ()) or rules.get(key, value) != value:
             bad.append(item)
             continue
-        if rules.get(key, value) != value:
-            bad.append(item)
-            continue
-        rules[key] = "on" if value == "on" else "off"
+        rules[key] = value
     if bad:
         raise ValidationError(
             f"rules 含非法取值: {bad}", details={"field": "rules", "unknown": bad}
@@ -131,13 +131,8 @@ def slot_bucket(s: ServerSummary) -> str | None:
 
 
 def _rules_ok(s: ServerSummary, rules: Mapping[str, RuleValue], skip: str | None = None) -> bool:
-    """服务器满足全部开关规则；读不到对应掩码时按不满足处理。"""
-    for key, value in rules.items():
-        if key == skip:
-            continue
-        if s.masks is None or toggle_state(s.masks, TOGGLES[key]) != (value == "on"):
-            return False
-    return True
+    """服务器满足全部规则；读不到对应掩码时按不满足处理。"""
+    return all(key == skip or rule_state(s.masks, key) == value for key, value in rules.items())
 
 
 def _base_matches(
@@ -202,7 +197,7 @@ def compute_facets(
 ) -> ServerFacets:
     """每个筛选项选上之后能剩几个服。
 
-    服务器类型与每个开关的计数都撇开自身维度的条件（选了「官服」时「私服」照样显示私服有多少），
+    服务器类型与每条规则各取值的计数都撇开自身维度的条件（选了「官服」时「私服」照样显示私服有多少），
     快捷标签的计数是把它的规则叠到当前条件上（同一开关以标签为准）之后的结果数。
     """
     rules = rules or {}
@@ -215,18 +210,14 @@ def compute_facets(
             type_counts[s.server_type] += 1
 
     typed = [s for s in base if not server_types or s.server_type in server_types]
-    rule_counts: dict[str, RuleFacet] = {}
-    for key, toggle in TOGGLES.items():
-        facet = RuleFacet()
+    rule_counts: dict[str, dict[str, int]] = {}
+    for key, values in RULE_VALUES.items():
+        counts = dict.fromkeys(sorted(values), 0)
         for s in typed:
-            state = toggle_state(s.masks, toggle) if s.masks is not None else None
-            if state is None or not _rules_ok(s, rules, skip=key):
-                continue
-            if state:
-                facet.on += 1
-            else:
-                facet.off += 1
-        rule_counts[key] = facet
+            state = rule_state(s.masks, key)
+            if state is not None and _rules_ok(s, rules, skip=key):
+                counts[state] += 1
+        rule_counts[key] = counts
 
     preset_counts = {
         p.id: sum(1 for s in typed if _rules_ok(s, {**rules, **p.rules})) for p in PRESETS
@@ -237,21 +228,49 @@ def compute_facets(
 _SERVER_TYPE_LABELS = {"OFFICIAL": "官服", "RANKED": "私服", "PRIVATE": "密码服"}
 
 
+def _percent(value: float) -> str:
+    return f"{round(value * 100)}%"
+
+
 def server_filter_options() -> ServerFilterOptions:
+    on_off = [FilterValueOption(value="on", label="开"), FilterValueOption(value="off", label="关")]
+    groups = [
+        FilterGroupOption(
+            id=g.id,
+            label=g.label,
+            rules=[
+                FilterRuleOption(
+                    key=t.rule_key,
+                    label=t.label,
+                    default="on" if t.default else "off",
+                    options=on_off,
+                )
+                for t in g.toggles
+            ],
+        )
+        for g in SETTING_GROUPS
+    ]
+    groups.append(
+        FilterGroupOption(
+            id="scales",
+            label="规则",
+            rules=[
+                FilterRuleOption(
+                    key=sc.rule_key,
+                    label=sc.label,
+                    default=sc.default,
+                    options=[
+                        FilterValueOption(value=o.key, label=_percent(o.value)) for o in sc.options
+                    ],
+                )
+                for sc in SCALE_SETTINGS
+            ],
+        )
+    )
     return ServerFilterOptions(
         server_types=[
             FilterServerTypeOption(id=t, label=_SERVER_TYPE_LABELS[t]) for t in SERVER_TYPES
         ],
         presets=[FilterPresetOption(id=p.id, label=p.label, rules=p.rules) for p in PRESETS],
-        groups=[
-            FilterGroupOption(
-                id=g.id,
-                label=g.label,
-                toggles=[
-                    FilterToggleOption(key=t.rule_key, label=t.label, default=t.default)
-                    for t in g.toggles
-                ],
-            )
-            for g in SETTING_GROUPS
-        ],
+        groups=groups,
     )

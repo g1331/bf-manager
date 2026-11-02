@@ -21,7 +21,7 @@ describe("server filters URL", () => {
       sizes: [64],
       emptySlots: ["10+"],
       serverTypes: ["RANKED"],
-      rules: { "vehicles.L": "off", "misc.3S": "on" },
+      rules: { "vehicles.L": "off", "misc.3S": "on", "scales.BD": "BD3" },
       includeEmpty: true,
       nameFilter: " abc ",
     };
@@ -37,9 +37,13 @@ describe("server filters URL", () => {
 
   it("丢掉过时或被手改的取值", () => {
     const f = filtersFromSearch(
-      "mode=Nope&mode=Rush&size=63&type=UNRANKED&rule=vehicles.L:maybe&rule=bad:on&rule=kits.HERO:off",
+      "mode=Nope&mode=Rush&size=63&type=UNRANKED&rule=vehicles.L:maybe&rule=bad:on&rule=kits.HERO:off&rule=scales.BD:bd3&rule=scales.TC:TC3",
     );
-    expect(f).toEqual({ ...DEFAULT_FILTERS, modes: ["Rush"], rules: { "kits.HERO": "off" } });
+    expect(f).toEqual({
+      ...DEFAULT_FILTERS,
+      modes: ["Rush"],
+      rules: { "kits.HERO": "off", "scales.TC": "TC3" },
+    });
     expect(sanitizeFilters("garbage")).toEqual(DEFAULT_FILTERS);
     expect(sanitizeFilters({ rules: [1, 2], sizes: "64" })).toEqual(DEFAULT_FILTERS);
   });

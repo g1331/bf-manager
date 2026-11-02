@@ -48,3 +48,7 @@ pre-push:
     - name: frontend-typecheck
       root: apps/web/
       run: pnpm typecheck
+
+    - name: frontend-test
+      root: apps/web/
+      run: pnpm test

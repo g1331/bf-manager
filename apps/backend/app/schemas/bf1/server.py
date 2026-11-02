@@ -7,6 +7,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
+from app.core.literals import RosterSlot
+
 
 class ServerSummary(BaseModel):
     """服务器列表项"""
@@ -81,7 +83,7 @@ class RosterPlayer(BaseModel):
 
     persona_id: int
     name: str | None = None
-    slot: Literal["team1", "team2", "queue", "spectator"]
+    slot: RosterSlot
     change: Literal["joined", "left", "seated", "switched"] | None = None
 
 

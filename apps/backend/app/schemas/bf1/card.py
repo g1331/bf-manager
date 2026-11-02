@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Literal
-
 from pydantic import BaseModel, Field
+
+from app.core.literals import CardJobKind, CardJobStatus
 
 
 class CardCredentials(BaseModel):
@@ -20,7 +20,7 @@ class CardPrecheckRequest(CardCredentials):
 
 
 class CardStartRequest(CardPrecheckRequest):
-    kind: Literal["card", "anchor"] = "card"
+    kind: CardJobKind = "card"
 
 
 class CardRestoreRequest(CardCredentials):
@@ -59,7 +59,7 @@ class CardJobView(BaseModel):
     server_name: str
     persona_id: int
     persona_name: str
-    status: Literal["running", "succeeded", "failed", "cancelled", "interrupted"]
+    status: CardJobStatus
     attempts: int
     max_attempts: int
     message: str

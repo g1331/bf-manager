@@ -12,6 +12,7 @@ from app.api.errors import NotFoundError
 from app.api.rate_limit import rate_limit
 from app.api.turnstile import require_turnstile
 from app.api.v1.auth import MAIL_ACCEPTED, clear_session, issue_session
+from app.core.literals import InviteCodeStatus
 from app.models import InviteCode
 from app.schemas.auth import (
     AcceptedResponse,
@@ -175,6 +176,7 @@ async def set_email(
 
 def _invite_item(row: InviteCode, now: datetime) -> InviteCodeItem:
     expires_at = row.expires_at if row.expires_at.tzinfo else row.expires_at.replace(tzinfo=UTC)
+    status: InviteCodeStatus
     if row.used_at is not None:
         status = "used"
     elif row.revoked_at is not None:
@@ -186,7 +188,7 @@ def _invite_item(row: InviteCode, now: datetime) -> InviteCodeItem:
     return InviteCodeItem(
         id=row.id,
         code=row.code,
-        status=status,  # type: ignore[arg-type]
+        status=status,
         expires_at=expires_at,
         used_at=row.used_at,
         created_at=row.created_at,

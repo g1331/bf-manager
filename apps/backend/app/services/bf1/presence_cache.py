@@ -15,6 +15,7 @@ from loguru import logger
 from redis.exceptions import RedisError
 
 from app.core.cache import get_redis
+from app.core.literals import RosterSlot
 from app.services.bf1.server_roster_service import SLOT_NAMES, Rosters
 
 PRESENCE_KEY = "bfm:bf1:presence"
@@ -34,7 +35,7 @@ def encode_rosters(rosters: Rosters) -> dict[str, str]:
     }
 
 
-def decode_entry(raw: str | None) -> tuple[int, str] | None:
+def decode_entry(raw: str | None) -> tuple[int, RosterSlot] | None:
     """hash 值还原成 (game_id, 位置名)；位置名见 SLOT_NAMES。脏值返回 None。"""
     if not raw:
         return None
@@ -62,7 +63,7 @@ async def write_presence(rosters: Rosters) -> None:
 
 async def read_presence(
     pids: list[int],
-) -> tuple[datetime | None, dict[int, tuple[int, str]]]:
+) -> tuple[datetime | None, dict[int, tuple[int, RosterSlot]]]:
     """按 pid 查所在服。返回 (本轮快照时间, pid → (game_id, 位置名))。
 
     缓存过期或 Redis 不可用时时间为 None，调用方据此显示“状态暂不可用”。
@@ -76,7 +77,7 @@ async def read_presence(
     ts_raw, *entries = values
     if not ts_raw:
         return None, {}
-    found: dict[int, tuple[int, str]] = {}
+    found: dict[int, tuple[int, RosterSlot]] = {}
     for pid, raw in zip(pids, entries, strict=True):
         entry = decode_entry(raw)  # type: ignore[arg-type]  # decode_responses=True，只会是 str
         if entry is not None:

@@ -26,11 +26,17 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.literals import RosterSlot
 from app.models.bf1.server_player_count import Bf1ServerPlayerCount
 from app.models.bf1.server_roster import Bf1PlayerName, Bf1ServerPlayerDay
 
 LEFT, TEAM1, TEAM2, QUEUE, SPECTATOR = range(5)
-SLOT_NAMES = {TEAM1: "team1", TEAM2: "team2", QUEUE: "queue", SPECTATOR: "spectator"}
+SLOT_NAMES: dict[int, RosterSlot] = {
+    TEAM1: "team1",
+    TEAM2: "team2",
+    QUEUE: "queue",
+    SPECTATOR: "spectator",
+}
 QUEUE_TIDX = 65535
 
 RETENTION = timedelta(days=7)

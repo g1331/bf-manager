@@ -21,6 +21,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.errors import EAApiError, ForbiddenError
+from app.core.literals import MembershipRole
 from app.models import Server, ServerMembership, User
 from app.services import group_server_service
 from app.services.bf1.server_service import BF1ServerService
@@ -65,7 +66,9 @@ class ServerAuthzService:
         await self.db.refresh(server)
         return server
 
-    async def _upsert_auto_membership(self, *, user_id: int, server_pk: int, role: str) -> None:
+    async def _upsert_auto_membership(
+        self, *, user_id: int, server_pk: int, role: MembershipRole
+    ) -> None:
         """写入 / 更新自动识别出的成员关系。
 
         仅维护「自动」记录（granted_by 为空）：不存在则新建，存在且为自动记录时按 EA 现状更新角色；
@@ -119,7 +122,7 @@ class ServerAuthzService:
             game=game, server_id=server_id, game_id=game_id, name=name
         )
         if owner_pid is not None and owner_pid in persona_ids:
-            role: str | None = "owner"
+            role: MembershipRole | None = "owner"
         elif persona_ids & set(admin_pids):
             role = "admin"
         else:

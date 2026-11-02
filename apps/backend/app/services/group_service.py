@@ -26,6 +26,7 @@ from sqlalchemy.orm import selectinload
 
 from app.api.errors import AppError, NotFoundError
 from app.core.config import get_settings
+from app.core.literals import GroupRole
 from app.models import AuditLog, EaBinding, Group, GroupInvite, GroupMember, User
 from app.models.group import GROUP_ROLES
 from app.services.user_service import lock_user
@@ -136,7 +137,7 @@ async def require_member(
 @dataclass(frozen=True)
 class GroupSummary:
     group: Group
-    role: str
+    role: GroupRole
     member_count: int
 
 
@@ -270,7 +271,7 @@ async def set_member_role(
     group_id: int,
     actor: User,
     target_user_id: int,
-    new_role: str,
+    new_role: GroupRole,
     ip: str | None = None,
 ) -> None:
     if new_role not in GROUP_ROLES:
@@ -454,7 +455,7 @@ async def find_invite(db: AsyncSession, token: str) -> GroupInvite:
 @dataclass(frozen=True)
 class JoinResult:
     group_id: int
-    role: str
+    role: GroupRole
     already_member: bool
 
 

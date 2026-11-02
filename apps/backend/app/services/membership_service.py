@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.api.errors import NotFoundError, ValidationError
+from app.core.literals import MembershipRole
 from app.models import (
     EaBinding,
     Group,
@@ -45,7 +46,7 @@ def _build_item(m: ServerMembership, u: User, s: Server) -> MembershipItem:
         game=s.game,
         server_id=s.server_id,
         server_name=s.name,
-        role=m.role,  # type: ignore[arg-type]
+        role=m.role,
         granted_by=m.granted_by,
         granted_at=m.created_at,
     )
@@ -145,7 +146,7 @@ class MembershipService:
         target_persona_id: int,
         game: str,
         server_id: int,
-        role: str,
+        role: MembershipRole,
         granted_by_user: User,
     ) -> MembershipItem:
         if role not in _ALLOWED_ROLES:

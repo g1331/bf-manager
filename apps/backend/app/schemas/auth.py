@@ -7,6 +7,14 @@ from typing import Literal
 
 from pydantic import BaseModel, EmailStr, Field
 
+from app.core.literals import (
+    InviteCodeStatus,
+    RegisterMode,
+    UserRole,
+    UserStatus,
+    VerificationKind,
+)
+
 
 class CookieBindRequest(BaseModel):
     remid: str = Field(..., min_length=10, description="EA 长效 cookie（必填）")
@@ -43,11 +51,11 @@ class VerificationConfirmRequest(VerificationTokenRequest):
 
 
 class VerificationInfoResponse(BaseModel):
-    kind: Literal["register", "claim", "reset", "set_email"]
+    kind: VerificationKind
     email: str
     persona_name: str | None = None
     # register 时区分 EA 邮箱注册（ea）还是其他邮箱注册（plain）
-    mode: Literal["ea", "plain"] | None = None
+    mode: RegisterMode | None = None
 
 
 class AuthConfigResponse(BaseModel):
@@ -89,7 +97,7 @@ class CookieBindResponse(BaseModel):
 class InviteCodeItem(BaseModel):
     id: int
     code: str
-    status: Literal["unused", "used", "expired", "revoked"]
+    status: InviteCodeStatus
     expires_at: datetime
     used_at: datetime | None = None
     created_at: datetime
@@ -125,10 +133,10 @@ class SessionUser(BaseModel):
 
     id: int
     username: str
-    role: Literal["user", "admin"] = "user"
+    role: UserRole = "user"
     email: str | None = None
     # legacy：旧版 remid 登录建的号，还没设置邮箱；pending_binding：还没绑 EA
-    status: Literal["legacy", "pending_binding", "active"] = "active"
+    status: UserStatus = "active"
     is_frozen: bool = False
     last_login_at: datetime | None = None
     primary_binding: SessionBinding | None = None

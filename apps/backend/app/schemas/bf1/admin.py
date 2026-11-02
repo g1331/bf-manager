@@ -7,6 +7,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from app.core.literals import VipStatus
+
 
 class KickPlayerRequest(BaseModel):
     persona_id: int
@@ -40,7 +42,7 @@ class TimedVipItem(BaseModel):
     persona_id: int
     display_name: str | None = None
     # active：已在 EA 名单里；pending：行动服待生效队列
-    status: Literal["active", "pending"]
+    status: VipStatus
     expires_at: datetime | None = None
     # 剩余秒数：active 是距到期（查询时算），pending 是冻结的剩余时长；为空表示永久
     remaining_seconds: int | None = None

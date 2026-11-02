@@ -30,6 +30,7 @@ from sqlalchemy.orm import selectinload
 from app.api.errors import AppError, NotFoundError, UnauthorizedError, ValidationError
 from app.core.cache import get_redis
 from app.core.config import get_settings
+from app.core.literals import RegisterMode, VerificationKind
 from app.core.passwords import hash_password, verify_password, verify_password_timing_safe
 from app.domain.games.bf1.gateway_errors import gateway_failure
 from app.models import EaBinding, EmailVerification, Group, GroupInvite, InviteCode, User
@@ -728,10 +729,10 @@ async def send_password_changed(email: str, ip: str | None) -> None:
 
 @dataclass(frozen=True)
 class VerificationInfo:
-    kind: str
+    kind: VerificationKind
     email: str
     persona_name: str | None
-    mode: str | None
+    mode: RegisterMode | None
 
 
 async def get_verification_info(db: AsyncSession, token: str) -> VerificationInfo:

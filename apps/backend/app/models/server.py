@@ -5,6 +5,7 @@ from __future__ import annotations
 from sqlalchemy import BigInteger, ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.core.literals import MembershipRole
 from app.models.base import Base, TimestampMixin
 
 
@@ -43,7 +44,7 @@ class ServerMembership(Base, TimestampMixin):
     )
 
     # owner / admin / moderator / viewer
-    role: Mapped[str] = mapped_column(String(16), nullable=False)
+    role: Mapped[MembershipRole] = mapped_column(String(16), nullable=False)
 
     granted_by: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
 

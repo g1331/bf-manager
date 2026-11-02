@@ -8,6 +8,7 @@ from typing import Any
 from sqlalchemy import JSON, DateTime, ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.core.literals import VerificationKind
 from app.models.base import Base
 
 # 验证链接的用途
@@ -22,7 +23,7 @@ class EmailVerification(Base):
     __tablename__ = "email_verifications"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    kind: Mapped[str] = mapped_column(String(16), nullable=False)
+    kind: Mapped[VerificationKind] = mapped_column(String(16), nullable=False)
     # 小写后的邮箱，信就发到这里
     email: Mapped[str] = mapped_column(String(255), index=True, nullable=False)
     # 链接里的 token 只存 sha256，明文只出现在邮件里

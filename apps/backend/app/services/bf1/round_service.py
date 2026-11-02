@@ -15,7 +15,7 @@ import asyncio
 import json
 from collections.abc import Callable
 from datetime import UTC, date, datetime, timedelta
-from typing import Any
+from typing import Any, Literal
 
 from loguru import logger
 from sqlalchemy import (
@@ -353,18 +353,36 @@ def _summary(r: Bf1Round, servers: dict[int, tuple[str, int]]) -> RoundSummary:
         ended_at=_ts(r.ended_at),
         observed_start=r.observed_start,
         settled=r.settled,
-        winner=r.winner if r.winner in (1, 2) else None,  # type: ignore[arg-type]
+        winner=_side(r.winner),
         team1_faction=teams.get("Team1"),
         team2_faction=teams.get("Team2"),
         player_count=r.player_count,
     )
 
 
-def _item(key: str) -> tuple[str, dict[str, Any]]:
+def _item(key: str) -> tuple[Literal["weapon", "vehicle"], dict[str, Any]]:
     """条目键（w:代号 / v:代号）→ (weapon / vehicle, 目录条目)"""
     prefix, code = key.split(":", 1)
-    kind, name = ("weapon", "weapons") if prefix == "w" else ("vehicle", "vehicles")
-    return kind, catalog(name).get(code) or {}
+    if prefix == "w":
+        return "weapon", catalog("weapons").get(code) or {}
+    return "vehicle", catalog("vehicles").get(code) or {}
+
+
+def _side(team: int | None) -> Literal[1, 2] | None:
+    """库里的队伍号 → 1 / 2；别的值（0 表示没分出胜负等）给 None"""
+    if team == 1:
+        return 1
+    if team == 2:
+        return 2
+    return None
+
+
+def _team(team: int) -> Literal[1, 2]:
+    """参战者的队伍号只会是 1 / 2，别的值说明条目坏了"""
+    side = _side(team)
+    if side is None:
+        raise ValueError(f"对局条目的队伍号不对：{team}")
+    return side
 
 
 def _by_item(slots: dict[int, int]) -> dict[str, dict[str, int]]:
@@ -395,7 +413,7 @@ def _weapons(
         c = (career or {}).get(key, {})
         out.append(
             RoundWeapon(
-                kind=kind,  # type: ignore[arg-type]
+                kind=kind,
                 name=entry.get("name"),
                 category=entry.get("category"),
                 image=normalize_map_image_url(entry.get("image")),
@@ -416,7 +434,7 @@ def _stars(stars: dict[int, int]) -> list[RoundStar]:
         kind, entry = _item(rw.items()[idx])
         out.append(
             RoundStar(
-                kind=kind,  # type: ignore[arg-type]
+                kind=kind,
                 name=entry.get("name"),
                 image=normalize_map_image_url(entry.get("image")),
                 stars=n,
@@ -545,7 +563,7 @@ def _player(
     return RoundPlayer(
         persona_id=pid,
         name=name,
-        team=team,  # type: ignore[arg-type]
+        team=_team(team),
         status="finished" if status == FINISHED else "left" if status == LEFT_EARLY else "suspect",
         won=won,
         kills=kills,

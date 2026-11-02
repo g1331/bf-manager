@@ -8,6 +8,7 @@ from typing import Any
 from sqlalchemy import JSON, BigInteger, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.core.literals import CardJobKind, CardJobStatus
 from app.models.base import Base, TimestampMixin
 
 
@@ -16,7 +17,7 @@ class Bf1CardJob(Base, TimestampMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     # card：抽图 + 锚定；anchor：只对当前图池锚定
-    kind: Mapped[str] = mapped_column(String(16), nullable=False)
+    kind: Mapped[CardJobKind] = mapped_column(String(16), nullable=False)
     game_id: Mapped[int] = mapped_column(BigInteger, index=True, nullable=False)
     server_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     server_name: Mapped[str] = mapped_column(
@@ -35,7 +36,7 @@ class Bf1CardJob(Base, TimestampMixin):
     token_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     client_ip: Mapped[str | None] = mapped_column(String(64), nullable=True)
     # running / succeeded / failed / cancelled / interrupted
-    status: Mapped[str] = mapped_column(String(16), index=True, nullable=False)
+    status: Mapped[CardJobStatus] = mapped_column(String(16), index=True, nullable=False)
     attempts: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)
     # 开始前的服务器设置与轮换（card_engine.Snapshot），含服务器密码，加密存放
     snapshot_enc: Mapped[str | None] = mapped_column(Text, nullable=True)

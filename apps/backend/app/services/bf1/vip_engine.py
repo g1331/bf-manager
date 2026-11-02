@@ -15,9 +15,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
+from typing import Final
 
-ACTIVE = "active"
-PENDING = "pending"
+from app.core.literals import VipStatus
+
+ACTIVE: Final = "active"
+PENDING: Final = "pending"
 
 DAY = timedelta(days=1)
 # EA 每台服的 VIP 位
@@ -28,7 +31,7 @@ QUEUE_LIMIT = 100
 
 @dataclass(frozen=True)
 class Entry:
-    status: str
+    status: VipStatus
     # active 必有：到期时刻
     expires_at: datetime | None = None
     # pending：冻结的剩余时长，None 表示永久

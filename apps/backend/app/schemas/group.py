@@ -3,13 +3,18 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import BaseModel, Field
 
-GroupRole = Literal["owner", "admin"]
-# 链接上的角色要低于发链接的群主，所以只能是 admin；保留字段，以后加角色时接口不用改
-InviteRole = Literal["admin"]
+from app.core.literals import (
+    GroupAccountStatus,
+    GroupRole,
+    GroupServerStatus,
+    GroupServerVia,
+    InviteRole,
+    RosterSlot,
+)
 
 
 class GroupCreateRequest(BaseModel):
@@ -124,7 +129,7 @@ class GroupAuditPage(BaseModel):
 
 # ===== 服务账号与绑服 =====
 
-AccountStatus = Literal["ok", "invalid"]
+AccountStatus = GroupAccountStatus
 
 
 class GroupAccountItem(BaseModel):
@@ -161,10 +166,10 @@ class GroupServerItem(BaseModel):
     game_id: int | None
     name: str | None
     bound_by_name: str | None
-    bound_via: Literal["owner", "admin"]
+    bound_via: GroupServerVia
     executor: GroupServerExecutor | None
     # active：群成员在这台服上有权限；revoked：绑定人已不是服主或管理员，权限失效
-    status: Literal["active", "revoked"]
+    status: GroupServerStatus
     status_reason: str | None
     # 执行账号的问题（没指定、登录失败、不是管理员），不影响权限，但服管操作会失败
     executor_problem: str | None
@@ -190,8 +195,8 @@ class ServerGroupItem(BaseModel):
     group_id: int
     group_name: str
     bound_by_name: str | None
-    bound_via: Literal["owner", "admin"]
-    status: Literal["active", "revoked"]
+    bound_via: GroupServerVia
+    status: GroupServerStatus
     created_at: datetime
 
 
@@ -201,7 +206,7 @@ class ServerGroupListResponse(BaseModel):
 
 # ===== 群成员在玩状态（右侧好友栏） =====
 
-PresenceSlot = Literal["team1", "team2", "queue", "spectator"]
+PresenceSlot = RosterSlot
 
 
 class MemberServer(BaseModel):

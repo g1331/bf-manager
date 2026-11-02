@@ -20,6 +20,7 @@ from app.domain.games.bf1.maps import (
     translate_mode_name,
     translate_region,
 )
+from app.domain.games.bf1.server_filter_catalog import MASK_FIELDS, rule_mask_field
 from app.domain.games.bf1.server_settings import localize_settings, settings_from_masks
 from app.models import Server
 from app.models.bf1 import Bf1GameInstance
@@ -301,6 +302,13 @@ def _to_extras(raw: dict[str, Any]) -> ServerExtras:
     )
 
 
+def _has_masks(items: list[ServerSummary], fields: set[str]) -> bool:
+    """缓存里每个所需的掩码字段至少有一台服读得出来，才能在本地按规则筛。"""
+    return all(
+        any(s.masks is not None and getattr(s.masks, f) is not None for s in items) for f in fields
+    )
+
+
 async def _settings_from_snapshot(game_id: int) -> tuple[dict[str, Any], dict[str, str]]:
     cached = await read_server_snapshot() or []
     hit = next((s for s in cached if s.game_id == game_id and s.masks is not None), None)
@@ -352,18 +360,20 @@ class BF1ServerService:
         # 或缓存来自 searchServers 回退（没有掩码与服务器类型）时改走 EA searchServers。
         use_cache = not include_empty and not (keyword or "").strip()
         cached = await read_server_snapshot() if use_cache else None
-        if cached is not None and (
-            (rule_map and not any(s.masks for s in cached))
-            or (server_types and not any(s.server_type for s in cached))
+        if cached is not None and not (
+            _has_masks(cached, {rule_mask_field(k) for k in rule_map})
+            and (not server_types or any(s.server_type for s in cached))
         ):
             cached = None
         if cached is not None:
             matched = filter_summaries(cached, **criteria)
             matched.sort(key=lambda s: s.player_count, reverse=True)
+            # 旧格式或 searchServers 回退写的缓存没有掩码与类型，数不出来就不给计数，免得全报 0
+            reliable = _has_masks(cached, set(MASK_FIELDS)) and any(s.server_type for s in cached)
             return ServerListResponse(
                 total=len(matched),
                 items=matched[:limit],
-                facets=compute_facets(cached, **criteria),
+                facets=compute_facets(cached, **criteria) if reliable else None,
             )
         async with get_bf1_client(self.db) as client:
             res = expect_ok(

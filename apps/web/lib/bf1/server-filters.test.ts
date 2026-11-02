@@ -4,6 +4,7 @@ import {
   filtersFromSearch,
   filtersToSearch,
   presetActive,
+  pruneRules,
   rulesToParams,
   sanitizeFilters,
   setRule,
@@ -68,5 +69,26 @@ describe("rules", () => {
   it("单个开关设为不限即删除", () => {
     expect(setRule({ "kits.HERO": "off" }, "kits.HERO", null)).toEqual({});
     expect(setRule({}, "kits.HERO", "on")).toEqual({ "kits.HERO": "on" });
+  });
+});
+
+describe("pruneRules", () => {
+  it("按目录裁掉不存在的规则键与取值", () => {
+    const catalog = {
+      groups: [
+        {
+          rules: [
+            { key: "kits.HERO", options: [{ value: "on" }, { value: "off" }] },
+            { key: "scales.BD", options: [{ value: "BD1" }, { value: "BD3" }] },
+          ],
+        },
+      ],
+    };
+    expect(
+      pruneRules(
+        { "kits.HERO": "off", "kits.X": "on", "misc.RETIRED": "off", "scales.BD": "BD9" },
+        catalog,
+      ),
+    ).toEqual({ "kits.HERO": "off" });
   });
 });

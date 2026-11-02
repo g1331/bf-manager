@@ -189,3 +189,14 @@ export function setRule(
   else next[key] = value;
   return next;
 }
+
+/** 只留目录里存在的规则键与取值；已下线或手改出来的规则发给后端会让整个查询失败 */
+export function pruneRules(
+  rules: Record<string, RuleValue>,
+  catalog: { groups: { rules: { key: string; options: { value: string }[] }[] }[] },
+): Record<string, RuleValue> {
+  const allowed = new Map(
+    catalog.groups.flatMap((g) => g.rules.map((r) => [r.key, r.options.map((o) => o.value)])),
+  );
+  return Object.fromEntries(Object.entries(rules).filter(([k, v]) => allowed.get(k)?.includes(v)));
+}

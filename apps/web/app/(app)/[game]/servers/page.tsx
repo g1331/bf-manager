@@ -52,6 +52,7 @@ import {
   filtersToSearch,
   loadStoredFilters,
   presetActive,
+  pruneRules,
   rulesToParams,
   setRule,
   storeFilters,
@@ -112,7 +113,19 @@ function ServerBrowser({ game, initial }: { game: string; initial: FilterState }
   const router = useRouter();
   // 进详情再返回时保留已展开的条数
   const [visibleCount, setVisibleCount] = usePageState(`${game}-servers-count`, PAGE_SIZE);
-  const [filters, setFilters] = useState<FilterState>(initial);
+  const [rawFilters, setFilters] = useState<FilterState>(initial);
+  const filterOptions = useQuery(bf1Queries.serverFilterOptions());
+  // URL 或 localStorage 里可能带着已下线、手改出来的规则，按目录裁掉再用；裁掉的随下次写回一并清除
+  const filters = useMemo(
+    () =>
+      filterOptions.data
+        ? { ...rawFilters, rules: pruneRules(rawFilters.rules, filterOptions.data) }
+        : rawFilters,
+    [rawFilters, filterOptions.data],
+  );
+  // 带规则时等目录到了再查，免得把不认识的规则发给后端换来整单失败；目录拉不到就照原样发
+  const catalogReady =
+    Object.keys(rawFilters.rules).length === 0 || !!filterOptions.data || filterOptions.isError;
 
   // 筛选写回 URL 与 localStorage。名称与「含空服」只放 URL：前者容易忘了清，后者每次都要请求 EA
   useEffect(() => {
@@ -156,10 +169,11 @@ function ServerBrowser({ game, initial }: { game: string; initial: FilterState }
 
   const servers = useQuery({
     ...bf1Queries.servers(debouncedSelection, debouncedName),
+    // 防抖值追上裁剪后的规则才发请求
+    enabled: catalogReady && debouncedSelection.rules.join() === selection.rules.join(),
     // 刷新 / 切换筛选期间保留上一次结果，避免请求期间 servers.data 变 undefined 导致列表与筛选面板闪断。
     placeholderData: keepPreviousData,
   });
-  const filterOptions = useQuery(bf1Queries.serverFilterOptions());
 
   // servers.data 为 undefined 时回落空数组；包进 useMemo 保持引用稳定，
   // 避免每次 render 生成新数组导致下游 filtered useMemo 失效（exhaustive-deps）。

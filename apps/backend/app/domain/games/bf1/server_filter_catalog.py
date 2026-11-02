@@ -240,6 +240,15 @@ def rule_state(masks: object, rule_key: str) -> str | None:
     return option.key if option else None
 
 
+def rule_mask_field(rule_key: str) -> str:
+    """判读这条规则要用的 ServerMasks 字段。"""
+    toggle = TOGGLES.get(rule_key)
+    return GROUPS[toggle.group].mask_field if toggle else "scale"
+
+
+MASK_FIELDS: tuple[str, ...] = ("vehicle", "weapon", "kit", "setting", "scale")
+
+
 def to_ea_filter(rules: Mapping[str, RuleValue]) -> dict[str, dict[str, str]]:
     """把规则转成 filterJson 里的分组：{"vehicles": {"L": "off"}, "scales": {"BD3": "on"}}。"""
     out: dict[str, dict[str, str]] = {}

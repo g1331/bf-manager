@@ -275,3 +275,41 @@ async def test_detail_settings_fall_back_to_snapshot(monkeypatch: pytest.MonkeyP
     # 不在快照里、或没有掩码的服仍然为空
     assert await server_service._settings_from_snapshot(8) == ({}, {})
     assert await server_service._settings_from_snapshot(9) == ({}, {})
+
+
+@pytest.mark.parametrize(
+    "masks",
+    [None, ServerMasks(), ServerMasks(weapon=511, kit=527, setting=54715, scale=9362)],
+    ids=["no-masks", "empty-masks", "no-vehicle-mask"],
+)
+async def test_search_falls_back_when_needed_mask_missing(
+    monkeypatch: pytest.MonkeyPatch, masks: ServerMasks | None
+) -> None:
+    """规则要用的那组掩码整份缓存都读不出时，本地只能筛出 0 台，得交给 EA。"""
+
+    async def fake_read() -> list[ServerSummary]:
+        return [_s(1, "RANKED", masks)]
+
+    client = _FakeClient()
+    monkeypatch.setattr(server_service, "read_server_snapshot", fake_read)
+    monkeypatch.setattr(server_service, "get_bf1_client", lambda _db: client)
+    await BF1ServerService(object()).search(rules=["vehicles.L:off"])  # type: ignore[arg-type]
+    assert client.filters and client.filters[0]["vehicles"] == {"L": "off"}
+
+
+@pytest.mark.parametrize(
+    "item",
+    [_s(1, "RANKED", None), ServerSummary(server_id=0, game_id=1, name="old", player_count=3)],
+    ids=["search-source", "old-format"],
+)
+async def test_browse_without_masks_hides_facets(
+    monkeypatch: pytest.MonkeyPatch, item: ServerSummary
+) -> None:
+    """searchServers 回退或旧格式缓存数不出玩法计数，不能报成 0。"""
+
+    async def fake_read() -> list[ServerSummary]:
+        return [item]
+
+    monkeypatch.setattr(server_service, "read_server_snapshot", fake_read)
+    res = await BF1ServerService(object()).search()  # type: ignore[arg-type]
+    assert res.total == 1 and res.facets is None

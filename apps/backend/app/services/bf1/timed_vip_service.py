@@ -320,7 +320,7 @@ async def _execute_plan(
                         message=str(err)[:256],
                     )
                 )
-                if err.no_permission or err.retryable:
+                if err.no_permission or err.ea_unavailable:
                     return removed, added
             await asyncio.sleep(EA_WRITE_INTERVAL)
     return removed, added
@@ -676,7 +676,7 @@ async def _expire_with(
                     error_message=str(err)[:256],
                     executor_persona_id=provider.executor_persona_id,
                 )
-                if err.retryable:
+                if err.ea_unavailable:
                     break  # EA 暂时不可用，剩下的等下一轮
             await asyncio.sleep(EA_WRITE_INTERVAL)
         await ledger.flush()

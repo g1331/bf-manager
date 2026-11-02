@@ -475,3 +475,24 @@ async def test_checkvip_stops_once_executor_has_no_permission(admin_client, test
     assert len([c for c in ea.calls if c[0] == "remove"]) == 1
     assert result.removed == 0 and len(result.failures) == 1
     assert result.failures[0].message == "账号无权限"
+
+
+async def test_checkvip_skips_player_hit_by_ea_backend_error(admin_client, test_session):
+    """EA 对某个玩家报后端内部异常：跳过他接着做，不能让一个人卡住整张名单"""
+    _, admin = admin_client
+    ea = _operation_ea(vips={500: "Old", 501: "Older"})
+    service = _service(test_session, admin, ea)
+    await service.revoke(500)
+    await service.revoke(501)
+    npe = EAGatewayError(
+        "EA后端未知错误",
+        kind="ea",
+        code=-32603,
+        ea_message="Internal Error: java.lang.NullPointerException",
+    )
+    ea.fail["remove"] = npe
+
+    result = await service.apply(restart=False)
+
+    assert len([c for c in ea.calls if c[0] == "remove"]) == 2
+    assert len(result.failures) == 2

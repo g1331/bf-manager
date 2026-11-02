@@ -583,6 +583,15 @@ class _BF1GatewayBase:
             }
         )
 
+    def _mark_desktop_rejected(self, error: str) -> None:
+        """EA 回 login_required：remid/sid 已被作废，和经典链路登录失败一样记成凭据失效。
+
+        经典 access_token / session 可能还缓存着没过期，只看那条链路会把这个号一直当成好的。
+        """
+        if error == "login_required":
+            self.credentials_rejected = True
+            logger.error(f"BF1账号{self.pid}EA Desktop 通道凭据失效，需要重新登录")
+
     async def _ensure_desktop_token(self) -> str | None:
         """确保 EA Desktop 通道的 access_token 有效，必要时刷新。
 
@@ -628,6 +637,10 @@ class _BF1GatewayBase:
                 location = response.headers.get("Location") or response.headers.get("location")
                 if response.status != 302 or not location:
                     body = await response.text()
+                    error = ""
+                    with contextlib.suppress(Exception):
+                        error = json.loads(body).get("error", "")
+                    self._mark_desktop_rejected(error)
                     logger.error(
                         f"BF1账号{self.pid}获取 desktop_access_token 失败: "
                         f"status={response.status} body={body[:300]}"
@@ -643,6 +656,7 @@ class _BF1GatewayBase:
         token = token_values[0] if token_values else None
         expires_in_str = (params.get("expires_in") or ["0"])[0]
         if not token:
+            self._mark_desktop_rejected((params.get("error") or [""])[0])
             logger.error(
                 f"BF1账号{self.pid}desktop_access_token 解析失败，"
                 f"location={location.split('?', 1)[0].split('#', 1)[0][:300]}"

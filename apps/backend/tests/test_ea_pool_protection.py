@@ -356,13 +356,15 @@ async def test_transient_error_inside_pool_client_is_not_held_against_account(
     assert refreshed.failure_count == 0
 
 
-async def test_transient_error_after_session_rejection_still_counts_as_failure(
-    test_session, fake_pool_client
+@pytest.mark.parametrize("flag", ["session_rejected", "credentials_rejected"])
+async def test_transient_error_after_ea_rejected_account_still_counts_as_failure(
+    test_session, fake_pool_client, flag: str
 ) -> None:
+    """比如 Desktop 链路回 login_required：请求按暂时性故障报 503，但账号本身已被 EA 作废"""
     account = await _seed_account(test_session, failure_count=2)
     with pytest.raises(EAApiError):
         async with gateway_factory.get_bf1_client(test_session) as client:
-            client.session_rejected = True
+            setattr(client, flag, True)
             raise EAApiError(code="EA_X", message="Session无效", retryable=True)
     refreshed = await _reload(test_session, account.id)
     assert refreshed.failure_count == 3

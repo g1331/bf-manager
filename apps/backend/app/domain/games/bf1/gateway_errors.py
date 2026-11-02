@@ -14,7 +14,7 @@ ErrorKind = Literal["network", "bad_response", "auth", "ea", "internal"]
 # EA 拒绝重复添加 VIP 时的原文
 ALREADY_VIP = "RspErrUserIsAlreadyVip()"
 
-# EA 自己超时、会话失效（api_call 已重登重放过一次仍失效），换个时间或账号再试可能就好
+# EA 自己超时、会话失效（api_call 已重登重放过一次仍失效）：EA 这会儿整体不可用
 _TRANSIENT_EA_CODES = frozenset({-32501, -32504})
 _TRANSIENT_EA_MESSAGES = frozenset(
     {
@@ -27,6 +27,25 @@ _TRANSIENT_EA_MESSAGES = frozenset(
 _NOT_FOUND_EA_CODES = frozenset({-34501, -32851, -32856, -35150})
 _NO_PERMISSION_EA_CODES = frozenset({-35160})
 _NO_PERMISSION_EA_MESSAGES = frozenset({"Internal Error: org.apache.thrift.TApplicationException"})
+# 已知的业务拒绝：方法不存在 / 参数不对 / 无法处置管理员 / 服务器未开启，以及上面的查无此物、没权限。
+# 没列在这里的 EA 错误（NullPointerException 这类后端内部异常、没见过的错误码）不能证明请求
+# 本身有问题，按暂时性故障处理
+_REJECTED_EA_CODES = (
+    frozenset({-32601, -32602, -32857, -32858}) | _NOT_FOUND_EA_CODES | _NO_PERMISSION_EA_CODES
+)
+_REJECTED_EA_MESSAGES = (
+    frozenset(
+        {
+            "Authentication failed",
+            "com.fasterxml.jackson.core.JsonParseException",
+            "ServerNotRestartableException",
+            "InvalidLevelIndexException",
+        }
+    )
+    | _NO_PERMISSION_EA_MESSAGES
+)
+# RSP 的业务错误都是 RspErrXxx()，如 RspErrUserIsAlreadyVip()、RspErrServerBanMax()
+_REJECTED_EA_MESSAGE_PREFIX = "RspErr"
 
 
 class EAGatewayError(str):
@@ -66,18 +85,35 @@ class EAGatewayError(str):
         return (_rebuild, (str(self), self.kind, self.code, self.ea_message))
 
     @property
-    def retryable(self) -> bool:
-        """暂时性故障：过一会儿或换个账号重试可能成功"""
-        if self.kind in ("network", "bad_response", "auth"):
-            return True
-        if self.kind == "ea":
-            return self.code in _TRANSIENT_EA_CODES or self.ea_message in _TRANSIENT_EA_MESSAGES
-        return False
-
-    @property
     def rejected(self) -> bool:
         """EA 明确拒绝了这次请求（玩家不存在、没有权限、名单已满……），原样重试不会变"""
-        return self.kind == "ea" and not self.retryable
+        if self.kind != "ea":
+            return False
+        message = self.ea_message or ""
+        return (
+            self.code in _REJECTED_EA_CODES
+            or message in _REJECTED_EA_MESSAGES
+            or message.startswith(_REJECTED_EA_MESSAGE_PREFIX)
+        )
+
+    @property
+    def retryable(self) -> bool:
+        """暂时性故障：过一会儿或换个账号重试可能成功。EA 没明确拒绝的错误都算"""
+        return self.kind in ("network", "bad_response", "auth") or (
+            self.kind == "ea" and not self.rejected
+        )
+
+    @property
+    def ea_unavailable(self) -> bool:
+        """EA 这会儿整体不可用（连不上、超时、会话失效）：接着发别的请求也会失败。
+
+        比 retryable 窄：EA 后端对某个玩家报的内部异常是 retryable，但不代表别人的请求也会失败。
+        """
+        if self.kind in ("network", "bad_response", "auth"):
+            return True
+        return self.kind == "ea" and (
+            self.code in _TRANSIENT_EA_CODES or self.ea_message in _TRANSIENT_EA_MESSAGES
+        )
 
     @property
     def not_found(self) -> bool:

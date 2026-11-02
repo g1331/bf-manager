@@ -55,14 +55,47 @@ def _ea(text: str, code: int | None = -32603, message: str | None = None) -> EAG
             False,
         ),
         (_ea("玩家不存在", code=-32856), False, True),
+        (_ea("无法处置管理员", code=-32857), False, True),
         (_ea("玩家已经是VIP了", message=ALREADY_VIP), False, True),
+        (_ea("服务器BAN位已满", message="RspErrServerBanMax()"), False, True),
         (_ea("账号无权限", message=NO_PERMISSION), False, True),
-        (_ea("Weird()", code=-1, message="Weird()"), False, True),
+        (_ea("地图编号无效", message="InvalidLevelIndexException"), False, True),
+        # 没列入已知拒绝的 EA 错误：后端内部异常、没见过的错误，不能证明请求本身有问题
+        (
+            _ea("EA后端未知错误", message="Internal Error: java.lang.NullPointerException"),
+            True,
+            False,
+        ),
+        (_ea("Weird()", code=-1, message="Weird()"), True, False),
     ],
 )
 def test_classification(err: EAGatewayError, retryable: bool, rejected: bool) -> None:
     assert err.retryable is retryable
     assert err.rejected is rejected
+
+
+def test_ea_unavailable_is_narrower_than_retryable() -> None:
+    assert EAGatewayError("网络超时!", kind="network").ea_unavailable
+    assert _ea("连接超时", code=-32504).ea_unavailable
+    npe = _ea("EA后端未知错误", message="Internal Error: java.lang.NullPointerException")
+    assert npe.retryable and not npe.ea_unavailable
+    assert not _ea("玩家不存在", code=-32856).ea_unavailable
+
+
+async def test_ea_backend_exception_from_error_handle_is_retryable_503() -> None:
+    """走真实的 error_handle：-32603 + NullPointerException 不能变成 422"""
+    from app.domain.games.bf1.gateway import BF1GatewayClient
+
+    client = BF1GatewayClient(pid=7)
+    client.check_login = True
+    res = await client.error_handle(
+        {"error": {"code": -32603, "message": "Internal Error: java.lang.NullPointerException"}}
+    )
+    await client.http_session.close()
+    with pytest.raises(EAApiError) as info:
+        expect_ok(res, code="X")
+    assert not isinstance(info.value, EARejectedError)
+    assert info.value.status_code == 503 and info.value.retryable is True
 
 
 def test_not_found_and_no_permission() -> None:
@@ -362,3 +395,64 @@ async def test_email_lookup_without_match_returns_none(test_session, monkeypatch
 
     _patch_email_pool(monkeypatch, {"personas": []})
     assert await lookup_ea_by_email(test_session, "a@example.com") is None
+
+
+# ----------------------------------------------------------------------------- EA Desktop 凭据失效
+
+
+class _OAuthResponse:
+    def __init__(self, status: int, headers: dict[str, str], body: str = "") -> None:
+        self.status = status
+        self.headers = headers
+        self._body = body
+
+    async def text(self) -> str:
+        return self._body
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *exc):
+        return False
+
+
+class _OAuthSession:
+    def __init__(self, response: _OAuthResponse) -> None:
+        self.response = response
+
+    def get(self, **kwargs):
+        return self.response
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        _OAuthResponse(302, {"Location": "https://pc.ea.com#error=login_required"}),
+        _OAuthResponse(200, {}, '{"error": "login_required", "error_description": "x"}'),
+    ],
+)
+async def test_desktop_login_required_marks_credentials_rejected(response) -> None:
+    """经典链路的登录态还缓存着、Desktop 链路被 EA 作废：要记成凭据失效，号池才会累计失败"""
+    from app.domain.games.bf1.gateway import BF1GatewayClient
+
+    client = BF1GatewayClient(pid=7, remid="r", sid="s")
+    await client.http_session.close()
+    client.http_session = _OAuthSession(response)  # type: ignore[assignment]
+
+    res = await client.getPersonasByName("someone")
+
+    assert client.credentials_rejected is True
+    with pytest.raises(EAApiError) as info:
+        expect_ok(res, code="EA_PERSONA_SEARCH_FAILED")
+    assert info.value.retryable is True
+
+
+async def test_desktop_server_error_is_not_credential_rejection() -> None:
+    from app.domain.games.bf1.gateway import BF1GatewayClient
+
+    client = BF1GatewayClient(pid=7, remid="r", sid="s")
+    await client.http_session.close()
+    client.http_session = _OAuthSession(_OAuthResponse(500, {}, "oops"))  # type: ignore[assignment]
+
+    await client.getPersonasByName("someone")
+    assert client.credentials_rejected is False

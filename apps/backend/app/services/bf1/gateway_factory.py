@@ -70,6 +70,10 @@ async def get_bf1_client(db: AsyncSession) -> AsyncIterator[BF1GatewayClient]:
     # 避开 Blaze 正在用的号：Gateway 给它刷新 desktop token 会把 Blaze 会话踢掉
     blaze = blaze_persona()
     creds = await account_service.pick_available(avoid=() if blaze is None else (blaze,))
+    if creds.persona_id == blaze_persona():
+        # Blaze 在我们查库的同时登记了同一个号（见 blaze_service 选号处）：带着避让再挑一次。
+        # 只剩这个号可用时重挑的结果不变，照常用它
+        creds = await account_service.pick_available(avoid=(creds.persona_id,))
     # 拿着号的这段时间登记为在用，Blaze 选号时避开它
     with gateway_using(creds.persona_id):
 

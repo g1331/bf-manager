@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 import pytest
@@ -168,3 +169,68 @@ async def test_gateway_client_registers_account_while_held(monkeypatch) -> None:
         async with gateway_factory.get_bf1_client(None):  # type: ignore[arg-type]
             raise RuntimeError("boom")
     assert ea_account_service.gateway_personas() == set()
+
+
+@pytest.mark.parametrize("blaze_first", [True, False])
+async def test_gateway_and_blaze_picking_at_once_end_on_different_accounts(
+    monkeypatch, blaze_first: bool
+) -> None:
+    """进程刚启动时两边同时挑号、查库期间都看不到对方：后返回的一方要发现撞号并重挑。"""
+    from app.services.bf1 import gateway_factory
+
+    accounts = {
+        pid: EACredentials(persona_id=pid, display_name=None, remid="r", sid="s") for pid in (1, 2)
+    }
+    both = asyncio.Event()
+    calls: list[set[int]] = []
+
+    class _Service:
+        def __init__(self, db: Any) -> None:
+            pass
+
+        async def pick_available(self, *, avoid: Any = ()) -> EACredentials:
+            avoid = set(avoid)
+            calls.append(avoid)
+            if len(calls) == 2:
+                both.set()
+            await both.wait()
+            return next((c for pid, c in accounts.items() if pid not in avoid), accounts[1])
+
+        async def mark_used(self, persona_id: int) -> None:
+            pass
+
+        async def mark_failure(self, persona_id: int) -> None:
+            pass
+
+    used: list[int] = []
+
+    class _Client:
+        access_token = "t"
+        credentials_rejected = session_rejected = False
+        check_login = False
+        http_session = None
+
+        def __init__(self, *, pid: int, **kw: Any) -> None:
+            used.append(pid)
+
+    async def login_ok(self: Any, c: EACredentials) -> _Socket:
+        return _Socket()
+
+    monkeypatch.setattr(blaze_service, "EAAccountService", _Service)
+    monkeypatch.setattr(gateway_factory, "EAAccountService", _Service)
+    monkeypatch.setattr(gateway_factory, "BF1GatewayClient", _Client)
+    monkeypatch.setattr(_BlazeConnectionPool, "_connect_and_login", login_ok)
+    pool = _BlazeConnectionPool()
+
+    async def gateway() -> None:
+        async with gateway_factory.get_bf1_client(None):  # type: ignore[arg-type]
+            await asyncio.sleep(0)
+
+    blaze = pool.get_socket(None)  # type: ignore[arg-type]
+    try:
+        await asyncio.gather(*((blaze, gateway()) if blaze_first else (gateway(), blaze)))
+        # 两边第一次都挑到 1 号；只有一方重挑，最后各用各的号
+        assert len(calls) == 3
+        assert used[0] != ea_account_service.blaze_persona()
+    finally:
+        ea_account_service.set_blaze_persona(None)

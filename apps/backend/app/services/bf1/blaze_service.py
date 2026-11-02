@@ -125,8 +125,18 @@ class _BlazeConnectionPool:
             await self._close_locked()
 
             if self._creds is None:
-                # 避开 Gateway 正拿在手里的号：在途请求随后刷新 desktop token 会把新会话踢掉
-                self._creds = await EAAccountService(db).pick_available(avoid=gateway_personas())
+                # 避开 Gateway 正拿在手里的号：在途请求随后刷新令牌或完整登录会把新会话踢掉
+                accounts = EAAccountService(db)
+                self._creds = await accounts.pick_available(avoid=gateway_personas())
+                # 挑完立刻登记，再看 Gateway 有没有在我们查库的同时拿走同一个号（进程刚启动时两边
+                # 几乎同时挑号，2026-11-02 14:30 生产就撞上了：Gateway 完整登录 90 秒后 Blaze 被注销）。
+                # 两边都是「挑完、登记、再检查」，中间没有 await，后返回的一方一定看得到先返回的
+                # 一方的登记，只有它重挑
+                set_blaze_persona(self._creds.persona_id)
+                if self._creds.persona_id in gateway_personas():
+                    self._creds = await accounts.pick_available(
+                        avoid=gateway_personas() | {self._creds.persona_id}
+                    )
             # 登录前就登记，Gateway 从这时起避开这个号，免得登录刚完成就被它刷新令牌踢掉
             set_blaze_persona(self._creds.persona_id)
 

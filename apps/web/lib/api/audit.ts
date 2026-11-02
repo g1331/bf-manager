@@ -1,7 +1,7 @@
 /**
  * 审计日志 API 客户端
  */
-import { api } from "@/lib/api-client";
+import { api, type RequestOpts } from "@/lib/api-client";
 
 export interface AuditLogItem {
   id: number;
@@ -74,13 +74,13 @@ export interface ListAuditLogsParams {
 }
 
 export const auditApi = {
-  list: (params: ListAuditLogsParams = {}) => {
+  list: (params: ListAuditLogsParams = {}, opts?: RequestOpts) => {
     const qs = new URLSearchParams();
     if (params.game) qs.set("game", params.game);
     if (params.serverId !== undefined) qs.set("server_id", String(params.serverId));
     if (params.action) qs.set("action", params.action);
     qs.set("page", String(params.page ?? 1));
     qs.set("page_size", String(params.pageSize ?? 20));
-    return api.get<AuditLogPage>(`/audit-logs?${qs.toString()}`);
+    return api.get<AuditLogPage>(`/audit-logs?${qs.toString()}`, opts);
   },
 };

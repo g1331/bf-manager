@@ -22,7 +22,6 @@ import {
 } from "@/components/ui/sheet";
 import { ResponsiveTable, type Column } from "@/components/common/ResponsiveTable";
 import {
-  auditApi,
   auditGameLabel,
   type AuditLogItem,
   GROUP_ACTION_LABEL,
@@ -30,6 +29,7 @@ import {
   SITE_ACTION_LABEL,
 } from "@/lib/api/audit";
 import { useSession } from "@/hooks/useSession";
+import { auditQueries } from "@/lib/queries/audit";
 
 const ACTION_LABEL: Record<string, string> = {
   kick_player: "踢人",
@@ -76,15 +76,7 @@ export default function AdminAuditPage() {
   }, [session.isLoading, session.isError, session.data, router]);
 
   const logs = useQuery({
-    queryKey: ["audit-logs", "admin", filters, page],
-    queryFn: () =>
-      auditApi.list({
-        game: filters.game || undefined,
-        serverId: filters.serverId ? Number(filters.serverId) : undefined,
-        action: filters.action || undefined,
-        page,
-        pageSize: 20,
-      }),
+    ...auditQueries.admin(filters, page),
     enabled: isAdmin,
   });
 

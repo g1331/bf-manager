@@ -8,12 +8,12 @@ import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
 import { PlayerAvatar } from "@/components/common/PlayerAvatar";
 import {
-  groupsApi,
   type GroupPresence,
   type MemberServer,
   type PresenceMember,
   type PresenceSlot,
 } from "@/lib/api/groups";
+import { groupQueries } from "@/lib/queries/groups";
 
 /**
  * 右侧好友 / 派对侧栏，默认收起：
@@ -30,8 +30,7 @@ export function FriendsRail() {
   const session = useSession();
   const active = session.data?.status === "active";
   const presence = useQuery({
-    queryKey: ["groups", "presence"],
-    queryFn: groupsApi.presence,
+    ...groupQueries.presence(),
     enabled: active,
     // 后端快照每分钟一轮，收起时也轮询，入口上的在服人数才跟得上
     refetchInterval: 60_000,

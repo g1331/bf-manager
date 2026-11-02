@@ -29,6 +29,7 @@ import { ResponsiveTable, type Column } from "@/components/common/ResponsiveTabl
 import { useSession } from "@/hooks/useSession";
 import { membershipsApi, type MembershipItem, type MembershipRole } from "@/lib/api/memberships";
 import { ApiException } from "@/lib/api-client";
+import { adminKeys, adminQueries } from "@/lib/queries/admin";
 
 const ROLE_LABEL: Record<MembershipRole, string> = {
   viewer: "查看者",
@@ -53,8 +54,7 @@ export default function MembershipsAdminPage() {
   const [pendingDelete, setPendingDelete] = useState<MembershipItem | null>(null);
 
   const list = useQuery({
-    queryKey: ["memberships"],
-    queryFn: () => membershipsApi.list({ pageSize: 200 }),
+    ...adminQueries.memberships(),
     enabled: session.data?.role === "admin",
   });
 
@@ -69,7 +69,7 @@ export default function MembershipsAdminPage() {
     mutationFn: (values: UpsertValues) => membershipsApi.upsert(values),
     onSuccess: () => {
       toast.success("已写入权限");
-      qc.invalidateQueries({ queryKey: ["memberships"] });
+      qc.invalidateQueries({ queryKey: adminKeys.memberships() });
       form.reset({ target_persona_id: 0, game: "bf1", server_id: 0, role: "moderator" });
     },
     onError: (err) => {
@@ -82,7 +82,7 @@ export default function MembershipsAdminPage() {
     mutationFn: (id: number) => membershipsApi.delete(id),
     onSuccess: () => {
       toast.success("已删除权限");
-      qc.invalidateQueries({ queryKey: ["memberships"] });
+      qc.invalidateQueries({ queryKey: adminKeys.memberships() });
       setPendingDelete(null);
     },
     onError: (err) => {

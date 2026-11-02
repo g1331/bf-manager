@@ -35,6 +35,7 @@ import {
 import { ApiException } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import { AccountsSection, ServersSection } from "./ServerSections";
+import { groupKeys, groupQueries } from "@/lib/queries/groups";
 
 const ALL_ROLES: GroupRole[] = ["owner", "admin"];
 
@@ -206,18 +207,15 @@ function InviteSection({ group }: { group: GroupDetail }) {
   const [uses, setUses] = useState(1);
   const [ttl, setTtl] = useState(168);
   const [created, setCreated] = useState<string | null>(null);
-  const invites = useQuery({
-    queryKey: ["group-invites", group.id],
-    queryFn: () => groupsApi.invites(group.id),
-  });
+  const invites = useQuery(groupQueries.invites(group.id));
   const create = useMutation({
     mutationFn: () =>
       groupsApi.createInvite(group.id, { role: "admin", max_uses: uses, ttl_hours: ttl }),
     onSuccess: (res) => {
       setOpen(false);
       setCreated(inviteUrl(res.token));
-      qc.invalidateQueries({ queryKey: ["group-invites", group.id] });
-      qc.invalidateQueries({ queryKey: ["group-audit", group.id] });
+      qc.invalidateQueries({ queryKey: groupKeys.invites(group.id) });
+      qc.invalidateQueries({ queryKey: groupKeys.audit(group.id) });
     },
     onError: (err) => toast.error(errorText(err, "生成失败，请稍后重试")),
   });
@@ -225,8 +223,8 @@ function InviteSection({ group }: { group: GroupDetail }) {
     mutationFn: (inviteId: number) => groupsApi.revokeInvite(group.id, inviteId),
     onSuccess: () => {
       toast.success("链接已作废");
-      qc.invalidateQueries({ queryKey: ["group-invites", group.id] });
-      qc.invalidateQueries({ queryKey: ["group-audit", group.id] });
+      qc.invalidateQueries({ queryKey: groupKeys.invites(group.id) });
+      qc.invalidateQueries({ queryKey: groupKeys.audit(group.id) });
     },
     onError: (err) => toast.error(errorText(err, "操作失败，请稍后重试")),
   });
@@ -366,10 +364,7 @@ function serverText(i: GroupAuditItem): string {
 
 function AuditSection({ groupId }: { groupId: number }) {
   const [page, setPage] = useState(1);
-  const audit = useQuery({
-    queryKey: ["group-audit", groupId, page],
-    queryFn: () => groupsApi.audit(groupId, page),
-  });
+  const audit = useQuery(groupQueries.auditPage(groupId, page));
   const totalPages = audit.data
     ? Math.max(1, Math.ceil(audit.data.total / audit.data.page_size))
     : 1;
@@ -458,17 +453,16 @@ export default function GroupDetailPage() {
   }, [session.isLoading, session.isError, session.data, router, groupId]);
 
   const group = useQuery({
-    queryKey: ["group", groupId],
-    queryFn: () => groupsApi.get(groupId),
+    ...groupQueries.detail(groupId),
     enabled: !!session.data && Number.isFinite(groupId),
     retry: false,
   });
 
   const refresh = (data?: GroupDetail) => {
-    if (data) qc.setQueryData(["group", groupId], data);
-    else qc.invalidateQueries({ queryKey: ["group", groupId] });
-    qc.invalidateQueries({ queryKey: ["group-audit", groupId] });
-    qc.invalidateQueries({ queryKey: ["groups"] });
+    if (data) qc.setQueryData(groupKeys.detail(groupId), data);
+    else qc.invalidateQueries({ queryKey: groupKeys.detail(groupId) });
+    qc.invalidateQueries({ queryKey: groupKeys.audit(groupId) });
+    qc.invalidateQueries({ queryKey: groupKeys.all() });
   };
 
   const setRole = useMutation({
@@ -501,7 +495,7 @@ export default function GroupDetailPage() {
     mutationFn: () => groupsApi.leave(groupId),
     onSuccess: () => {
       toast.success("已退出群");
-      qc.invalidateQueries({ queryKey: ["groups"] });
+      qc.invalidateQueries({ queryKey: groupKeys.all() });
       router.replace("/me/groups");
     },
     onError: (err) => {
@@ -513,7 +507,7 @@ export default function GroupDetailPage() {
     mutationFn: () => groupsApi.remove(groupId),
     onSuccess: () => {
       toast.success("群已删除");
-      qc.invalidateQueries({ queryKey: ["groups"] });
+      qc.invalidateQueries({ queryKey: groupKeys.all() });
       router.replace("/me/groups");
     },
     onError: (err) => toast.error(errorText(err, "删除失败，请稍后重试")),

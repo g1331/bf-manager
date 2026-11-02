@@ -43,6 +43,7 @@ import {
 } from "@/lib/auth";
 import { ApiException } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
+import { accountKeys, accountQueries } from "@/lib/queries/account";
 
 function errorText(err: unknown, fallback: string) {
   return err instanceof ApiException ? err.message : fallback;
@@ -315,7 +316,7 @@ export function SecuritySection({ user }: { user: SessionUser }) {
   const logoutAllMutation = useMutation({
     mutationFn: logoutAll,
     onSuccess: () => {
-      qc.setQueryData(["session"], null);
+      qc.setQueryData(accountKeys.session(), null);
       toast.success("已退出所有设备");
       router.replace("/login");
     },
@@ -469,9 +470,9 @@ function InviteRow({
 /** 邀请码：注册要邀请码时才显示 */
 export function InviteSection({ canCreate }: { canCreate: boolean }) {
   const qc = useQueryClient();
-  const invites = useQuery({ queryKey: ["invite-codes"], queryFn: listInviteCodes });
+  const invites = useQuery(accountQueries.inviteCodes());
   const update = (data: Awaited<ReturnType<typeof listInviteCodes>>) =>
-    qc.setQueryData(["invite-codes"], data);
+    qc.setQueryData(accountKeys.inviteCodes(), data);
   const create = useMutation({
     mutationFn: createInviteCode,
     onSuccess: (data) => {

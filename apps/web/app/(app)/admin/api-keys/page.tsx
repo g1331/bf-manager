@@ -14,6 +14,7 @@ import { ResponsiveTable, type Column } from "@/components/common/ResponsiveTabl
 import { useSession } from "@/hooks/useSession";
 import { apiKeysApi, type AdminApiKeyItem } from "@/lib/api/api-keys";
 import { ApiException } from "@/lib/api-client";
+import { adminKeys, adminQueries } from "@/lib/queries/admin";
 
 // 列多，时间用短格式
 function formatTime(value: string | null): string {
@@ -36,8 +37,7 @@ export default function ApiKeysAdminPage() {
   const [pendingRevoke, setPendingRevoke] = useState<AdminApiKeyItem | null>(null);
 
   const list = useQuery({
-    queryKey: ["admin-api-keys"],
-    queryFn: apiKeysApi.listAll,
+    ...adminQueries.apiKeys(),
     enabled: session.data?.role === "admin",
   });
 
@@ -47,7 +47,7 @@ export default function ApiKeysAdminPage() {
     onSuccess: () => {
       toast.success("已更新额度倍数");
       setEditing(null);
-      qc.invalidateQueries({ queryKey: ["admin-api-keys"] });
+      qc.invalidateQueries({ queryKey: adminKeys.apiKeys() });
     },
     onError: (err) => toast.error(err instanceof ApiException ? err.message : "更新失败"),
   });
@@ -57,7 +57,7 @@ export default function ApiKeysAdminPage() {
     onSuccess: () => {
       toast.success("已吊销");
       setPendingRevoke(null);
-      qc.invalidateQueries({ queryKey: ["admin-api-keys"] });
+      qc.invalidateQueries({ queryKey: adminKeys.apiKeys() });
     },
     onError: (err) => toast.error(err instanceof ApiException ? err.message : "吊销失败"),
   });

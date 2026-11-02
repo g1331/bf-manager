@@ -29,6 +29,7 @@ import {
 } from "@/lib/auth";
 import { ApiException } from "@/lib/api-client";
 import { safeNextPath } from "@/lib/utils";
+import { accountKeys } from "@/lib/queries/account";
 
 const loginSchema = z.object({
   email: z.string().trim().email("请输入正确的邮箱"),
@@ -85,7 +86,7 @@ function LoginForm() {
   });
 
   const enter = (user: SessionUser) => {
-    qc.setQueryData(["session"], user);
+    qc.setQueryData(accountKeys.session(), user);
     const greet = user.primary_binding?.display_name ?? user.username;
     toast.success(`欢迎回来，${greet}`);
     router.push(landingPath(user, next));

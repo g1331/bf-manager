@@ -9,10 +9,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { AdminPageSkeleton } from "@/components/layout/PageSkeleton";
 import { SectionHeading } from "@/components/layout/SectionHeading";
 import { useSession } from "@/hooks/useSession";
-import { eaAccountsApi, type EAAccountItem } from "@/lib/api/ea-accounts";
-import { membershipsApi } from "@/lib/api/memberships";
 import {
-  adminApi,
   type AdminMetrics,
   type DailyCount,
   type EaHourCount,
@@ -20,6 +17,7 @@ import {
   type EaSourceCount,
   type TrackerEventCount,
 } from "@/lib/api/admin";
+import { adminQueries } from "@/lib/queries/admin";
 
 /**
  * 管理员运维概览：平台整体运行情况入口。
@@ -42,21 +40,18 @@ export default function AdminOverviewPage() {
     }
   }, [session.isLoading, session.isError, session.data, router]);
 
-  const eaAccounts = useQuery<EAAccountItem[]>({
-    queryKey: ["ea-accounts"],
-    queryFn: eaAccountsApi.list,
+  const eaAccounts = useQuery({
+    ...adminQueries.eaAccounts(),
     enabled: isAdmin,
   });
 
   const memberships = useQuery({
-    queryKey: ["memberships", "admin-overview"],
-    queryFn: () => membershipsApi.list({ pageSize: 1 }),
+    ...adminQueries.membershipsOverview(),
     enabled: isAdmin,
   });
 
-  const metrics = useQuery<AdminMetrics>({
-    queryKey: ["admin-metrics"],
-    queryFn: adminApi.getMetrics,
+  const metrics = useQuery({
+    ...adminQueries.metrics(),
     enabled: isAdmin,
     refetchInterval: 60_000,
   });

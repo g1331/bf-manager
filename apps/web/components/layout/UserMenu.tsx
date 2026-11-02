@@ -17,6 +17,7 @@ import {
 import { useSession } from "@/hooks/useSession";
 import { logout } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { accountKeys } from "@/lib/queries/account";
 
 /** compact：手机端顶栏用，未登录时是纯文字「登录」，头像缩到 32px。 */
 export function UserMenu({ compact = false }: { compact?: boolean }) {
@@ -64,7 +65,7 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
   const onLogout = async () => {
     try {
       await logout();
-      qc.setQueryData(["session"], null);
+      qc.setQueryData(accountKeys.session(), null);
       toast.success("已退出登录");
       router.push("/");
       router.refresh();

@@ -1,4 +1,4 @@
-import { api } from "@/lib/api-client";
+import { api, type RequestOpts } from "@/lib/api-client";
 
 export interface EAAccountItem {
   id: number;
@@ -43,7 +43,7 @@ export interface EAAccountVerifyResult {
 }
 
 export const eaAccountsApi = {
-  list: () => api.get<EAAccountItem[]>("/ea-accounts"),
+  list: (opts?: RequestOpts) => api.get<EAAccountItem[]>("/ea-accounts", opts),
 
   create: (payload: EAAccountCreateRequest) => api.post<EAAccountItem>("/ea-accounts", payload),
 

@@ -24,6 +24,7 @@ import { useSession } from "@/hooks/useSession";
 import { bindWithCookie, logout } from "@/lib/auth";
 import { readPendingInvite } from "@/lib/api/groups";
 import { ApiException } from "@/lib/api-client";
+import { accountKeys } from "@/lib/queries/account";
 
 const cookieSchema = z.object({
   remid: z.string().trim().min(10, "remid 看上去不是合法 cookie 值"),
@@ -68,12 +69,12 @@ export default function BindPage() {
     const invited = readPendingInvite() !== null;
     setLeaving(true);
     if (claimed) {
-      qc.setQueryData(["session"], null);
+      qc.setQueryData(accountKeys.session(), null);
       router.replace(invited ? "/login?claimed=1&next=/invite" : "/login?claimed=1");
       return;
     }
     toast.success(name ? `已绑定 ${name}` : "EA 账号已绑定");
-    qc.invalidateQueries({ queryKey: ["session"] });
+    qc.invalidateQueries({ queryKey: accountKeys.session() });
     router.replace(invited ? "/invite" : "/stats");
   };
 
@@ -91,7 +92,7 @@ export default function BindPage() {
   const onLogout = async () => {
     setLeaving(true);
     await logout().catch(() => {});
-    qc.setQueryData(["session"], null);
+    qc.setQueryData(accountKeys.session(), null);
     router.replace("/login");
   };
 

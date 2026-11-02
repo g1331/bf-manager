@@ -37,6 +37,11 @@ function getBaseUrl(): string {
   return "";
 }
 
+/** 读接口的可选项：signal 交给 React Query，组件卸载或查询被取代时取消请求 */
+export interface RequestOpts {
+  signal?: AbortSignal;
+}
+
 interface FetchOptions extends RequestInit {
   /** 是否携带 session cookie（默认 true） */
   withCredentials?: boolean;

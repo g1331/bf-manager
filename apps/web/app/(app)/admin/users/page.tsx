@@ -17,6 +17,7 @@ import { useSession } from "@/hooks/useSession";
 import { adminApi, type AdminUser, type AdminUserFilter } from "@/lib/api/admin";
 import { ApiException } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
+import { adminKeys, adminQueries } from "@/lib/queries/admin";
 
 const PAGE_SIZE = 20;
 const REASON_MAX = 200;
@@ -77,8 +78,7 @@ export default function UsersAdminPage() {
 
   const isAdmin = session.data?.role === "admin";
   const list = useQuery({
-    queryKey: ["admin-users", q, only, page],
-    queryFn: () => adminApi.listUsers({ q: q || undefined, only, page, pageSize: PAGE_SIZE }),
+    ...adminQueries.usersPage(q, only, page, PAGE_SIZE),
     enabled: isAdmin,
     placeholderData: keepPreviousData,
   });
@@ -89,8 +89,8 @@ export default function UsersAdminPage() {
 
   const done = (msg: string) => {
     toast.success(msg);
-    qc.invalidateQueries({ queryKey: ["admin-users"] });
-    qc.invalidateQueries({ queryKey: ["admin-api-keys"] });
+    qc.invalidateQueries({ queryKey: adminKeys.users() });
+    qc.invalidateQueries({ queryKey: adminKeys.apiKeys() });
   };
   const freeze = useMutation({
     mutationFn: ({ id, text }: { id: number; text: string }) => adminApi.freezeUser(id, text),

@@ -1,7 +1,7 @@
 /**
  * 平台运维统计 API 客户端
  */
-import { api } from "@/lib/api-client";
+import { api, type RequestOpts } from "@/lib/api-client";
 import type { RegistrationMode } from "@/lib/auth";
 
 /** 按接口分组累计的请求次数，group 形如 bf1/stats、bf1/servers */
@@ -107,18 +107,22 @@ export interface AdminUserPage {
 export type AdminUserFilter = "all" | "frozen" | "admin";
 
 export const adminApi = {
-  getMetrics: () => api.get<AdminMetrics>("/admin/metrics"),
-  getRegistration: () => api.get<RegistrationSetting>("/admin/settings/registration"),
+  getMetrics: (opts?: RequestOpts) => api.get<AdminMetrics>("/admin/metrics", opts),
+  getRegistration: (opts?: RequestOpts) =>
+    api.get<RegistrationSetting>("/admin/settings/registration", opts),
   setRegistration: (mode: RegistrationMode) =>
     api.put<RegistrationSetting>("/admin/settings/registration", { mode }),
-  listUsers: (params: { q?: string; only?: AdminUserFilter; page: number; pageSize: number }) => {
+  listUsers: (
+    params: { q?: string; only?: AdminUserFilter; page: number; pageSize: number },
+    opts?: RequestOpts,
+  ) => {
     const sp = new URLSearchParams({
       page: String(params.page),
       page_size: String(params.pageSize),
     });
     if (params.q) sp.set("q", params.q);
     if (params.only && params.only !== "all") sp.set("only", params.only);
-    return api.get<AdminUserPage>(`/admin/users?${sp.toString()}`);
+    return api.get<AdminUserPage>(`/admin/users?${sp.toString()}`, opts);
   },
   freezeUser: (id: number, reason: string) =>
     api.post<AdminUser>(`/admin/users/${id}/freeze`, { reason }),

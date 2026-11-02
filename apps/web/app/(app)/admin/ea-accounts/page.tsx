@@ -39,6 +39,7 @@ import { ResponsiveTable, type Column } from "@/components/common/ResponsiveTabl
 import { useSession } from "@/hooks/useSession";
 import { ApiException } from "@/lib/api-client";
 import { eaAccountsApi, type EAAccountItem } from "@/lib/api/ea-accounts";
+import { adminKeys, adminQueries } from "@/lib/queries/admin";
 
 const createSchema = z.object({
   persona_id: z.coerce.number().int().positive("persona_id 必须是正整数"),
@@ -139,7 +140,7 @@ function RenameSheet({ account, onClose }: { account: EAAccountItem | null; onCl
     },
     onSuccess: () => {
       toast.success("已更新备注名");
-      qc.invalidateQueries({ queryKey: ["ea-accounts"] });
+      qc.invalidateQueries({ queryKey: adminKeys.eaAccounts() });
       form.reset(RENAME_DEFAULTS);
       onClose();
     },
@@ -212,7 +213,7 @@ function CredentialsSheet({
     },
     onSuccess: () => {
       toast.success("已更新凭据，失败计数已清零");
-      qc.invalidateQueries({ queryKey: ["ea-accounts"] });
+      qc.invalidateQueries({ queryKey: adminKeys.eaAccounts() });
       form.reset(CREDENTIALS_DEFAULTS);
       onClose();
     },
@@ -327,8 +328,7 @@ export default function EAAccountsAdminPage() {
   const isAdmin = session.data?.role === "admin";
 
   const list = useQuery({
-    queryKey: ["ea-accounts"],
-    queryFn: () => eaAccountsApi.list(),
+    ...adminQueries.eaAccounts(),
     enabled: isAdmin,
   });
 
@@ -351,7 +351,7 @@ export default function EAAccountsAdminPage() {
       }),
     onSuccess: () => {
       toast.success("已新增 EA 账号");
-      qc.invalidateQueries({ queryKey: ["ea-accounts"] });
+      qc.invalidateQueries({ queryKey: adminKeys.eaAccounts() });
       form.reset(CREATE_DEFAULTS);
     },
     onError: (err) => toast.error(errMsg(err, "新增失败")),
@@ -361,7 +361,7 @@ export default function EAAccountsAdminPage() {
     mutationFn: (id: number) => eaAccountsApi.delete(id),
     onSuccess: () => {
       toast.success("已删除 EA 账号");
-      qc.invalidateQueries({ queryKey: ["ea-accounts"] });
+      qc.invalidateQueries({ queryKey: adminKeys.eaAccounts() });
       setPendingDelete(null);
     },
     onError: (err) => toast.error(errMsg(err, "删除失败")),
@@ -372,7 +372,7 @@ export default function EAAccountsAdminPage() {
       eaAccountsApi.setEnabled(id, enabled),
     onSuccess: (item) => {
       toast.success(item.enabled ? "已启用账号" : "已停用账号");
-      qc.invalidateQueries({ queryKey: ["ea-accounts"] });
+      qc.invalidateQueries({ queryKey: adminKeys.eaAccounts() });
     },
     onError: (err) => toast.error(errMsg(err, "操作失败")),
   });
@@ -382,7 +382,7 @@ export default function EAAccountsAdminPage() {
     onSuccess: (res) => {
       if (res.success) toast.success(`连通性正常（persona ${res.persona_id}）`);
       else toast.error(`连通性失败：${res.message ?? "未知错误"}`);
-      qc.invalidateQueries({ queryKey: ["ea-accounts"] });
+      qc.invalidateQueries({ queryKey: adminKeys.eaAccounts() });
     },
     onError: (err) => toast.error(errMsg(err, "验证失败")),
   });
@@ -548,7 +548,7 @@ export default function EAAccountsAdminPage() {
               <TabsContent value="login" forceMount className="data-[state=inactive]:hidden">
                 <EaLoginPanel
                   actor="admin"
-                  onSucceeded={() => qc.invalidateQueries({ queryKey: ["ea-accounts"] })}
+                  onSucceeded={() => qc.invalidateQueries({ queryKey: adminKeys.eaAccounts() })}
                 />
               </TabsContent>
               <TabsContent value="cookie">
@@ -696,7 +696,7 @@ export default function EAAccountsAdminPage() {
           target={reloginTarget}
           open={reloginOpen}
           onOpenChange={setReloginOpen}
-          onSucceeded={() => qc.invalidateQueries({ queryKey: ["ea-accounts"] })}
+          onSucceeded={() => qc.invalidateQueries({ queryKey: adminKeys.eaAccounts() })}
         />
       </main>
     </>

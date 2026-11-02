@@ -19,6 +19,7 @@ import {
   savePendingInvite,
 } from "@/lib/api/groups";
 import { ApiException } from "@/lib/api-client";
+import { groupKeys, groupQueries } from "@/lib/queries/groups";
 
 /**
  * 群邀请链接 /invite#token=…：
@@ -40,8 +41,7 @@ export default function InvitePage() {
   }, [hashToken]);
 
   const lookup = useQuery({
-    queryKey: ["group-invite", token],
-    queryFn: () => groupsApi.lookupInvite(token as string),
+    ...groupQueries.invite(token),
     enabled: !!token,
     retry: false,
     staleTime: Infinity,
@@ -56,7 +56,7 @@ export default function InvitePage() {
     mutationFn: () => groupsApi.acceptInvite(token as string),
     onSuccess: (res) => {
       clearPendingInvite();
-      qc.invalidateQueries({ queryKey: ["groups"] });
+      qc.invalidateQueries({ queryKey: groupKeys.all() });
       toast.success(
         res.already_member ? "你已经在这个群里了" : `已加入 ${lookup.data?.group_name ?? "群组"}`,
       );
@@ -66,7 +66,7 @@ export default function InvitePage() {
       toast.error(err instanceof ApiException ? err.message : "加入失败，请稍后重试");
       if (err instanceof ApiException && err.status === 404) {
         clearPendingInvite();
-        qc.invalidateQueries({ queryKey: ["group-invite", token] });
+        qc.invalidateQueries({ queryKey: groupKeys.invite(token) });
       }
     },
   });

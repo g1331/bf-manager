@@ -1,7 +1,7 @@
 /**
  * BF1 API 客户端
  */
-import { api } from "@/lib/api-client";
+import { api, type RequestOpts } from "@/lib/api-client";
 
 export interface PersonaBrief {
   persona_id: number;
@@ -829,11 +829,6 @@ export interface Campaign {
   ends_at: string;
   daily_reset_at: string;
   operations: { name: string; image_url: string | null }[];
-}
-
-/** 读接口的可选项：signal 交给 React Query，组件卸载或查询被取代时取消请求 */
-export interface RequestOpts {
-  signal?: AbortSignal;
 }
 
 export const bf1Api = {

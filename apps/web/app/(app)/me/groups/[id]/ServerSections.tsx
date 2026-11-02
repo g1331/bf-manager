@@ -29,6 +29,7 @@ import { groupLoginActor } from "@/lib/api/ea-login-tasks";
 import { ApiException } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import { bf1Keys, bf1Queries } from "@/lib/queries/bf1";
+import { groupKeys, groupQueries } from "@/lib/queries/groups";
 
 function errorText(err: unknown, fallback: string) {
   return err instanceof ApiException ? err.message : fallback;
@@ -52,9 +53,9 @@ function Badge({ tone, children }: { tone: "amber" | "red" | "muted"; children: 
 function useInvalidate(groupId: number) {
   const qc = useQueryClient();
   return () => {
-    qc.invalidateQueries({ queryKey: ["group-accounts", groupId] });
-    qc.invalidateQueries({ queryKey: ["group-servers", groupId] });
-    qc.invalidateQueries({ queryKey: ["group-audit", groupId] });
+    qc.invalidateQueries({ queryKey: groupKeys.accounts(groupId) });
+    qc.invalidateQueries({ queryKey: groupKeys.servers(groupId) });
+    qc.invalidateQueries({ queryKey: groupKeys.audit(groupId) });
   };
 }
 
@@ -69,10 +70,7 @@ export function AccountsSection({ group }: { group: GroupDetail }) {
   const [sid, setSid] = useState("");
   const [removing, setRemoving] = useState<GroupAccount | null>(null);
 
-  const accounts = useQuery({
-    queryKey: ["group-accounts", group.id],
-    queryFn: () => groupsApi.accounts(group.id),
-  });
+  const accounts = useQuery(groupQueries.accounts(group.id));
   const addCookie = useMutation({
     mutationFn: () =>
       groupsApi.addAccountWithCookie(group.id, { remid: remid.trim(), sid: sid.trim() }),
@@ -475,14 +473,8 @@ export function ServersSection({ group }: { group: GroupDetail }) {
   const [bindOpen, setBindOpen] = useState(false);
   const [unbinding, setUnbinding] = useState<GroupServer | null>(null);
 
-  const servers = useQuery({
-    queryKey: ["group-servers", group.id],
-    queryFn: () => groupsApi.servers(group.id),
-  });
-  const accounts = useQuery({
-    queryKey: ["group-accounts", group.id],
-    queryFn: () => groupsApi.accounts(group.id),
-  });
+  const servers = useQuery(groupQueries.servers(group.id));
+  const accounts = useQuery(groupQueries.accounts(group.id));
   const setExecutor = useMutation({
     mutationFn: ({ bindingId, accountId }: { bindingId: number; accountId: number }) =>
       groupsApi.setExecutor(group.id, bindingId, accountId),
@@ -505,8 +497,8 @@ export function ServersSection({ group }: { group: GroupDetail }) {
   const recheck = useMutation({
     mutationFn: () => groupsApi.recheckServers(group.id),
     onSuccess: (data) => {
-      qc.setQueryData(["group-servers", group.id], data);
-      qc.invalidateQueries({ queryKey: ["group-accounts", group.id] });
+      qc.setQueryData(groupKeys.servers(group.id), data);
+      qc.invalidateQueries({ queryKey: groupKeys.accounts(group.id) });
       toast.success("已按 EA 现状重新检查");
     },
     onError: (err) => toast.error(errorText(err, "检查失败，请稍后重试")),

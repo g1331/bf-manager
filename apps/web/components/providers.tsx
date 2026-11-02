@@ -12,6 +12,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { toast } from "sonner";
 import { ApiException } from "@/lib/api-client";
 import { initPwa } from "@/lib/pwa";
+import { accountKeys } from "@/lib/queries/account";
 
 /**
  * 登录态中途失效（token 过期、被冻结）时任意请求会回 401：把 session 置空，
@@ -20,9 +21,9 @@ import { initPwa } from "@/lib/pwa";
  */
 function handleUnauthorized(client: QueryClient, error: unknown, queryKey?: QueryKey) {
   if (!(error instanceof ApiException) || error.status !== 401) return;
-  if (queryKey?.[0] === "session") return;
-  if (!client.getQueryData(["session"])) return;
-  client.setQueryData(["session"], null);
+  if (queryKey?.[0] === accountKeys.session()[0]) return;
+  if (!client.getQueryData(accountKeys.session())) return;
+  client.setQueryData(accountKeys.session(), null);
   toast.error("登录已过期，请重新登录", { id: "session-expired" });
 }
 

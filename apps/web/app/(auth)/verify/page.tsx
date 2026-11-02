@@ -20,14 +20,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { confirmMatches, confirmMismatch, newPasswordFields } from "@/components/auth/password";
-import {
-  confirmVerification,
-  landingPath,
-  lookupVerification,
-  type VerificationInfo,
-} from "@/lib/auth";
+import { confirmVerification, landingPath, type VerificationInfo } from "@/lib/auth";
 import { ApiException } from "@/lib/api-client";
 import { useHashToken } from "@/hooks/useHashToken";
+import { accountKeys, accountQueries } from "@/lib/queries/account";
 
 const schema = z.object(newPasswordFields).refine(confirmMatches, confirmMismatch);
 type Values = z.infer<typeof schema>;
@@ -82,8 +78,7 @@ function copyFor(info: VerificationInfo) {
 export default function VerifyPage() {
   const token = useHashToken();
   const info = useQuery({
-    queryKey: ["verification", token],
-    queryFn: () => lookupVerification(token as string),
+    ...accountQueries.verification(token),
     enabled: !!token,
     retry: false,
     staleTime: Infinity,
@@ -128,7 +123,7 @@ function SetPasswordForm({ token, info }: { token: string; info: VerificationInf
     setSubmitting(true);
     try {
       const user = await confirmVerification(token, password);
-      qc.setQueryData(["session"], user);
+      qc.setQueryData(accountKeys.session(), user);
       toast.success(copy.done);
       router.replace(landingPath(user, info.kind === "set_email" ? "/me" : "/stats"));
       router.refresh();

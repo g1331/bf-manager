@@ -1,7 +1,7 @@
 /**
  * 鉴权 / 会话相关工具
  */
-import { api, ApiException } from "./api-client";
+import { api, ApiException, type RequestOpts } from "./api-client";
 
 export interface SessionBinding {
   id: number;
@@ -127,9 +127,9 @@ export interface BindingListResponse {
   items: BindingListItem[];
 }
 
-export async function getSession(): Promise<SessionUser | null> {
+export async function getSession(opts?: RequestOpts): Promise<SessionUser | null> {
   try {
-    const res = await api.get<SessionResponse>("/auth/session");
+    const res = await api.get<SessionResponse>("/auth/session", opts);
     return res.user;
   } catch (err) {
     if (err instanceof ApiException && err.status === 401) return null;
@@ -142,8 +142,8 @@ function captchaHeaders(token: string | null): HeadersInit | undefined {
   return token ? { "X-Turnstile-Token": token } : undefined;
 }
 
-export async function getAuthConfig(): Promise<AuthConfig> {
-  return api.get<AuthConfig>("/auth/config");
+export async function getAuthConfig(opts?: RequestOpts): Promise<AuthConfig> {
+  return api.get<AuthConfig>("/auth/config", opts);
 }
 
 export async function emailLogin(payload: EmailLoginRequest): Promise<SessionUser> {
@@ -171,8 +171,11 @@ export async function requestPasswordReset(
   );
 }
 
-export async function lookupVerification(token: string): Promise<VerificationInfo> {
-  return api.post<VerificationInfo>("/auth/verifications/lookup", { token });
+export async function lookupVerification(
+  token: string,
+  opts?: RequestOpts,
+): Promise<VerificationInfo> {
+  return api.post<VerificationInfo>("/auth/verifications/lookup", { token }, opts);
 }
 
 export async function confirmVerification(token: string, password: string): Promise<SessionUser> {
@@ -216,8 +219,8 @@ export async function logoutAll(): Promise<void> {
   await api.post("/auth/logout-all");
 }
 
-export async function listInviteCodes(): Promise<InviteCodeList> {
-  return api.get<InviteCodeList>("/me/invite-codes");
+export async function listInviteCodes(opts?: RequestOpts): Promise<InviteCodeList> {
+  return api.get<InviteCodeList>("/me/invite-codes", opts);
 }
 
 export async function createInviteCode(): Promise<InviteCodeList> {
@@ -237,8 +240,8 @@ export async function logout(): Promise<void> {
   await api.post("/auth/logout");
 }
 
-export async function listMyBindings(): Promise<BindingListItem[]> {
-  const res = await api.get<BindingListResponse>("/me/ea-bindings");
+export async function listMyBindings(opts?: RequestOpts): Promise<BindingListItem[]> {
+  const res = await api.get<BindingListResponse>("/me/ea-bindings", opts);
   return res.items;
 }
 

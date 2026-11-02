@@ -14,6 +14,7 @@ import { ConfirmSheet } from "@/components/common/ConfirmSheet";
 import { useSession } from "@/hooks/useSession";
 import { groupsApi, ROLE_LABEL } from "@/lib/api/groups";
 import { ApiException } from "@/lib/api-client";
+import { groupKeys, groupQueries } from "@/lib/queries/groups";
 
 export default function GroupsPage() {
   const router = useRouter();
@@ -29,15 +30,14 @@ export default function GroupsPage() {
   }, [session.isLoading, session.isError, session.data, router]);
 
   const groups = useQuery({
-    queryKey: ["groups"],
-    queryFn: groupsApi.list,
+    ...groupQueries.list(),
     enabled: !!session.data,
   });
 
   const create = useMutation({
     mutationFn: () => groupsApi.create(name),
     onSuccess: (group) => {
-      qc.invalidateQueries({ queryKey: ["groups"] });
+      qc.invalidateQueries({ queryKey: groupKeys.all() });
       setCreateOpen(false);
       setName("");
       router.push(`/me/groups/${group.id}`);

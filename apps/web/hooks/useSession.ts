@@ -2,7 +2,8 @@
 
 import { useSyncExternalStore } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getSession, type SessionUser } from "@/lib/auth";
+import type { SessionUser } from "@/lib/auth";
+import { accountQueries } from "@/lib/queries/account";
 
 const noopSubscribe = () => () => {};
 
@@ -30,9 +31,8 @@ const HYDRATING: SessionState = {
  * 展开整个结果会让后台重取时的 isFetching 等变化也触发重渲染。
  */
 export function useSession(): SessionState {
-  const query = useQuery<SessionUser | null>({
-    queryKey: ["session"],
-    queryFn: getSession,
+  const query = useQuery({
+    ...accountQueries.session(),
     staleTime: 60 * 1000,
   });
   const hydrated = useSyncExternalStore(

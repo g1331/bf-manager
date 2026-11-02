@@ -55,7 +55,7 @@ import {
 import { nextMap, operationKey, operationStep } from "@/components/bf1/server-detail/operation";
 import { useMyServerRole } from "@/hooks/useServerAdminActions";
 import { useSession } from "@/hooks/useSession";
-import { auditApi, type AuditLogItem } from "@/lib/api/audit";
+import type { AuditLogItem } from "@/lib/api/audit";
 import { FACTION_SLUG } from "@/lib/bf1/factions";
 import { canDo } from "@/lib/bf1/server-admin-authz";
 import { cn } from "@/lib/utils";
@@ -69,6 +69,7 @@ import type {
   ServerPlayersResponse,
 } from "@/lib/api/bf1";
 import { bf1Queries } from "@/lib/queries/bf1";
+import { auditQueries } from "@/lib/queries/audit";
 
 const ACTION_LABEL: Record<string, string> = {
   kick_player: "踢人",
@@ -983,8 +984,7 @@ function formatHours(v: number | null | undefined): string {
 function ServerAuditTab({ game, gameId }: { game: string; gameId: number }) {
   const [page, setPage] = useState(1);
   const logs = useQuery({
-    queryKey: ["audit-logs", "server", gameId, page],
-    queryFn: () => auditApi.list({ serverId: gameId, page, pageSize: 20 }),
+    ...auditQueries.server(gameId, page),
     enabled: Number.isFinite(gameId),
   });
 

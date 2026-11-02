@@ -1,5 +1,5 @@
 /** 开放 API Key：用户自助签发 / 吊销，平台 admin 查看全部并调整额度 */
-import { api } from "@/lib/api-client";
+import { api, type RequestOpts } from "@/lib/api-client";
 
 export interface ApiKeyItem {
   id: number;
@@ -50,11 +50,11 @@ export interface AdminApiKeyListResponse {
 }
 
 export const apiKeysApi = {
-  listMine: () => api.get<ApiKeyListResponse>("/me/api-keys"),
+  listMine: (opts?: RequestOpts) => api.get<ApiKeyListResponse>("/me/api-keys", opts),
   create: (name: string) => api.post<ApiKeyCreated>("/me/api-keys", { name }),
   revokeMine: (id: number) => api.post<ApiKeyItem>(`/me/api-keys/${id}/revoke`),
 
-  listAll: () => api.get<AdminApiKeyListResponse>("/admin/api-keys"),
+  listAll: (opts?: RequestOpts) => api.get<AdminApiKeyListResponse>("/admin/api-keys", opts),
   /** multiplier 传 null 恢复默认倍数 */
   setMultiplier: (id: number, multiplier: number | null) =>
     api.patch<ApiKeyItem>(`/admin/api-keys/${id}`, { rate_multiplier: multiplier }),

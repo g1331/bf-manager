@@ -14,6 +14,8 @@ import { adminApi } from "@/lib/api/admin";
 import type { RegistrationMode } from "@/lib/auth";
 import { ApiException } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
+import { accountKeys } from "@/lib/queries/account";
+import { adminKeys, adminQueries } from "@/lib/queries/admin";
 
 const REGISTRATION_OPTIONS: { value: RegistrationMode; label: string; hint: string }[] = [
   {
@@ -46,8 +48,7 @@ export default function SiteSettingsPage() {
   const [pending, setPending] = useState<RegistrationMode | null>(null);
 
   const registration = useQuery({
-    queryKey: ["admin-settings", "registration"],
-    queryFn: adminApi.getRegistration,
+    ...adminQueries.registration(),
     enabled: session.data?.role === "admin",
   });
 
@@ -56,9 +57,9 @@ export default function SiteSettingsPage() {
     onSuccess: (data) => {
       toast.success(`已切换为${LABEL[data.mode]}`);
       setPending(null);
-      qc.setQueryData(["admin-settings", "registration"], data);
+      qc.setQueryData(adminKeys.registration(), data);
       // 注册页、邀请页读的是公开配置
-      qc.invalidateQueries({ queryKey: ["auth-config"] });
+      qc.invalidateQueries({ queryKey: accountKeys.authConfig() });
     },
     onError: (err) => toast.error(err instanceof ApiException ? err.message : "保存失败"),
   });

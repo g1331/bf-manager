@@ -15,6 +15,7 @@ import { ResponsiveTable, type Column } from "@/components/common/ResponsiveTabl
 import { useSession } from "@/hooks/useSession";
 import { apiKeysApi, type ApiKeyItem, type ApiKeyQuota } from "@/lib/api/api-keys";
 import { ApiException } from "@/lib/api-client";
+import { accountKeys, accountQueries } from "@/lib/queries/account";
 
 type Bucket = "lookup" | "read" | "avatar";
 
@@ -116,8 +117,7 @@ export default function MyApiKeysPage() {
   }, [session.isLoading, session.isError, session.data, router]);
 
   const keys = useQuery({
-    queryKey: ["my-api-keys"],
-    queryFn: apiKeysApi.listMine,
+    ...accountQueries.apiKeys(),
     enabled: !!session.data,
   });
 
@@ -128,7 +128,7 @@ export default function MyApiKeysPage() {
       setCopied(false);
       setCreateOpen(false);
       setName("");
-      qc.invalidateQueries({ queryKey: ["my-api-keys"] });
+      qc.invalidateQueries({ queryKey: accountKeys.apiKeys() });
     },
     onError: (err) => toast.error(err instanceof ApiException ? err.message : "创建失败"),
   });
@@ -138,7 +138,7 @@ export default function MyApiKeysPage() {
     onSuccess: () => {
       toast.success("已吊销，用这个 key 的请求会立即被拒绝");
       setPendingRevoke(null);
-      qc.invalidateQueries({ queryKey: ["my-api-keys"] });
+      qc.invalidateQueries({ queryKey: accountKeys.apiKeys() });
     },
     onError: (err) => toast.error(err instanceof ApiException ? err.message : "吊销失败"),
   });

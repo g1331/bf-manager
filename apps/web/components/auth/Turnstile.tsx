@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getAuthConfig } from "@/lib/auth";
+import { accountQueries } from "@/lib/queries/account";
 
 interface TurnstileApi {
   render: (el: HTMLElement, options: Record<string, unknown>) => string;
@@ -78,8 +78,7 @@ function TurnstileWidget({
 
 export function useAuthConfig() {
   return useQuery({
-    queryKey: ["auth-config"],
-    queryFn: getAuthConfig,
+    ...accountQueries.authConfig(),
     // 注册方式可以在后台随时切换，别缓存太久
     staleTime: 30 * 1000,
   });

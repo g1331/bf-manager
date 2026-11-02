@@ -1,6 +1,5 @@
 /** 群组：成员与角色、邀请链接、服务账号与绑服、群组记录 */
-import { api } from "@/lib/api-client";
-import type { RequestOpts } from "@/lib/api/bf1";
+import { api, type RequestOpts } from "@/lib/api-client";
 
 /** 群主 / 管理员两级，和 tenko v3 的服主 / 管理员一致 */
 export type GroupRole = "owner" | "admin";
@@ -199,11 +198,11 @@ export function inviteUrl(token: string): string {
 }
 
 export const groupsApi = {
-  list: () => api.get<GroupList>("/groups"),
+  list: (opts?: RequestOpts) => api.get<GroupList>("/groups", opts),
   /** 我所在各群的其他成员此刻在哪个服（不含自己），右侧好友栏用 */
-  presence: () => api.get<GroupPresence>("/groups/presence"),
+  presence: (opts?: RequestOpts) => api.get<GroupPresence>("/groups/presence", opts),
   create: (name: string) => api.post<GroupDetail>("/groups", { name }),
-  get: (id: number) => api.get<GroupDetail>(`/groups/${id}`),
+  get: (id: number, opts?: RequestOpts) => api.get<GroupDetail>(`/groups/${id}`, opts),
   rename: (id: number, name: string) => api.patch<GroupDetail>(`/groups/${id}`, { name }),
   remove: (id: number) => api.delete<void>(`/groups/${id}`),
   leave: (id: number) => api.post<void>(`/groups/${id}/leave`),
@@ -211,21 +210,24 @@ export const groupsApi = {
     api.patch<GroupDetail>(`/groups/${id}/members/${userId}`, { role }),
   removeMember: (id: number, userId: number) =>
     api.delete<GroupDetail>(`/groups/${id}/members/${userId}`),
-  invites: (id: number) => api.get<{ items: GroupInvite[] }>(`/groups/${id}/invites`),
+  invites: (id: number, opts?: RequestOpts) =>
+    api.get<{ items: GroupInvite[] }>(`/groups/${id}/invites`, opts),
   createInvite: (id: number, body: { role: InviteRole; max_uses: number; ttl_hours: number }) =>
     api.post<InviteCreated>(`/groups/${id}/invites`, body),
   revokeInvite: (id: number, inviteId: number) =>
     api.post<void>(`/groups/${id}/invites/${inviteId}/revoke`),
-  audit: (id: number, page: number) =>
-    api.get<GroupAuditPage>(`/groups/${id}/audit?page=${page}&page_size=15`),
-  accounts: (id: number) => api.get<{ items: GroupAccount[] }>(`/groups/${id}/accounts`),
+  audit: (id: number, page: number, opts?: RequestOpts) =>
+    api.get<GroupAuditPage>(`/groups/${id}/audit?page=${page}&page_size=15`, opts),
+  accounts: (id: number, opts?: RequestOpts) =>
+    api.get<{ items: GroupAccount[] }>(`/groups/${id}/accounts`, opts),
   addAccountWithCookie: (id: number, body: { remid: string; sid: string }) =>
     api.post<GroupAccount>(`/groups/${id}/accounts/cookie`, body),
   setDefaultAccount: (id: number, accountId: number) =>
     api.post<void>(`/groups/${id}/accounts/${accountId}/default`),
   removeAccount: (id: number, accountId: number) =>
     api.delete<void>(`/groups/${id}/accounts/${accountId}`),
-  servers: (id: number) => api.get<{ items: GroupServer[] }>(`/groups/${id}/servers`),
+  servers: (id: number, opts?: RequestOpts) =>
+    api.get<{ items: GroupServer[] }>(`/groups/${id}/servers`, opts),
   bindServer: (id: number, body: { game_id: number; account_id?: number }) =>
     api.post<GroupServer>(`/groups/${id}/servers`, body),
   setExecutor: (id: number, bindingId: number, accountId: number) =>
@@ -241,7 +243,8 @@ export const groupsApi = {
     api.get<{ items: ServerGroup[] }>(`/bf1/server-admin/${gameId}/groups`, opts),
   removeServerFromGroup: (gameId: number, groupId: number) =>
     api.delete<void>(`/bf1/server-admin/${gameId}/groups/${groupId}`),
-  lookupInvite: (token: string) => api.post<InviteLookup>("/group-invites/lookup", { token }),
+  lookupInvite: (token: string, opts?: RequestOpts) =>
+    api.post<InviteLookup>("/group-invites/lookup", { token }, opts),
   acceptInvite: (token: string) => api.post<InviteAccepted>("/group-invites/accept", { token }),
 };
 

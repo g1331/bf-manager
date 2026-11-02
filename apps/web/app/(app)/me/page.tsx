@@ -14,9 +14,8 @@ import { PageHeaderSkeleton, RowsSkeleton } from "@/components/layout/PageSkelet
 import { SectionHeading } from "@/components/layout/SectionHeading";
 import { ResponsiveTable, type Column } from "@/components/common/ResponsiveTable";
 import { EaLoginDialog } from "@/components/common/EaLoginFlow";
-import { type BindingListItem, listMyBindings, unbindEa } from "@/lib/auth";
+import { unbindEa } from "@/lib/auth";
 import {
-  auditApi,
   auditGameLabel,
   type AuditLogItem,
   GROUP_ACTION_LABEL,
@@ -27,6 +26,8 @@ import { ENABLED_GAMES } from "@/lib/game-registry";
 import { useSession } from "@/hooks/useSession";
 import { ApiException } from "@/lib/api-client";
 import { InviteSection, SecuritySection, SetEmailCard } from "./AccountSection";
+import { accountKeys, accountQueries } from "@/lib/queries/account";
+import { auditQueries } from "@/lib/queries/audit";
 
 const ACTION_LABEL: Record<string, string> = {
   kick_player: "踢人",
@@ -63,15 +64,13 @@ export default function MePage() {
     }
   }, [session.isLoading, session.isError, session.data, router]);
 
-  const bindings = useQuery<BindingListItem[]>({
-    queryKey: ["my-ea-bindings"],
-    queryFn: listMyBindings,
+  const bindings = useQuery({
+    ...accountQueries.eaBindings(),
     enabled: !!session.data,
   });
 
   const logs = useQuery({
-    queryKey: ["audit-logs", "me", logPage],
-    queryFn: () => auditApi.list({ page: logPage, pageSize: 10 }),
+    ...auditQueries.mine(logPage),
     enabled: !!session.data,
   });
 
@@ -79,8 +78,8 @@ export default function MePage() {
     mutationFn: unbindEa,
     onSuccess: () => {
       toast.success("已解绑该 EA 账号");
-      qc.invalidateQueries({ queryKey: ["my-ea-bindings"] });
-      qc.invalidateQueries({ queryKey: ["session"] });
+      qc.invalidateQueries({ queryKey: accountKeys.eaBindings() });
+      qc.invalidateQueries({ queryKey: accountKeys.session() });
     },
     onError: (err) =>
       toast.error(err instanceof ApiException ? err.message : "解绑失败，请稍后重试"),
@@ -366,8 +365,8 @@ export default function MePage() {
         open={loginFlowOpen}
         onOpenChange={setLoginFlowOpen}
         onSucceeded={() => {
-          qc.invalidateQueries({ queryKey: ["my-ea-bindings"] });
-          qc.invalidateQueries({ queryKey: ["session"] });
+          qc.invalidateQueries({ queryKey: accountKeys.eaBindings() });
+          qc.invalidateQueries({ queryKey: accountKeys.session() });
         }}
       />
     </main>

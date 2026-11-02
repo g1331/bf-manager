@@ -9,7 +9,7 @@ gateway 失败时返回 EAGatewayError（见 gateway_errors），这里按失败
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from loguru import logger
 
@@ -49,5 +49,5 @@ def expect_ok(
     """成功返回 EA 的 JSON，失败按种类抛 AppError"""
     err = gateway_failure(res)
     if err is None:
-        return res
+        return cast(dict[str, Any], res)
     raise to_app_error(err, code=code, action=action, not_found=not_found)

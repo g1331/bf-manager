@@ -22,6 +22,7 @@ from __future__ import annotations
 import json
 from functools import lru_cache
 from pathlib import Path
+from typing import cast
 
 from app.domain.games.bf1.blaze_catalog import catalog
 from app.domain.games.bf1.blaze_stats import CORE, STAT
@@ -78,7 +79,7 @@ _ITEMS_PATH = Path(__file__).parent / "data" / "round_items.json"
 def items() -> list[str]:
     """槽位列表里的条目键（w:代号 / v:代号），下标 × 6 + 指标下标即槽位"""
     with _ITEMS_PATH.open(encoding="utf-8") as f:
-        return json.load(f)
+        return cast(list[str], json.load(f))
 
 
 @lru_cache(maxsize=1)

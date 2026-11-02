@@ -74,7 +74,9 @@ class AutoSwitchService:
         self.db = db
 
     async def _row(self, game_id: int) -> Bf1AutoSwitch | None:
-        return await self.db.scalar(select(Bf1AutoSwitch).where(Bf1AutoSwitch.game_id == game_id))
+        return (
+            await self.db.scalars(select(Bf1AutoSwitch).where(Bf1AutoSwitch.game_id == game_id))
+        ).first()
 
     async def get(self, game_id: int) -> AutoSwitchView:
         row = await self._row(game_id)

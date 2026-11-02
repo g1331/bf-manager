@@ -5,7 +5,7 @@ from __future__ import annotations
 import base64
 import os
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, cast
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from jose import JWTError, jwt
@@ -91,13 +91,18 @@ def create_access_token(
     }
     if extra_claims:
         payload.update(extra_claims)
-    return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
+    return cast(
+        "str", jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
+    )
 
 
 def decode_access_token(token: str) -> dict[str, Any]:
     """解码并验证 JWT，失败抛 JWTError"""
     settings = get_settings()
-    return jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
+    return cast(
+        "dict[str, Any]",
+        jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm]),
+    )
 
 
 __all__ = [

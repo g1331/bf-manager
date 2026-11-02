@@ -1,5 +1,7 @@
 import contextlib
 import struct
+from collections.abc import Mapping, Sequence
+from typing import Any, cast
 
 from app.domain.ea.blaze_protocol.methods import Components, Commands, Methods, Components2Int
 
@@ -55,18 +57,24 @@ TYPE = {
 TYPE2INT = {v: int(k) for k, v in TYPE.items()}
 # 键名类型码只有一个字符，Float（10）在键名里写作十六进制的 "a"，如 "LOSS a"
 TYPE["a"] = "Float"
-Tags = {}
+Tags: dict[str, str] = {}
 keepalive = bytearray(16)
 keepalive[13] = 128
 
+# 待解码的帧
+Buffer = bytes | bytearray
+# 解码时 Blaze 的头部：tag 与类型码（List / Map / Union 会把子类型码追加到 type 后面）
+Header = dict[str, str]
+
 
 class Blaze:
-    packet = None
+    # 解码时是收到的帧（bytes），编码时是要发的包（dict：method / id / data）
+    packet: Any = None
 
-    def __init__(self, data):
+    def __init__(self, data: Any) -> None:
         self.packet = data
 
-    def decode(self, readable: bool = False) -> dict:
+    def decode(self, readable: bool = False) -> dict[str, Any]:
         byte_data = self.packet
         offset = 16
         length = int.from_bytes(byte_data[:4], byteorder="big") + int.from_bytes(
@@ -84,7 +92,8 @@ class Blaze:
             if type_ in ["KeepAlive", "Ping", "Pong"]
             else f"{Components.get(component, str(component))}."
             # 未登记的组件 / 命令回退为数字，避免收到陌生推送时 KeyError
-            + Commands.get(Components.get(component), {})
+            # 组件未登记时 Components.get 得 None，Commands.get(None, {}) 取到默认值
+            + Commands.get(cast(str, Components.get(component)), {})
             .get(table, {})
             .get(str(command), str(command))
         )
@@ -127,7 +136,7 @@ class Blaze:
         }
 
     @staticmethod
-    def decode_tag(hex_str):
+    def decode_tag(hex_str: str) -> str:
         tag_buffer = bytearray(4)
         tag_int = int(hex_str, 16)
         tag_buffer[0] = ((tag_int >> 18) & 63) + 32
@@ -137,7 +146,7 @@ class Blaze:
         return tag_buffer.decode("ascii")
 
     @staticmethod
-    def parse_integer(byte_data, offset):
+    def parse_integer(byte_data: Buffer, offset: int) -> tuple[int, int]:
         """Integer 不定长整数
         首字节：0x80 为续读标志，0x40 为符号位，低 6 位为数值最低位；
         后续字节：0x80 为续读标志，低 7 位依次拼到更高位（Little Endian）。
@@ -155,7 +164,7 @@ class Blaze:
         return (-n if negative else n), offset
 
     @staticmethod
-    def parse_string(byte_data, offset):
+    def parse_string(byte_data: Buffer, offset: int) -> tuple[str, int]:
         """String 字符串
         字符串数据由两部分组成：第一部分是一个整数（Integer，0x00），第二部分是一个长度等于该整数值的字符串。"""
         length, offset = Blaze.parse_integer(byte_data, offset)
@@ -173,7 +182,7 @@ class Blaze:
             return ("", offset) if data is None else (data, offset)
 
     @staticmethod
-    def parse_blob(byte_data, offset):
+    def parse_blob(byte_data: Buffer, offset: int) -> tuple[str, int]:
         """Blob 二进制
         Blob数据与String相似，也由两部分组成：第一部分是一个整数（Integer，0x00），第二部分是一个长度等于该整数值的二进制数据。"""
         length, offset = Blaze.parse_integer(byte_data, offset)
@@ -183,7 +192,9 @@ class Blaze:
         return value, offset
 
     @staticmethod
-    def parse_list(byte_data, header, offset, readable: bool = False):
+    def parse_list(
+        byte_data: Buffer, header: Header, offset: int, readable: bool = False
+    ) -> tuple[list[Any], int]:
         """List 列表
         List 数据包含多个相同类型的数据项。
         List 数据的第一个字节是 Type，表示存储的数据类型。之后是一个 Integer 类型的值，表示列表中包含的数据项的个数。最后是列表中的数据项。"""
@@ -191,7 +202,7 @@ class Blaze:
         header["type"] += str(type_)
         offset += 1
         size, offset = Blaze.parse_integer(byte_data, offset)
-        data = []
+        data: list[Any] = []
         if type_ == 3 and byte_data[offset] == 2:
             offset += 1
             header["type"] += "2"
@@ -203,7 +214,9 @@ class Blaze:
         return data, offset
 
     @staticmethod
-    def parse_map(byte_data, header, offset, readable: bool = False):
+    def parse_map(
+        byte_data: Buffer, header: Header, offset: int, readable: bool = False
+    ) -> tuple[dict[Any, Any], int]:
         """Map 键值对
         Map 数据包含多个键值对，每个键值对包含一个键和一个值。Map 数据的前两个字节分别表示键和值的类型。
         之后是一个 Integer 类型的值，表示 Map 中包含的键值对的个数。接下来是按照键-值键-值的结构排列的数据项。
@@ -213,7 +226,7 @@ class Blaze:
         header["type"] += key_type + val_type
         offset += 2
         size, offset = Blaze.parse_integer(byte_data, offset)
-        data = {}
+        data: dict[Any, Any] = {}
         for _ in range(size):
             key_value, offset = Blaze.parse_block(byte_data, {"type": key_type}, offset, readable)
             val_value, offset = Blaze.parse_block(byte_data, {"type": val_type}, offset, readable)
@@ -221,9 +234,11 @@ class Blaze:
         return data, offset
 
     @staticmethod
-    def parse_union(byte_data, header, offset, readable: bool = False):
+    def parse_union(
+        byte_data: Buffer, header: Header, offset: int, readable: bool = False
+    ) -> tuple[dict[str, Any], int]:
         """Union 联合体"""
-        data = {}
+        data: dict[str, Any] = {}
         union_type = byte_data[offset]
         header["type"] += str(union_type)
         offset += 1
@@ -239,7 +254,7 @@ class Blaze:
         return data, offset
 
     @staticmethod
-    def parse_double(buffer, offset):
+    def parse_double(buffer: Buffer, offset: int) -> tuple[float, int]:
         """Double 双精度浮点数
         8字节，IEEE 754 标准的双精度浮点数
         """
@@ -248,7 +263,7 @@ class Blaze:
         return double_value, offset
 
     @staticmethod
-    def parse_object_type(buffer, offset):
+    def parse_object_type(buffer: Buffer, offset: int) -> tuple[tuple[str | None, str], int]:
         """ObjectType 类型定义
         包含两个Integer，第一个是ComponentId，第二个是TypeId
         """
@@ -259,7 +274,7 @@ class Blaze:
         return (component, type_), offset
 
     @staticmethod
-    def parse_object_id(buffer, offset):
+    def parse_object_id(buffer: Buffer, offset: int) -> tuple[tuple[str | None, str, int], int]:
         """ObjectId 类型实体
         包含三个Integer，第一个是ComponentId，第二个是TypeId，第三个是EntityId
         """
@@ -271,39 +286,42 @@ class Blaze:
         return (component, type_, entity_id), offset
 
     @staticmethod
-    def parse_tripple(byte_data, offset):
-        data = []
+    def parse_tripple(byte_data: Buffer, offset: int) -> tuple[list[int], int]:
+        data: list[int] = []
         for _ in range(3):
             value, offset = Blaze.parse_integer(byte_data, offset)
             data.append(value)
         return data, offset
 
     @staticmethod
-    def parse_int_list(byte_data, offset):
+    def parse_int_list(byte_data: Buffer, offset: int) -> tuple[list[int], int]:
         """IntList 整数列表
         开头是一个Integer，后面是和开头的Int值相等数量的Int"""
         size, offset = Blaze.parse_integer(byte_data, offset)
-        data = []
+        data: list[int] = []
         for _ in range(int(size)):
             item_value, offset = Blaze.parse_integer(byte_data, offset)
             data.append(item_value)
         return data, offset
 
     @staticmethod
-    def parse_float(buffer, offset):
+    def parse_float(buffer: Buffer, offset: int) -> tuple[float, int]:
         float_value = struct.unpack_from(">f", buffer, offset)[0]
         offset += 4
         return float_value, offset
 
     @staticmethod
-    def parse_block(byte_data, header, offset, readable: bool):
+    def parse_block(
+        byte_data: Buffer, header: Header, offset: int, readable: bool
+    ) -> tuple[Any, int]:
         type_ = TYPE.get(header["type"], "Unknown")
+        value: Any
         if type_ == "Integer":
             value, offset = Blaze.parse_integer(byte_data, offset)
         elif type_ == "String":
             value, offset = Blaze.parse_string(byte_data, offset)
         elif type_ == "Struct":
-            data: dict = Blaze.parse_struct(byte_data, offset, readable)
+            data: dict[str, Any] = Blaze.parse_struct(byte_data, offset, readable)
             value, offset = data["struct"], data["offset"]
         elif type_ == "Blob":
             value, offset = Blaze.parse_blob(byte_data, offset)
@@ -331,8 +349,8 @@ class Blaze:
         return value, offset
 
     @staticmethod
-    def parse_struct(byte_data, offset, readable: bool = False) -> dict:
-        data = {}
+    def parse_struct(byte_data: Buffer, offset: int, readable: bool = False) -> dict[str, Any]:
+        data: dict[str, Any] = {}
         while byte_data[offset]:
             tag = Blaze.decode_tag(byte_data[offset : offset + 3].hex())
             type_ = str(byte_data[offset + 3])
@@ -375,7 +393,7 @@ class Blaze:
         return bytes.fromhex(header + hex_str)
 
     @staticmethod
-    def write_struct(object_, end=True) -> hex:
+    def write_struct(object_: Mapping[str, Any], end: bool = True) -> str:
         hex_str = ""
         for key, value in object_.items():
             tag = Blaze.encode_tag(key[:4])
@@ -400,7 +418,8 @@ class Blaze:
         return hex_str
 
     @staticmethod
-    def write_block(type_str=None, value=None, key=None) -> hex:
+    # 历史签名带 None 默认值：type_str 调用方都会传；key 在写 Map 的键值时不传
+    def write_block(type_str: Any = None, value: Any = None, key: Any = None) -> str:
         if TYPE[type_str] == "Integer":
             value = Blaze.write_integer(value)
         elif TYPE[type_str] == "String":
@@ -430,10 +449,11 @@ class Blaze:
         else:
             raise TypeError(f"Unknown Type {type_str}")
 
-        return value
+        # value 复用了入参名，上面各分支都已换成编码后的十六进制串
+        return cast(str, value)
 
     @staticmethod
-    def write_integer(n):
+    def write_integer(n: int | str) -> str:
         negative = False
         n = int(n)
         if n < 0:
@@ -450,7 +470,7 @@ class Blaze:
         return bytes(temp).hex()
 
     @staticmethod
-    def write_string(text):
+    def write_string(text: str | None) -> str:
         if not text:
             return "00"
         text_hex = f"{text.encode().hex()}00"
@@ -459,13 +479,13 @@ class Blaze:
         return length_hex + text_hex
 
     @staticmethod
-    def write_blob(blob_hex):
+    def write_blob(blob_hex: str) -> str:
         blob_bytes = bytes.fromhex(blob_hex)
         length_hex = Blaze.write_integer(len(blob_bytes))
         return length_hex + blob_bytes.hex()
 
     @staticmethod
-    def write_list(lst, key):
+    def write_list(lst: Sequence[Any], key: str) -> str:
         hex_str = ""
         hex_str += f"0{key[6]}"
         hex_str += Blaze.write_integer(len(lst))  # size
@@ -474,7 +494,7 @@ class Blaze:
         return hex_str
 
     @staticmethod
-    def write_map(map_data, key):
+    def write_map(map_data: Any, key: str) -> str:
         map_data = list(map_data.items())
         result = f"0{key[6]}0{key[7]}"
         result += Blaze.write_integer(len(map_data))
@@ -484,7 +504,7 @@ class Blaze:
         return result
 
     @staticmethod
-    def write_union(data, key):
+    def write_union(data: Mapping[str, Any], key: str) -> str:
         if key[6]:
             hex_str = f"0{key[6]}"
             hex_str += Blaze.write_struct(data, False)
@@ -493,21 +513,21 @@ class Blaze:
         return hex_str
 
     @staticmethod
-    def write_double(values):
+    def write_double(values: Sequence[int | str]) -> str:
         hex_str = ""
         hex_str += Blaze.write_integer(values[0])
         hex_str += Blaze.write_integer(values[1])
         return hex_str
 
     @staticmethod
-    def write_object_type(values):
+    def write_object_type(values: Sequence[int | str]) -> str:
         hex_str = ""
         hex_str += Blaze.write_integer(Blaze._component_int(values[0]))
         hex_str += Blaze.write_integer(Blaze._type_int(values[1]))
         return hex_str
 
     @staticmethod
-    def write_object_id(values):
+    def write_object_id(values: Sequence[int | str]) -> str:
         hex_str = ""
         hex_str += Blaze.write_integer(Blaze._component_int(values[0]))
         hex_str += Blaze.write_integer(Blaze._type_int(values[1]))
@@ -516,15 +536,15 @@ class Blaze:
 
     # ObjectType / ObjectId 既接受解码出来的名字，也接受原始数字（如 [30722, 2, cgid]）
     @staticmethod
-    def _component_int(value) -> int:
+    def _component_int(value: int | str) -> int:
         return value if isinstance(value, int) else Components2Int[value]
 
     @staticmethod
-    def _type_int(value) -> int:
+    def _type_int(value: int | str) -> int:
         return value if isinstance(value, int) else TYPE2INT[value]
 
     @staticmethod
-    def write_tripple(values):
+    def write_tripple(values: Sequence[int | str]) -> str:
         hex_str = ""
         hex_str += Blaze.write_integer(values[0])
         hex_str += Blaze.write_integer(values[1])
@@ -532,7 +552,7 @@ class Blaze:
         return hex_str
 
     @staticmethod
-    def write_int_list(values):
+    def write_int_list(values: Sequence[int | str]) -> str:
         hex_str = ""
         hex_str += Blaze.write_integer(len(values))
         for value in values:
@@ -540,5 +560,5 @@ class Blaze:
         return hex_str
 
     @staticmethod
-    def write_float(value):
+    def write_float(value: float) -> str:
         return struct.pack(">f", value).hex()

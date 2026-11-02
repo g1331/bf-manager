@@ -38,14 +38,16 @@ class EaBindingService:
 
     async def get_by_persona(self, persona_id: int) -> EaBinding | None:
         """取这个 EA 号当前（未冻结）的绑定；解绑后的历史行不算"""
-        return await self.db.scalar(
-            select(EaBinding).where(
-                EaBinding.persona_id == persona_id, EaBinding.is_frozen.is_(False)
+        return (
+            await self.db.scalars(
+                select(EaBinding).where(
+                    EaBinding.persona_id == persona_id, EaBinding.is_frozen.is_(False)
+                )
             )
-        )
+        ).first()
 
     async def get_by_id(self, binding_id: int) -> EaBinding | None:
-        return await self.db.scalar(select(EaBinding).where(EaBinding.id == binding_id))
+        return (await self.db.scalars(select(EaBinding).where(EaBinding.id == binding_id))).first()
 
     async def list_for_user(self, user_id: int) -> list[EaBinding]:
         rows = (
@@ -61,13 +63,15 @@ class EaBindingService:
 
     async def get_primary_for_user(self, user_id: int) -> EaBinding | None:
         """取该 user 的 primary 且未冻结 binding，没有则返回 None"""
-        return await self.db.scalar(
-            select(EaBinding).where(
-                EaBinding.user_id == user_id,
-                EaBinding.is_primary.is_(True),
-                EaBinding.is_frozen.is_(False),
+        return (
+            await self.db.scalars(
+                select(EaBinding).where(
+                    EaBinding.user_id == user_id,
+                    EaBinding.is_primary.is_(True),
+                    EaBinding.is_frozen.is_(False),
+                )
             )
-        )
+        ).first()
 
     async def bind_verified_persona(
         self,

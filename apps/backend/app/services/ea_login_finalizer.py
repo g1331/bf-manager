@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import contextlib
 from collections.abc import Iterator
+from typing import Any, cast
 
 from loguru import logger
 from sqlalchemy import select
@@ -230,7 +231,7 @@ class EALoginFinalizer:
             with _silence_gateway_logs():
                 personas = await client.getPersonasByIds([persona_id])
             if gateway_failure(personas) is None:
-                pmap = personas.get("result", {}).get("personas", {})
+                pmap = cast(dict[str, Any], personas).get("result", {}).get("personas", {})
                 info = pmap.get(str(persona_id), {})
                 display_name = info.get("displayName")
                 avatar_url = info.get("avatar")

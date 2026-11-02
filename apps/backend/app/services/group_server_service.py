@@ -17,7 +17,7 @@ import asyncio
 import html
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, cast
 
 from loguru import logger
 from sqlalchemy import select
@@ -84,7 +84,7 @@ async def _display_name(db: AsyncSession, user_id: int | None) -> str | None:
     ).first()
     if row is None:
         return None
-    return row[1] or row[0]
+    return cast(str | None, row[1] or row[0])
 
 
 async def _personas_of(db: AsyncSession, user_id: int) -> set[int]:
@@ -526,11 +526,13 @@ class ServerGroupView:
 
 
 async def _server_for_game(db: AsyncSession, game_id: int) -> Server | None:
-    return await db.scalar(
-        select(Server)
-        .where(Server.game == GAME, Server.game_id == game_id)
-        .order_by(Server.updated_at.desc())
-    )
+    return (
+        await db.scalars(
+            select(Server)
+            .where(Server.game == GAME, Server.game_id == game_id)
+            .order_by(Server.updated_at.desc())
+        )
+    ).first()
 
 
 async def list_groups_for_server(db: AsyncSession, game_id: int) -> list[ServerGroupView]:

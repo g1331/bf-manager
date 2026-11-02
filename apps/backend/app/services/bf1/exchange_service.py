@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import UTC, date, datetime, time, timedelta
-from typing import Any
+from typing import Any, cast
 from zoneinfo import ZoneInfo
 
 from loguru import logger
@@ -42,7 +42,7 @@ CATEGORY_NAMES = {"ID_P_CAT_MELEE": "近战武器", "ID_P_CAT_XPBOOST": "经验�
 
 
 def _cn(text: str | None) -> str:
-    return zhconv.convert(text or "", "zh-cn")
+    return cast(str, zhconv.convert(text or "", "zh-cn"))
 
 
 def offers_signature(items: list[dict[str, Any]]) -> list[tuple[str, int]]:

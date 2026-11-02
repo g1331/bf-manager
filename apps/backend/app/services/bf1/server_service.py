@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from typing import Any
+from typing import Any, cast
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -371,7 +371,7 @@ class BF1ServerService:
                 if err.retryable:
                     raise to_ea_error(err, code="EA_SERVER_DETAIL_FAILED", action="查询服务器详情")
                 return None
-            raw = res.get("result") or {}
+            raw = cast(dict[str, Any], res).get("result") or {}
             if not raw:
                 return None
             server_info = raw.get("serverInfo") or {}

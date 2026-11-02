@@ -7,7 +7,7 @@ gateway 的方法「成功返回 EA 的 JSON、失败返回 EAGatewayError」。
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 
 ErrorKind = Literal["network", "bad_response", "auth", "ea", "internal"]
 
@@ -125,6 +125,10 @@ class EAGatewayError(str):
         return self.kind == "ea" and (
             self.code in _NO_PERMISSION_EA_CODES or self.ea_message in _NO_PERMISSION_EA_MESSAGES
         )
+
+
+# gateway 方法的返回值：成功是 EA 的 JSON，失败是 EAGatewayError
+GatewayResult = dict[str, Any] | EAGatewayError
 
 
 def _rebuild(

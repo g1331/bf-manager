@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String, false, func, true
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.core.literals import UserRole, UserStatus
 from app.models.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
@@ -31,12 +32,12 @@ class User(Base, TimestampMixin):
     # 只存验证过的邮箱。本地管理员和待认领的老账号没有邮箱
     email: Mapped[str | None] = mapped_column(String(255))
     email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    status: Mapped[str] = mapped_column(
+    status: Mapped[UserStatus] = mapped_column(
         String(16), default="active", server_default="active", nullable=False
     )
 
     # 平台角色
-    role: Mapped[str] = mapped_column(
+    role: Mapped[UserRole] = mapped_column(
         String(16), default="user", server_default="user", nullable=False
     )
     is_active: Mapped[bool] = mapped_column(

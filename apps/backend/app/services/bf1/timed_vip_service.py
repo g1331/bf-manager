@@ -15,7 +15,7 @@ import asyncio
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, Literal
 from zoneinfo import ZoneInfo
 
 from fastapi import status
@@ -296,7 +296,11 @@ async def _execute_plan(
     """
     removed: list[int] = []
     added: list[int] = []
-    for action, pids in (("remove", plan.remove), ("add", plan.add)):
+    steps: tuple[tuple[Literal["remove", "add"], list[int]], ...] = (
+        ("remove", plan.remove),
+        ("add", plan.add),
+    )
+    for action, pids in steps:
         for pid in pids:
             if action == "remove":
                 res = await client.removeServerVip(pid, ctx.server_id)
@@ -316,7 +320,7 @@ async def _execute_plan(
                     VipApplyFailure(
                         persona_id=pid,
                         display_name=ledger.name(pid),
-                        action=action,  # type: ignore[arg-type]
+                        action=action,
                         message=str(err)[:256],
                     )
                 )
@@ -356,7 +360,7 @@ class TimedVipService(BF1ServerAdminService):
             TimedVipItem(
                 persona_id=pid,
                 display_name=ledger.name(pid),
-                status=e.status,  # type: ignore[arg-type]
+                status=e.status,
                 expires_at=e.expires_at,
                 remaining_seconds=_seconds_left(e, now),
                 expired=engine.is_expired(e, now),

@@ -7,6 +7,7 @@ from datetime import datetime
 from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.core.literals import VipStatus
 from app.models.base import Base, TimestampMixin
 
 
@@ -29,7 +30,7 @@ class Bf1ServerVip(Base, TimestampMixin):
     persona_id: Mapped[int] = mapped_column(BigInteger, index=True, nullable=False)
     display_name: Mapped[str | None] = mapped_column(String(64))
 
-    status: Mapped[str] = mapped_column(String(16), nullable=False, server_default="active")
+    status: Mapped[VipStatus] = mapped_column(String(16), nullable=False, server_default="active")
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
     remaining_seconds: Mapped[int | None] = mapped_column(BigInteger)
     # 排队顺序；续期不改它

@@ -25,6 +25,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.api.errors import EAApiError, NotFoundError
 from app.core.config import get_settings
+from app.core.literals import GroupServerStatus, GroupServerVia
 from app.core.security import get_cipher
 from app.models import (
     EaBinding,
@@ -102,7 +103,7 @@ class ServerIdentity:
     server_id: int
     name: str | None
 
-    def manages(self, persona_ids: set[int] | int) -> str | None:
+    def manages(self, persona_ids: set[int] | int) -> GroupServerVia | None:
         """这些 persona 里有服主就是 owner，有管理员就是 admin，都没有返回 None"""
         pids = {persona_ids} if isinstance(persona_ids, int) else persona_ids
         if self.owner_pid is not None and self.owner_pid in pids:
@@ -519,8 +520,8 @@ class ServerGroupView:
     group_id: int
     group_name: str
     bound_by_name: str | None
-    bound_via: str
-    status: str
+    bound_via: GroupServerVia
+    status: GroupServerStatus
     created_at: datetime
 
 
@@ -684,7 +685,7 @@ async def _check_account(db: AsyncSession, account: GroupEaAccount) -> bool:
 
 async def _binder_status(
     db: AsyncSession, gs: GroupServer, identity: ServerIdentity
-) -> tuple[str, str | None]:
+) -> tuple[GroupServerStatus, str | None]:
     # 共享锁读挂服人：正在冻结他的事务提交前这里会等着，不会拿冻结前的状态把挂服写回有效
     binder = (
         await db.get(

@@ -23,6 +23,13 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.core.literals import (
+    GroupAccountStatus,
+    GroupRole,
+    GroupServerStatus,
+    GroupServerVia,
+    InviteRole,
+)
 from app.models.base import Base
 
 if TYPE_CHECKING:
@@ -58,7 +65,7 @@ class GroupMember(Base):
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False
     )
-    role: Mapped[str] = mapped_column(String(16), nullable=False)
+    role: Mapped[GroupRole] = mapped_column(String(16), nullable=False)
     invited_by: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     joined_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -82,7 +89,7 @@ class GroupInvite(Base):
         ForeignKey("groups.id", ondelete="CASCADE"), index=True, nullable=False
     )
     token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True, nullable=False)
-    role: Mapped[str] = mapped_column(String(16), nullable=False)
+    role: Mapped[InviteRole] = mapped_column(String(16), nullable=False)
     created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     max_uses: Mapped[int] = mapped_column(Integer, nullable=False)
     uses: Mapped[int] = mapped_column(Integer, server_default="0", default=0, nullable=False)
@@ -117,7 +124,7 @@ class GroupEaAccount(Base):
         Boolean, default=False, server_default=false(), nullable=False
     )
     # ok / invalid：连续登录失败到阈值标 invalid，群主重新提交凭据后恢复
-    status: Mapped[str] = mapped_column(
+    status: Mapped[GroupAccountStatus] = mapped_column(
         String(16), default="ok", server_default="ok", nullable=False
     )
     failure_count: Mapped[int] = mapped_column(
@@ -155,11 +162,11 @@ class GroupServer(Base):
         ForeignKey("users.id", ondelete="SET NULL")
     )
     # 绑定人当时在 EA 上的身份：owner / admin。只记录，不限制权限
-    bound_via: Mapped[str] = mapped_column(String(16), nullable=False)
+    bound_via: Mapped[GroupServerVia] = mapped_column(String(16), nullable=False)
     executor_account_id: Mapped[int | None] = mapped_column(
         ForeignKey("group_ea_accounts.id", ondelete="SET NULL")
     )
-    status: Mapped[str] = mapped_column(
+    status: Mapped[GroupServerStatus] = mapped_column(
         String(16), default="active", server_default="active", nullable=False
     )
     status_reason: Mapped[str | None] = mapped_column(String(255))

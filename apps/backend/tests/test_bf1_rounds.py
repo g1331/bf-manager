@@ -26,7 +26,6 @@ from app.domain.games.bf1.round_stats import (
     MODE_SCORES,
     MVP,
     OBJECTIVE,
-    PROBE_NAMES,
     RANK,
     RECHECK_NAMES,
     RECORDS,
@@ -404,31 +403,88 @@ async def test_tracker_caps_queries_and_prioritizes_leavers(monkeypatch) -> None
     assert all(s.base is not None for s in tr.rounds[1].seats.values())
 
 
-def _probe_calls(career: Career) -> list[list[int]]:
-    return [pids for pids, names in career.calls if names == PROBE_NAMES]
+def _light_calls(career: Career, since: int = 0) -> list[list[int]]:
+    return [pids for pids, names in career.calls[since:] if names == RECHECK_NAMES]
 
 
-async def test_tracker_probe_two_stages() -> None:
+async def test_tracker_probe_reads_four_at_once_but_decides_on_first_two() -> None:
+    career, tr = Career(), MatchTracker()
+    for p in (1, 2, 3, 4, 5):
+        career.add(p)
+    t0 = 1_800_000_000
+    roster = _roster(p1=TEAM1, p2=TEAM1, p3=TEAM2, p4=TEAM2, p5=TEAM2)
+    await tr.tick(roster, MAP, t0, career.fetch)
+    # 没结算：每轮只发一个轻请求，基线最旧的 4 人一次带齐
+    await tr.tick(roster, MAP, t0 + 60, career.fetch)
+    assert _light_calls(career) == [[1, 2, 3, 4]]
+    # 前两人只有 1 个 +1：按 4 人判断，1 人不过半
+    career.add(1, w=1, r=1)
+    await tr.tick(roster, MAP, t0 + 120, career.fetch)
+    assert tr.rounds[1].settle_seen_at is None
+    # 前两人仍是 1 个 +1，后两人都 +1：4 人里 3 人过半
+    career.add(3, w=1, r=1)
+    career.add(4, l=1, r=1)
+    await tr.tick(roster, MAP, t0 + 180, career.fetch)
+    assert tr.rounds[1].settle_seen_at == t0 + 180
+    assert len(_light_calls(career)) == 3
+
+
+async def test_tracker_probe_first_two_settle_without_the_rest() -> None:
     career, tr = Career(), MatchTracker()
     for p in (1, 2, 3, 4):
         career.add(p)
     t0 = 1_800_000_000
     roster = _roster(p1=TEAM1, p2=TEAM1, p3=TEAM2, p4=TEAM2)
     await tr.tick(roster, MAP, t0, career.fetch)
-    # 没结算：第一段 2 人都没变，不补查
+    # 前两人都 +1 就算结算，后两人没变也不影响（与原先两段探测的第一段结论一致）
+    career.settle(winners=[1, 2], losers=[])
     await tr.tick(roster, MAP, t0 + 60, career.fetch)
-    assert _probe_calls(career) == [[1, 2]]
-    # 只有 1 个人 +1：同一轮补查另外 2 人，4 人里 1 人不过半
-    career.add(1, w=1, r=1)
-    await tr.tick(roster, MAP, t0 + 120, career.fetch)
-    assert _probe_calls(career)[1:] == [[1, 2], [3, 4]]
-    assert tr.rounds[1].settle_seen_at is None
-    # 正常结算：第一段 2 人都 +1 就够了
-    career.settle(winners=[2, 3], losers=[4])
-    career.add(1, l=1, r=1)
-    await tr.tick(roster, MAP, t0 + 180, career.fetch)
-    assert _probe_calls(career)[3:] == [[1, 2]]
-    assert tr.rounds[1].settle_seen_at == t0 + 180
+    assert tr.rounds[1].settle_seen_at == t0 + 60
+
+
+async def test_tracker_probe_failure_keeps_recheck_for_next_round() -> None:
+    career, tr = Career(), MatchTracker()
+    for p in (1, 2):
+        career.add(p)
+    t0 = 1_800_000_000
+    roster = _roster(p1=TEAM1, p2=TEAM2)
+    for t in range(t0, t0 + RECHECK_AFTER, 60):
+        await tr.tick(roster, MAP, t, career.fetch)
+    # 到点那一轮轻请求失败：复查留到下一轮
+    career.fail = True
+    await tr.tick(roster, MAP, t0 + RECHECK_AFTER, career.fetch)
+    assert tr.rounds[1].seats[1].recheck_at == t0 + RECHECK_AFTER
+    career.fail = False
+    await tr.tick(roster, MAP, t0 + RECHECK_AFTER + 60, career.fetch)
+    assert tr.rounds[1].seats[1].recheck_at is None
+
+
+async def test_tracker_recheck_slots_freed_by_settling_server_go_to_others(monkeypatch) -> None:
+    """复查名额满了、其中一台服本轮探测出结算：它让出的名额要给其它服到期的人，不能空着。"""
+    from app.services.bf1 import match_tracker
+
+    monkeypatch.setattr(match_tracker, "MAX_QUERY_PER_TICK", 2)
+    career, tr = Career(), MatchTracker()
+    for p in (1, 2, 3, 4):
+        career.add(p)
+    t0 = 1_800_000_000
+    maps = {1: MAP[1], 2: MAP[1]}
+    rosters = {
+        1: {1: (TEAM1, "p1"), 2: (TEAM2, "p2")},
+        2: {3: (TEAM1, "p3"), 4: (TEAM2, "p4")},
+    }
+    for t in range(t0, t0 + RECHECK_AFTER, 60):
+        await tr.tick(rosters, maps, t, career.fetch)
+    # 1 号服结算；2 号服的 4 带着别处迟到的结算（只有他一人 +1，2 号服不算结算）
+    career.settle(winners=[1], losers=[2])
+    career.add(4, w=1, r=1)
+    await tr.tick(rosters, maps, t0 + RECHECK_AFTER, career.fetch)
+    assert tr.rounds[1].settle_seen_at == t0 + RECHECK_AFTER
+    assert tr.rounds[2].settle_seen_at is None
+    # 原先先截到 2 人（1、2）再判结算，2 号服这一轮无人复查；现在 3、4 补上，4 当轮换基线
+    assert tr.rounds[2].seats[3].recheck_at is None
+    assert tr.rounds[2].seats[4].base == career.vec[4]
+    assert tr.rounds[2].seats[4].rebase is False
 
 
 async def test_tracker_reuses_vector_after_hop_and_rechecks_lightly(monkeypatch) -> None:
@@ -456,8 +512,11 @@ async def test_tracker_reuses_vector_after_hop_and_rechecks_lightly(monkeypatch)
     calls = len(career.calls)
     for t in range(t0 + 180, t0 + 121 + RECHECK_AFTER, 60):
         await tr.tick(rosters, maps, t, career.fetch)
-    light = [pids for pids, names in career.calls[calls:] if names == RECHECK_NAMES]
-    assert sorted(p for pids in light for p in pids) == [1, 2, 3]
+    # 复查和结算探测合在同一个轻请求里：每轮至多一个，复查的人都在里面
+    ticks = len(range(t0 + 180, t0 + 121 + RECHECK_AFTER, 60))
+    light = _light_calls(career, calls)
+    assert len(light) <= ticks
+    assert {1, 2, 3} <= {p for pids in light for p in pids}
     assert (events["recheck_changed_hop"], events["recheck_same_fresh"]) == (1, 2)
     assert events["want_recheck"] == 1 and events["recheck_light"] == 3
     assert tr.rounds[2].seats[1].base == career.vec[1]

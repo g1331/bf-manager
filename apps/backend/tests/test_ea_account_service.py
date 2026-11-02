@@ -286,6 +286,33 @@ async def test_pick_available_prefers_low_failure_count(test_session) -> None:
     assert creds.persona_id == 1202
 
 
+async def test_pick_available_avoids_blaze_account_while_others_are_healthy(test_session) -> None:
+    """Blaze 在用的号排在同等健康度的号之后；别的号失败过一次时按最久未使用轮换，两次才让出。"""
+    from datetime import UTC, datetime, timedelta
+
+    now = datetime.now(UTC)
+    blaze = await _seed(test_session, persona_id=1301)  # last_used_at=None，最久未用
+    other = await _seed(test_session, persona_id=1302)
+    other.last_used_at = now
+    await test_session.commit()
+    service = EAAccountService(test_session)
+    assert (await service.pick_available()).persona_id == 1301
+    assert (await service.pick_available(avoid=(1301,))).persona_id == 1302
+
+    other.failure_count = 1
+    other.last_used_at = now - timedelta(hours=1)
+    blaze.last_used_at = now
+    await test_session.commit()
+    assert (await service.pick_available(avoid=(1301,))).persona_id == 1302
+    other.failure_count = 2
+    await test_session.commit()
+    assert (await service.pick_available(avoid=(1301,))).persona_id == 1301
+    # 只剩 Blaze 那个号时照样用它
+    other.enabled = False
+    await test_session.commit()
+    assert (await service.pick_available(avoid=(1301,))).persona_id == 1301
+
+
 async def test_upsert_creates_when_absent(test_session) -> None:
     service = EAAccountService(test_session)
     item = await service.upsert(persona_id=3003, display_name="cli", remid="r1", sid="s1")

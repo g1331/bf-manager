@@ -462,7 +462,9 @@ class EAAccountService:
         return EAAccountVerifyResult(success=True, persona_id=persona_id)
 
     async def _get(self, persona_id: int) -> EAAccount | None:
-        return await self.db.scalar(select(EAAccount).where(EAAccount.persona_id == persona_id))
+        return (
+            await self.db.scalars(select(EAAccount).where(EAAccount.persona_id == persona_id))
+        ).first()
 
     async def get_by_id(self, account_id: int) -> EAAccount:
         account = await self.db.scalar(select(EAAccount).where(EAAccount.id == account_id))

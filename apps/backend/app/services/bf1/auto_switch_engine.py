@@ -15,7 +15,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, cast
 
 from app.domain.games.bf1.maps import operation_maps, translate_map_name
 
@@ -91,7 +91,7 @@ def _advance(plan: dict[str, Any], st: dict[str, Any]) -> bool:
 
 
 def _target(plan: dict[str, Any], st: dict[str, Any]) -> str:
-    return plan["items"][st["cursor"]]["map"]
+    return cast(str, plan["items"][st["cursor"]]["map"])
 
 
 def decide(
@@ -179,7 +179,7 @@ class _Step:
         return item_maps(self.plan["items"][self.st["cursor"]])
 
     def is_operation(self) -> bool:
-        return self.plan["items"][self.st["cursor"]]["scope"] == "operation"
+        return cast(bool, self.plan["items"][self.st["cursor"]]["scope"] == "operation")
 
     def on_pending(self, landed: bool) -> None:
         pending, obs = self.st["pending"], self.obs

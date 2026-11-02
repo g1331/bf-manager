@@ -2,9 +2,10 @@ import asyncio
 import contextlib
 import hashlib
 import ssl
+from collections.abc import Callable, Coroutine
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, cast
 
 import httpx
 from cryptography import x509
@@ -18,6 +19,9 @@ from app.domain.ea.blaze_protocol.protocol import QType, Blaze, keepalive
 # 公共 CA 库里没有它，所以单独信任这一张。指纹 SHA-256
 # CD:80:56:E2:56:84:92:A9:91:D8:AD:7B:CC:25:76:1B:15:B9:B1:E3:AA:DB:1F:BE:A0:A6:82:B3:42:BE:5E:08
 GOS_CA_FILE = Path(__file__).with_name("gos_2015_ca.pem")
+
+# 收到每个包（解码后的 dict）时的回调
+PacketCallback = Callable[[dict[str, Any]], object]
 
 
 # redirector 证书公钥（SubjectPublicKeyInfo）的 SHA-256。证书 CN 是 winter15.gosredirector.ea.com，
@@ -100,8 +104,8 @@ class BlazeServerREQ:
 
     @staticmethod
     async def get_server_address(
-        game_code: Union["BF1", "BFV", "BF2042"] = BF1,
-    ) -> (str, int):
+        game_code: str = BF1,
+    ) -> tuple[str, int]:
         """
         获取服务器地址
         :param game_code: 游戏代码, 默认为BF1, 可选BF1, BFV, BF2042
@@ -135,7 +139,7 @@ class BlazeServerREQ:
                     "Content-Type": "application/xml",
                     "Accept": "application/json",
                 },
-                data=game_code,
+                data=game_code,  # type: ignore[arg-type]  # httpx 的存根不收 str（实际按 content 发送）
             )
             check_redirector_key(response)
             response.raise_for_status()
@@ -155,36 +159,48 @@ _REPLY_TYPES = ("Result", "Error")
 
 
 class BlazeSocket:
-    def __init__(self, host: str, port: int, callback=None, readable: bool = True):
-        self.callback = callback
+    def __init__(
+        self,
+        host: str,
+        port: int,
+        callback: PacketCallback | None = None,
+        readable: bool = True,
+    ) -> None:
+        # 收到每个包后都会回调（快照、对局采集借它收推送）；None 表示不回调
+        self.callback: PacketCallback | None = callback
         self.readable = readable
         self.connect = False
         self.authenticated = False
-        self.map: dict[int, asyncio.Future] = {}
+        self.map: dict[int, asyncio.Future[dict[str, Any]]] = {}
         self.id = 1
         # TCP 是字节流：一次 read 可能含半个帧，也可能含多个帧，统一进缓冲区按帧头切分
         self._buffer = bytearray()
         # 持有后台任务引用，避免被 GC 回收（asyncio.create_task 文档要求）
-        self._tasks: set[asyncio.Task] = set()
+        self._tasks: set[asyncio.Task[None]] = set()
         self.ssl_context = blaze_ssl_context()
         self.host = host
         self.port = port
-        self.reader: asyncio.StreamReader = None
-        self.writer: asyncio.StreamWriter = None
+        self.reader: asyncio.StreamReader | None = None
+        self.writer: asyncio.StreamWriter | None = None
 
     @classmethod
-    async def create(cls, host: str = "diceprodblapp-08.ea.com", port: int = 10539, callback=None):
+    async def create(
+        cls,
+        host: str = "diceprodblapp-08.ea.com",
+        port: int = 10539,
+        callback: PacketCallback | None = None,
+    ) -> "BlazeSocket":
         self = BlazeSocket(host, port, callback)
         await self.connect_to_server()
         self._spawn(self.keepalive())
         return self
 
-    def _spawn(self, coro) -> None:
+    def _spawn(self, coro: Coroutine[Any, Any, None]) -> None:
         task = asyncio.create_task(coro)
         self._tasks.add(task)
         task.add_done_callback(self._tasks.discard)
 
-    async def connect_to_server(self):
+    async def connect_to_server(self) -> None:
         # 异步连接到服务器
         self.reader, self.writer = await asyncio.open_connection(
             self.host, self.port, ssl=self.ssl_context
@@ -226,7 +242,7 @@ class BlazeSocket:
 
         return True
 
-    def _cleanup_connection(self):
+    def _cleanup_connection(self) -> None:
         """清理连接资源"""
         self.writer = None
         self.reader = None
@@ -269,14 +285,15 @@ class BlazeSocket:
                 task.cancel()
         logger.success(f"已断开与Blaze服务器 {self.host}:{self.port} 的连接")
 
-    async def keepalive(self):
+    async def keepalive(self) -> None:
         while self.connect:
             await asyncio.sleep(60)
             # 检查连接状态和writer有效性
             if self.connect and self._is_writer_valid():
+                # _is_writer_valid 已确认 writer 不是 None
                 try:
-                    self.writer.write(keepalive)
-                    await self.writer.drain()  # 确保数据发送
+                    cast(asyncio.StreamWriter, self.writer).write(keepalive)
+                    await cast(asyncio.StreamWriter, self.writer).drain()  # 确保数据发送
                 except Exception as e:
                     logger.exception(f"Keepalive发送失败，连接可能已断开: {e}")
                     self._mark_disconnected("Keepalive 发送失败")
@@ -297,7 +314,7 @@ class BlazeSocket:
             packet = Blaze(packet).decode()
         ea_metrics.count("blaze", str(packet.get("method")))
 
-        future = asyncio.Future()
+        future: asyncio.Future[dict[str, Any]] = asyncio.Future()
         if "id" not in packet:
             packet["id"] = self.id
             self.id += 1
@@ -317,7 +334,7 @@ class BlazeSocket:
             self.map.pop(packet["id"], None)
             raise TimeoutError(f"Timeout waiting for response to packet ID: {packet['id']}") from e
 
-    async def request(self, packet):
+    async def request(self, packet: bytes | dict[str, Any]) -> None:
         # 请求数据包
         if not self.connect:
             raise ConnectionError("连接已关闭")
@@ -331,21 +348,23 @@ class BlazeSocket:
             raise TypeError("packet must be dict or bytes")
         if not self._is_writer_valid():
             raise ConnectionError("Writer无效，连接可能已断开")
+        # _is_writer_valid 已确认 writer 不是 None
         try:
-            self.writer.write(packet)
-            await self.writer.drain()  # 确保数据发送
+            cast(asyncio.StreamWriter, self.writer).write(packet)
+            await cast(asyncio.StreamWriter, self.writer).drain()  # 确保数据发送
         except Exception as e:
             logger.exception(f"发送数据包失败: {e}")
             self._mark_disconnected(f"发送数据包失败: {e}")
             raise ConnectionError(f"发送数据包失败: {e}") from e
 
-    async def receive_data(self):
+    async def receive_data(self) -> None:
         # 接收数据；无论因何退出（含意外异常），都把连接标记为断开，避免连接池误判可用
         reason = "接收循环退出"
         try:
             while self.connect:
                 try:
-                    data = await self.reader.read(65565)
+                    # 建连后才启动接收循环，reader 不是 None；真被清空也会落到下面的 except
+                    data = await cast(asyncio.StreamReader, self.reader).read(65565)
                 except ConnectionResetError:
                     logger.warning("连接被重置，正在清理资源")
                     reason = "连接被重置"
@@ -398,7 +417,7 @@ class BlazeSocket:
                 continue
             await self.response(packet)
 
-    async def response(self, packet):
+    async def response(self, packet: dict[str, Any]) -> None:
         # 处理接收到的数据包
         if packet["method"] == "KeepAlive":
             return
@@ -420,8 +439,3 @@ class BlazeSocket:
             logger.warning(f"Blaze 应答无对应请求: {packet['method']} (ID {packet['id']})")
         if self.callback:
             self.callback(packet)
-
-    @staticmethod
-    def callback(packet):
-        # 只记方法名：登录应答里带会话 key 等凭据
-        logger.debug(f"Blaze 包: {packet.get('method')} ({packet.get('type')})")

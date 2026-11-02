@@ -22,13 +22,15 @@ async def lock_user(db: AsyncSession, user_id: int) -> User | None:
     认领、改密码、生成邀请码这类「先检查再写」的操作都要先锁：两个请求并发时，
     后到的一个等前一个提交后，读到的是更新过的状态，再检查一次。
     """
-    return await db.scalar(
-        select(User)
-        .options(selectinload(User.ea_bindings))
-        .where(User.id == user_id)
-        .with_for_update()
-        .execution_options(populate_existing=True)
-    )
+    return (
+        await db.scalars(
+            select(User)
+            .options(selectinload(User.ea_bindings))
+            .where(User.id == user_id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
+    ).first()
 
 
 async def bump_token_version(db: AsyncSession, user: User) -> None:
@@ -51,18 +53,20 @@ class UserService:
         self.db = db
 
     async def get_by_id(self, user_id: int) -> User | None:
-        return await self.db.scalar(select(User).where(User.id == user_id))
+        return (await self.db.scalars(select(User).where(User.id == user_id))).first()
 
     async def get_by_username(self, username: str) -> User | None:
-        return await self.db.scalar(select(User).where(User.username == username))
+        return (await self.db.scalars(select(User).where(User.username == username))).first()
 
     async def get_by_persona_id(self, persona_id: int) -> User | None:
         """通过 binding 反查 user。无 binding 或无对应 user 返回 None。"""
-        return await self.db.scalar(
-            select(User)
-            .join(EaBinding, EaBinding.user_id == User.id)
-            .where(EaBinding.persona_id == persona_id, EaBinding.is_frozen.is_(False))
-        )
+        return (
+            await self.db.scalars(
+                select(User)
+                .join(EaBinding, EaBinding.user_id == User.id)
+                .where(EaBinding.persona_id == persona_id, EaBinding.is_frozen.is_(False))
+            )
+        ).first()
 
     async def create_local_admin(
         self,

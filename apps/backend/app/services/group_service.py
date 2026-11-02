@@ -115,11 +115,13 @@ async def _lock_group(db: AsyncSession, group_id: int) -> Group:
 
 
 async def get_membership(db: AsyncSession, group_id: int, user_id: int) -> GroupMember | None:
-    return await db.scalar(
-        select(GroupMember)
-        .where(GroupMember.group_id == group_id, GroupMember.user_id == user_id)
-        .execution_options(populate_existing=True)
-    )
+    return (
+        await db.scalars(
+            select(GroupMember)
+            .where(GroupMember.group_id == group_id, GroupMember.user_id == user_id)
+            .execution_options(populate_existing=True)
+        )
+    ).first()
 
 
 async def require_member(
@@ -261,9 +263,11 @@ async def _owner_count(db: AsyncSession, group_id: int) -> int:
 
 
 async def _load_user(db: AsyncSession, user_id: int) -> User | None:
-    return await db.scalar(
-        select(User).options(selectinload(User.ea_bindings)).where(User.id == user_id)
-    )
+    return (
+        await db.scalars(
+            select(User).options(selectinload(User.ea_bindings)).where(User.id == user_id)
+        )
+    ).first()
 
 
 async def set_member_role(

@@ -23,7 +23,7 @@ import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, cast
 
 from loguru import logger
 from sqlalchemy import select, update
@@ -510,11 +510,11 @@ class _Runner:
     async def state(self) -> engine.ServerState | None:
         res = await self.client.getServerDetails(self.game_id)
         err = gateway_failure(res)
-        if err is not None or not res.get("result"):
+        if err is not None or not cast(dict[str, Any], res).get("result"):
             await self.fail(f"查询服务器状态失败：{str(err or '没有返回服务器信息')[:120]}", err)
             return None
         self.ok()
-        return engine.parse_state(res["result"])
+        return engine.parse_state(cast(dict[str, Any], res)["result"])
 
     async def choose_level(self, guid: str) -> None:
         err = gateway_failure(await self.client.chooseLevel(guid, 0))

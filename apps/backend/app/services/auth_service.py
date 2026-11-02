@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import contextlib
 from dataclasses import dataclass
+from typing import Any, cast
 
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -43,7 +44,9 @@ class AuthService:
             try:
                 personas = await client.getPersonasByIds([persona_id])
                 if gateway_failure(personas) is None:
-                    persona_map = personas.get("result", {}).get("personas", {})
+                    persona_map = (
+                        cast(dict[str, Any], personas).get("result", {}).get("personas", {})
+                    )
                     persona_info = persona_map.get(str(persona_id), {})
                     display_name = persona_info.get("displayName")
                     avatar_url = persona_info.get("avatar")

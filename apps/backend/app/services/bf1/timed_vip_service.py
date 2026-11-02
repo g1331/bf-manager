@@ -569,7 +569,7 @@ def _ready(row: Bf1ServerVip, now: datetime) -> bool:
     last = _aware(row.last_attempt_at)
     if not row.attempts or last is None:
         return True
-    wait = min(BACKOFF_BASE * 2 ** min(row.attempts, 16), BACKOFF_MAX)
+    wait: timedelta = min(BACKOFF_BASE * 2 ** min(row.attempts, 16), BACKOFF_MAX)
     return last + wait <= now
 
 

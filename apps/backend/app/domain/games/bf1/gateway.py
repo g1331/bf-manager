@@ -20,14 +20,14 @@ import time
 import urllib.parse
 import uuid
 from collections.abc import Awaitable, Callable
-from typing import Any
+from typing import Any, cast
 
 import aiohttp
 import httpx
 from loguru import logger
 
 from app.core import ea_metrics
-from app.domain.games.bf1.gateway_errors import EAGatewayError, gateway_failure
+from app.domain.games.bf1.gateway_errors import EAGatewayError, GatewayResult, gateway_failure
 from app.core.config import get_settings
 from app.domain.games.bf1.profile import BF1Profile
 
@@ -288,7 +288,9 @@ class _BF1GatewayBase:
             return True
         if (not self.remid) or (not self.pid):
             data = await self.Companion_isLoggedIn()
-            if gateway_failure(data) or not (data.get("result") or {}).get("isLoggedIn"):
+            if gateway_failure(data) or not (cast(dict[str, Any], data).get("result") or {}).get(
+                "isLoggedIn"
+            ):
                 self.check_login = False
                 return True
             else:
@@ -310,11 +312,11 @@ class _BF1GatewayBase:
         else:
             return str(self.session)
 
-    async def get_api_header(self) -> dict:
+    async def get_api_header(self) -> dict[str, str]:
         self.api_header["X-Gatewaysession"] = await self.get_session()
         return self.api_header
 
-    async def api_call(self, body: dict) -> dict | str:
+    async def api_call(self, body: dict[str, Any]) -> GatewayResult:
         data = await self._post_jsonrpc(body)
         # -32501 表示 EA 因 session 无效拒绝了请求（未执行），重新登录后用新 session 重放一次。
         # 登录态跨请求缓存后，EA 端提前作废的 session 靠这里自愈。
@@ -332,9 +334,15 @@ class _BF1GatewayBase:
                 logger.exception(f"BF1账号{self.pid}重新登录异常: {e}")
             if self.check_login:
                 data = await self._post_jsonrpc(body)
-        return data if isinstance(data, str) else await self._handle_response(data)
+        # _post_jsonrpc 自己的失败都是 EAGatewayError；只有 EA 回了 JSON 字符串时这里才是普通 str，
+        # 调用方经 gateway_failure 按 internal 处理
+        return (
+            cast(EAGatewayError, data)
+            if isinstance(data, str)
+            else await self._handle_response(data)
+        )
 
-    async def _handle_response(self, data: dict[str, Any]) -> dict[str, Any] | str:
+    async def _handle_response(self, data: dict[str, Any]) -> GatewayResult:
         try:
             return await self.error_handle(data)
         except Exception as e:
@@ -349,7 +357,7 @@ class _BF1GatewayBase:
                 url=self.api_url,
                 headers=await self.get_api_header(),
                 data=json.dumps(body),
-                timeout=10,
+                timeout=aiohttp.ClientTimeout(total=10),
                 proxy=_get_proxy(),
             ) as response:
                 # 检查Content-Type是否为JSON
@@ -371,7 +379,7 @@ class _BF1GatewayBase:
             return EAGatewayError("EA API请求时发生未知错误", kind="internal")
 
     # 玩家信息相关
-    async def login(self, remid: str, sid: str) -> str | None:
+    async def login(self, remid: str, sid: str | None) -> str | None:
         """
         使用remid和sid登录，返回session
         :param remid: 玩家登录时cookie的remid
@@ -390,7 +398,7 @@ class _BF1GatewayBase:
         }
         ea_metrics.count("accounts", "connect/auth:token")
         response = await self.http_session.get(
-            url=url, headers=header, timeout=10, proxy=_get_proxy()
+            url=url, headers=header, timeout=aiohttp.ClientTimeout(total=10), proxy=_get_proxy()
         )
         try:
             res = json.loads(await response.text())
@@ -461,7 +469,7 @@ class _BF1GatewayBase:
         await self._notify_session_refreshed(new_sid=self.sid, new_session=self.session)
         return self.session
 
-    async def setLocale(self, locale: str = "zhtw") -> dict:
+    async def setLocale(self, locale: str = "zhtw") -> GatewayResult:
         """
         设置语言
         :param locale: 语言
@@ -476,7 +484,7 @@ class _BF1GatewayBase:
             }
         )
 
-    async def getBlazeAuthcode(self, remid: str = None, sid: str = None) -> str:
+    async def getBlazeAuthcode(self, remid: str | None = None, sid: str | None = None) -> str:
         if not remid:
             remid = self.remid
         if not sid:
@@ -494,7 +502,11 @@ class _BF1GatewayBase:
         }
         ea_metrics.count("accounts", "connect/auth:blaze")
         response = await self.http_session.get(
-            url=url, headers=header, timeout=10, allow_redirects=False, proxy=_get_proxy()
+            url=url,
+            headers=header,
+            timeout=aiohttp.ClientTimeout(total=10),
+            allow_redirects=False,
+            proxy=_get_proxy(),
         )
         try:
             authcode = response.headers["location"]
@@ -503,7 +515,7 @@ class _BF1GatewayBase:
             logger.error(f"BF1账号{self.pid}登录获取Blaze authcode失败: {type(e).__name__}")
             return await response.text()
 
-    async def Authentication_getEnvIdViaAuthCode(self, authcode) -> dict | str:
+    async def Authentication_getEnvIdViaAuthCode(self, authcode: str | None) -> GatewayResult:
         """
         登录获取session和pid
         result:
@@ -538,7 +550,7 @@ class _BF1GatewayBase:
                 url=self.api_url,
                 headers=header,
                 data=json.dumps(body),
-                timeout=10,
+                timeout=aiohttp.ClientTimeout(total=10),
                 proxy=_get_proxy(),
             )
             # 检查Content-Type是否为JSON
@@ -559,7 +571,7 @@ class _BF1GatewayBase:
             logger.error(f"EA API请求异常: {e}")
             return EAGatewayError("EA API请求时发生未知错误", kind="internal")
 
-    async def Onboarding_welcomeMessage(self) -> dict:
+    async def Onboarding_welcomeMessage(self) -> GatewayResult:
         """
         欢迎信息
         :return:
@@ -630,7 +642,7 @@ class _BF1GatewayBase:
             async with self.http_session.get(
                 url=url,
                 headers=header,
-                timeout=15,
+                timeout=aiohttp.ClientTimeout(total=15),
                 allow_redirects=False,
                 proxy=_get_proxy(),
             ) as response:
@@ -671,7 +683,7 @@ class _BF1GatewayBase:
         logger.success(f"BF1账号{self.pid}desktop_access_token 已更新，有效期 {expires_in}s")
         return token
 
-    async def getPersonasByName(self, player_name: str) -> dict | str:
+    async def getPersonasByName(self, player_name: str) -> GatewayResult:
         """根据玩家昵称解析 persona 基本信息。
 
         通过 EA Desktop 的 Service Aggregation Layer (SAL) GraphQL `SearchPlayer`
@@ -788,7 +800,7 @@ class _BF1GatewayBase:
                 url=url,
                 headers=header,
                 data=json.dumps(payload),
-                timeout=15,
+                timeout=aiohttp.ClientTimeout(total=15),
                 proxy=_get_proxy(),
             ) as response:
                 body_text = await response.text()
@@ -848,7 +860,7 @@ class _BF1GatewayBase:
             )
         return {"personas": personas}
 
-    async def getPersonasByIds(self, personaIds: list[int | str]) -> dict:
+    async def getPersonasByIds(self, personaIds: list[int | str]) -> GatewayResult:
         """
         根据pid获取Personas
 
@@ -889,7 +901,7 @@ class _BF1GatewayBase:
             }
         )
 
-    async def Companion_isLoggedIn(self):
+    async def Companion_isLoggedIn(self) -> GatewayResult:
         """
         检查是否登录
         :return:
@@ -912,7 +924,7 @@ class _BF1GatewayBase:
             }
         )
 
-    async def Companion_isLoggedIn_noLogin(self):
+    async def Companion_isLoggedIn_noLogin(self) -> GatewayResult:
         return await self.api_call(
             {
                 "jsonrpc": "2.0",
@@ -922,7 +934,7 @@ class _BF1GatewayBase:
         )
 
     # 返回数据前进行错误处理
-    async def error_handle(self, data: dict) -> dict | str:
+    async def error_handle(self, data: dict[str, Any]) -> GatewayResult:
         """
         错误处理
             {
@@ -943,7 +955,7 @@ class _BF1GatewayBase:
         ea_message = error_data.get("message")
         ea_message = str(ea_message) if ea_message is not None else None
 
-        def _err(text) -> EAGatewayError:
+        def _err(text: object) -> EAGatewayError:
             return EAGatewayError(str(text), kind="ea", code=code, ea_message=ea_message)
 
         # session 无效要先于文案翻译处理：这条错误的 message 在 error_msg_dict 里，原来走不到
@@ -968,7 +980,7 @@ class _BF1GatewayBase:
 class Game(_BF1GatewayBase):
     """进出服务器"""
 
-    async def reserveSlot(self, gameId: int | str) -> dict:
+    async def reserveSlot(self, gameId: int | str) -> GatewayResult:
         """
         进入服务器
         :param gameId: 服务器gameId
@@ -989,7 +1001,7 @@ class Game(_BF1GatewayBase):
             }
         )
 
-    async def leaveGame(self, gameId: int | str) -> dict:
+    async def leaveGame(self, gameId: int | str) -> GatewayResult:
         """
         退出服务器
         :param gameId: 服务器gameId
@@ -1014,7 +1026,7 @@ class Game(_BF1GatewayBase):
 
 
 class Progression(_BF1GatewayBase):
-    async def getDogtagsByPersonaId(self, personaId: int | str) -> dict:
+    async def getDogtagsByPersonaId(self, personaId: int | str) -> GatewayResult:
         """
         获取狗牌
         :param personaId: PID
@@ -1054,7 +1066,7 @@ class Progression(_BF1GatewayBase):
             }
         )
 
-    async def getMedalsByPersonaId(self, personaId: int | str) -> dict:
+    async def getMedalsByPersonaId(self, personaId: int | str) -> GatewayResult:
         """
         获取勋章
         :param personaId: PID
@@ -1126,7 +1138,7 @@ class Progression(_BF1GatewayBase):
             }
         )
 
-    async def getWeaponsByPersonaId(self, personaId: int | str) -> dict:
+    async def getWeaponsByPersonaId(self, personaId: int | str) -> GatewayResult:
         """
         获取武器
         :param personaId: PID
@@ -1164,7 +1176,7 @@ class Progression(_BF1GatewayBase):
             }
         )
 
-    async def getVehiclesByPersonaId(self, personaId: int | str) -> dict:
+    async def getVehiclesByPersonaId(self, personaId: int | str) -> GatewayResult:
         """
         获取载具
         :param personaId: PID
@@ -1204,7 +1216,7 @@ class Progression(_BF1GatewayBase):
 
 
 class ScrapExchange(_BF1GatewayBase):
-    async def getOffers(self) -> dict:
+    async def getOffers(self) -> GatewayResult:
         """
         获取交换信息
         :return:
@@ -1222,7 +1234,7 @@ class ScrapExchange(_BF1GatewayBase):
 
 
 class CampaignOperations(_BF1GatewayBase):
-    async def getPlayerCampaignStatus(self) -> dict:
+    async def getPlayerCampaignStatus(self) -> GatewayResult:
         """
                 获取战役信息
                 示例响应：
@@ -1307,7 +1319,7 @@ class CampaignOperations(_BF1GatewayBase):
 
 
 class Stats(_BF1GatewayBase):
-    async def detailedStatsByPersonaId(self, personaId: int | str) -> dict:
+    async def detailedStatsByPersonaId(self, personaId: int | str) -> GatewayResult:
         """
         获取战绩
         :param personaId: PID
@@ -1350,7 +1362,7 @@ class Stats(_BF1GatewayBase):
 
 
 class ServerHistory(_BF1GatewayBase):
-    async def mostRecentServers(self, personaId: int | str) -> dict:
+    async def mostRecentServers(self, personaId: int | str) -> GatewayResult:
         """
         最近游玩
         :param personaId: PID
@@ -1375,7 +1387,7 @@ class ServerHistory(_BF1GatewayBase):
 
 
 class Gamedata(_BF1GatewayBase):
-    async def getGameData(self) -> dict:
+    async def getGameData(self) -> GatewayResult:
         """
         获取游戏信息
         :return:
@@ -1415,7 +1427,10 @@ class Gamedata(_BF1GatewayBase):
 
 
 class GameServer(_BF1GatewayBase):
-    async def searchServers(self, server_name: str, limit: int = 200, filter_dict=None) -> dict:
+    # filter_dict 传入时是 dict，函数体里会改写成 JSON 字符串
+    async def searchServers(
+        self, server_name: str, limit: int = 200, filter_dict: Any = None
+    ) -> GatewayResult:
         """
         搜索服务器
         :return:
@@ -1455,7 +1470,7 @@ class GameServer(_BF1GatewayBase):
             }
         )
 
-    async def getServerDetails(self, gameId: int | str) -> dict:
+    async def getServerDetails(self, gameId: int | str) -> GatewayResult:
         """
         服务器信息
         :param gameId: 服务器gameId
@@ -1496,7 +1511,7 @@ class GameServer(_BF1GatewayBase):
             }
         )
 
-    async def getFullServerDetails(self, gameId: int | str) -> dict:
+    async def getFullServerDetails(self, gameId: int | str) -> GatewayResult:
         """
         服务器完整信息
         :param gameId: 服务器gameId
@@ -1527,7 +1542,7 @@ class GameServer(_BF1GatewayBase):
             }
         )
 
-    async def getServersByPersonaIds(self, personaIds: list[int | str]) -> dict:
+    async def getServersByPersonaIds(self, personaIds: list[int | str]) -> GatewayResult:
         """
         获取正在游玩的服务器
         :param personaIds: PID列表
@@ -1557,7 +1572,7 @@ class GameServer(_BF1GatewayBase):
 class RSP(_BF1GatewayBase):
     """服管相关"""
 
-    async def RSPgetServerDetails(self, serverId: int | str) -> dict:
+    async def RSPgetServerDetails(self, serverId: int | str) -> GatewayResult:
         """
         服务器RSP信息
         :param serverId: serverId
@@ -1593,7 +1608,9 @@ class RSP(_BF1GatewayBase):
             }
         )
 
-    async def kickPlayer(self, gameId: int | str, personaId, reason: str) -> dict | str:
+    async def kickPlayer(
+        self, gameId: int | str, personaId: int | str, reason: str
+    ) -> GatewayResult:
         """
         踢人
         :param gameId: 服务器gameId
@@ -1626,7 +1643,7 @@ class RSP(_BF1GatewayBase):
             }
         )
 
-    async def chooseLevel(self, persistedGameId: str, levelIndex: int | str) -> dict:
+    async def chooseLevel(self, persistedGameId: str, levelIndex: int | str) -> GatewayResult:
         """
         换图
         :param levelIndex: 地图序号
@@ -1655,7 +1672,7 @@ class RSP(_BF1GatewayBase):
             }
         )
 
-    async def addServerAdmin(self, personaId: int | str, serverId: int | str) -> dict:
+    async def addServerAdmin(self, personaId: int | str, serverId: int | str) -> GatewayResult:
         """
         上管理
         :param serverId:
@@ -1688,7 +1705,7 @@ class RSP(_BF1GatewayBase):
             }
         )
 
-    async def removeServerAdmin(self, personaId: int | str, serverId: int | str) -> dict:
+    async def removeServerAdmin(self, personaId: int | str, serverId: int | str) -> GatewayResult:
         """
         下管理
         :param serverId:
@@ -1721,7 +1738,7 @@ class RSP(_BF1GatewayBase):
             }
         )
 
-    async def addServerVip(self, personaId: int | str, serverId: int | str) -> dict:
+    async def addServerVip(self, personaId: int | str, serverId: int | str) -> GatewayResult:
         """
         上VIP
         :param serverId:
@@ -1754,7 +1771,7 @@ class RSP(_BF1GatewayBase):
             }
         )
 
-    async def removeServerVip(self, personaId: int | str, serverId: int | str) -> dict:
+    async def removeServerVip(self, personaId: int | str, serverId: int | str) -> GatewayResult:
         """
         下VIP
         :param serverId:
@@ -1787,7 +1804,7 @@ class RSP(_BF1GatewayBase):
             }
         )
 
-    async def addServerBan(self, personaId: int | str, serverId: int | str) -> dict:
+    async def addServerBan(self, personaId: int | str, serverId: int | str) -> GatewayResult:
         """
         上Ban
         :param serverId:
@@ -1820,7 +1837,7 @@ class RSP(_BF1GatewayBase):
             }
         )
 
-    async def removeServerBan(self, personaId: int | str, serverId: int | str) -> dict:
+    async def removeServerBan(self, personaId: int | str, serverId: int | str) -> GatewayResult:
         """
         下Ban
         :param serverId:
@@ -1853,7 +1870,7 @@ class RSP(_BF1GatewayBase):
             }
         )
 
-    async def updateServer(self, params: dict) -> dict | str:
+    async def updateServer(self, params: dict[str, Any]) -> GatewayResult:
         """
         覆盖服务器设置与地图轮换（服主可用；管理员据反馈也可以，未实测）。
         :param params: 完整请求参数，由 services/bf1/card_engine.update_params 构造：
@@ -1883,7 +1900,9 @@ class RSP(_BF1GatewayBase):
             }
         )
 
-    async def movePlayer(self, gameId: int | str, personaId: int | str, teamId: int) -> dict:
+    async def movePlayer(
+        self, gameId: int | str, personaId: int | str, teamId: int
+    ) -> GatewayResult:
         """
         移动玩家
         :param gameId:
@@ -1907,7 +1926,7 @@ class RSP(_BF1GatewayBase):
             }
         )
 
-    async def proxiedMethodGetLogs(self, serverId: int | str) -> dict:
+    async def proxiedMethodGetLogs(self, serverId: int | str) -> GatewayResult:
         """
         获取服务器日志
         :param serverId: serverId
@@ -1928,7 +1947,7 @@ class Platoons(_BF1GatewayBase):
     战队相关
     """
 
-    async def getPlatoonForRspServer(self, serverId: int | str) -> dict:
+    async def getPlatoonForRspServer(self, serverId: int | str) -> GatewayResult:
         """
         服务器战队信息
         :param serverId: serverId
@@ -1963,7 +1982,7 @@ class Platoons(_BF1GatewayBase):
             }
         )
 
-    async def getActiveTagsByPersonaIds(self, personaIds: list[int | str]) -> dict:
+    async def getActiveTagsByPersonaIds(self, personaIds: list[int | str]) -> GatewayResult:
         """
         获取代表战队图章
         :param personaIds: PID列表
@@ -1987,7 +2006,7 @@ class Platoons(_BF1GatewayBase):
             }
         )
 
-    async def getActivePlatoon(self, personaId: int | str) -> dict:
+    async def getActivePlatoon(self, personaId: int | str) -> GatewayResult:
         """
         获取玩家所在战队
         :param personaId:
@@ -2023,7 +2042,7 @@ class Platoons(_BF1GatewayBase):
             }
         )
 
-    async def getPlatoon(self, platoon_guid: str) -> dict:
+    async def getPlatoon(self, platoon_guid: str) -> GatewayResult:
         """
         获取战队信息
         :param platoon_guid:
@@ -2058,7 +2077,7 @@ class Platoons(_BF1GatewayBase):
             }
         )
 
-    async def getPlatoons(self, personaId: int | str) -> dict:
+    async def getPlatoons(self, personaId: int | str) -> GatewayResult:
         """
         获取玩家所在战排列表
         :param personaId:
@@ -2080,7 +2099,7 @@ class Platoons(_BF1GatewayBase):
 
     async def getMembers(
         self, platoon_guid: str, page_index: int = 0, page_size: int = 100
-    ) -> dict:
+    ) -> GatewayResult:
         """
         获取战队成员。pageIndex、pageSize 都必填，pageSize 最大 100（与战队人数上限相同）
         :param platoon_guid:
@@ -2111,7 +2130,7 @@ class Platoons(_BF1GatewayBase):
 
     async def findByPartialName(
         self, partial_name: str, page_index: int = 0, page_size: int = 10
-    ) -> dict:
+    ) -> GatewayResult:
         """
         按名字模糊搜索战队（不匹配简称，不区分大小写）
         :param partial_name: 至少 3 个字符，否则 error -35103「戰隊名稱太短」
@@ -2146,7 +2165,7 @@ class Platoons(_BF1GatewayBase):
             }
         )
 
-    async def getServersWithPlayers(self, platoon_guid: str) -> dict:
+    async def getServersWithPlayers(self, platoon_guid: str) -> GatewayResult:
         """
         获取战队正在游玩的服务器
         :param platoon_guid:
@@ -2372,7 +2391,7 @@ class Emblems(_BF1GatewayBase):
     图章
     """
 
-    async def getEquippedEmblem(self, personaId: int | str) -> dict:
+    async def getEquippedEmblem(self, personaId: int | str) -> GatewayResult:
         """
         获取玩家当前装备的图章
         :param personaId:
@@ -2401,7 +2420,7 @@ class Loadout(_BF1GatewayBase):
     装备
     """
 
-    async def getEquippedDogtagsByPersonaId(self, personaId: int | str) -> dict:
+    async def getEquippedDogtagsByPersonaId(self, personaId: int | str) -> GatewayResult:
         return await self.api_call(
             {
                 "jsonrpc": "2.0",
@@ -2411,7 +2430,7 @@ class Loadout(_BF1GatewayBase):
             }
         )
 
-    async def getPresetsByPersonaId(self, personaId: int | str) -> dict:
+    async def getPresetsByPersonaId(self, personaId: int | str) -> GatewayResult:
         return await self.api_call(
             {
                 "jsonrpc": "2.0",

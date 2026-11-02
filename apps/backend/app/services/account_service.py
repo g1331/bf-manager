@@ -267,15 +267,17 @@ async def _lock_verification_target(db: AsyncSession, token: str) -> None:
 
 
 async def _user_by_email(db: AsyncSession, email: str) -> User | None:
-    return await db.scalar(select(User).where(func.lower(User.email) == email))
+    return (await db.scalars(select(User).where(func.lower(User.email) == email))).first()
 
 
 async def _active_binding(db: AsyncSession, persona_id: int) -> EaBinding | None:
-    return await db.scalar(
-        select(EaBinding)
-        .options(selectinload(EaBinding.user))
-        .where(EaBinding.persona_id == persona_id, EaBinding.is_frozen.is_(False))
-    )
+    return (
+        await db.scalars(
+            select(EaBinding)
+            .options(selectinload(EaBinding.user))
+            .where(EaBinding.persona_id == persona_id, EaBinding.is_frozen.is_(False))
+        )
+    ).first()
 
 
 def primary_binding(user: User) -> EaBinding | None:

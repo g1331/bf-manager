@@ -10,6 +10,7 @@ import asyncio
 import getpass
 import json
 import sys
+from typing import cast
 
 from sqlalchemy import select
 
@@ -27,7 +28,7 @@ def _resolve_password(args: argparse.Namespace, prompt_label: str = "Password") 
     无参数：getpass 交互式 prompt（推荐人工场景，不回显且不进 history）
     """
     if args.password is not None:
-        return args.password
+        return cast(str, args.password)
     if args.password_stdin:
         data = sys.stdin.read()
         # 允许 stdin 末尾有换行

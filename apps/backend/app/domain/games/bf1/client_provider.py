@@ -23,7 +23,7 @@ from __future__ import annotations
 import sys
 from collections.abc import AsyncIterator
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
-from typing import Protocol, runtime_checkable
+from typing import Any, Protocol, cast, runtime_checkable
 
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -209,7 +209,7 @@ async def _probe_rsp(client: BF1GatewayClient, game_id: int) -> bool | EAGateway
     err = gateway_failure(res)
     if err is not None:
         return err if err.retryable else False
-    raw = res.get("result") or {}
+    raw = cast(dict[str, Any], res).get("result") or {}
     rsp_server = (raw.get("rspInfo") or {}).get("server") or {}
     return bool(rsp_server.get("serverId"))
 

@@ -673,7 +673,7 @@ async def fetch_game_list_snapshot(db: AsyncSession) -> list[dict[str, Any]]:
         }
         previous = socket.callback
         # BlazeSocket 把 callback 声明成静态方法、实例上按属性覆盖，mypy 认不出这种用法
-        socket.callback = _on_packet  # type: ignore[method-assign]
+        socket.callback = _on_packet
         try:
             async with asyncio.timeout(GAME_LIST_SNAPSHOT_TIMEOUT):
                 response = await socket.send(packet, timeout=GAME_LIST_SNAPSHOT_TIMEOUT)
@@ -692,5 +692,5 @@ async def fetch_game_list_snapshot(db: AsyncSession) -> list[dict[str, Any]]:
             await _pool.invalidate()
             raise
         finally:
-            socket.callback = previous  # type: ignore[method-assign]
+            socket.callback = previous
         return updates

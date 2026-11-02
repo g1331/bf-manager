@@ -136,11 +136,10 @@ describe("网络失败与取消", () => {
   it("调用方取消时原样抛出，不包装成 ApiException", async () => {
     stubFetch(hangUntilAborted);
     const controller = new AbortController();
+    const reason = new DOMException("left page", "AbortError");
     const pending = api.get("/x", { signal: controller.signal });
-    controller.abort();
-    await expect(pending).rejects.toSatisfy(
-      (err) => !(err instanceof ApiException) && (err as Error).name === "AbortError",
-    );
+    controller.abort(reason);
+    await expect(pending).rejects.toBe(reason);
   });
 });
 

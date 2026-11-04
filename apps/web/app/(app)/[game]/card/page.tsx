@@ -3,9 +3,12 @@
 /**
  * 一键卡行动：私服没有行动模式选项，服主或管理员用这个工具把服务器「抽」成 24 图行动并锚定。
  *
- * 公开工具，不要求登录：服主或管理员填 remid + sid（登录用户可直接用主绑定账号）。凭据只随请求发给
- * 后端、只在任务内存里用，不存本地也不落库；任务 id 和查看令牌存在 localStorage，
- * 刷新或关掉页面后回来还能看进度。
+ * 公开工具，不要求登录：服主或管理员填 remid + sid（登录用户可直接用主绑定账号，或借用本站号池里
+ * 是这台服管理员的平台账号）。凭据只随请求发给后端、只在任务内存里用，不存本地也不落库；任务 id 和
+ * 查看令牌存在 localStorage，刷新或关掉页面后回来还能看进度。
+ *
+ * 选好账号后按收录的私服名单列出它是服主或管理员的服，点一下就检查；名单只覆盖有人进过的服，
+ * 所以 gameId 也能直接填。
  */
 
 import { Suspense, useEffect, useMemo, useState, useSyncExternalStore } from "react";
@@ -22,6 +25,7 @@ import { useSession } from "@/hooks/useSession";
 import { ApiException } from "@/lib/api-client";
 import {
   cardApi,
+  type CardAccountServers,
   type CardCredentials,
   type CardJob,
   type CardJobStatus,
@@ -125,10 +129,18 @@ function CardOperation() {
   const binding = session.data?.primary_binding ?? null;
   const qc = useQueryClient();
 
-  // 未手动切换时，登录且有主绑定就默认用绑定账号
-  const [credMode, setCredMode] = useState<"binding" | "manual" | null>(null);
+  // 未手动切换时，登录且有主绑定就默认用绑定账号；平台账号只给登录用户
+  const [credMode, setCredMode] = useState<CredMode | null>(null);
+  const loggedIn = session.data != null;
   const canUseBinding = binding != null && !binding.is_frozen;
-  const useBinding = canUseBinding && (credMode ?? "binding") === "binding";
+  const modes: { v: CredMode; label: string }[] = [
+    ...(canUseBinding
+      ? [{ v: "binding" as const, label: `绑定账号 ${binding.display_name ?? binding.persona_id}` }]
+      : []),
+    ...(loggedIn ? [{ v: "pool" as const, label: "平台账号" }] : []),
+    { v: "manual", label: "填写 remid / sid" },
+  ];
+  const mode: CredMode = credMode && modes.some((m) => m.v === credMode) ? credMode : modes[0].v;
   const [remid, setRemid] = useState("");
   const [sid, setSid] = useState("");
   const [gameId, setGameId] = useState(params.get("gameId") ?? "");
@@ -136,10 +148,26 @@ function CardOperation() {
   const [confirm, setConfirm] = useState<"card" | "anchor" | null>(null);
   const stored = useStoredJob();
 
-  const creds: CardCredentials = { remid: remid.trim(), sid: sid.trim(), use_binding: useBinding };
-  const credsReady = useBinding || (creds.remid !== "" && creds.sid !== "");
+  const creds: CardCredentials = {
+    remid: remid.trim(),
+    sid: sid.trim(),
+    use_binding: mode === "binding",
+    use_pool: mode === "pool",
+  };
+  const credsReady = mode !== "manual" || (creds.remid !== "" && creds.sid !== "");
   const gid = Number(gameId.trim());
   const gidValid = Number.isInteger(gid) && gid > 0;
+
+  // 绑定账号和平台账号不用登录 EA 就能查，切过去自动列；手填的要登录一次，点「识别账号」才查
+  const autoServers = useQuery({
+    queryKey: ["bf1-card-servers", mode, session.data?.id ?? null],
+    queryFn: () => cardApi.servers(creds),
+    enabled: mode !== "manual" && loggedIn,
+    staleTime: 5 * 60_000,
+    retry: false,
+  });
+  const identify = useMutation({ mutationFn: () => cardApi.servers(creds) });
+  const servers = mode === "manual" ? identify : autoServers;
 
   const remember = writeStored;
 
@@ -152,7 +180,7 @@ function CardOperation() {
   const setJob = (j: CardJob) => qc.setQueryData(bf1Keys.cardJob(j.id), j);
 
   const precheck = useMutation({
-    mutationFn: () => cardApi.precheck(gid, creds),
+    mutationFn: (g: number) => cardApi.precheck(g, creds),
     onSuccess: setCheck,
     onError: (e) => {
       setCheck(null);
@@ -224,24 +252,21 @@ function CardOperation() {
 
       <Bf1Panel cut={14} className="p-4 sm:p-6" style={PANEL_STYLE}>
         <SectionHeading className="mb-0">服主或管理员账号</SectionHeading>
-        {binding && canUseBinding ? (
-          <div className="mt-3 inline-flex ring-1 ring-white/15">
-            {[
-              { v: true, label: `绑定账号 ${binding.display_name ?? binding.persona_id}` },
-              { v: false, label: "填写 remid / sid" },
-            ].map((o) => (
+        {modes.length > 1 ? (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {modes.map((o) => (
               <button
-                key={String(o.v)}
+                key={o.v}
                 type="button"
                 onClick={() => {
-                  setCredMode(o.v ? "binding" : "manual");
+                  setCredMode(o.v);
                   setCheck(null);
                 }}
                 className={cn(
-                  "compact-action px-3 py-1.5 text-xs transition-colors",
-                  useBinding === o.v
-                    ? "bg-white font-semibold text-black"
-                    : "text-white/65 hover:text-white",
+                  "compact-action px-3 py-1.5 text-xs ring-1 transition-colors",
+                  mode === o.v
+                    ? "bg-white font-semibold text-black ring-white"
+                    : "text-white/65 ring-white/15 hover:text-white",
                 )}
               >
                 {o.label}
@@ -249,7 +274,7 @@ function CardOperation() {
             ))}
           </div>
         ) : null}
-        {useBinding ? null : (
+        {mode !== "manual" ? null : (
           <>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <label className="flex flex-col gap-1.5 text-xs text-white/60">
@@ -262,6 +287,7 @@ function CardOperation() {
                   onChange={(e) => {
                     setRemid(e.target.value);
                     setCheck(null);
+                    identify.reset();
                   }}
                   placeholder="EA 账号的 remid"
                   className="h-11"
@@ -277,6 +303,7 @@ function CardOperation() {
                   onChange={(e) => {
                     setSid(e.target.value);
                     setCheck(null);
+                    identify.reset();
                   }}
                   placeholder="EA 账号的 sid"
                   className="h-11"
@@ -302,19 +329,37 @@ function CardOperation() {
           </>
         )}
         <p className="mt-3 text-xs leading-relaxed text-white/45">
-          凭据只用于这次操作，不会保存。卡服期间会用这个账号登录游戏服务，这个账号正在玩的话会被挤下线。
+          {mode === "pool"
+            ? "用本站号池里是这台服服主或管理员的账号操作，需要你在本站对这台服有管理员权限。"
+            : "凭据只用于这次操作，不会保存。卡服期间会用这个账号登录游戏服务，这个账号正在玩的话会被挤下线。"}
         </p>
       </Bf1Panel>
 
       <Bf1Panel cut={14} className="p-4 sm:p-6" style={PANEL_STYLE}>
         <SectionHeading className="mb-0">服务器</SectionHeading>
+        <AccountServers
+          mode={mode}
+          result={servers.data}
+          loading={servers.isPending && (mode === "manual" ? identify.isPending : loggedIn)}
+          error={servers.isError ? errText(servers.error) : null}
+          selected={gidValid ? gid : null}
+          onIdentify={() => {
+            if (!credsReady) toast.error("请先填写账号的 remid 和 sid");
+            else identify.mutate();
+          }}
+          onPick={(g) => {
+            setGameId(String(g));
+            setCheck(null);
+            precheck.mutate(g);
+          }}
+        />
         <form
           className="mt-3 flex gap-2"
           onSubmit={(e) => {
             e.preventDefault();
             if (!credsReady) toast.error("请先填写账号的 remid 和 sid");
             else if (!gidValid) toast.error("请填写服务器的 gameId（数字）");
-            else precheck.mutate();
+            else precheck.mutate(gid);
           }}
         >
           <DarkInput
@@ -370,6 +415,84 @@ function CardOperation() {
         ) : null}
       </ConfirmSheet>
     </main>
+  );
+}
+
+type CredMode = "binding" | "pool" | "manual";
+
+const ROLE_LABEL: Record<string, string> = { owner: "服主", admin: "管理员" };
+
+function AccountServers({
+  mode,
+  result,
+  loading,
+  error,
+  selected,
+  onIdentify,
+  onPick,
+}: {
+  mode: CredMode;
+  result: CardAccountServers | undefined;
+  loading: boolean;
+  error: string | null;
+  selected: number | null;
+  onIdentify: () => void;
+  onPick: (gameId: number) => void;
+}) {
+  if (mode === "manual" && !result && !loading && !error) {
+    return (
+      <button
+        type="button"
+        onClick={onIdentify}
+        className="compact-action mt-3 h-9 bg-white/[0.08] px-4 text-xs font-semibold text-white/85 ring-1 ring-white/15 transition-colors hover:bg-white hover:text-black"
+      >
+        识别账号，列出它管理的服
+      </button>
+    );
+  }
+  if (loading) {
+    return <p className="mt-3 text-xs text-white/50">正在查这个账号管理的服…</p>;
+  }
+  if (error) {
+    return <p className="mt-3 text-xs text-red-300/80">{error}</p>;
+  }
+  if (!result) return null;
+  if (result.servers.length === 0) {
+    return (
+      <p className="mt-3 text-xs leading-relaxed text-white/50">
+        {mode === "pool"
+          ? "平台账号能管的服里，没有你在本站有管理员权限的。"
+          : "收录的私服里没找到这个账号是服主或管理员的服。"}
+        没人进过的服不在收录范围，可以直接填 gameId。
+      </p>
+    );
+  }
+  return (
+    <ul className="mt-3 divide-y divide-white/[0.06] ring-1 ring-white/10">
+      {result.servers.map((s) => {
+        const live = s.player_count != null;
+        return (
+          <li key={s.server_id}>
+            <button
+              type="button"
+              onClick={() => onPick(s.game_id)}
+              className={cn(
+                "flex min-h-11 w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-white/[0.06]",
+                selected === s.game_id && "bg-white/[0.08]",
+              )}
+            >
+              <span className="min-w-0 flex-1 truncate text-sm text-white/90">{s.name}</span>
+              <span className="shrink-0 text-xs text-white/50 tabular-nums">
+                {live ? `${s.player_count}/${s.max_player_count ?? "?"} 人` : "当前没人"}
+              </span>
+              <span className="shrink-0 bg-white/10 px-1.5 py-px text-[11px] text-white/70">
+                {ROLE_LABEL[s.role] ?? s.role}
+              </span>
+            </button>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 

@@ -1121,11 +1121,28 @@ export interface AutoSwitchView {
   events: { ts: number; kind: string; message: string }[];
 }
 
-/** 一键卡行动：服主或管理员的凭据。匿名填 remid + sid，登录用户可改用主绑定账号 */
+/**
+ * 一键卡行动：服主或管理员的凭据。匿名填 remid + sid，登录用户可改用主绑定账号，
+ * 或借用本站号池里是这台服管理员的账号（需要本站管理员以上权限）
+ */
 export interface CardCredentials {
   remid: string;
   sid: string;
   use_binding: boolean;
+  use_pool: boolean;
+}
+
+/** 账号能卡行动的一台服（来自收录的私服名单） */
+export interface CardServer extends PlayerRspServer {
+  role: "owner" | "admin";
+  persona_id: number;
+}
+
+export interface CardAccountServers {
+  /** 借平台账号时为空 */
+  persona_id: number | null;
+  servers: CardServer[];
+  tracked_servers: number;
 }
 
 export interface CardPrecheck {
@@ -1173,6 +1190,8 @@ export interface CardJob {
 const cardHeaders = (token: string | null) => (token ? { "X-Card-Token": token } : undefined);
 
 export const cardApi = {
+  servers: (creds: CardCredentials) =>
+    api.post<CardAccountServers>("/bf1/card/servers", creds, { timeoutMs: 45_000 }),
   precheck: (gameId: number, creds: CardCredentials) =>
     api.post<CardPrecheck>(
       "/bf1/card/precheck",

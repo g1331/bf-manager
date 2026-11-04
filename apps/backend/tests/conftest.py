@@ -90,6 +90,19 @@ def _make_binding(
     )
 
 
+@pytest.fixture(autouse=True)
+def _clear_process_caches():
+    """进程内的服管理员名单缓存和卡行动借号登记跨用例会串，每个用例前后清掉"""
+    from app.domain.games.bf1 import client_provider
+    from app.services import ea_account_service
+
+    client_provider._admin_ids_cache.clear()
+    ea_account_service._reserved.clear()
+    yield
+    client_provider._admin_ids_cache.clear()
+    ea_account_service._reserved.clear()
+
+
 @pytest_asyncio.fixture
 async def test_session():
     """每个用例独立 sqlite 引擎 + schema"""

@@ -338,3 +338,327 @@ async def test_api_requires_credentials_and_token(client, test_session):
     res = await client.get("/api/v1/bf1/card/jobs/1", headers={"X-Card-Token": "good"})
     assert res.status_code == 200
     assert res.json()["can_restore"] is True
+
+
+# ----------------------------------------------------------------------------- 借号池账号
+
+POOL_CREDS = OwnerCredentials(remid="r", sid="s", pool_persona_id=ADMIN)
+
+
+@pytest.fixture
+def pool_env(monkeypatch):
+    """号池里有 ADMIN 和另一个号；记下让 Blaze 让号和走号池 client 的调用"""
+    from app.services import ea_account_service
+
+    state: dict[str, Any] = {"enabled": [ADMIN, 5], "released": [], "pool_clients": []}
+
+    class _Accounts:
+        def __init__(self, db):
+            pass
+
+        async def enabled_personas(self):
+            return list(state["enabled"])
+
+    async def _release(pid):
+        state["released"].append(pid)
+
+    monkeypatch.setattr(card_service, "EAAccountService", _Accounts)
+    monkeypatch.setattr(card_service, "release_blaze_account", _release)
+    yield state
+    for pid in (ADMIN, 5):
+        ea_account_service.release_persona(pid)
+
+
+async def test_pool_account_is_reserved_while_card_runs(maker, monkeypatch, pool_env):
+    from app.services.ea_account_service import reserved_personas
+
+    client = FakeClient([details("BreakthroughLarge", OPS, soldiers=12)], pid=ADMIN)
+    gate = asyncio.Event()
+    orig_state = client.getServerDetails
+
+    async def slow_state(game_id):
+        await gate.wait()
+        return await orig_state(game_id)
+
+    client.getServerDetails = slow_state
+    use_client(monkeypatch, client)
+    async with maker() as db:
+        view, _ = await CardService(db).start(POOL_CREDS, GAME_ID, "anchor", user=None, ip=None)
+        # 生产 Blaze 先让出这个号，任务期间它被独占
+        assert pool_env["released"] == [ADMIN]
+        assert ADMIN in reserved_personas()
+        # 同一个号不能同时借给另一台服
+        with pytest.raises(ValidationError, match="正在给别的服卡行动"):
+            await CardService(db).start(POOL_CREDS, GAME_ID + 1, "anchor", user=None, ip=None)
+    gate.set()
+    job = await wait_done(maker, view.id)
+    assert job.status == "succeeded", job.events
+    assert ADMIN not in reserved_personas()
+
+
+async def test_pool_account_released_when_start_fails(maker, monkeypatch, pool_env):
+    from app.services.ea_account_service import reserved_personas
+
+    use_client(monkeypatch, FakeClient([details("Conquest", ["MP_Alps"], soldiers=3)], pid=ADMIN))
+    async with maker() as db:
+        with pytest.raises(ValidationError, match="空服"):
+            await CardService(db).start(POOL_CREDS, GAME_ID, "card", user=None, ip=None)
+    assert ADMIN not in reserved_personas()
+
+
+async def test_pool_account_needs_another_account_left(maker, monkeypatch, pool_env):
+    from app.services.ea_account_service import reserved_personas
+
+    pool_env["enabled"] = [ADMIN]
+    use_client(monkeypatch, FakeClient([EMPTY_CQ], pid=ADMIN))
+    async with maker() as db:
+        with pytest.raises(ValidationError, match="没有别的可用账号"):
+            await CardService(db).start(POOL_CREDS, GAME_ID, "card", user=None, ip=None)
+    assert pool_env["released"] == []
+    assert ADMIN not in reserved_personas()
+
+
+async def test_pool_precheck_and_restore_use_cached_pool_client(maker, monkeypatch, pool_env):
+    """预检和恢复走号池 client（沿用登录态），不做完整登录"""
+    from contextlib import asynccontextmanager
+
+    client = FakeClient([EMPTY_CQ], pid=ADMIN, update_result="无权限")
+    use_client(monkeypatch, client)
+
+    @asynccontextmanager
+    async def _pool_client(db, persona_id):
+        pool_env["pool_clients"].append(persona_id)
+        yield client
+
+    async def _no_login(_creds):
+        raise AssertionError("号池账号的预检和恢复不该完整登录")
+
+    monkeypatch.setattr(card_service, "get_bf1_client_for_pool_account", _pool_client)
+    async with maker() as db:
+        view, token = await CardService(db).start(POOL_CREDS, GAME_ID, "card", user=None, ip=None)
+    job = await wait_done(maker, view.id)
+    assert job.status == "failed"
+
+    monkeypatch.setattr(card_service, "_login", _no_login)
+    client.update_result = {"result": "success"}
+    async with maker() as db:
+        pre = await CardService(db).precheck(POOL_CREDS, GAME_ID)
+        assert pre.is_admin
+        restored = await CardService(db).restore(view.id, token, None, POOL_CREDS)
+    assert restored.restored_at is not None
+    assert pool_env["pool_clients"] == [ADMIN, ADMIN]
+
+
+async def test_resolve_pool_credentials_checks_site_role(maker, monkeypatch, pool_env):
+    from types import SimpleNamespace
+
+    from app.core.security import get_cipher
+    from app.models import EAAccount
+
+    roles: dict[str, Any] = {"ok": False}
+
+    class _Authz:
+        def __init__(self, db):
+            pass
+
+        async def require_role(self, **kw):
+            assert kw["min_role"] == "admin"
+            if not roles["ok"]:
+                raise ForbiddenError("无权管理此服务器")
+
+    candidates: list[int] = []
+
+    async def _pool_admins(db, game_id, *, fresh=False):
+        assert fresh
+        return list(candidates)
+
+    async def _admin_ids(db, game_id, *, fresh=False):
+        return frozenset({ADMIN})
+
+    monkeypatch.setattr(card_service, "ServerAuthzService", _Authz)
+    monkeypatch.setattr(card_service, "pool_admin_personas", _pool_admins)
+    monkeypatch.setattr(card_service, "server_admin_ids", _admin_ids)
+    from app.services.ea_account_service import EAAccountService as RealAccounts
+
+    monkeypatch.setattr(card_service, "EAAccountService", RealAccounts)
+    user = SimpleNamespace(id=1)
+
+    async with maker() as db:
+        cipher = get_cipher()
+        db.add(
+            EAAccount(
+                persona_id=ADMIN,
+                encrypted_remid=cipher.encrypt("pool-remid"),
+                encrypted_sid=cipher.encrypt("pool-sid"),
+                enabled=True,
+            )
+        )
+        await db.commit()
+
+        with pytest.raises(ValidationError, match="登录后"):
+            await card_service.resolve_pool_credentials(db, None, GAME_ID)
+        with pytest.raises(ForbiddenError, match="借用平台账号需要"):
+            await card_service.resolve_pool_credentials(db, user, GAME_ID)
+        roles["ok"] = True
+        with pytest.raises(ValidationError, match="都不是这台服的服主或管理员"):
+            await card_service.resolve_pool_credentials(db, user, GAME_ID)
+        from app.services import ea_account_service
+
+        ea_account_service.reserve_persona(ADMIN)
+        with pytest.raises(ValidationError, match="正在给别的服卡行动"):
+            await card_service.resolve_pool_credentials(db, user, GAME_ID)
+        ea_account_service.release_persona(ADMIN)
+        candidates.append(ADMIN)
+        creds = await card_service.resolve_pool_credentials(db, user, GAME_ID)
+    assert (creds.remid, creds.sid, creds.pool_persona_id) == ("pool-remid", "pool-sid", ADMIN)
+    assert "pool-remid" not in repr(creds)
+
+
+async def test_pool_reservation_waits_for_in_flight_gateway_use(maker, monkeypatch, pool_env):
+    from app.services.ea_account_service import gateway_using, reserved_personas
+
+    use_client(monkeypatch, FakeClient([details("BreakthroughLarge", OPS, soldiers=12)], pid=ADMIN))
+    order: list[str] = []
+    orig_release = card_service.release_blaze_account
+
+    async def release(pid):
+        order.append("blaze-released")
+        await orig_release(pid)
+
+    monkeypatch.setattr(card_service, "release_blaze_account", release)
+
+    async def in_flight():
+        with gateway_using(ADMIN):
+            await asyncio.sleep(0.3)
+            order.append("gateway-done")
+
+    holder = asyncio.create_task(in_flight())
+    await asyncio.sleep(0)
+    async with maker() as db:
+        view, _ = await CardService(db).start(POOL_CREDS, GAME_ID, "anchor", user=None, ip=None)
+    await holder
+    assert order == ["gateway-done", "blaze-released"]
+    await wait_done(maker, view.id)
+    assert ADMIN not in reserved_personas()
+
+    # 一直有请求拿着这个号：等不到就放弃借用
+    monkeypatch.setattr(card_service, "RESERVE_WAIT_SECONDS", 0.2)
+    with gateway_using(ADMIN):
+        async with maker() as db:
+            with pytest.raises(ValidationError, match="正在处理别的请求"):
+                await CardService(db).start(POOL_CREDS, GAME_ID, "anchor", user=None, ip=None)
+    assert ADMIN not in reserved_personas()
+
+
+async def test_cancel_during_cleanup_releases_pool_account_after_closing(
+    maker, monkeypatch, pool_env
+):
+    from app.services.ea_account_service import reserved_personas
+
+    client = FakeClient([EMPTY_CQ], pid=ADMIN)
+    use_client(monkeypatch, client)
+    closing = asyncio.Event()
+    gate = asyncio.Event()
+    closed: list[bool] = []
+
+    class SlowCloseBlaze(FakeBlaze):
+        async def close(self):
+            closing.set()
+            await gate.wait()
+            closed.append(True)
+
+    monkeypatch.setattr(card_service, "CardBlazeSession", SlowCloseBlaze)
+    async with maker() as db:
+        view, token = await CardService(db).start(POOL_CREDS, GAME_ID, "card", user=None, ip=None)
+    runner = card_service._runners[view.id]
+    await asyncio.sleep(0.05)
+
+    async def stop():
+        async with maker() as db:
+            await CardService(db).cancel(view.id, token, None)
+
+    first = asyncio.create_task(stop())
+    await asyncio.wait_for(closing.wait(), 5)
+    # 收尾卡在关 Blaze 时又点了一次停止：只取消一次
+    second = asyncio.create_task(stop())
+    await asyncio.sleep(0.05)
+    assert runner.task.cancelling() == 1
+    # 收尾中又被取消、接着进程关闭再取消一次：连接还没关完，账号和这台服都不放，关闭也等着
+    runner.task.cancel()
+    await asyncio.sleep(0.01)
+    shutdown = asyncio.create_task(card_service.shutdown_card_jobs())
+    await asyncio.sleep(0.05)
+    assert not shutdown.done()
+    assert ADMIN in reserved_personas()
+    assert view.id in card_service._runners
+    gate.set()
+    await asyncio.wait_for(shutdown, 5)
+    assert runner.task.cancelled()
+    await asyncio.gather(first, second)
+    assert closed == [True]
+    assert ADMIN not in reserved_personas()
+    assert view.id not in card_service._runners
+
+
+async def test_cleanup_leave_timeout_still_closes_then_releases(maker, monkeypatch, pool_env):
+    from app.services.ea_account_service import reserved_personas
+
+    never = asyncio.Event()
+
+    class StuckLeaveClient(FakeClient):
+        async def leaveGame(self, game_id):  # noqa: N802
+            await never.wait()
+
+    client = StuckLeaveClient([EMPTY_CQ], pid=ADMIN)
+    use_client(monkeypatch, client)
+    monkeypatch.setattr(card_service, "LEAVE_SECONDS", 0.1)
+    async with maker() as db:
+        view, token = await CardService(db).start(POOL_CREDS, GAME_ID, "card", user=None, ip=None)
+    runner = card_service._runners[view.id]
+    await asyncio.sleep(0.05)
+    runner.joined = True
+    async with maker() as db:
+        await CardService(db).cancel(view.id, token, None)
+    # 离服超时也照样关掉 Blaze，再放账号
+    assert runner.task.done()
+    assert runner.blaze is not None and runner.blaze.alive is False
+    assert ADMIN not in reserved_personas()
+    assert view.id not in card_service._runners
+
+
+async def test_stop_waits_for_in_flight_progress_write(maker, monkeypatch):
+    client = FakeClient([EMPTY_CQ, details("Conquest", ["MP_Amiens"] * 9, soldiers=1)])
+    use_client(monkeypatch, client)
+    entered = asyncio.Event()
+    gate = asyncio.Event()
+    original = card_service._Runner._write
+
+    async def slow_write(self, events, fields):
+        if "attempts" in fields and not entered.is_set():
+            entered.set()
+            await gate.wait()
+            events = [("info", "进度")]
+        await original(self, events, fields)
+
+    monkeypatch.setattr(card_service._Runner, "_write", slow_write)
+    async with maker() as db:
+        view, token = await CardService(db).start(CREDS, GAME_ID, "card", user=None, ip=None)
+    runner = card_service._runners[view.id]
+    await asyncio.wait_for(entered.wait(), 5)
+
+    async def stop():
+        async with maker() as db:
+            return await CardService(db).cancel(view.id, token, None)
+
+    stopping = asyncio.create_task(stop())
+    await asyncio.sleep(0.05)
+    # 进度还没写完：任务不结束，最终状态也不抢先写
+    assert not runner.task.done()
+    gate.set()
+    stopped = await asyncio.wait_for(stopping, 5)
+    assert stopped.status == "cancelled"
+    async with maker() as db:
+        job = await db.get(Bf1CardJob, view.id)
+    # 事件新的在前：停止排在进度之后写入，两条都在
+    messages = [e["message"] for e in job.events]
+    assert messages[0].startswith("已停止") and "进度" in messages[1:]

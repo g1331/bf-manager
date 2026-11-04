@@ -10,6 +10,7 @@ REFRESH_INTERVAL 刷新一次。服务器详情页拉到的名单也会写回来
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -167,6 +168,44 @@ async def refresh_stale_lists(
     return done
 
 
+def _to_item(srv: Bf1RspServer, live: dict[int, ServerSummary]) -> PlayerRspServer:
+    s = live.get(srv.game_id)
+    return PlayerRspServer(
+        server_id=srv.server_id,
+        game_id=srv.game_id,
+        name=srv.name,
+        refreshed_at=int(_aware(srv.refreshed_at).timestamp()),
+        player_count=s.player_count if s else None,
+        max_player_count=s.max_player_count if s else None,
+        map_display_name=s.map_display_name if s else None,
+        map_image_url=s.map_image_url if s else None,
+    )
+
+
+async def list_managed_servers(
+    db: AsyncSession, persona_ids: Iterable[int]
+) -> list[tuple[int, str, PlayerRspServer]]:
+    """这些人是服主或管理员的收录私服：(persona_id, owner / admin, 服务器)，按服名排序。
+
+    同一台服多人都有身份时各占一行，服主排在管理员前面。
+    """
+    pids = list({int(p) for p in persona_ids})
+    if not pids:
+        return []
+    rows = (
+        await db.execute(
+            select(Bf1RspMember.pid, Bf1RspMember.role, Bf1RspServer)
+            .join(Bf1RspServer, Bf1RspServer.server_id == Bf1RspMember.server_id)
+            .where(Bf1RspMember.pid.in_(pids), Bf1RspMember.role.in_(("owner", "admin")))
+            .order_by(Bf1RspServer.name, Bf1RspMember.role.desc(), Bf1RspMember.pid)
+        )
+    ).all()
+    if not rows:
+        return []
+    live = {int(s.game_id or 0): s for s in (await read_server_snapshot() or [])}
+    return [(int(pid), role, _to_item(srv, live)) for pid, role, srv in rows]
+
+
 async def list_player_servers(db: AsyncSession, persona_id: int) -> PlayerRspServers:
     """天眼查：按角色列出这个人在收录私服里的身份，每类按服名排序。"""
     rows = (
@@ -184,17 +223,5 @@ async def list_player_servers(db: AsyncSession, persona_id: int) -> PlayerRspSer
     for role, srv in rows:
         if role not in ROLES:
             continue
-        s = live.get(srv.game_id)
-        getattr(out, role).append(
-            PlayerRspServer(
-                server_id=srv.server_id,
-                game_id=srv.game_id,
-                name=srv.name,
-                refreshed_at=int(_aware(srv.refreshed_at).timestamp()),
-                player_count=s.player_count if s else None,
-                max_player_count=s.max_player_count if s else None,
-                map_display_name=s.map_display_name if s else None,
-                map_image_url=s.map_image_url if s else None,
-            )
-        )
+        getattr(out, role).append(_to_item(srv, live))
     return out

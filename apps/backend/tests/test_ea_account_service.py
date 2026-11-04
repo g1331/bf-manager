@@ -476,3 +476,21 @@ async def test_relogin_task_for_missing_account_returns_404(admin_client) -> Non
         json={"email": "a@example.com", "password": "pw", "target_account_id": 12345},
     )
     assert resp.status_code == 404
+
+
+async def test_pick_available_exclude_and_fixed_account_lookup(test_session) -> None:
+    await _seed(test_session, persona_id=1401)
+    await _seed(test_session, persona_id=1402, failure_count=3)
+    await _seed(test_session, persona_id=1403, enabled=False)
+    service = EAAccountService(test_session)
+    # 排除的号再健康也不挑
+    assert (await service.pick_available(exclude=(1401,))).persona_id == 1402
+    with pytest.raises(Exception, match="平台未配置可用 EA 账号"):
+        await service.pick_available(exclude=(1401, 1402))
+    # 启用中的号按失败计数排
+    assert await service.enabled_personas() == [1401, 1402]
+    creds = await service.credentials_for(1402)
+    assert creds is not None and creds.remid == "remid-value"
+    # 停用或不存在的号拿不到凭据
+    assert await service.credentials_for(1403) is None
+    assert await service.credentials_for(9999) is None

@@ -22,6 +22,7 @@ from app.models import (
 from app.schemas.bf1.admin import MyServerItem
 from app.schemas.membership import MembershipItem
 from app.services.authz_service import ROLE_LEVEL
+from app.services.bf1.rsp_list_service import list_managed_servers
 
 _ALLOWED_ROLES = {"viewer", "moderator", "admin", "owner"}
 
@@ -138,7 +139,93 @@ class MembershipService:
                 via_group=group_name,
             )
             items.append(item)
+        if game == "bf1":
+            items.extend(await self._detected_bf1(user_id, {i.server_id for i in items}))
         return items
+
+    async def _detected_bf1(self, user_id: int, known: set[int]) -> builtins.list[MyServerItem]:
+        """收录的私服名单里，自己绑定的账号是服主或管理员、但还没识别落库的服。
+
+        名单每台服几小时刷新一次，这里只用来列出来；真正操作时鉴权仍按 EA 实时名单走。
+        """
+        pids = await self._bound_personas(user_id)
+        found: dict[int, tuple[str, int, str]] = {}
+        for _, role, srv in await list_managed_servers(self.db, pids):
+            if srv.server_id in known:
+                continue
+            prev = found.get(srv.server_id)
+            if prev is None or ROLE_LEVEL[role] > ROLE_LEVEL[prev[0]]:
+                found[srv.server_id] = (role, srv.game_id, srv.name)
+        if not found:
+            return []
+        servers = {
+            s.server_id: s
+            for s in await self.db.scalars(
+                select(Server).where(Server.game == "bf1", Server.server_id.in_(list(found)))
+            )
+        }
+        # 还没建档的服先建档，列表项要 server_pk
+        missing = [sid for sid in found if sid not in servers]
+        for sid in missing:
+            _, game_id, name = found[sid]
+            servers[sid] = Server(game="bf1", server_id=sid, game_id=game_id, name=name)
+            self.db.add(servers[sid])
+        if missing:
+            await self.db.commit()
+        return [
+            MyServerItem(
+                server_pk=servers[sid].id,
+                game="bf1",
+                server_id=sid,
+                game_id=game_id,
+                name=name,
+                role=role,
+            )
+            for sid, (role, game_id, name) in found.items()
+        ]
+
+    async def _bound_personas(self, user_id: int) -> set[int]:
+        rows = await self.db.scalars(
+            select(EaBinding.persona_id).where(
+                EaBinding.user_id == user_id, EaBinding.is_frozen.is_(False)
+            )
+        )
+        return set(rows.all())
+
+    async def admin_server_ids(self, user: User) -> set[int]:
+        """本地记录里这个人能以管理员以上身份管理的 BF1 私服（RSP serverId）：
+        绑定账号在收录名单里是服主或管理员、人工授予管理员以上、或挂在自己所在的群上"""
+        ids = {
+            srv.server_id
+            for _, _, srv in await list_managed_servers(
+                self.db, await self._bound_personas(user.id)
+            )
+        }
+        ids.update(
+            await self.db.scalars(
+                select(Server.server_id)
+                .join(ServerMembership, ServerMembership.server_pk == Server.id)
+                .where(
+                    ServerMembership.user_id == user.id,
+                    ServerMembership.role.in_(("admin", "owner")),
+                    Server.game == "bf1",
+                )
+            )
+        )
+        if not user.is_frozen and (user.role == "admin" or user.status == "active"):
+            ids.update(
+                await self.db.scalars(
+                    select(Server.server_id)
+                    .join(GroupServer, GroupServer.server_pk == Server.id)
+                    .join(GroupMember, GroupMember.group_id == GroupServer.group_id)
+                    .where(
+                        GroupMember.user_id == user.id,
+                        GroupServer.status == "active",
+                        Server.game == "bf1",
+                    )
+                )
+            )
+        return ids
 
     async def upsert(
         self,

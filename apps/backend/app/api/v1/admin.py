@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.api.client_ip import client_ip
-from app.api.deps import CurrentAdmin, DbDep
+from app.api.deps import CurrentAdmin, DbDep, SessionFactoryDep
 from app.models import User
 from app.schemas.admin import (
     AdminMetrics,
@@ -19,8 +19,10 @@ from app.schemas.admin import (
     RegistrationSettingResponse,
     UserFreezeRequest,
 )
+from app.schemas.bf6.admin import Bf6CredentialStatusResponse, Bf6CredentialUpdate
 from app.services import account_deletion_service, site_settings_service, user_admin_service
 from app.services.account_service import primary_binding
+from app.services.bf6 import credential_service as bf6_credential_service
 from app.services.metrics_service import read_metrics
 
 router = APIRouter()
@@ -65,6 +67,30 @@ async def set_registration_setting(
         db, payload.mode, user, ip=client_ip(request)
     )
     return await _registration_response(db, setting)
+
+
+@router.get("/settings/bf6-credentials", response_model=Bf6CredentialStatusResponse)
+async def get_bf6_credentials(_user: CurrentAdmin, db: DbDep) -> Bf6CredentialStatusResponse:
+    status = await bf6_credential_service.get_status(db)
+    return Bf6CredentialStatusResponse(**status.__dict__)
+
+
+@router.put("/settings/bf6-credentials", response_model=Bf6CredentialStatusResponse)
+async def set_bf6_credentials(
+    payload: Bf6CredentialUpdate,
+    user: CurrentAdmin,
+    session_factory: SessionFactoryDep,
+    request: Request,
+) -> Bf6CredentialStatusResponse:
+    """保存前会立即用这组凭据向 EA 刷新一次，EA 不认就返回 400 且不保存。"""
+    status = await bf6_credential_service.save_credentials(
+        session_factory,
+        refresh_token=payload.refresh_token,
+        client_secret=payload.client_secret,
+        actor=user,
+        ip=client_ip(request),
+    )
+    return Bf6CredentialStatusResponse(**status.__dict__)
 
 
 # ===== 用户 =====

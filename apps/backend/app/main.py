@@ -8,6 +8,8 @@ from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, Response
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from loguru import logger
@@ -28,6 +30,7 @@ from app.domain.ea.login.task_manager import close_task_manager, init_task_manag
 
 # 触发游戏 profile 注册
 from app.domain.games import GameRegistry  # noqa: F401
+from app.domain.games.bf6.client import close_channel as bf6_close_channel
 from app.services.account_deletion_service import account_deletion_poller
 from app.services.account_service import account_cleanup_poller
 from app.services.bf1.auto_switch_service import auto_switch_poller
@@ -37,6 +40,8 @@ from app.services.bf1.exchange_service import exchange_poller
 from app.services.bf1.overview_service import overview_poller
 from app.services.bf1.round_service import restore_tracker_state, save_tracker_state
 from app.services.bf1.timed_vip_service import timed_vip_poller
+from app.services.bf6.credential_service import drain as bf6_drain_refresh
+from app.services.bf6.credential_service import refresh_poller as bf6_refresh_poller
 from app.services.ea_login_finalizer import EALoginFinalizer
 from app.services.group_server_service import group_server_poller
 from app.services.metrics_service import classify_path, record_request, user_id_from_token
@@ -74,6 +79,8 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         asyncio.create_task(account_cleanup_poller(get_sessionmaker())),
         # 删除注销冷静期已过的账号
         asyncio.create_task(account_deletion_poller(get_sessionmaker())),
+        # BF6 凭据每天主动刷新，refresh token 闲置 9 天会失效
+        asyncio.create_task(bf6_refresh_poller(get_sessionmaker())),
     ]
     if "bf1" in settings.games:
         if settings.bf1_match_tracking:
@@ -96,10 +103,13 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         task.cancel()
         with contextlib.suppress(asyncio.CancelledError):
             await task
+    # BF6 刷新拿到新 token 后旧值就作废了，必须等它写进库再关连接池
+    await bf6_drain_refresh()
     if "bf1" in settings.games and settings.bf1_match_tracking:
         await save_tracker_state()
     await close_task_manager()
     await close_blaze_pool()
+    await bf6_close_channel()
     await close_redis()
     await close_engine()
 
@@ -163,6 +173,17 @@ def create_app() -> FastAPI:
             },
             headers=exc.headers,
         )
+
+    # 参数校验失败：保持 FastAPI 默认的 {detail: [...]} 结构，但去掉 input——
+    # 它会把提交的原文（密码、token 等）带回响应
+    @app.exception_handler(RequestValidationError)
+    async def _validation_error_handler(
+        request: Request, exc: RequestValidationError
+    ) -> JSONResponse:
+        errors = [
+            {k: v for k, v in err.items() if k not in ("input", "url")} for err in exc.errors()
+        ]
+        return JSONResponse(status_code=422, content={"detail": jsonable_encoder(errors)})
 
     @app.exception_handler(StarletteHTTPException)
     async def _http_error_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:

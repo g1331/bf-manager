@@ -24,6 +24,7 @@ from app.models.bf1 import (
     Bf1ServerPlayerDay,
     Bf1ServerVip,
 )
+from app.models.bf6_credential import Bf6Credential
 from app.models.ea_account import EAAccount
 from app.models.ea_binding import EaBinding
 from app.models.group import (
@@ -59,6 +60,7 @@ __all__ = [
     "Bf1ServerPlayerCount",
     "Bf1ServerPlayerDay",
     "Bf1ServerVip",
+    "Bf6Credential",
     "EAAccount",
     "EaBinding",
     "EmailVerification",

@@ -106,12 +106,33 @@ export interface AdminUserPage {
 
 export type AdminUserFilter = "all" | "frozen" | "admin";
 
+/** BF6 查询凭据的状态；接口不回凭据原值 */
+export interface Bf6CredentialStatus {
+  configured: boolean;
+  refresh_expires_at: string | null;
+  access_expires_at: string | null;
+  last_refreshed_at: string | null;
+  last_error: string | null;
+  last_error_at: string | null;
+  updated_at: string | null;
+}
+
+export interface Bf6CredentialUpdate {
+  refresh_token: string;
+  /** 留空沿用已保存的值 */
+  client_secret?: string;
+}
+
 export const adminApi = {
   getMetrics: (opts?: RequestOpts) => api.get<AdminMetrics>("/admin/metrics", opts),
   getRegistration: (opts?: RequestOpts) =>
     api.get<RegistrationSetting>("/admin/settings/registration", opts),
   setRegistration: (mode: RegistrationMode) =>
     api.put<RegistrationSetting>("/admin/settings/registration", { mode }),
+  getBf6Credentials: (opts?: RequestOpts) =>
+    api.get<Bf6CredentialStatus>("/admin/settings/bf6-credentials", opts),
+  setBf6Credentials: (body: Bf6CredentialUpdate) =>
+    api.put<Bf6CredentialStatus>("/admin/settings/bf6-credentials", body),
   listUsers: (
     params: { q?: string; only?: AdminUserFilter; page: number; pageSize: number },
     opts?: RequestOpts,

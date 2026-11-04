@@ -9,6 +9,8 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
+import hashlib
 import json
 import time
 import uuid
@@ -103,8 +105,10 @@ def _apply_grant(row: Bf6Credential, grant: bf6.TokenGrant, now: datetime) -> No
 _pending: set[asyncio.Task[Any]] = set()
 _refreshing: asyncio.Task[str] | None = None
 _PERSIST_ATTEMPTS = 3
-_UNSAVED_KEY = "bf6:unsaved_grant"
+# 待补写的 grant 存成 Redis hash：每份一个字段，各自增删，互不覆盖
+_UNSAVED_KEY = "bf6:unsaved_grants"
 _UNSAVED_TTL_SECONDS = 9 * 86400
+_AUDIT_ACTION = "bf6_credentials_update"
 
 
 def _detach[T](coro: Coroutine[Any, Any, T]) -> asyncio.Task[T]:
@@ -115,17 +119,35 @@ def _detach[T](coro: Coroutine[Any, Any, T]) -> asyncio.Task[T]:
 
 
 @dataclass(frozen=True)
+class _AdminWrite:
+    """管理员保存的元数据：补写时连同更新人、审计一起写进去。"""
+
+    actor_id: int
+    persona_id: int
+    ip: str | None
+    secret_changed: bool
+    write_id: str
+
+
+@dataclass(frozen=True)
 class _Unsaved:
     """EA 已经轮换、还没确认写进库的 grant。
 
-    base_generation 是换 token 时库里的版本：补写时版本没变才写，变了说明期间有人写进了更新的
-    凭据（管理员重新保存，或这份 grant 其实已经写进去、又被下一次刷新轮换掉），这份就作废。
-    client_secret 只在管理员保存时带上（可能换了 secret）。
+    后台刷新得到的（admin 为 None）：base_generation 是换 token 时库里的版本，补写时版本没变才写；
+    变了说明期间有人写进了更新的凭据，或者这份其实已经写进去、又被下一次刷新轮换掉，这份作废。
+    管理员保存得到的：总是覆盖库里的值，除非已经写过，或之后又有管理员保存了更新的凭据。
     """
 
     grant: bf6.TokenGrant
     base_generation: int
+    created_at: float
     client_secret: str | None = None
+    admin: _AdminWrite | None = None
+
+    @property
+    def key(self) -> str:
+        # 每份 grant 的 refresh token 都不同，取摘要作 Redis 字段名，不暴露 token 本身
+        return hashlib.sha256(self.grant.refresh_token.encode()).hexdigest()[:32]
 
     def dump(self) -> str:
         return get_cipher().encrypt(
@@ -133,7 +155,9 @@ class _Unsaved:
                 {
                     "grant": asdict(self.grant),
                     "base_generation": self.base_generation,
+                    "created_at": self.created_at,
                     "client_secret": self.client_secret,
+                    "admin": asdict(self.admin) if self.admin else None,
                 }
             )
         )
@@ -141,57 +165,60 @@ class _Unsaved:
     @classmethod
     def load(cls, blob: str) -> _Unsaved:
         data = json.loads(get_cipher().decrypt(blob))
-        return cls(bf6.TokenGrant(**data["grant"]), data["base_generation"], data["client_secret"])
+        admin = data["admin"]
+        return cls(
+            grant=bf6.TokenGrant(**data["grant"]),
+            base_generation=data["base_generation"],
+            created_at=data["created_at"],
+            client_secret=data["client_secret"],
+            admin=_AdminWrite(**admin) if admin else None,
+        )
 
 
 # 本进程里待补写的 grant；同时加密存一份到 Redis，进程退出、换进程也能接着补写
-_unsaved: _Unsaved | None = None
+_unsaved: dict[str, _Unsaved] = {}
 
 
 async def _stash(unsaved: _Unsaved) -> None:
     try:
         cache = await get_cache()
-        await cache.set(_UNSAVED_KEY, unsaved.dump(), ttl=_UNSAVED_TTL_SECONDS)
+        await cache.hash_set(_UNSAVED_KEY, unsaved.key, unsaved.dump(), ttl=_UNSAVED_TTL_SECONDS)
     except (RedisError, OSError) as e:
         logger.error("BF6 待补写的 token 存不进 Redis，只留在进程内存里: {!r}", e)
 
 
-async def _load_stash() -> _Unsaved | None:
-    try:
-        blob = await (await get_cache()).get(_UNSAVED_KEY)
-    except (RedisError, OSError) as e:
-        logger.error("BF6 读不到 Redis 里待补写的 token: {!r}", e)
-        return None
-    if not isinstance(blob, str):
-        return None
-    try:
-        return _Unsaved.load(blob)
-    except (ValueError, KeyError, TypeError) as e:
-        logger.error("BF6 Redis 里待补写的 token 解不开，丢弃: {!r}", e)
-        return None
-
-
 async def _remember(unsaved: _Unsaved) -> None:
-    global _unsaved  # noqa: PLW0603
-    _unsaved = unsaved
+    _unsaved[unsaved.key] = unsaved
     await _stash(unsaved)
 
 
-async def _forget(unsaved: _Unsaved | None = None) -> None:
-    """unsaved 已写进库或已作废。不指定就清掉全部（管理员保存了新凭据，之前的都作废）。"""
-    global _unsaved  # noqa: PLW0603
-    if unsaved is None or _unsaved == unsaved:
-        _unsaved = None
+async def _forget(unsaved: _Unsaved) -> None:
+    """unsaved 已写进库或已作废。只删这一份，别的进程、别的请求留下的不动。"""
+    _unsaved.pop(unsaved.key, None)
     try:
-        cache = await get_cache()
-        if unsaved is None:
-            await cache.delete(_UNSAVED_KEY)
-        else:
-            current = await cache.get(_UNSAVED_KEY)
-            if isinstance(current, str) and _Unsaved.load(current) == unsaved:
-                await cache.delete(_UNSAVED_KEY)
-    except (RedisError, OSError, ValueError, KeyError, TypeError) as e:
+        await (await get_cache()).hash_delete(_UNSAVED_KEY, unsaved.key)
+    except (RedisError, OSError) as e:
         logger.warning("BF6 清理 Redis 里待补写的 token 失败: {!r}", e)
+
+
+async def _all_unsaved() -> list[_Unsaved]:
+    """本进程内存里的和 Redis 里的合在一起，按换到 token 的先后排。"""
+    found = dict(_unsaved)
+    try:
+        stored = await (await get_cache()).hash_all(_UNSAVED_KEY)
+    except (RedisError, OSError) as e:
+        logger.error("BF6 读不到 Redis 里待补写的 token: {!r}", e)
+        stored = {}
+    for key, blob in stored.items():
+        if key in found:
+            continue
+        try:
+            found[key] = _Unsaved.load(blob)
+        except (ValueError, KeyError, TypeError) as e:
+            logger.error("BF6 Redis 里待补写的 token 解不开，丢弃: {!r}", e)
+            with contextlib.suppress(RedisError, OSError):
+                await (await get_cache()).hash_delete(_UNSAVED_KEY, key)
+    return sorted(found.values(), key=lambda u: u.created_at)
 
 
 async def drain(timeout: float = 30) -> None:
@@ -200,8 +227,8 @@ async def drain(timeout: float = 30) -> None:
         _done, pending = await asyncio.wait(set(_pending), timeout=timeout)
         if pending:
             logger.error("BF6 停机时还有 {} 个刷新任务没写完", len(pending))
-    if _unsaved is not None:
-        await _stash(_unsaved)
+    for unsaved in list(_unsaved.values()):
+        await _stash(unsaved)
         logger.error("BF6 有一份新 token 没写进库，已存进 Redis，下次刷新时补写")
 
 
@@ -210,6 +237,54 @@ def _write(row: Bf6Credential, unsaved: _Unsaved) -> None:
         row.encrypted_client_secret = get_cipher().encrypt(unsaved.client_secret)
     _apply_grant(row, unsaved.grant, datetime.now(UTC))
     row.generation += 1
+
+
+def _write_admin(db: AsyncSession, row: Bf6Credential, unsaved: _Unsaved) -> None:
+    """管理员保存：凭据、更新人、审计放进同一个事务。"""
+    admin = unsaved.admin
+    assert admin is not None
+    _write(row, unsaved)
+    row.updated_by = admin.actor_id
+    db.add(
+        AuditLog(
+            user_id=admin.actor_id,
+            acting_persona_id=admin.persona_id,
+            game=AUDIT_GAME,
+            action=_AUDIT_ACTION,
+            payload={
+                "client_secret_changed": admin.secret_changed,
+                "refresh_expires_at": row.refresh_expires_at.isoformat()
+                if row.refresh_expires_at
+                else None,
+                "write_id": admin.write_id,
+                "issued_at": unsaved.created_at,
+            },
+            result="success",
+            ip=admin.ip,
+        )
+    )
+
+
+async def _admin_superseded(db: AsyncSession, unsaved: _Unsaved) -> bool:
+    """这份管理员凭据不该再写：已经写过（commit 成功但没收到确认），或之后又有管理员保存了更新的。
+
+    凭据和审计在同一个事务里，看审计就知道写没写进去。
+    """
+    admin = unsaved.admin
+    assert admin is not None
+    payloads = await db.scalars(
+        select(AuditLog.payload)
+        .where(AuditLog.game == AUDIT_GAME, AuditLog.action == _AUDIT_ACTION)
+        .order_by(AuditLog.id.desc())
+        .limit(10)
+    )
+    for p in payloads:
+        if p.get("write_id") == admin.write_id:
+            return True
+        issued = p.get("issued_at")
+        if isinstance(issued, int | float) and issued > unsaved.created_at:
+            return True
+    return False
 
 
 async def _persist_grant(session_factory: SessionFactory, unsaved: _Unsaved) -> None:
@@ -252,18 +327,27 @@ async def _persist_grant(session_factory: SessionFactory, unsaved: _Unsaved) -> 
 
 
 async def _recover_unsaved(db: AsyncSession, row: Bf6Credential) -> bool:
-    """有上次没写进库的 grant 就先补写（调用方已锁住这一行）。补写了返回 True。"""
-    unsaved = _unsaved or await _load_stash()
-    if unsaved is None:
+    """把之前没写进库的 grant 按先后补写（调用方已锁住这一行）。补写了返回 True。"""
+    pending = await _all_unsaved()
+    if not pending:
         return False
-    if row.generation != unsaved.base_generation:
+    applied = admin_applied = False
+    for unsaved in pending:
+        if unsaved.admin is not None:
+            if not await _admin_superseded(db, unsaved):
+                _write_admin(db, row, unsaved)
+                applied = admin_applied = True
+        elif row.generation == unsaved.base_generation:
+            _write(row, unsaved)
+            applied = True
+    if applied:
+        await db.commit()
+        logger.info("BF6 已补写上次没写进库的 token")
+    for unsaved in pending:
         await _forget(unsaved)
-        return False
-    _write(row, unsaved)
-    await db.commit()
-    logger.info("BF6 已补写上次没写进库的 token")
-    await _forget(unsaved)
-    return True
+    if admin_applied:
+        _session.clear()
+    return applied
 
 
 def _validate_refresh_token(refresh_token: str) -> None:
@@ -288,31 +372,16 @@ class _SaveRequest:
 
     refresh_token: str
     client_secret: str
-    secret_changed: bool
-    actor_id: int
-    persona_id: int
-    ip: str | None
-    base_generation: int
-    write_id: str
-
-
-async def _already_written(db: AsyncSession, write_id: str) -> bool:
-    # 上一次 commit 成功但没收到确认：审计和凭据在同一个事务里，有这条审计就说明写进去了
-    payloads = await db.scalars(
-        select(AuditLog.payload)
-        .where(AuditLog.game == AUDIT_GAME, AuditLog.action == "bf6_credentials_update")
-        .order_by(AuditLog.id.desc())
-        .limit(5)
-    )
-    return any(p.get("write_id") == write_id for p in payloads)
+    admin: _AdminWrite
 
 
 async def _store_admin_grant(
     session_factory: SessionFactory, req: _SaveRequest, grant: bf6.TokenGrant
 ) -> None:
-    """凭据、更新人、审计在同一个事务里写；管理员的新凭据总是覆盖库里的。"""
+    """管理员的新凭据总是覆盖库里的。写库前先备份：写库失败、卡住或停机，下次刷新都能补写。"""
+    unsaved = _Unsaved(grant, 0, time.time(), req.client_secret, req.admin)
+    await _remember(unsaved)
     cipher = get_cipher()
-    unsaved = _Unsaved(grant, req.base_generation, req.client_secret)
     for attempt in range(1, _PERSIST_ATTEMPTS + 1):
         try:
             async with session_factory() as db:
@@ -331,32 +400,12 @@ async def _store_admin_grant(
                     Bf6Credential, BF6_CREDENTIAL_ID, with_for_update=True, populate_existing=True
                 )
                 assert row is not None
-                if attempt > 1 and await _already_written(db, req.write_id):
-                    break
-                _write(row, unsaved)
-                row.updated_by = req.actor_id
-                db.add(
-                    AuditLog(
-                        user_id=req.actor_id,
-                        acting_persona_id=req.persona_id,
-                        game=AUDIT_GAME,
-                        action="bf6_credentials_update",
-                        payload={
-                            "client_secret_changed": req.secret_changed,
-                            "refresh_expires_at": row.refresh_expires_at.isoformat()
-                            if row.refresh_expires_at
-                            else None,
-                            "write_id": req.write_id,
-                        },
-                        result="success",
-                        ip=req.ip,
-                    )
-                )
-                await db.commit()
+                # 别的进程补写过，或上一次 commit 成功但没收到确认
+                if not await _admin_superseded(db, unsaved):
+                    _write_admin(db, row, unsaved)
+                    await db.commit()
                 break
         except (SQLAlchemyError, OSError) as e:
-            if attempt == 1:
-                await _remember(unsaved)
             if attempt == _PERSIST_ATTEMPTS:
                 logger.critical(
                     "BF6 后台保存的凭据已在 EA 轮换但写库失败 {} 次，新值留在内存和 Redis 里，"
@@ -367,8 +416,8 @@ async def _store_admin_grant(
                 raise
             logger.error("BF6 后台保存的凭据写库失败（第 {} 次），稍后重试: {!r}", attempt, e)
             await asyncio.sleep(attempt)
-    # 新凭据生效：之前没写进库的 grant 和网关会话都作废
-    await _forget()
+    await _forget(unsaved)
+    # 新凭据生效，旧的网关会话作废
     _session.clear()
 
 
@@ -401,8 +450,8 @@ async def save_credentials(
         raise AppError(400, "BF6_CREDENTIAL_INVALID", "client secret 长度不对")
 
     async with session_factory() as db:
-        row = await db.get(Bf6Credential, BF6_CREDENTIAL_ID)
         if client_secret is None:
+            row = await db.get(Bf6Credential, BF6_CREDENTIAL_ID)
             if row is None:
                 raise AppError(400, "BF6_CREDENTIAL_INVALID", "首次保存需要填写 client secret")
             client_secret = get_cipher().decrypt(row.encrypted_client_secret)
@@ -411,16 +460,17 @@ async def save_credentials(
                 EaBinding.user_id == actor.id, EaBinding.is_primary.is_(True)
             )
         )
-        req = _SaveRequest(
-            refresh_token=refresh_token,
-            client_secret=client_secret,
-            secret_changed=secret_changed,
+    req = _SaveRequest(
+        refresh_token=refresh_token,
+        client_secret=client_secret,
+        admin=_AdminWrite(
             actor_id=actor.id,
             persona_id=persona or 0,
             ip=ip,
-            base_generation=row.generation if row is not None else 0,
+            secret_changed=secret_changed,
             write_id=uuid.uuid4().hex,
-        )
+        ),
+    )
 
     # EA 一旦轮换，原 refresh token 就作废：保存任务不随请求取消
     await asyncio.shield(_detach(_verify_and_store(session_factory, req)))
@@ -477,7 +527,7 @@ async def _refresh(session_factory: SessionFactory, max_age: int | None) -> str:
                 cipher.decrypt(row.encrypted_refresh_token),
                 now=int(time.time()),
             )
-            unsaved = _Unsaved(grant, row.generation)
+            unsaved = _Unsaved(grant, row.generation, time.time())
             await _remember(unsaved)
             _write(row, unsaved)
             try:

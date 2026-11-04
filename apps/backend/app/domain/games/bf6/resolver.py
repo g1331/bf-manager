@@ -123,7 +123,10 @@ async def lookup(
     # 正常是十进制数字串；数字类型也接受，但必须是 64 位以内的正整数
     nucleus_id = (
         int(user_id)
-        if isinstance(user_id, str) and user_id.isascii() and user_id.isdigit()
+        if isinstance(user_id, str)
+        and user_id.isascii()
+        and user_id.isdigit()
+        and len(user_id) <= 19
         else bounded_int(user_id, 2**63 - 1)
     )
     if not nucleus_id or nucleus_id >= 2**63:

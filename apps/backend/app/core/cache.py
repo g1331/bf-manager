@@ -34,6 +34,10 @@ async def close_redis() -> None:
         _redis = None
 
 
+def _text(value: bytes | str) -> str:
+    return value.decode() if isinstance(value, bytes) else value
+
+
 class Cache:
     """简易 JSON 序列化缓存"""
 
@@ -65,6 +69,24 @@ class Cache:
 
     async def exists(self, key: str) -> bool:
         return bool(await self._r.exists(self._key(key)))
+
+    async def hash_set(self, key: str, field: str, value: str, *, ttl: int | None = None) -> None:
+        """写入 hash 的一个字段；ttl 作用于整个 key，每次写入都续期。"""
+        async with self._r.pipeline(transaction=True) as pipe:
+            pipe.hset(self._key(key), field, value)
+            if ttl is not None:
+                pipe.expire(self._key(key), ttl)
+            await pipe.execute()
+
+    async def hash_all(self, key: str) -> dict[str, str]:
+        raw = await self._r.hgetall(self._key(key))
+        # 连接开了 decode_responses，这里只是把类型收窄到 str
+        return {_text(k): _text(v) for k, v in raw.items()}
+
+    async def hash_delete(self, key: str, *fields: str) -> int:
+        if not fields:
+            return 0
+        return await self._r.hdel(self._key(key), *fields)
 
     async def list_append(
         self, key: str, value: Any, *, max_len: int, ttl: int | None = None

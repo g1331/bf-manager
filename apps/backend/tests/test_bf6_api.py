@@ -78,6 +78,19 @@ class FakeCache:
     async def delete(self, *keys: str) -> int:
         return sum(self.store.pop(k, None) is not None for k in keys)
 
+    async def hash_set(self, key: str, field: str, value: str, *, ttl: int | None = None) -> None:
+        self.store.setdefault(key, {})[field] = value
+
+    async def hash_all(self, key: str) -> dict[str, str]:
+        return dict(self.store.get(key, {}))
+
+    async def hash_delete(self, key: str, *fields: str) -> int:
+        h = self.store.get(key, {})
+        n = sum(h.pop(f, None) is not None for f in fields)
+        if not h:
+            self.store.pop(key, None)
+        return n
+
 
 @pytest.fixture(autouse=True)
 def stash(monkeypatch: pytest.MonkeyPatch) -> FakeCache:
@@ -88,7 +101,7 @@ def stash(monkeypatch: pytest.MonkeyPatch) -> FakeCache:
         return cache
 
     monkeypatch.setattr(credential_service, "get_cache", get_cache)
-    monkeypatch.setattr(credential_service, "_unsaved", None)
+    monkeypatch.setattr(credential_service, "_unsaved", {})
     monkeypatch.setattr(credential_service, "_refreshing", None)
     return cache
 
@@ -500,7 +513,7 @@ async def test_exhausted_retries_keep_rotated_token_for_next_process(
 
     # 数据库恢复、进程也换了（内存里那份没了），只剩 Redis 里的
     failing["left"] = 0
-    monkeypatch.setattr(credential_service, "_unsaved", None)
+    monkeypatch.setattr(credential_service, "_unsaved", {})
     assert await credential_service.get_access_token(session_factory) == "access-1"
     # 没有再拿作废的 rt-0 去换
     assert fake_ea.calls == [("sec", "rt-0")]
@@ -533,7 +546,7 @@ async def test_drain_timeout_leaves_grant_in_redis(
     caller.cancel()
     await asyncio.gather(caller, *credential_service._pending, return_exceptions=True)
     monkeypatch.setattr(AsyncSession, "commit", original)
-    monkeypatch.setattr(credential_service, "_unsaved", None)
+    monkeypatch.setattr(credential_service, "_unsaved", {})
     monkeypatch.setattr(credential_service, "_refreshing", None)
     assert await credential_service.get_access_token(session_factory) == "access-1"
     assert fake_ea.calls == [("sec", "rt-0")]
@@ -558,7 +571,9 @@ async def test_stale_retry_does_not_override_newer_admin_save(
     await _seed(session_factory, access_left=0)
     # 后台刷新换到了 rotated-x，第一次 commit 失败、还没来得及重试
     stale = credential_service._Unsaved(
-        bf6.TokenGrant("access-x", int(time.time()) + 86400, "rotated-x", None), base_generation=0
+        bf6.TokenGrant("access-x", int(time.time()) + 86400, "rotated-x", None),
+        base_generation=0,
+        created_at=time.time(),
     )
     # 这时管理员保存了新凭据
     resp = await client.put(URL, json={"refresh_token": _rt(), "client_secret": "new-secret"})
@@ -622,6 +637,162 @@ async def test_admin_save_commit_ack_lost_writes_one_audit(
     async with session_factory() as db:
         logs = (await db.scalars(select(AuditLog).where(AuditLog.game == "bf6"))).all()
     assert len(logs) == 1
+
+
+def _admin_req(user, write_id: str = "w-1") -> credential_service._SaveRequest:
+    return credential_service._SaveRequest(
+        refresh_token=_rt(),
+        client_secret="new-secret",
+        admin=credential_service._AdminWrite(
+            actor_id=user.id, persona_id=0, ip="1.2.3.4", secret_changed=True, write_id=write_id
+        ),
+    )
+
+
+def _admin_grant(rt: str = "admin-rotated", access_left: int = 86400) -> bf6.TokenGrant:
+    return bf6.TokenGrant("admin-access", int(time.time()) + access_left, rt, None)
+
+
+async def _audits(session_factory) -> list[AuditLog]:
+    async with session_factory() as db:
+        return list(await db.scalars(select(AuditLog).where(AuditLog.game == "bf6")))
+
+
+async def test_admin_cleanup_keeps_newer_refresh_grant(
+    admin, fake_ea: FakeEA, monkeypatch: pytest.MonkeyPatch, session_factory, stash: FakeCache
+) -> None:
+    _client, user = admin
+    await _seed(session_factory, access_left=0)
+    entered, release = asyncio.Event(), asyncio.Event()
+    original_forget = credential_service._forget
+
+    async def paused_forget(unsaved: credential_service._Unsaved) -> None:
+        if unsaved.admin is not None and not entered.is_set():
+            entered.set()
+            await release.wait()
+        await original_forget(unsaved)
+
+    monkeypatch.setattr(credential_service, "_forget", paused_forget)
+    # 管理员保存已提交、还没清理自己那份；access token 快过期，紧接着就会刷新
+    task = asyncio.create_task(
+        credential_service._store_admin_grant(
+            session_factory, _admin_req(user), _admin_grant(access_left=60)
+        )
+    )
+    await entered.wait()
+    failing = _fail_commits(monkeypatch)
+    failing["left"] = 100
+    # 刷新把 admin-rotated 换成 rotated-1，但写库一直失败
+    with pytest.raises(OperationalError):
+        await credential_service.get_access_token(session_factory)
+    release.set()
+    await task
+
+    # 管理员保存的清理只删自己那份，刷新换到的新 token 还在
+    assert len(stash.store[credential_service._UNSAVED_KEY]) == 1
+    failing["left"] = 0
+    await credential_service.get_access_token(session_factory, max_age=0)
+    assert fake_ea.calls[-1][1] == "rotated-1"
+    assert stash.store == {}
+
+
+async def test_admin_grant_is_backed_up_before_commit(
+    admin, fake_ea: FakeEA, monkeypatch: pytest.MonkeyPatch, session_factory, stash: FakeCache
+) -> None:
+    _client, user = admin
+    await _seed(session_factory, access_left=0)
+    credential_service._session.token, credential_service._session.expires_at = "old", 2**31
+    original = AsyncSession.commit
+    blocked = asyncio.Event()
+
+    async def stuck_commit(self: AsyncSession) -> None:
+        blocked.set()
+        await asyncio.Event().wait()
+
+    monkeypatch.setattr(AsyncSession, "commit", stuck_commit)
+    task = credential_service._detach(
+        credential_service._store_admin_grant(session_factory, _admin_req(user), _admin_grant())
+    )
+    await blocked.wait()
+    await credential_service.drain(timeout=0.01)
+    assert credential_service._UNSAVED_KEY in stash.store
+
+    # 停机：任务被取消、内存清空，重启后从 Redis 补写，连同审计和更新人
+    task.cancel()
+    await asyncio.gather(task, return_exceptions=True)
+    monkeypatch.setattr(AsyncSession, "commit", original)
+    monkeypatch.setattr(credential_service, "_unsaved", {})
+    # 补写后管理员换到的 access token 还有效，直接用，不再找 EA 换
+    assert await credential_service.get_access_token(session_factory) == "admin-access"
+    assert fake_ea.calls == []
+    row = await _row(session_factory)
+    assert row is not None
+    assert row.updated_by == user.id
+    assert get_cipher().decrypt(row.encrypted_client_secret) == "new-secret"
+    logs = await _audits(session_factory)
+    assert len(logs) == 1 and logs[0].payload["write_id"] == "w-1"
+    assert credential_service._session.token == ""
+    assert stash.store == {}
+
+
+async def test_recovered_admin_grant_ignores_generation_change(
+    admin, monkeypatch: pytest.MonkeyPatch, session_factory, stash: FakeCache
+) -> None:
+    _client, user = admin
+    await _seed(session_factory, access_left=0)
+    failing = _fail_commits(monkeypatch)
+    failing["left"] = 100
+    with pytest.raises(OperationalError):
+        await credential_service._store_admin_grant(
+            session_factory, _admin_req(user), _admin_grant()
+        )
+    failing["left"] = 0
+    # 写库失败期间后台刷新过一次（版本变了），管理员的新凭据仍然要生效
+    async with session_factory() as db:
+        row = await credential_service._lock_row(db)
+        row.generation = 5
+        await db.commit()
+    async with session_factory() as db:
+        row = await credential_service._lock_row(db)
+        assert await credential_service._recover_unsaved(db, row)
+    row = await _row(session_factory)
+    assert row is not None
+    assert get_cipher().decrypt(row.encrypted_refresh_token) == "admin-rotated"
+    assert row.updated_by == user.id
+    assert len(await _audits(session_factory)) == 1
+
+
+async def test_older_admin_grant_does_not_override_newer_save(
+    admin, monkeypatch: pytest.MonkeyPatch, session_factory, stash: FakeCache
+) -> None:
+    _client, user = admin
+    await _seed(session_factory, access_left=0)
+    failing = _fail_commits(monkeypatch)
+    failing["left"] = 100
+    with pytest.raises(OperationalError):
+        await credential_service._store_admin_grant(
+            session_factory, _admin_req(user, "old"), _admin_grant("admin-old")
+        )
+    # 第一份一直没写进去；随后又保存了一次，这次成功
+    failing["left"] = 0
+    await credential_service._store_admin_grant(
+        session_factory, _admin_req(user, "new"), _admin_grant("admin-new")
+    )
+    async with session_factory() as db:
+        row = await credential_service._lock_row(db)
+        assert not await credential_service._recover_unsaved(db, row)
+    row = await _row(session_factory)
+    assert row is not None
+    assert get_cipher().decrypt(row.encrypted_refresh_token) == "admin-new"
+    assert [log.payload["write_id"] for log in await _audits(session_factory)] == ["new"]
+    assert stash.store == {}
+
+
+async def test_overlong_user_id_is_upstream_error() -> None:
+    response = httpx.Response(200, json={"playerStatsSummary": {"userId": "9" * 4301}})
+    async with httpx.AsyncClient(transport=httpx.MockTransport(lambda _r: response)) as http:
+        with pytest.raises(bf6.Bf6Error):
+            await resolver.lookup(http, "x", "EVT", None)
 
 
 # ---------------------------------------------------------------------------

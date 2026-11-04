@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import contextlib
 from collections.abc import Iterator
-from typing import Any, cast
 
 from loguru import logger
 from sqlalchemy import select
@@ -33,9 +32,9 @@ from app.domain.ea.login.login_engine import LoginCookies
 from app.domain.ea.login.schemas import EALoginTaskResultData
 from app.domain.ea.login.task_manager import ActorKind
 from app.domain.games.bf1.gateway import BF1GatewayClient
-from app.domain.games.bf1.gateway_errors import gateway_failure
 from app.models import User
 from app.services import group_server_service
+from app.services.bf1.gateway_result import persona_info
 from app.services.ea_account_service import EAAccountService
 from app.services.ea_binding_service import BindingConflictError, EaBindingService
 
@@ -230,11 +229,10 @@ class EALoginFinalizer:
         try:
             with _silence_gateway_logs():
                 personas = await client.getPersonasByIds([persona_id])
-            if gateway_failure(personas) is None:
-                pmap = cast(dict[str, Any], personas).get("result", {}).get("personas", {})
-                info = pmap.get(str(persona_id), {})
-                display_name = info.get("displayName")
-                avatar_url = info.get("avatar")
+            info = persona_info(personas, persona_id)
+            if info is not None:
+                display_name = info.get("displayName") or None
+                avatar_url = info.get("avatar") or None
         except Exception as e:
             # persona 详情查询失败不致命：binding/account 仍可以无 display_name 落库，
             # 后续 verify 流程会重试。把异常用 debug 落日志做诊断即可。

@@ -4,15 +4,14 @@ from __future__ import annotations
 
 import contextlib
 from dataclasses import dataclass
-from typing import Any, cast
 
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.errors import AppError, EAApiError, UnauthorizedError
 from app.domain.games.bf1.gateway import BF1GatewayClient
-from app.domain.games.bf1.gateway_errors import gateway_failure
 from app.models import User
+from app.services.bf1.gateway_result import persona_info
 from app.services.user_service import UserService
 
 
@@ -42,14 +41,10 @@ class AuthService:
             display_name: str | None = None
             avatar_url: str | None = None
             try:
-                personas = await client.getPersonasByIds([persona_id])
-                if gateway_failure(personas) is None:
-                    persona_map = (
-                        cast(dict[str, Any], personas).get("result", {}).get("personas", {})
-                    )
-                    persona_info = persona_map.get(str(persona_id), {})
-                    display_name = persona_info.get("displayName")
-                    avatar_url = persona_info.get("avatar")
+                info = persona_info(await client.getPersonasByIds([persona_id]), persona_id)
+                if info is not None:
+                    display_name = info.get("displayName") or None
+                    avatar_url = info.get("avatar") or None
             except Exception as e:
                 logger.debug("fetch persona detail failed: {}", e)
             return EaIdentity(

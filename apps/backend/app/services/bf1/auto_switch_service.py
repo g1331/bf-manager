@@ -38,6 +38,7 @@ from app.services.bf1.card_service import active_game_ids
 from app.services.bf1.gateway_result import expect_ok
 from app.services.bf1.server_admin_service import resolve_ea_ids
 from app.services.bf1.server_service import BF1ServerService
+from app.services.user_admin_service import display_name
 
 POLL_SECONDS = 5
 ROTATION_REFRESH_SECONDS = 600
@@ -82,7 +83,15 @@ class AutoSwitchService:
         row = await self._row(game_id)
         if row is None:
             return AutoSwitchView()
-        user = await self.db.get(User, row.enabled_by_user_id) if row.enabled_by_user_id else None
+        user = (
+            await self.db.scalar(
+                select(User)
+                .options(selectinload(User.ea_bindings))
+                .where(User.id == row.enabled_by_user_id)
+            )
+            if row.enabled_by_user_id
+            else None
+        )
         st = {**engine.initial_state(), **(row.state or {})}
         return AutoSwitchView(
             enabled=row.enabled,
@@ -91,7 +100,7 @@ class AutoSwitchService:
             done=st["done"],
             loop=st["loop"],
             pending_map=(st["pending"] or {}).get("target"),
-            enabled_by=user.username if user else None,
+            enabled_by=display_name(user) if user else None,
             enabled_at=row.enabled_at.timestamp() if row.enabled_at else None,
             events=[AutoSwitchEvent.model_validate(e) for e in row.events or []],
         )
@@ -134,7 +143,7 @@ class AutoSwitchService:
         row.enabled_at = datetime.now(UTC)
         row.state = engine.initial_state()
         row.events = engine.append_events(
-            row.events or [], [("start", f"{user.username} 开启了自动换图")], now
+            row.events or [], [("start", f"{display_name(user)} 开启了自动换图")], now
         )
         await self.db.commit()
         await self._audit(user, game_id, "auto_switch_enable")
@@ -145,7 +154,7 @@ class AutoSwitchService:
         if row is not None and row.enabled:
             row.enabled = False
             row.events = engine.append_events(
-                row.events or [], [("stop", f"{user.username} 关闭了自动换图")], time.time()
+                row.events or [], [("stop", f"{display_name(user)} 关闭了自动换图")], time.time()
             )
             await self.db.commit()
             await self._audit(user, game_id, "auto_switch_disable")

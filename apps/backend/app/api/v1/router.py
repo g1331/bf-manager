@@ -20,6 +20,7 @@ from app.api.v1 import (
     public_docs,
 )
 from app.api.v1.games import bf1 as bf1_routes
+from app.api.v1.games import bf6 as bf6_routes
 
 api_router = APIRouter()
 
@@ -50,3 +51,4 @@ api_router.include_router(
     tags=["ea-login-tasks"],
 )
 api_router.include_router(bf1_routes.router)
+api_router.include_router(bf6_routes.router)

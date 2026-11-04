@@ -28,6 +28,7 @@ from app.domain.ea.login.task_manager import close_task_manager, init_task_manag
 
 # 触发游戏 profile 注册
 from app.domain.games import GameRegistry  # noqa: F401
+from app.domain.games.bf6.client import close_channel as bf6_close_channel
 from app.services.account_deletion_service import account_deletion_poller
 from app.services.account_service import account_cleanup_poller
 from app.services.bf1.auto_switch_service import auto_switch_poller
@@ -37,6 +38,7 @@ from app.services.bf1.exchange_service import exchange_poller
 from app.services.bf1.overview_service import overview_poller
 from app.services.bf1.round_service import restore_tracker_state, save_tracker_state
 from app.services.bf1.timed_vip_service import timed_vip_poller
+from app.services.bf6.credential_service import refresh_poller as bf6_refresh_poller
 from app.services.ea_login_finalizer import EALoginFinalizer
 from app.services.group_server_service import group_server_poller
 from app.services.metrics_service import classify_path, record_request, user_id_from_token
@@ -74,6 +76,8 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         asyncio.create_task(account_cleanup_poller(get_sessionmaker())),
         # 删除注销冷静期已过的账号
         asyncio.create_task(account_deletion_poller(get_sessionmaker())),
+        # BF6 凭据每天主动刷新，refresh token 闲置 9 天会失效
+        asyncio.create_task(bf6_refresh_poller(get_sessionmaker())),
     ]
     if "bf1" in settings.games:
         if settings.bf1_match_tracking:
@@ -100,6 +104,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         await save_tracker_state()
     await close_task_manager()
     await close_blaze_pool()
+    await bf6_close_channel()
     await close_redis()
     await close_engine()
 

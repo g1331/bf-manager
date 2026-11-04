@@ -16,6 +16,7 @@ import { ApiException } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import { accountKeys } from "@/lib/queries/account";
 import { adminKeys, adminQueries } from "@/lib/queries/admin";
+import { Bf6CredentialsSection } from "./Bf6CredentialsSection";
 
 const REGISTRATION_OPTIONS: { value: RegistrationMode; label: string; hint: string }[] = [
   {
@@ -157,6 +158,8 @@ export default function SiteSettingsPage() {
           </>
         )}
       </section>
+
+      <Bf6CredentialsSection />
 
       <ConfirmSheet
         open={pending !== null}

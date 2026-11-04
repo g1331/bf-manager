@@ -19,6 +19,7 @@ export const adminKeys = {
     ["admin-users", q, only, page] as const,
   apiKeys: () => ["admin-api-keys"] as const,
   registration: () => ["admin-settings", "registration"] as const,
+  bf6Credentials: () => ["admin-settings", "bf6-credentials"] as const,
 };
 
 export const adminQueries = {
@@ -59,5 +60,10 @@ export const adminQueries = {
     queryOptions({
       queryKey: adminKeys.registration(),
       queryFn: ({ signal }) => adminApi.getRegistration({ signal }),
+    }),
+  bf6Credentials: () =>
+    queryOptions({
+      queryKey: adminKeys.bf6Credentials(),
+      queryFn: ({ signal }) => adminApi.getBf6Credentials({ signal }),
     }),
 };

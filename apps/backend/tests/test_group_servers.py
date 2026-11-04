@@ -251,7 +251,8 @@ async def test_daily_recheck_revokes_and_notifies_owner(env, test_session, ea) -
     await gss.recheck_all(test_session)
     gs = await test_session.scalar(select(GroupServer))
     await test_session.refresh(gs)
-    assert gs.status == "active" and gs.executor_problem == gss.PROBLEM_EXECUTOR_NOT_ADMIN
+    assert gs.status == "active"
+    assert gs.executor_problem == gss.PROBLEM_EXECUTOR_NOT_ADMIN + gss.PROBLEM_NO_FALLBACK
     assert await _my_role(ac, alice) == "admin"
     mails = outbox.outbox[sent:]
     assert [m.to for m in mails] == ["owner@example.com"]
@@ -504,3 +505,43 @@ async def test_group_server_runs_on_platform_account_without_group_account(
     assert gs.executor_problem == gss.PROBLEM_NO_EXECUTOR
     resp = await ac.post(f"{API}/bf1/server-admin/{GAME_ID}/kick", json={"persona_id": 43})
     assert resp.status_code == 403
+
+
+async def test_platform_fallback_follows_pool_account(env, test_session, ea) -> None:
+    ac, outbox, _, _, _, gid = await _group_with_alice(env, test_session)
+    await _add_account(ac, gid)
+    await _bind(ac, gid)
+    await _seed_pool_account(test_session)
+    sent = len(outbox.outbox)
+
+    async def item() -> dict[str, Any]:
+        return (await ac.get(f"{API}/groups/{gid}/servers")).json()["items"][0]
+
+    # 群服务账号被撤了管理员，号池账号还是：报问题，页面显示暂由平台账号执行
+    ea.admins = {OWNER_PID, POOL_PID}
+    await gss.recheck_all(test_session)
+    got = await item()
+    assert got["executor_problem"] == gss.PROBLEM_EXECUTOR_NOT_ADMIN
+    assert got["platform_fallback"] is True
+    assert len(outbox.outbox) == sent + 1
+
+    # 号池账号也被撤了：兜底没了要再提醒一次
+    ea.admins = {OWNER_PID}
+    await gss.recheck_all(test_session)
+    got = await item()
+    assert got["executor_problem"] == gss.PROBLEM_EXECUTOR_NOT_ADMIN + gss.PROBLEM_NO_FALLBACK
+    assert got["platform_fallback"] is False
+    assert len(outbox.outbox) == sent + 2
+
+
+async def test_platform_fallback_hidden_when_pool_disabled(env, test_session, ea) -> None:
+    from app.models import EAAccount
+
+    ac, _, _, _, _, gid = await _group_with_alice(env, test_session)
+    await _seed_pool_account(test_session)
+    ea.admins = {OWNER_PID, POOL_PID}
+    assert (await _bind(ac, gid)).status_code == 201
+    await test_session.execute(update(EAAccount).values(enabled=False))
+    await test_session.commit()
+    got = (await ac.get(f"{API}/groups/{gid}/servers")).json()["items"][0]
+    assert got["executor"] is None and got["platform_fallback"] is False

@@ -550,18 +550,22 @@ async def test_pool_reservation_waits_for_in_flight_gateway_use(maker, monkeypat
     assert ADMIN not in reserved_personas()
 
 
-async def test_cancel_during_cleanup_still_releases_pool_account(maker, monkeypatch, pool_env):
+async def test_cancel_during_cleanup_releases_pool_account_after_closing(
+    maker, monkeypatch, pool_env
+):
     from app.services.ea_account_service import reserved_personas
 
     client = FakeClient([EMPTY_CQ], pid=ADMIN)
     use_client(monkeypatch, client)
     closing = asyncio.Event()
-    never = asyncio.Event()
+    gate = asyncio.Event()
+    closed: list[bool] = []
 
     class SlowCloseBlaze(FakeBlaze):
         async def close(self):
             closing.set()
-            await never.wait()
+            await gate.wait()
+            closed.append(True)
 
     monkeypatch.setattr(card_service, "CardBlazeSession", SlowCloseBlaze)
     async with maker() as db:
@@ -575,14 +579,43 @@ async def test_cancel_during_cleanup_still_releases_pool_account(maker, monkeypa
 
     first = asyncio.create_task(stop())
     await asyncio.wait_for(closing.wait(), 5)
-    # 收尾卡在关 Blaze 时又点了一次停止：只取消一次，不会打断收尾
+    # 收尾卡在关 Blaze 时又点了一次停止：只取消一次
     second = asyncio.create_task(stop())
     await asyncio.sleep(0.05)
     assert runner.task.cancelling() == 1
-    # 进程关闭时直接再取消：finally 里照样放掉账号和这台服
+    # 进程关闭时直接再取消：连接还没关完，账号和这台服都不放
     runner.task.cancel()
+    await asyncio.sleep(0.05)
+    assert ADMIN in reserved_personas()
+    assert view.id in card_service._runners
+    gate.set()
     with pytest.raises(asyncio.CancelledError):
         await runner.task
     await asyncio.gather(first, second)
+    assert closed == [True]
+    assert ADMIN not in reserved_personas()
+    assert view.id not in card_service._runners
+
+
+async def test_cleanup_timeout_still_releases_pool_account(maker, monkeypatch, pool_env):
+    from app.services.ea_account_service import reserved_personas
+
+    client = FakeClient([EMPTY_CQ], pid=ADMIN)
+    use_client(monkeypatch, client)
+    monkeypatch.setattr(card_service, "CLEANUP_SECONDS", 0.1)
+    never = asyncio.Event()
+
+    class StuckBlaze(FakeBlaze):
+        async def close(self):
+            await never.wait()
+
+    monkeypatch.setattr(card_service, "CardBlazeSession", StuckBlaze)
+    async with maker() as db:
+        view, token = await CardService(db).start(POOL_CREDS, GAME_ID, "card", user=None, ip=None)
+    runner = card_service._runners[view.id]
+    await asyncio.sleep(0.05)
+    async with maker() as db:
+        await CardService(db).cancel(view.id, token, None)
+    assert runner.task.done()
     assert ADMIN not in reserved_personas()
     assert view.id not in card_service._runners

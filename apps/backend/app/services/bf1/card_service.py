@@ -89,11 +89,15 @@ ANCHOR_JOIN_TRIES = 3
 OCCUPIED_WAIT_SECONDS = 10
 # 借平台账号时等它手上的 Gateway 请求结束，最多这么久
 RESERVE_WAIT_SECONDS = 15
+# 收尾（离服、关连接）最多等这么久，超时也放掉账号
+CLEANUP_SECONDS = 10
 
 SLEEP: Callable[[float], Awaitable[None]] = asyncio.sleep
 
 # 进程内运行中的任务：job_id → 运行器
 _runners: dict[int, _Runner] = {}
+# 正在收尾的任务：外层被取消后它还在跑，留个引用免得被回收
+_closing: set[asyncio.Task[None]] = set()
 
 
 def active_game_ids() -> set[int]:
@@ -743,15 +747,29 @@ class _Runner:
             await self._cleanup()
 
     async def _cleanup(self) -> None:
+        # 收尾放进独立任务：外面被取消（收尾时点了停止、进程关闭）也要先离服、关掉 Blaze 和
+        # HTTP 连接，再放掉独占的账号和这台服；先放账号的话，生产 Blaze 可能挑上一个还连着的号
+        closing = asyncio.ensure_future(self._close_and_release())
+        _closing.add(closing)
+        closing.add_done_callback(_closing.discard)
         try:
-            with contextlib.suppress(Exception):
-                await asyncio.shield(self.leave())
-            if self.blaze is not None:
+            await asyncio.shield(closing)
+        except asyncio.CancelledError:
+            await asyncio.wait({closing})
+            raise
+
+    async def _close_and_release(self) -> None:
+        try:
+            async with asyncio.timeout(CLEANUP_SECONDS):
                 with contextlib.suppress(Exception):
-                    await asyncio.shield(self.blaze.close())
-            await _close(self.client)
+                    await self.leave()
+                if self.blaze is not None:
+                    with contextlib.suppress(Exception):
+                        await self.blaze.close()
+                await _close(self.client)
+        except TimeoutError:
+            logger.warning("卡行动任务 {} 收尾超时，直接放掉账号", self.job_id)
         finally:
-            # 收尾途中再被取消（进程关闭）也要放掉独占的账号和这台服
             if self.creds.pool_persona_id is not None:
                 release_persona(self.creds.pool_persona_id)
             _runners.pop(self.job_id, None)

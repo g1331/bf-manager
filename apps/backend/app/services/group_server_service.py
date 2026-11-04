@@ -57,6 +57,8 @@ RECHECK_FIRST_DELAY_SECONDS = 10 * 60
 PROBLEM_NO_EXECUTOR = "没有指定服务账号"
 PROBLEM_EXECUTOR_NOT_ADMIN = "服务账号已不是这台服的服主或管理员"
 PROBLEM_EXECUTOR_INVALID = "服务账号登录失败，需要群主重新提交凭据"
+# 群服务账号出问题、号池里也没有这台服的管理员时接在问题后面：兜底没了要另发一次提醒
+PROBLEM_NO_FALLBACK = "，也没有平台账号能代为执行"
 REASON_BINDER_LOST = "绑定人已不是这台服的服主或管理员"
 REASON_BINDER_GONE = "绑定人的账号已不存在"
 REASON_BINDER_FROZEN = "挂服人的账号已被冻结"
@@ -221,7 +223,9 @@ async def save_account(
     for gs in await db.scalars(
         select(GroupServer).where(
             GroupServer.executor_account_id == account.id,
-            GroupServer.executor_problem == PROBLEM_EXECUTOR_INVALID,
+            GroupServer.executor_problem.in_(
+                (PROBLEM_EXECUTOR_INVALID, PROBLEM_EXECUTOR_INVALID + PROBLEM_NO_FALLBACK)
+            ),
         )
     ):
         gs.executor_problem = None
@@ -302,9 +306,12 @@ class GroupServerView:
     platform_fallback: bool = False
 
 
-async def _platform_covered(db: AsyncSession, server_ids: list[int]) -> set[int]:
+async def _platform_covered(db: AsyncSession, server_ids: list[int]) -> set[int] | None:
+    """收录名单里号池账号管理的服；号池里没有启用的账号时返回 None"""
     pids = await EAAccountService(db).enabled_personas()
-    if not pids or not server_ids:
+    if not pids:
+        return None
+    if not server_ids:
         return set()
     rows = await db.scalars(
         select(Bf1RspMember.server_id).where(
@@ -314,6 +321,20 @@ async def _platform_covered(db: AsyncSession, server_ids: list[int]) -> set[int]
         )
     )
     return set(rows.all())
+
+
+def _platform_fallback(gs: GroupServer, server: Server, covered: set[int] | None) -> bool:
+    """服管操作是不是由号池账号执行：以挂服、复核时对照 EA 名单的结论为准，之后的变化等下次复核"""
+    problem = gs.executor_problem
+    if covered is None:
+        return False
+    if problem is None:
+        return gs.executor_account_id is None
+    if problem == PROBLEM_NO_EXECUTOR:
+        # 删群服务账号时直接记成这个，没查 EA，只能看收录的名单
+        return server.server_id in covered
+    # 群服务账号有问题：复核时号池也接不上会带上 PROBLEM_NO_FALLBACK
+    return not problem.endswith(PROBLEM_NO_FALLBACK)
 
 
 async def _views(db: AsyncSession, rows: list[tuple[GroupServer, Server]]) -> list[GroupServerView]:
@@ -337,9 +358,7 @@ async def _views(db: AsyncSession, rows: list[tuple[GroupServer, Server]]) -> li
                 server=server,
                 bound_by_name=await _display_name(db, gs.bound_by_user_id),
                 executor=accounts.get(gs.executor_account_id or 0),
-                # 挂服时没指定群服务账号、执行账号也没问题的，只能是号池账号在执行
-                platform_fallback=server.server_id in covered
-                or (gs.executor_account_id is None and gs.executor_problem is None),
+                platform_fallback=_platform_fallback(gs, server, covered),
             )
         )
     return out
@@ -761,10 +780,15 @@ async def _executor_problem(
         # 挂服时就没指定群服务账号的，是号池账号在执行；它也不再是管理员才算问题
         return None if await _platform_executor(db, identity) is not None else PROBLEM_NO_EXECUTOR
     if executor.status == "invalid":
-        return PROBLEM_EXECUTOR_INVALID
-    if identity.manages(executor.persona_id) is None:
-        return PROBLEM_EXECUTOR_NOT_ADMIN
-    return None
+        problem = PROBLEM_EXECUTOR_INVALID
+    elif identity.manages(executor.persona_id) is None:
+        problem = PROBLEM_EXECUTOR_NOT_ADMIN
+    else:
+        return None
+    # 服管会退到号池账号执行；它也接不上时问题文字跟着变，复核才会再提醒一次
+    if await _platform_executor(db, identity) is None:
+        problem += PROBLEM_NO_FALLBACK
+    return problem
 
 
 async def _recheck_rows(

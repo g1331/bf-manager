@@ -86,6 +86,7 @@ secrets/
 !.vscode/extensions.json.example
 .claude/
 !.claude/*.example
+.codegraph/
 *.swp
 *.swo
 *~

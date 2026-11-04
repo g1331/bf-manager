@@ -10,19 +10,27 @@ export interface SectionTab<K extends string> {
   count?: number;
 }
 
+const ACCENTS = {
+  amber: { line: "bg-amber-400", count: "text-amber-400" },
+  bf6: { line: "bg-bf6", count: "text-bf6" },
+} as const;
+
 /**
- * 详情页的吸顶分区导航：琥珀下划线随切换滑动，翻长列表时也能随时切分区。
+ * 详情页的吸顶分区导航：强调色下划线随切换滑动，翻长列表时也能随时切分区。
  * 手机端吸在 48px 顶栏下方（top-12）；分区多时横向滑动，选中项自动滑到中间，不会半截露在屏幕外。
  */
 export function SectionNav<K extends string>({
   tabs,
   tab,
   onTab,
+  accent = "amber",
 }: {
   tabs: ReadonlyArray<SectionTab<K>>;
   tab: K;
   onTab: (t: K) => void;
+  accent?: keyof typeof ACCENTS;
 }) {
+  const colors = ACCENTS[accent];
   const scroller = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const box = scroller.current;
@@ -56,7 +64,7 @@ export function SectionNav<K extends string>({
               <span
                 className={cn(
                   "text-[11px] font-medium tracking-normal tabular-nums",
-                  tab === t.key ? "text-amber-400" : "text-white/35",
+                  tab === t.key ? colors.count : "text-white/35",
                 )}
               >
                 {t.count}
@@ -65,7 +73,7 @@ export function SectionNav<K extends string>({
             {tab === t.key ? (
               <motion.span
                 layoutId="section-nav-underline"
-                className="absolute inset-x-3 bottom-0 h-0.5 bg-amber-400"
+                className={cn("absolute inset-x-3 bottom-0 h-0.5", colors.line)}
               />
             ) : null}
           </button>
@@ -88,7 +96,9 @@ export function useTabHash<K extends string>(all: readonly K[], available: reado
   });
   const setTab = (t: K) => {
     setTabState(t);
-    window.history.replaceState(null, "", t === first ? window.location.pathname : `#${t}`);
+    // 保留查询串（如 BF6 战绩页的 ?name=），只换 hash
+    const base = window.location.pathname + window.location.search;
+    window.history.replaceState(null, "", t === first ? base : `${base}#${t}`);
   };
   return [available.includes(tab) ? tab : first, setTab] as const;
 }

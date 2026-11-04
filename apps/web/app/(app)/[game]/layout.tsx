@@ -7,7 +7,8 @@ import { ENABLED_GAMES, isValidGame, getGame } from "@/lib/game-registry";
 export const dynamicParams = false;
 
 export function generateStaticParams() {
-  return ENABLED_GAMES.map((g) => ({ game: g.id }));
+  // BF6 的页面在独立的 /bf6 路由下，这里的页面都是 BF1 的
+  return ENABLED_GAMES.filter((g) => g.id !== "bf6").map((g) => ({ game: g.id }));
 }
 
 interface GameLayoutProps {
@@ -19,7 +20,7 @@ export default async function GameLayout({ children, params }: GameLayoutProps) 
   const { game } = await params;
   if (!isValidGame(game)) notFound();
   const meta = getGame(game)!;
-  if (!meta.enabled) notFound();
+  if (!meta.enabled || meta.id === "bf6") notFound();
 
   return (
     // 仅承载 data-theme 与文字色，不铺实色背景，让底层战场氛围（AmbientBackground）透出。

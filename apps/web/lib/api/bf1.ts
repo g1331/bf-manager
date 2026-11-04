@@ -2,6 +2,7 @@
  * BF1 API 客户端
  */
 import { api, type RequestOpts } from "@/lib/api-client";
+import type { MembershipRole } from "@/lib/api/memberships";
 
 export interface PersonaBrief {
   persona_id: number;
@@ -816,7 +817,7 @@ export interface BF1Overview {
 
 /** 当前登录用户对某服务器的角色；role 为 null 且 is_platform_admin 为 false 表示无任何服管权限 */
 export interface MyServerRole {
-  role: "viewer" | "moderator" | "admin" | "owner" | null;
+  role: MembershipRole | null;
   is_platform_admin: boolean;
 }
 
@@ -828,7 +829,7 @@ export interface MyServerItem {
   /** 末次解析到的 EA gameId，详情页据此寻址；null = 尚未在线时识别，链接不可点 */
   game_id: number | null;
   name: string | null;
-  role: "viewer" | "moderator" | "admin" | "owner";
+  role: MembershipRole;
   /** 经由群组获得的权限：群名；EA 识别或人工授权的为 null */
   via_group?: string | null;
 }

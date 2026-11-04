@@ -113,7 +113,7 @@ async def kick_player(
     request: Request,
 ) -> AdminActionResult:
     authz = ServerAuthzService(db)
-    await authz.require_role(user=user, game="bf1", server_id=game_id, min_role="moderator")
+    await authz.require_role(user=user, game="bf1", server_id=game_id, min_role="admin")
     service = _admin_service(db, request, user, game_id)
     await service.kick_player(payload.persona_id, payload.reason)
     return AdminActionResult(success=True, message=f"已踢出玩家 {payload.persona_id}")
@@ -127,9 +127,8 @@ async def move_player(
     user: CurrentUser,
     request: Request,
 ) -> AdminActionResult:
-    # 换边是瞬时、温和、高频的人数平衡操作（玩家不离服），与踢人同列 moderator。
     authz = ServerAuthzService(db)
-    await authz.require_role(user=user, game="bf1", server_id=game_id, min_role="moderator")
+    await authz.require_role(user=user, game="bf1", server_id=game_id, min_role="admin")
     service = _admin_service(db, request, user, game_id)
     await service.move_player(payload.persona_id, payload.team_id)
     return AdminActionResult(success=True, message=f"已将玩家 {payload.persona_id} 换边")
@@ -210,7 +209,7 @@ async def get_timed_vips(
     request: Request,
 ) -> TimedVipView:
     await ServerAuthzService(db).require_role(
-        user=user, game="bf1", server_id=game_id, min_role="moderator"
+        user=user, game="bf1", server_id=game_id, min_role="admin"
     )
     # 只读服务器详情，没有群服务账号时用号池也看得到
     return await _vip_service(db, request, user, game_id, pool_fallback=True).view()
@@ -286,7 +285,7 @@ async def choose_level(
 @router.get("/{game_id}/auto-switch", response_model=AutoSwitchView)
 async def get_auto_switch(game_id: int, db: DbDep, user: CurrentUser) -> AutoSwitchView:
     await ServerAuthzService(db).require_role(
-        user=user, game="bf1", server_id=game_id, min_role="moderator"
+        user=user, game="bf1", server_id=game_id, min_role="admin"
     )
     return await AutoSwitchService(db).get(game_id)
 

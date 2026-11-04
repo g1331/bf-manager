@@ -32,17 +32,20 @@ import { ApiException } from "@/lib/api-client";
 import { adminKeys, adminQueries } from "@/lib/queries/admin";
 
 const ROLE_LABEL: Record<MembershipRole, string> = {
-  viewer: "查看者",
-  moderator: "协管（踢人）",
-  admin: "管理员（封禁/换图）",
+  admin: "管理员",
   owner: "服主",
 };
+
+const ROLE_OPTIONS: { value: MembershipRole; label: string }[] = [
+  { value: "admin", label: "管理员（全部服管操作）" },
+  { value: "owner", label: "服主（另可增删游戏内管理员）" },
+];
 
 const upsertSchema = z.object({
   target_persona_id: z.coerce.number().int().positive("persona_id 必须是正整数"),
   game: z.string().min(1, "需要游戏代号").max(16),
   server_id: z.coerce.number().int().positive("server_id 必须是正整数"),
-  role: z.enum(["viewer", "moderator", "admin", "owner"]),
+  role: z.enum(["admin", "owner"]),
 });
 
 type UpsertValues = z.infer<typeof upsertSchema>;
@@ -62,7 +65,7 @@ export default function MembershipsAdminPage() {
     // zod 4 起 z.coerce 的 input 类型为 unknown，与 useForm 的 output 泛型不一致；
     // resolver 运行时仍照常 coerce，这里按 output 形态断言以对齐 RHF 类型
     resolver: zodResolver(upsertSchema) as Resolver<UpsertValues>,
-    defaultValues: { target_persona_id: 0, game: "bf1", server_id: 0, role: "moderator" },
+    defaultValues: { target_persona_id: 0, game: "bf1", server_id: 0, role: "admin" },
   });
 
   const upsert = useMutation({
@@ -70,7 +73,7 @@ export default function MembershipsAdminPage() {
     onSuccess: () => {
       toast.success("已写入权限");
       qc.invalidateQueries({ queryKey: adminKeys.memberships() });
-      form.reset({ target_persona_id: 0, game: "bf1", server_id: 0, role: "moderator" });
+      form.reset({ target_persona_id: 0, game: "bf1", server_id: 0, role: "admin" });
     },
     onError: (err) => {
       const msg = err instanceof ApiException ? err.message : "授权失败";
@@ -112,7 +115,7 @@ export default function MembershipsAdminPage() {
       <main className="mx-auto max-w-md space-y-4 px-4 py-12 text-center">
         <h1 className="text-xl font-semibold">无权访问</h1>
         <p className="text-muted-foreground text-sm">
-          服管权限授予仅平台管理员可见。如需协管权限，请联系平台 admin。
+          服管权限授予仅平台管理员可见。如需服管权限，请联系平台管理员。
         </p>
       </main>
     );
@@ -172,7 +175,7 @@ export default function MembershipsAdminPage() {
         <PageHeader
           kicker="Admin"
           title="服管权限授予"
-          description="为某个玩家在某个服务器赋予 viewer / moderator / admin / owner 权限。同 user × server 组合再次提交会覆盖现有角色。"
+          description="为某个玩家在某个服务器授予管理员或服主权限。管理员能做全部服管操作，服主另可增删游戏内管理员。同一玩家和服务器再次提交会覆盖原有角色。"
         />
 
         <Card>
@@ -237,10 +240,11 @@ export default function MembershipsAdminPage() {
                           {...field}
                           className="border-input bg-background h-11 w-full rounded-md border px-3 text-sm"
                         >
-                          <option value="viewer">viewer（仅查看）</option>
-                          <option value="moderator">moderator（踢人）</option>
-                          <option value="admin">admin（封禁 / 换图）</option>
-                          <option value="owner">owner（服主）</option>
+                          {ROLE_OPTIONS.map((o) => (
+                            <option key={o.value} value={o.value}>
+                              {o.label}
+                            </option>
+                          ))}
                         </select>
                       </FormControl>
                       <FormMessage />

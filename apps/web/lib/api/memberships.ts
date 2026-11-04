@@ -1,7 +1,8 @@
 /** 服管权限授予 API（仅平台 admin 可访问） */
 import { api, type RequestOpts } from "@/lib/api-client";
 
-export type MembershipRole = "viewer" | "moderator" | "admin" | "owner";
+/** 服管权限：管理员能做全部服管操作，服主另可增删游戏内管理员、管这台服挂的群 */
+export type MembershipRole = "admin" | "owner";
 
 export interface MembershipItem {
   id: number;

@@ -27,11 +27,9 @@ from app.services import group_server_service
 from app.services.bf1.server_service import BF1ServerService
 
 # 角色等级映射（数值越大权限越高）
-ROLE_LEVEL = {
-    "viewer": 1,
-    "moderator": 2,
-    "admin": 3,
-    "owner": 4,
+ROLE_LEVEL: dict[str, int] = {
+    "admin": 1,
+    "owner": 2,
 }
 
 
@@ -200,7 +198,7 @@ class ServerAuthzService:
         user: User,
         game: str,
         server_id: int,
-        min_role: str = "moderator",
+        min_role: MembershipRole = "admin",
     ) -> None:
         """校验 user 是否对该服务器具有至少 min_role 的权限，不足则抛 ForbiddenError。
 

@@ -11,7 +11,8 @@ from typing import Literal
 
 UserRole = Literal["user", "admin"]
 UserStatus = Literal["legacy", "pending_binding", "active"]
-MembershipRole = Literal["viewer", "moderator", "admin", "owner"]
+# 服务器服管权限：管理员能做全部服管操作，服主另可增删游戏内管理员、管这台服挂的群
+MembershipRole = Literal["admin", "owner"]
 GroupRole = Literal["owner", "admin"]
 # 链接上的角色要低于发链接的群主，所以只能是 admin；保留字段，以后加角色时接口不用改
 InviteRole = Literal["admin"]

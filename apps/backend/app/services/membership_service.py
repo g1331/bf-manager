@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import builtins
+from typing import get_args
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,7 +25,7 @@ from app.schemas.membership import MembershipItem
 from app.services.authz_service import ROLE_LEVEL
 from app.services.bf1.rsp_list_service import list_managed_servers
 
-_ALLOWED_ROLES = {"viewer", "moderator", "admin", "owner"}
+_ALLOWED_ROLES = set(get_args(MembershipRole))
 
 
 def _primary_binding(user: User) -> EaBinding | None:
@@ -103,7 +104,7 @@ class MembershipService:
             )
             for m, s in rows
         ]
-        # 挂在自己所在群上的服：群里的人在上面是管理员，和已有角色取高的
+        # 挂在自己所在群上的服：群里的人在上面是管理员；已有直接角色的服不会更低，保留原样
         by_pk = {i.server_pk: i for i in items}
         user = await self.db.get(User, user_id)
         if user is None or (user.role != "admin" and user.status != "active"):
@@ -123,11 +124,7 @@ class MembershipService:
             )
         ).all()
         for s, group_name in group_rows:
-            existing = by_pk.get(s.id)
-            if existing is not None:
-                if ROLE_LEVEL.get(existing.role, 0) < ROLE_LEVEL["admin"]:
-                    existing.role = "admin"
-                    existing.via_group = group_name
+            if s.id in by_pk:
                 continue
             by_pk[s.id] = item = MyServerItem(
                 server_pk=s.id,

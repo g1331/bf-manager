@@ -114,14 +114,14 @@ async def test_manual_membership_preserved_when_unlisted(user_client, test_sessi
     assert role0 is None
     server = await test_session.scalar(select(Server).where(Server.server_id == SERVER_ID))
 
-    # 平台 admin 人工授予 moderator
+    # 平台 admin 人工授予 owner
     test_session.add(
-        ServerMembership(user_id=user.id, server_pk=server.id, role="moderator", granted_by=999)
+        ServerMembership(user_id=user.id, server_pk=server.id, role="owner", granted_by=999)
     )
     await test_session.commit()
 
     role1, _ = await authz.resolve_role(user=user, game="bf1", server_id=GAME_ID)
-    assert role1 == "moderator", "人工授权不应被自动逻辑删除"
+    assert role1 == "owner", "人工授权不应被自动逻辑删除"
 
 
 async def test_require_role_enforces_threshold_on_auto_recognized(

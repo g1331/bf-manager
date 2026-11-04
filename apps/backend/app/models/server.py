@@ -43,7 +43,7 @@ class ServerMembership(Base, TimestampMixin):
         ForeignKey("servers.id", ondelete="CASCADE"), index=True, nullable=False
     )
 
-    # owner / admin / moderator / viewer
+    # owner / admin
     role: Mapped[MembershipRole] = mapped_column(String(16), nullable=False)
 
     granted_by: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))

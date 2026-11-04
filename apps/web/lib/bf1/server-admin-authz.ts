@@ -23,16 +23,14 @@ export type ServerAdminAction =
   | "chooseLevel";
 
 const ROLE_LEVEL: Record<MembershipRole, number> = {
-  viewer: 1,
-  moderator: 2,
-  admin: 3,
-  owner: 4,
+  admin: 1,
+  owner: 2,
 };
 
 /** 每个操作所需的最低角色，与后端各端点的 require_role(min_role) 对齐 */
 export const SERVER_ADMIN_ACTION_MIN_ROLE: Record<ServerAdminAction, MembershipRole> = {
-  kick: "moderator",
-  move: "moderator",
+  kick: "admin",
+  move: "admin",
   ban: "admin",
   unban: "admin",
   addVip: "admin",
@@ -53,7 +51,7 @@ export function canDo(action: ServerAdminAction, role: MyServerRole | null | und
 
 /**
  * 是否拥有任意服管权限，用于决定是否渲染服管入口（⋯ 菜单、批量栏、换图按钮）。
- * 最低可执行操作是踢人（moderator），因此等价于 canDo("kick")。
+ * 管理员就能做全部常规服管操作，因此等价于 canDo("kick")。
  */
 export function hasAnyServerAdmin(role: MyServerRole | null | undefined): boolean {
   return canDo("kick", role);

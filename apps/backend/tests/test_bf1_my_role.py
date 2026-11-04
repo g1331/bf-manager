@@ -36,11 +36,11 @@ async def test_my_role_user_with_membership(user_client, test_session) -> None:
     server = Server(game="bf1", server_id=SERVER_ID)
     test_session.add(server)
     await test_session.flush()
-    test_session.add(ServerMembership(user_id=user.id, server_pk=server.id, role="moderator"))
+    test_session.add(ServerMembership(user_id=user.id, server_pk=server.id, role="admin"))
     await test_session.commit()
 
     resp = await client.get(MY_ROLE_URL)
     assert resp.status_code == 200
     body = resp.json()
     assert body["is_platform_admin"] is False
-    assert body["role"] == "moderator"
+    assert body["role"] == "admin"

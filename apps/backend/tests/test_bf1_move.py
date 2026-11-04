@@ -2,14 +2,14 @@
 
 换边复用 RSP.movePlayer，其 teamId 语义是玩家「当前源队伍号」（1-based）：传入源队伍号，
 引擎把玩家移到对面。Blaze 名单的 team 是 0/1，故 rsp_team = team_id + 1。本用例锁定这个
-映射方向（移错方向会把玩家换到错误阵营），并覆盖 moderator 门槛与 team_id 取值边界。
+映射方向（移错方向会把玩家换到错误阵营），并覆盖管理员门槛与 team_id 取值边界。
 """
 
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
 
-from app.models import Server, ServerMembership
+from app.services.bf1 import server_service as ss_module
 from app.services.bf1.server_admin_service import BF1ServerAdminService
 
 SERVER_ID = 8901234567890
@@ -61,15 +61,46 @@ async def test_move_rejects_out_of_range_team(admin_client) -> None:
     assert resp.status_code == 422
 
 
-async def test_move_requires_moderator(user_client, test_session) -> None:
-    client, user = user_client
-    # 建服务器并只给 viewer 成员角色：换边要求 moderator 及以上 → 403
-    server = Server(game="bf1", server_id=SERVER_ID)
-    test_session.add(server)
-    await test_session.flush()
-    test_session.add(ServerMembership(user_id=user.id, server_pk=server.id, role="viewer"))
-    await test_session.commit()
-
+async def test_move_requires_server_role(user_client) -> None:
+    client, _ = user_client
+    # 没有任何服管角色 → 403，不触达 EA
     resp = await client.post(MOVE_URL, json={"persona_id": 999, "team_id": 0})
     assert resp.status_code == 403
     assert resp.json()["error"]["code"] == "FORBIDDEN"
+
+
+async def test_server_admin_can_kick_and_move_but_not_manage_admins(
+    user_client, monkeypatch
+) -> None:
+    """服管权限只有管理员、服主两级：管理员能踢人换边，增删游戏内管理员仍只给服主"""
+    client, user = user_client
+    pid = user.ea_bindings[0].persona_id
+
+    async def fake_identity(self, game_id):
+        return 999, [pid], 9001, "My Server"  # 用户在 EA 管理员名单里，不是服主
+
+    monkeypatch.setattr(ss_module.BF1ServerService, "get_admin_identity", fake_identity)
+    calls: list[str] = []
+
+    async def fake_kick(self, persona_id, reason):
+        calls.append("kick")
+
+    async def fake_move(self, persona_id, team_id):
+        calls.append("move")
+
+    async def fake_add_admin(self, persona_id):
+        calls.append("add_admin")
+
+    monkeypatch.setattr(BF1ServerAdminService, "kick_player", fake_kick)
+    monkeypatch.setattr(BF1ServerAdminService, "move_player", fake_move)
+    monkeypatch.setattr(BF1ServerAdminService, "add_admin", fake_add_admin)
+
+    base = f"/api/v1/bf1/server-admin/{SERVER_ID}"
+    resp = await client.post(f"{base}/kick", json={"persona_id": 42})
+    assert resp.status_code == 200, resp.text
+    resp = await client.post(MOVE_URL, json={"persona_id": 42, "team_id": 0})
+    assert resp.status_code == 200, resp.text
+
+    resp = await client.post(f"{base}/admin", json={"persona_id": 42})
+    assert resp.status_code == 403
+    assert calls == ["kick", "move"]

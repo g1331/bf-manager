@@ -9,8 +9,8 @@ const role = (r: MembershipRole | null, isPlatformAdmin = false) =>
 describe("canDo", () => {
   // 与后端各服管端点的 require_role(min_role) 对照
   const cases: [ServerAdminAction, MembershipRole[]][] = [
-    ["kick", ["moderator", "admin", "owner"]],
-    ["move", ["moderator", "admin", "owner"]],
+    ["kick", ["admin", "owner"]],
+    ["move", ["admin", "owner"]],
     ["ban", ["admin", "owner"]],
     ["unban", ["admin", "owner"]],
     ["addVip", ["admin", "owner"]],
@@ -20,7 +20,7 @@ describe("canDo", () => {
     ["addAdmin", ["owner"]],
     ["removeAdmin", ["owner"]],
   ];
-  const all: MembershipRole[] = ["viewer", "moderator", "admin", "owner"];
+  const all: MembershipRole[] = ["admin", "owner"];
 
   it.each(cases)("%s 允许 %o", (action, allowed) => {
     for (const r of all) {
@@ -35,8 +35,10 @@ describe("canDo", () => {
     expect(canDo("kick", role(null))).toBe(false);
   });
 
-  it("hasAnyServerAdmin 从 moderator 起", () => {
-    expect(hasAnyServerAdmin(role("viewer"))).toBe(false);
-    expect(hasAnyServerAdmin(role("moderator"))).toBe(true);
+  it("hasAnyServerAdmin：管理员、服主、平台管理员有，无角色没有", () => {
+    expect(hasAnyServerAdmin(role("admin"))).toBe(true);
+    expect(hasAnyServerAdmin(role("owner"))).toBe(true);
+    expect(hasAnyServerAdmin(role(null, true))).toBe(true);
+    expect(hasAnyServerAdmin(role(null))).toBe(false);
   });
 });

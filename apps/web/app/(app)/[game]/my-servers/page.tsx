@@ -21,15 +21,11 @@ import { cn } from "@/lib/utils";
 const ROLE_LABEL: Record<MyServerItem["role"], string> = {
   owner: "服主",
   admin: "管理员",
-  moderator: "协管",
-  viewer: "查看",
 };
 
 const ROLE_STYLE: Record<MyServerItem["role"], string> = {
   owner: "bg-amber-500/15 text-amber-300",
   admin: "bg-sky-500/15 text-sky-300",
-  moderator: "bg-emerald-500/15 text-emerald-300",
-  viewer: "bg-white/10 text-white/60",
 };
 
 export default function MyServersPage() {

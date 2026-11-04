@@ -71,7 +71,7 @@ async def test_memberships_admin_upsert_and_delete(admin_client, test_session) -
         "target_persona_id": 1003517866915,
         "game": "bf1",
         "server_id": 13110853,
-        "role": "moderator",
+        "role": "admin",
     }
 
     resp = await ac.post("/api/v1/memberships", json=payload)
@@ -79,16 +79,16 @@ async def test_memberships_admin_upsert_and_delete(admin_client, test_session) -
     body = resp.json()
     assert body["user_persona_id"] == 1003517866915
     assert body["user_username"] == target.username
-    assert body["role"] == "moderator"
+    assert body["role"] == "admin"
     membership_id = body["id"]
 
     # 重复 upsert 应覆盖角色
-    payload["role"] = "admin"
+    payload["role"] = "owner"
     resp = await ac.post("/api/v1/memberships", json=payload)
     assert resp.status_code == 200
     body = resp.json()
     assert body["id"] == membership_id
-    assert body["role"] == "admin"
+    assert body["role"] == "owner"
 
     resp = await ac.get("/api/v1/memberships")
     assert resp.status_code == 200
@@ -109,11 +109,26 @@ async def test_memberships_upsert_unknown_user_returns_404(admin_client) -> None
             "target_persona_id": 99999999,
             "game": "bf1",
             "server_id": 1,
-            "role": "viewer",
+            "role": "admin",
         },
     )
     assert resp.status_code == 404
     assert resp.json()["error"]["code"] == "NOT_FOUND"
+
+
+async def test_memberships_rejects_removed_roles(admin_client, test_session) -> None:
+    """服管权限只有管理员、服主两级，协管 / 查看者在入参校验阶段就被拒绝"""
+    ac, _admin = admin_client
+    await _create_target_user(test_session, user_id=3, persona_id=3, username="persona_3")
+
+    for role in ("moderator", "viewer"):
+        resp = await ac.post(
+            "/api/v1/memberships",
+            json={"target_persona_id": 3, "game": "bf1", "server_id": 1, "role": role},
+        )
+        assert resp.status_code == 422, role
+
+    assert (await ac.get("/api/v1/memberships")).json()["total"] == 0
 
 
 async def test_memberships_creates_server_record_on_first_upsert(

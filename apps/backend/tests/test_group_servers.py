@@ -429,17 +429,18 @@ async def test_login_task_routes_check_group_and_owner(env, test_session, ea, mo
     assert (await ac.get(f"{API}/groups/{gid}/accounts/login-tasks/t-1")).status_code == 403
 
 
-async def test_my_servers_raises_lower_role_to_group_admin(env, test_session, ea) -> None:
+async def test_my_servers_keeps_direct_role_over_group(env, test_session, ea) -> None:
     ac, _, _, alice, _, gid = await _group_with_alice(env, test_session)
     await _add_account(ac, gid)
     await _bind(ac, gid)
     server = await test_session.scalar(select(Server))
-    test_session.add(ServerMembership(user_id=alice.id, server_pk=server.id, role="moderator"))
+    test_session.add(ServerMembership(user_id=alice.id, server_pk=server.id, role="owner"))
     await test_session.commit()
 
+    # 自己就是这台服的服主：不因群里只是管理员被压低，也不算成经由群组
     _login_cookie(ac, alice)
     mine = (await ac.get(f"{API}/bf1/server-admin/mine")).json()["items"]
-    assert [(i["role"], i["via_group"]) for i in mine] == [("admin", "测试 群")]
+    assert [(i["role"], i["via_group"]) for i in mine] == [("owner", None)]
 
 
 POOL_PID = 6006  # 本站号池里的账号，EA 上是这台服的管理员

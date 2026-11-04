@@ -155,7 +155,7 @@ export const MODE_GROUPS = [
     key: "redsec",
     zh: "禁区冲突",
     en: "REDSEC",
-    ids: ["brsquad", "graniteDuo", "graniteSolo", "gntgauntlet"],
+    ids: ["brsquad", "graniteDuo", "graniteSolo", "rr_solo", "gntgauntlet"],
   },
 ] as const;
 

@@ -27,6 +27,8 @@ import { bf6Queries } from "@/lib/queries/bf6";
 
 const TAB_KEYS = ["overview", "weapons", "vehicles", "gadgets", "maps", "modes"] as const;
 
+const LINK = "hover:text-bf6-fg whitespace-nowrap underline-offset-2 hover:underline";
+
 export default function Bf6PlayerPage() {
   const { nucleusId } = useParams<{ nucleusId: string }>();
   const id = Number(nucleusId);
@@ -127,8 +129,26 @@ function PlayerView({ nucleusId, stats }: { nucleusId: number; stats: Bf6PlayerS
         {tab === "modes" && <ModesTab stats={stats} />}
       </motion.div>
 
-      <p className="border-bf6-line text-bf6-mute mt-10 border-t pt-3.5 text-xs">
-        EA 生涯数据 · 更新于 {new Date(stats.fetched_at).toLocaleString("zh-CN", { hour12: false })}
+      <p className="border-bf6-line text-bf6-mute mt-10 flex flex-wrap justify-between gap-x-4 gap-y-1 border-t pt-3.5 text-xs">
+        <span>
+          EA 生涯数据 · 更新于{" "}
+          {new Date(stats.fetched_at).toLocaleString("zh-CN", { hour12: false })}
+        </span>
+        <span>
+          部分配备图标：Lorc、Delapouite、Skoll、DarkZaitzev /{" "}
+          <a href="https://game-icons.net" target="_blank" rel="noreferrer" className={LINK}>
+            game-icons.net
+          </a>
+          ，
+          <a
+            href="https://creativecommons.org/licenses/by/3.0/"
+            target="_blank"
+            rel="noreferrer"
+            className={LINK}
+          >
+            CC BY 3.0
+          </a>
+        </span>
       </p>
     </div>
   );

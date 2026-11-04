@@ -49,7 +49,7 @@ from app.services.bf1.card_engine import parse_state
 from app.services.bf1.card_service import active_game_ids
 from app.services.bf1.gateway_result import expect_ok, to_ea_error
 from app.services.bf1.server_admin_service import BF1ServerAdminService
-from app.services.bf1.server_service import current_game_ids
+from app.services.bf1.server_service import current_game_ids, persisted_game_id_of
 
 CN_TZ = ZoneInfo("Asia/Shanghai")
 OPERATIONS_MODE = "BreakthroughLarge"
@@ -152,10 +152,9 @@ async def fetch_context(client: Any, game_id: int) -> VipContext:
             vips[pid] = item.get("displayName")
     state = parse_state(info)
     soldiers = int(((info.get("slots") or {}).get("Soldier") or {}).get("current") or 0)
-    persisted = info.get("persistedGameId") or raw.get("persistedGameId") or info.get("guid")
     return VipContext(
         server_id=server_id,
-        persisted_game_id=persisted,
+        persisted_game_id=persisted_game_id_of(raw),
         name=info.get("name"),
         operation=state.mode == OPERATIONS_MODE,
         map_name=state.map,

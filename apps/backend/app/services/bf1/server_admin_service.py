@@ -12,6 +12,7 @@ from app.models import User
 from app.services.audit_service import AuditService
 from app.services.authz_service import ServerAuthzService
 from app.services.bf1.gateway_result import expect_ok
+from app.services.bf1.server_service import persisted_game_id_of
 
 # RSP.kickPlayer 的原因 EA 限 32 字节
 KICK_REASON_MAX_BYTES = 32
@@ -35,10 +36,7 @@ async def resolve_ea_ids(client: Any, game_id: int) -> tuple[int | None, str | N
         server_id = int(server_id_raw) if server_id_raw is not None else None
     except (TypeError, ValueError):
         server_id = None
-    persisted_game_id = (
-        server_info.get("persistedGameId") or raw.get("persistedGameId") or server_info.get("guid")
-    )
-    return server_id, persisted_game_id
+    return server_id, persisted_game_id_of(raw)
 
 
 class BF1ServerAdminService:

@@ -285,6 +285,20 @@ def test_to_summary_official_flag_from_nested_server_info() -> None:
     assert _to_summary(raw).is_official is False
 
 
+def test_to_summary_persisted_game_id_from_guid() -> None:
+    """详情接口的 serverInfo 只有 guid 没有 persistedGameId；前端靠它判断能否换图"""
+    raw = _make_full_detail()
+    assert "persistedGameId" not in raw["serverInfo"]
+    assert _to_summary(raw).persisted_game_id == "1a9f5032-0cc0-4c0a-a83b-f229463ea39e"
+
+
+def test_to_summary_persisted_game_id_none_when_missing() -> None:
+    raw = _make_full_detail()
+    del raw["serverInfo"]["guid"]
+    raw.pop("rspInfo", None)
+    assert _to_summary(raw).persisted_game_id is None
+
+
 def test_to_extras_full_payload() -> None:
     extras = _to_extras(_make_full_detail())
     assert extras.game_id == 8460032230118

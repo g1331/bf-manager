@@ -127,8 +127,23 @@ function PlayerView({ nucleusId, stats }: { nucleusId: number; stats: Bf6PlayerS
         {tab === "modes" && <ModesTab stats={stats} />}
       </motion.div>
 
-      <p className="border-bf6-line text-bf6-mute mt-10 border-t pt-3.5 text-xs">
-        EA 生涯数据 · 更新于 {new Date(stats.fetched_at).toLocaleString("zh-CN", { hour12: false })}
+      <p className="border-bf6-line text-bf6-mute mt-10 flex flex-wrap justify-between gap-x-4 gap-y-1 border-t pt-3.5 text-xs">
+        <span>
+          EA 生涯数据 · 更新于{" "}
+          {new Date(stats.fetched_at).toLocaleString("zh-CN", { hour12: false })}
+        </span>
+        <span>
+          部分配备图标来自{" "}
+          <a
+            href="https://game-icons.net"
+            target="_blank"
+            rel="noreferrer"
+            className="hover:text-bf6-fg underline-offset-2 hover:underline"
+          >
+            game-icons.net
+          </a>
+          （CC BY 3.0）
+        </span>
       </p>
     </div>
   );

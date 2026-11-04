@@ -31,7 +31,9 @@ describe("BF6 图鉴", () => {
   });
 
   it("没有核对过中文名的模式显示英文，大逃杀模式用禁区冲突的配图", () => {
-    expect(modeInfo("strike").name).toBe("Strikepoint");
+    expect(modeInfo("op").name).toBe("Operations");
+    expect(modeInfo("strike").name).toBe("打击点");
+    expect(modeInfo("rr_solo").art).toBe("/bf6/mode-art/granite.webp");
     expect(modeInfo("graniteSolo").art).toBe("/bf6/mode-art/granite.webp");
   });
 

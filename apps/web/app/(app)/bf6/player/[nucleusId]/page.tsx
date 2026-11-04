@@ -7,7 +7,7 @@
  * 当前分区记在 URL hash。数据都是 EA 的生涯统计，后端缓存 20 分钟。
  */
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -89,9 +89,11 @@ function PlayerView({ nucleusId, stats }: { nucleusId: number; stats: Bf6PlayerS
     { key: "modes" as const, label: "模式", count: stats.modes.length },
   ];
   const [tab, setTab] = useTabHash(TAB_KEYS, TAB_KEYS);
+  // 桌面端滚动的是页面容器而不是 window，用锚点滚回分区导航处
+  const navAnchor = useRef<HTMLDivElement>(null);
   const showTab = (t: Bf6Tab) => {
     setTab(t);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    navAnchor.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   return (
@@ -107,6 +109,7 @@ function PlayerView({ nucleusId, stats }: { nucleusId: number; stats: Bf6PlayerS
 
       <Bf6Hero name={displayName} avatarUrl={avatarUrl} platform={platformNs} stats={stats} />
 
+      <div ref={navAnchor} className="scroll-mt-12 lg:scroll-mt-0" />
       <SectionNav tabs={tabs} tab={tab} onTab={setTab} accent="bf6" />
 
       <motion.div

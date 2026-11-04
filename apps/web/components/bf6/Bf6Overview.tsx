@@ -21,7 +21,7 @@ import {
   share,
 } from "@/lib/bf6/format";
 import { cn } from "@/lib/utils";
-import { MapCard, RedsecPanel, nonRedsecMaps } from "./Bf6Maps";
+import { MapCard, RedsecPanel, mapCards } from "./Bf6Maps";
 import { MaskIcon, Panel, PanelTitle, SectionTitle, Stat } from "./primitives";
 
 export type Bf6Tab = "overview" | "weapons" | "vehicles" | "gadgets" | "maps" | "modes";
@@ -33,7 +33,7 @@ export function Bf6Overview({
   stats: Bf6PlayerStats;
   onShowTab: (tab: Bf6Tab) => void;
 }) {
-  const maps = nonRedsecMaps(stats.maps);
+  const maps = mapCards(stats);
   let index = 0;
   const next = () => String(++index).padStart(2, "0");
 

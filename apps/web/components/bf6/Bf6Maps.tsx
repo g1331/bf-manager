@@ -7,8 +7,9 @@ import { fmtHours, fmtInt, fmtPct } from "@/lib/bf6/format";
 import { cn } from "@/lib/utils";
 import { MaskIcon, Panel, PanelTitle, Ring, SectionTitle, Stat, WinLossBar } from "./primitives";
 
-export function nonRedsecMaps(maps: Bf6MapStats[]): Bf6MapStats[] {
-  return maps.filter((m) => !mapInfo(m.id).redsec);
+/** 有大逃杀汇总时，禁区地图并进大逃杀面板；没有汇总就照常按地图卡展示，免得数据被藏起来。 */
+export function mapCards(stats: Bf6PlayerStats): Bf6MapStats[] {
+  return stats.redsec ? stats.maps.filter((m) => !mapInfo(m.id).redsec) : stats.maps;
 }
 
 /* ------------------------------ 地图 ------------------------------ */
@@ -71,7 +72,7 @@ export function MapCard({
 }
 
 export function MapsTab({ stats }: { stats: Bf6PlayerStats }) {
-  const maps = nonRedsecMaps(stats.maps);
+  const maps = mapCards(stats);
   return (
     <div>
       {maps.length > 0 ? (

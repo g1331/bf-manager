@@ -36,6 +36,7 @@ from app.models import User
 from app.services import group_server_service
 from app.services.bf1.gateway_result import persona_info
 from app.services.ea_account_service import EAAccountService
+from app.services.ea_avatar import fetch_ea_avatar
 from app.services.ea_binding_service import BindingConflictError, EaBindingService
 
 
@@ -99,6 +100,7 @@ class EALoginFinalizer:
                 refreshed_remid,
                 refreshed_sid,
                 access_token,
+                ea_user_id,
             ) = await self._exchange_bf1_session(client, cookies)
         finally:
             with contextlib.suppress(Exception):
@@ -118,15 +120,16 @@ class EALoginFinalizer:
                     user=user,
                     persona_id=persona_id,
                     display_name=display_name,
-                    avatar_url=avatar_url,
+                    avatar_url=avatar_url or await fetch_ea_avatar(db, ea_user_id),
                     verified_via="password",
+                    ea_user_id=ea_user_id,
                 )
             except BindingConflictError as e:
                 raise EALoginError(e.message, stage="finalize", code="EA_BINDING_CONFLICT") from e
             return EALoginTaskResultData(
                 persona_id=persona_id,
                 display_name=display_name,
-                avatar_url=avatar_url,
+                avatar_url=outcome.binding.avatar_url,
                 binding_id=outcome.binding.id,
                 claimed=outcome.claimed_user_id is not None,
             )
@@ -202,11 +205,12 @@ class EALoginFinalizer:
 
     async def _exchange_bf1_session(
         self, client: BF1GatewayClient, cookies: LoginCookies
-    ) -> tuple[int, str | None, str | None, str, str, str, str | None]:
+    ) -> tuple[int, str | None, str | None, str, str, str, str | None, int | None]:
         """调用 ``BF1GatewayClient.login`` 并查询 persona 详情。
 
         Returns:
-            ``(persona_id, display_name, avatar_url, session, remid, sid, access_token)``。
+            ``(persona_id, display_name, avatar_url, session, remid, sid, access_token,
+            ea_user_id)``，ea_user_id 是 EA 账号 ID（nucleusId），取不到为 None。
             其中 ``remid`` / ``sid`` 优先取 gateway 刷新后的新值，回退到 EA 登录链路
             原始 cookies；保证 ea_bindings / ea_accounts 落库的是最新有效凭据。
         """
@@ -226,6 +230,7 @@ class EALoginFinalizer:
         persona_id = int(client.pid)
         display_name: str | None = None
         avatar_url: str | None = None
+        ea_user_id: int | None = None
         try:
             with _silence_gateway_logs():
                 personas = await client.getPersonasByIds([persona_id])
@@ -233,6 +238,8 @@ class EALoginFinalizer:
             if info is not None:
                 display_name = info.get("displayName") or None
                 avatar_url = info.get("avatar") or None
+                nucleus = str(info.get("nucleusId") or "")
+                ea_user_id = int(nucleus) if nucleus.isdigit() else None
         except Exception as e:
             # persona 详情查询失败不致命：binding/account 仍可以无 display_name 落库，
             # 后续 verify 流程会重试。把异常用 debug 落日志做诊断即可。
@@ -248,6 +255,7 @@ class EALoginFinalizer:
             client.remid or cookies.remid,
             client.sid or cookies.sid,
             client.access_token,
+            ea_user_id,
         )
 
 

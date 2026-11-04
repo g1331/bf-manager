@@ -30,6 +30,7 @@ from app.schemas.auth import (
 from app.services import account_deletion_service, account_service, site_settings_service
 from app.services.account_service import AccountError, normalize_email
 from app.services.auth_service import AuthService
+from app.services.ea_avatar import fetch_ea_avatar
 from app.services.ea_binding_service import EaBindingService
 
 router = APIRouter()
@@ -75,8 +76,9 @@ async def bind_with_cookie(
         user=user,
         persona_id=identity.persona_id,
         display_name=identity.display_name,
-        avatar_url=identity.avatar_url,
+        avatar_url=identity.avatar_url or await fetch_ea_avatar(db, identity.ea_user_id),
         verified_via="cookie",
+        ea_user_id=identity.ea_user_id,
     )
     if outcome.claimed_user_id is not None:
         clear_session(response)

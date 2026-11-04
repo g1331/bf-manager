@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from app.api.v1 import me as me_api
 from app.core.passwords import hash_password, verify_password
 from app.core.security import create_access_token
 from app.models import EaBinding, EmailVerification, InviteCode, User
@@ -19,6 +20,7 @@ from sqlalchemy.orm import selectinload
 
 EA_EMAIL = "Player@Example.com"
 PERSONA = 1004198901469
+AVATAR = "https://eaavatarservice.akamaized.net/production/avatar/prod/userAvatar/1/208x208.PNG"
 
 
 def _token_from(outbox: LogMailSender) -> str:
@@ -116,7 +118,9 @@ def _login_cookie(ac: AsyncClient, user: User) -> None:
 
 async def test_register_with_ea_email_creates_account_on_confirm(env, test_session) -> None:
     ac, outbox, directory = env
-    directory["player@example.com"] = EaEmailMatch(PERSONA, 1000331701469, "SHlSAN13")
+    directory["player@example.com"] = EaEmailMatch(
+        PERSONA, 1000331701469, "SHlSAN13", avatar_url=AVATAR
+    )
     invite = await _make_invite(test_session)
 
     resp = await ac.post(
@@ -154,6 +158,7 @@ async def test_register_with_ea_email_creates_account_on_confirm(env, test_sessi
     binding = await test_session.scalar(select(EaBinding).where(EaBinding.persona_id == PERSONA))
     assert binding.verified_via == "email"
     assert binding.ea_user_id == 1000331701469
+    assert binding.avatar_url == AVATAR
     assert binding.encrypted_remid is None
     await test_session.refresh(invite)
     assert invite.used_at is not None and invite.used_by == body["id"]
@@ -316,6 +321,30 @@ async def test_plain_register_then_bind_with_cookie(env, test_session, monkeypat
     assert binding.verified_via == "cookie"
     assert binding.encrypted_remid is None
     assert (await ac.get("/api/v1/me/invite-codes")).status_code == 200
+
+
+async def test_cookie_bind_fills_avatar_by_ea_account(env, test_session, monkeypatch) -> None:
+    """EA 的 persona 接口不回头像：绑定时按 EA 账号 ID 补上，同时存下 EA 账号 ID"""
+    ac, _, _ = env
+    user = await _active_user(test_session, user_id=5, email="p@example.com", persona_id=None)
+    _login_cookie(ac, user)
+
+    async def fake_verify(self, remid, sid):
+        return EaIdentity(persona_id=556, display_name="Bound", avatar_url=None, ea_user_id=99)
+
+    asked: list[int | None] = []
+
+    async def fake_avatar(_db, ea_user_id):
+        asked.append(ea_user_id)
+        return AVATAR
+
+    monkeypatch.setattr(AuthService, "verify_ea_cookie", fake_verify)
+    monkeypatch.setattr(me_api, "fetch_ea_avatar", fake_avatar)
+    resp = await ac.post("/api/v1/me/ea-bindings/cookie", json={"remid": "r" * 20, "sid": ""})
+    assert resp.status_code == 200, resp.text
+    binding = await test_session.scalar(select(EaBinding).where(EaBinding.persona_id == 556))
+    assert (binding.avatar_url, binding.ea_user_id) == (AVATAR, 99)
+    assert asked == [99]
 
 
 async def test_cookie_bind_cannot_take_persona_from_active_account(

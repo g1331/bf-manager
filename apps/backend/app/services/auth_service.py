@@ -15,11 +15,16 @@ from app.services.bf1.gateway_result import persona_info
 from app.services.user_service import UserService
 
 
+def _int_or_none(value: object) -> int | None:
+    return int(value) if isinstance(value, (int, str)) and str(value).isdigit() else None
+
+
 @dataclass(frozen=True)
 class EaIdentity:
     persona_id: int
     display_name: str | None
     avatar_url: str | None
+    ea_user_id: int | None = None
 
 
 class AuthService:
@@ -40,15 +45,20 @@ class AuthService:
             persona_id = int(client.pid)
             display_name: str | None = None
             avatar_url: str | None = None
+            ea_user_id: int | None = None
             try:
                 info = persona_info(await client.getPersonasByIds([persona_id]), persona_id)
                 if info is not None:
                     display_name = info.get("displayName") or None
                     avatar_url = info.get("avatar") or None
+                    ea_user_id = _int_or_none(info.get("nucleusId"))
             except Exception as e:
                 logger.debug("fetch persona detail failed: {}", e)
             return EaIdentity(
-                persona_id=persona_id, display_name=display_name, avatar_url=avatar_url
+                persona_id=persona_id,
+                display_name=display_name,
+                avatar_url=avatar_url,
+                ea_user_id=ea_user_id,
             )
         except AppError:
             raise

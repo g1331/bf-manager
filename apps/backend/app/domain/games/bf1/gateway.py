@@ -683,10 +683,9 @@ class _BF1GatewayBase:
         logger.success(f"BF1账号{self.pid}desktop_access_token 已更新，有效期 {expires_in}s")
         return token
 
-    async def _sal_post(
-        self, payload: dict[str, Any], *, op: str, action: str
-    ) -> dict[str, Any] | EAGatewayError:
-        """向 EA App 的 SAL GraphQL 发一次请求，返回解析后的 JSON；action 是失败文案的前缀"""
+    async def _sal_post(self, payload: dict[str, Any], *, op: str, action: str) -> Any:
+        """向 EA App 的 SAL GraphQL 发一次请求，返回解析后的 JSON 或 EAGatewayError；
+        action 是失败文案的前缀。JSON 的结构由调用方检查。"""
         token = await self._ensure_desktop_token()
         if not token:
             return EAGatewayError("EA Desktop 通道未获取到 access_token", kind="auth")
@@ -738,8 +737,6 @@ class _BF1GatewayBase:
         except Exception as e:
             logger.exception(f"{action}异常: {e}")
             return EAGatewayError(f"{action}失败: 处理返回数据出错", kind="internal")
-        if not isinstance(data, dict):
-            return EAGatewayError(f"{action}失败: 返回格式不对", kind="bad_response")
         return data
 
     async def getPlayerByPd(self, pd: int) -> GatewayResult:
@@ -759,20 +756,35 @@ class _BF1GatewayBase:
         )
         if isinstance(data, EAGatewayError):
             return data
-        player = (data.get("data") or {}).get("playerByPd")
-        if data.get("errors") or not isinstance(player, dict):
-            errors = str(data["errors"])[:200] if data.get("errors") else None
-            return EAGatewayError(
-                f"查询 EA 账号失败: {errors}" if errors else f"查无此 EA 账号: {pd}",
-                kind="ea",
-                ea_message=errors,
-            )
-        avatar = ((player.get("avatar") or {}).get("medium") or {}).get("path")
+        bad = EAGatewayError("查询 EA 账号失败: 返回格式不对", kind="bad_response")
+        if not isinstance(data, dict):
+            return bad
+        if data.get("errors"):
+            errors = str(data["errors"])[:200]
+            return EAGatewayError(f"查询 EA 账号失败: {errors}", kind="ea", ea_message=errors)
+        body = data.get("data")
+        if not isinstance(body, dict):
+            return bad
+        player = body.get("playerByPd")
+        if player is None:
+            return EAGatewayError(f"查无此 EA 账号: {pd}", kind="ea")
+        if not isinstance(player, dict):
+            return bad
+        psd, avatar, name = player.get("psd"), player.get("avatar"), player.get("displayName")
+        medium = avatar.get("medium") if isinstance(avatar, dict) else None
+        path = medium.get("path") if isinstance(medium, dict) else None
+        if (
+            not str(psd or "").isdigit()
+            or not isinstance(avatar, dict | None)
+            or not isinstance(medium, dict | None)
+            or not isinstance(path, str | None)
+        ):
+            return bad
         return {
-            "pd": int(player.get("pd") or pd),
-            "personaId": int(player["psd"]) if player.get("psd") else None,
-            "displayName": player.get("displayName"),
-            "avatar": avatar or None,
+            "pd": int(pd),
+            "personaId": int(str(psd)),
+            "displayName": name if isinstance(name, str) else None,
+            "avatar": path or None,
         }
 
     async def getPersonasByName(self, player_name: str) -> GatewayResult:

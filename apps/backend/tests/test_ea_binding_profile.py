@@ -14,10 +14,12 @@ from app.api.errors import EAApiError
 from app.domain.ea.login.login_engine import LoginCookies
 from app.domain.games.bf1.gateway import BF1GatewayClient
 from app.domain.games.bf1.gateway_errors import EAGatewayError
-from app.services import ea_avatar
+from app.models import EaBinding, User
+from app.services import ea_avatar, ea_login_finalizer
 from app.services.auth_service import AuthService
 from app.services.bf1.gateway_result import persona_info
 from app.services.ea_login_finalizer import EALoginFinalizer
+from sqlalchemy import select
 
 PID = 1004198901469
 
@@ -156,3 +158,58 @@ async def test_fetch_ea_avatar_failure_does_not_raise(monkeypatch):
 
     monkeypatch.setattr(ea_avatar, "get_bf1_client", no_pool)
     assert await ea_avatar.fetch_ea_avatar(None, 1) is None
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        [1],
+        {"data": [1], "errors": None},
+        {"data": {"playerByPd": "x"}},
+        {"data": {"playerByPd": {"pd": "1", "psd": "2", "avatar": {"medium": "unexpected"}}}},
+        {"data": {"playerByPd": {"pd": "1", "psd": "not-a-number", "avatar": None}}},
+        {"data": {"playerByPd": {"pd": "1", "psd": "2", "avatar": {"medium": {"path": 3}}}}},
+    ],
+)
+async def test_player_by_pd_malformed_is_bad_response(monkeypatch, body):
+    async def sal(self, payload, *, op, action):
+        return body
+
+    monkeypatch.setattr(BF1GatewayClient, "_sal_post", sal)
+    res = await BF1GatewayClient(pid=0).getPlayerByPd(1)
+    assert isinstance(res, EAGatewayError) and res.kind == "bad_response"
+
+
+async def test_player_by_pd_null_is_not_found(monkeypatch):
+    async def sal(self, payload, *, op, action):
+        return {"data": {"playerByPd": None}}
+
+    monkeypatch.setattr(BF1GatewayClient, "_sal_post", sal)
+    res = await BF1GatewayClient(pid=0).getPlayerByPd(1)
+    assert isinstance(res, EAGatewayError) and res.kind == "ea"
+
+
+async def test_password_bind_task_returns_stored_avatar(test_session, monkeypatch):
+    """EA 不回头像时补查到的头像既存进绑定，也出现在登录任务的结果里"""
+    user = User(id=7, username="u7", role="user", status="pending_binding")
+    test_session.add(user)
+    await test_session.commit()
+
+    async def exchange(self, client, cookies):
+        return (PID, "SomePlayer", None, "sess", "remid", "sid", None, 1008047106256)
+
+    asked: list[int | None] = []
+
+    async def fake_avatar(_db, ea_user_id):
+        asked.append(ea_user_id)
+        return AVATAR
+
+    monkeypatch.setattr(EALoginFinalizer, "_exchange_bf1_session", exchange)
+    monkeypatch.setattr(ea_login_finalizer, "fetch_ea_avatar", fake_avatar)
+    result = await EALoginFinalizer()._run(
+        test_session, "user", 7, LoginCookies(remid="r", sid="s", gateway_session_id="g"), None
+    )
+    assert result.avatar_url == AVATAR
+    binding = await test_session.scalar(select(EaBinding).where(EaBinding.persona_id == PID))
+    assert (binding.avatar_url, binding.ea_user_id) == (AVATAR, 1008047106256)
+    assert asked == [1008047106256]

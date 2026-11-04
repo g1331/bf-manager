@@ -129,7 +129,7 @@ class EALoginFinalizer:
             return EALoginTaskResultData(
                 persona_id=persona_id,
                 display_name=display_name,
-                avatar_url=avatar_url,
+                avatar_url=outcome.binding.avatar_url,
                 binding_id=outcome.binding.id,
                 claimed=outcome.claimed_user_id is not None,
             )

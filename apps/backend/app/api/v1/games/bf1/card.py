@@ -14,6 +14,7 @@ from app.api.client_ip import client_ip
 from app.api.deps import CurrentUserOptional, DbDep
 from app.api.rate_limit import rate_limit
 from app.schemas.bf1.card import (
+    CardAccountServers,
     CardCredentials,
     CardJobView,
     CardPrecheck,
@@ -43,6 +44,14 @@ async def _credentials(
 TokenHeader = Annotated[str | None, Header(alias="X-Card-Token")]
 # 任务页每 2 秒轮询一次进度，用宽松的只读额度
 _read = rate_limit("read")
+
+
+@router.post("/servers", response_model=CardAccountServers, dependencies=[rate_limit("card_check")])
+async def account_servers(
+    payload: CardCredentials, db: DbDep, user: CurrentUserOptional
+) -> CardAccountServers:
+    """账号是服主或管理员的服（收录名单里的），页面据此列出可选的服"""
+    return await CardService(db).account_servers(payload, user)
 
 
 @router.post("/precheck", response_model=CardPrecheck, dependencies=[rate_limit("card_check")])

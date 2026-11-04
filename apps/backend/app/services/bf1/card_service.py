@@ -28,7 +28,7 @@ from datetime import UTC, datetime
 from typing import Any, cast
 
 from loguru import logger
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.errors import (
@@ -48,7 +48,15 @@ from app.domain.games.bf1.gateway_errors import EAGatewayError, gateway_failure
 from app.domain.games.bf1.maps import translate_map_name, translate_mode_name
 from app.models import User
 from app.models.bf1 import Bf1AutoSwitch, Bf1CardJob
-from app.schemas.bf1.card import CardCredentials, CardEvent, CardJobView, CardPrecheck
+from app.models.bf1.rsp_lists import Bf1RspServer
+from app.schemas.bf1.card import (
+    CardAccountServers,
+    CardCredentials,
+    CardEvent,
+    CardJobView,
+    CardPrecheck,
+    CardServer,
+)
 from app.services.audit_service import AuditService
 from app.services.authz_service import ServerAuthzService
 from app.services.bf1 import card_engine as engine
@@ -56,6 +64,7 @@ from app.services.bf1.blaze_service import release_blaze_account
 from app.services.bf1.card_blaze import CardBlazeSession
 from app.services.bf1.gateway_factory import get_bf1_client_for_pool_account
 from app.services.bf1.gateway_result import to_ea_error
+from app.services.bf1.rsp_list_service import list_managed_servers
 from app.services.bf1.server_service import _to_member
 from app.services.ea_account_service import (
     EAAccountService,
@@ -64,6 +73,7 @@ from app.services.ea_account_service import (
     reserved_personas,
 )
 from app.services.ea_binding_service import EaBindingService
+from app.services.membership_service import MembershipService
 
 MAX_ATTEMPTS = 120
 MAX_SECONDS = 30 * 60
@@ -296,6 +306,41 @@ def _mode_name(mode: str) -> str:
 class CardService:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
+
+    async def account_servers(self, req: CardCredentials, user: User | None) -> CardAccountServers:
+        """这个账号是服主或管理员的服，供页面直接点选。
+
+        绑定账号直接按 persona 查；手填的 remid / sid 要登录一次才知道是谁；借平台账号时列号池
+        账号能管、且用户在本站对它有管理员以上权限的服（平台管理员不限）。
+        """
+        if req.use_pool:
+            if user is None:
+                raise ValidationError("登录后才能借用平台账号")
+            persona_id = None
+            rows = await list_managed_servers(
+                self.db, await EAAccountService(self.db).enabled_personas()
+            )
+            if user.role != "admin":
+                allowed = await MembershipService(self.db).admin_server_ids(user)
+                rows = [r for r in rows if r[2].server_id in allowed]
+        else:
+            creds = resolve_credentials(req, user)
+            if creds.binding_id is not None and user is not None:
+                persona_id = next(
+                    b.persona_id for b in user.ea_bindings if b.id == creds.binding_id
+                )
+            else:
+                async with _gateway(self.db, creds) as client:
+                    persona_id = int(client.pid)
+            rows = await list_managed_servers(self.db, [persona_id])
+        seen: set[int] = set()
+        servers = []
+        for pid, role, srv in rows:
+            if srv.server_id not in seen:
+                seen.add(srv.server_id)
+                servers.append(CardServer(**srv.model_dump(), role=role, persona_id=pid))
+        tracked = await self.db.scalar(select(func.count()).select_from(Bf1RspServer)) or 0
+        return CardAccountServers(persona_id=persona_id, servers=servers, tracked_servers=tracked)
 
     async def precheck(self, creds: OwnerCredentials, game_id: int) -> CardPrecheck:
         async with _gateway(self.db, creds) as client:

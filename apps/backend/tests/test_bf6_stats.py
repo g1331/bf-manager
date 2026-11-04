@@ -59,6 +59,9 @@ def _sample() -> PlayerStats:
         _g("kw_wp_pst_temp", 1),
         _g("kw_wp_pst_m44", 1),
         _g("kw_wp_ar_m4", 5),
+        _g("kw_wp_sg_m87a1", 2),
+        _g("sfw_wp_sg_m87a1", 10),
+        _g("shw_wp_sg_m87a1", 37),
         # 载具
         _g("kw_veh_tank_abrams", 3),
         _g("tp_veh_tank_abrams", 120),
@@ -155,7 +158,9 @@ def test_normalize_career_and_breakdowns() -> None:
     assert career.vehicle_kills == 4
     assert career.best_class == "support"
 
-    assert [w.id for w in result.weapons] == ["mg_l110", "ar_m4", "pst_m44"]
+    assert [w.id for w in result.weapons] == ["mg_l110", "ar_m4", "sg_m87a1", "pst_m44"]
+    # 霰弹命中按弹丸计，命中率会超过 100%，不给
+    assert result.weapons[2].accuracy is None
     l110 = result.weapons[0]
     assert (l110.kills, l110.accuracy, l110.headshot_rate, l110.kpm) == (30, 0.25, 0.2667, 3.0)
     assert l110.damage is None

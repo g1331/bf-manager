@@ -171,7 +171,9 @@ def normalize(player: PlayerStats | None, nucleus_id: int, fetched_at: datetime)
             continue
         item = _WEAPON_CATEGORY_ALIASES.get(raw_id, raw_id)
         weapon = Bf6WeaponStats.model_validate({"id": item, **values})
-        weapon.accuracy = ratio(weapon.shots_hit, weapon.shots_fired)
+        # 霰弹按弹丸计命中、按发计射击，命中率会超过 100%，不给
+        if item != "sg" and not item.startswith("sg_"):
+            weapon.accuracy = ratio(weapon.shots_hit, weapon.shots_fired)
         weapon.headshot_rate = ratio(weapon.headshots, weapon.kills)
         weapon.kpm = _per_minute(weapon.kills, weapon.time_seconds)
         (weapon_categories if item in _WEAPON_CATEGORIES else weapons).append(weapon)

@@ -16,6 +16,7 @@ import asyncio
 import contextlib
 import copy
 import json
+import re
 import time
 import urllib.parse
 import uuid
@@ -39,6 +40,10 @@ def _get_proxy() -> str:
     """从配置读取代理（部分网络环境需要走代理访问 EA API）"""
     settings = get_settings()
     return settings.https_proxy or settings.http_proxy or ""
+
+
+# EA 的 persona / 账号 ID：ASCII 数字，长度有限
+_ID_RE = re.compile(r"[0-9]{1,20}")
 
 
 async def get_a_uuid() -> str:
@@ -774,7 +779,7 @@ class _BF1GatewayBase:
         medium = avatar.get("medium") if isinstance(avatar, dict) else None
         path = medium.get("path") if isinstance(medium, dict) else None
         if (
-            not str(psd or "").isdigit()
+            not (isinstance(psd, str | int) and _ID_RE.fullmatch(str(psd)))
             or not isinstance(avatar, dict | None)
             or not isinstance(medium, dict | None)
             or not isinstance(path, str | None)

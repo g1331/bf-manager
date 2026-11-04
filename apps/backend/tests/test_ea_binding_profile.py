@@ -169,6 +169,9 @@ async def test_fetch_ea_avatar_failure_does_not_raise(monkeypatch):
         {"data": {"playerByPd": {"pd": "1", "psd": "2", "avatar": {"medium": "unexpected"}}}},
         {"data": {"playerByPd": {"pd": "1", "psd": "not-a-number", "avatar": None}}},
         {"data": {"playerByPd": {"pd": "1", "psd": "2", "avatar": {"medium": {"path": 3}}}}},
+        {"data": {"playerByPd": {"psd": "²", "avatar": None}}},
+        {"data": {"playerByPd": {"psd": "9" * 5000, "avatar": None}}},
+        {"data": {"playerByPd": {"psd": 1.5, "avatar": None}}},
     ],
 )
 async def test_player_by_pd_malformed_is_bad_response(monkeypatch, body):

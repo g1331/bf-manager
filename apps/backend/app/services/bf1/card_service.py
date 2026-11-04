@@ -608,8 +608,9 @@ class _Runner:
     # ---- 持久化
 
     async def _save(self, events: list[tuple[str, str]] | None = None, **fields: Any) -> None:
-        # 写到一半被停止的话，事务会悬着占住连接；让这次写完，取消在写完后生效
-        await asyncio.shield(self._write(events, fields))
+        # 写到一半被停止的话，事务会悬着占住连接，还会和随后写的最终状态互相覆盖；
+        # 让这次写完，取消在写完后生效
+        await _through_cancel(asyncio.ensure_future(self._write(events, fields)))
 
     async def _write(self, events: list[tuple[str, str]] | None, fields: dict[str, Any]) -> None:
         try:
@@ -757,14 +758,7 @@ class _Runner:
         closing = asyncio.ensure_future(self._close_and_release())
         _closing.add(closing)
         closing.add_done_callback(_closing.discard)
-        try:
-            await asyncio.shield(closing)
-        except asyncio.CancelledError:
-            # 收尾时点了停止、又赶上进程关闭，会连着取消几次；都等收尾做完再传出去，它自己有时限
-            while not closing.done():
-                with contextlib.suppress(asyncio.CancelledError):
-                    await asyncio.shield(closing)
-            raise
+        await _through_cancel(closing)
 
     async def _close_and_release(self) -> None:
         try:
@@ -894,6 +888,18 @@ async def mark_interrupted_jobs() -> None:
             await db.commit()
     except Exception as exc:
         logger.warning("卡行动任务启动清理失败: {!r}", exc)
+
+
+async def _through_cancel(task: asyncio.Future[None]) -> None:
+    """等 task 做完再返回；期间被取消（可能连着几次，比如收尾时点了停止又赶上进程关闭）
+    也先等它做完，再把取消传出去。task 自己要有时限"""
+    try:
+        await asyncio.shield(task)
+    except asyncio.CancelledError:
+        while not task.done():
+            with contextlib.suppress(asyncio.CancelledError):
+                await asyncio.shield(task)
+        raise
 
 
 async def shutdown_card_jobs() -> None:

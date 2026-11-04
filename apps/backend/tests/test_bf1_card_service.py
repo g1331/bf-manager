@@ -624,3 +624,41 @@ async def test_cleanup_leave_timeout_still_closes_then_releases(maker, monkeypat
     assert runner.blaze is not None and runner.blaze.alive is False
     assert ADMIN not in reserved_personas()
     assert view.id not in card_service._runners
+
+
+async def test_stop_waits_for_in_flight_progress_write(maker, monkeypatch):
+    client = FakeClient([EMPTY_CQ, details("Conquest", ["MP_Amiens"] * 9, soldiers=1)])
+    use_client(monkeypatch, client)
+    entered = asyncio.Event()
+    gate = asyncio.Event()
+    original = card_service._Runner._write
+
+    async def slow_write(self, events, fields):
+        if "attempts" in fields and not entered.is_set():
+            entered.set()
+            await gate.wait()
+            events = [("info", "进度")]
+        await original(self, events, fields)
+
+    monkeypatch.setattr(card_service._Runner, "_write", slow_write)
+    async with maker() as db:
+        view, token = await CardService(db).start(CREDS, GAME_ID, "card", user=None, ip=None)
+    runner = card_service._runners[view.id]
+    await asyncio.wait_for(entered.wait(), 5)
+
+    async def stop():
+        async with maker() as db:
+            return await CardService(db).cancel(view.id, token, None)
+
+    stopping = asyncio.create_task(stop())
+    await asyncio.sleep(0.05)
+    # 进度还没写完：任务不结束，最终状态也不抢先写
+    assert not runner.task.done()
+    gate.set()
+    stopped = await asyncio.wait_for(stopping, 5)
+    assert stopped.status == "cancelled"
+    async with maker() as db:
+        job = await db.get(Bf1CardJob, view.id)
+    # 事件新的在前：停止排在进度之后写入，两条都在
+    messages = [e["message"] for e in job.events]
+    assert messages[0].startswith("已停止") and "进度" in messages[1:]

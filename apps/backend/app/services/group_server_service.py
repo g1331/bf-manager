@@ -55,6 +55,8 @@ RECHECK_INTERVAL_SECONDS = 24 * 3600
 RECHECK_FIRST_DELAY_SECONDS = 10 * 60
 
 PROBLEM_NO_EXECUTOR = "没有指定服务账号"
+# 删掉群服务账号时记的问题：还没对照 EA 名单，下次复核换成 None（号池能接上）或 PROBLEM_NO_EXECUTOR
+PROBLEM_EXECUTOR_REMOVED = "服务账号已删除，没有指定执行账号"
 PROBLEM_EXECUTOR_NOT_ADMIN = "服务账号已不是这台服的服主或管理员"
 PROBLEM_EXECUTOR_INVALID = "服务账号登录失败，需要群主重新提交凭据"
 # 群服务账号出问题、号池里也没有这台服的管理员时接在问题后面：兜底没了要另发一次提醒
@@ -272,7 +274,7 @@ async def remove_account(
         select(GroupServer).where(GroupServer.executor_account_id == account.id)
     ):
         gs.executor_account_id = None
-        gs.executor_problem = PROBLEM_NO_EXECUTOR
+        gs.executor_problem = PROBLEM_EXECUTOR_REMOVED
     if account.is_default:
         nxt = await db.scalar(
             select(GroupEaAccount)
@@ -330,9 +332,11 @@ def _platform_fallback(gs: GroupServer, server: Server, covered: set[int] | None
         return False
     if problem is None:
         return gs.executor_account_id is None
-    if problem == PROBLEM_NO_EXECUTOR:
-        # 删群服务账号时直接记成这个，没查 EA，只能看收录的名单
+    if problem == PROBLEM_EXECUTOR_REMOVED:
+        # 还没复核，只能看收录的名单
         return server.server_id in covered
+    if problem == PROBLEM_NO_EXECUTOR:
+        return False
     # 群服务账号有问题：复核时号池也接不上会带上 PROBLEM_NO_FALLBACK
     return not problem.endswith(PROBLEM_NO_FALLBACK)
 

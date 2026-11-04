@@ -89,8 +89,9 @@ ANCHOR_JOIN_TRIES = 3
 OCCUPIED_WAIT_SECONDS = 10
 # 借平台账号时等它手上的 Gateway 请求结束，最多这么久
 RESERVE_WAIT_SECONDS = 15
-# 收尾（离服、关连接）最多等这么久，超时也放掉账号
-CLEANUP_SECONDS = 10
+# 收尾时离服最多等这么久；关 Blaze、关 HTTP 各自再限时，超时也照样关连接、放账号
+LEAVE_SECONDS = 10
+CLOSE_SECONDS = 5
 
 SLEEP: Callable[[float], Awaitable[None]] = asyncio.sleep
 
@@ -607,6 +608,10 @@ class _Runner:
     # ---- 持久化
 
     async def _save(self, events: list[tuple[str, str]] | None = None, **fields: Any) -> None:
+        # 写到一半被停止的话，事务会悬着占住连接；让这次写完，取消在写完后生效
+        await asyncio.shield(self._write(events, fields))
+
+    async def _write(self, events: list[tuple[str, str]] | None, fields: dict[str, Any]) -> None:
         try:
             async with get_sessionmaker()() as db:
                 job = await db.get(Bf1CardJob, self.job_id)
@@ -755,20 +760,27 @@ class _Runner:
         try:
             await asyncio.shield(closing)
         except asyncio.CancelledError:
-            await asyncio.wait({closing})
+            # 收尾时点了停止、又赶上进程关闭，会连着取消几次；都等收尾做完再传出去，它自己有时限
+            while not closing.done():
+                with contextlib.suppress(asyncio.CancelledError):
+                    await asyncio.shield(closing)
             raise
 
     async def _close_and_release(self) -> None:
         try:
-            async with asyncio.timeout(CLEANUP_SECONDS):
-                with contextlib.suppress(Exception):
+            try:
+                async with asyncio.timeout(LEAVE_SECONDS):
                     await self.leave()
-                if self.blaze is not None:
-                    with contextlib.suppress(Exception):
+            except TimeoutError:
+                logger.warning("卡行动任务 {} 收尾离服超时", self.job_id)
+            if self.blaze is not None:
+                # 先在本地断开连接、再等关闭握手，超时只是不等握手
+                with contextlib.suppress(Exception):
+                    async with asyncio.timeout(CLOSE_SECONDS):
                         await self.blaze.close()
-                await _close(self.client)
-        except TimeoutError:
-            logger.warning("卡行动任务 {} 收尾超时，直接放掉账号", self.job_id)
+            with contextlib.suppress(Exception):
+                async with asyncio.timeout(CLOSE_SECONDS):
+                    await _close(self.client)
         finally:
             if self.creds.pool_persona_id is not None:
                 release_persona(self.creds.pool_persona_id)
@@ -891,3 +903,6 @@ async def shutdown_card_jobs() -> None:
         t.cancel()
     if tasks:
         await asyncio.gather(*tasks, return_exceptions=True)
+    # 收尾时已被停止过的任务会更早结束，它的收尾任务可能还在关连接
+    if _closing:
+        await asyncio.gather(*list(_closing), return_exceptions=True)

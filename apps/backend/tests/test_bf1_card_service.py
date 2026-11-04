@@ -583,39 +583,44 @@ async def test_cancel_during_cleanup_releases_pool_account_after_closing(
     second = asyncio.create_task(stop())
     await asyncio.sleep(0.05)
     assert runner.task.cancelling() == 1
-    # 进程关闭时直接再取消：连接还没关完，账号和这台服都不放
+    # 收尾中又被取消、接着进程关闭再取消一次：连接还没关完，账号和这台服都不放，关闭也等着
     runner.task.cancel()
+    await asyncio.sleep(0.01)
+    shutdown = asyncio.create_task(card_service.shutdown_card_jobs())
     await asyncio.sleep(0.05)
+    assert not shutdown.done()
     assert ADMIN in reserved_personas()
     assert view.id in card_service._runners
     gate.set()
-    with pytest.raises(asyncio.CancelledError):
-        await runner.task
+    await asyncio.wait_for(shutdown, 5)
+    assert runner.task.cancelled()
     await asyncio.gather(first, second)
     assert closed == [True]
     assert ADMIN not in reserved_personas()
     assert view.id not in card_service._runners
 
 
-async def test_cleanup_timeout_still_releases_pool_account(maker, monkeypatch, pool_env):
+async def test_cleanup_leave_timeout_still_closes_then_releases(maker, monkeypatch, pool_env):
     from app.services.ea_account_service import reserved_personas
 
-    client = FakeClient([EMPTY_CQ], pid=ADMIN)
-    use_client(monkeypatch, client)
-    monkeypatch.setattr(card_service, "CLEANUP_SECONDS", 0.1)
     never = asyncio.Event()
 
-    class StuckBlaze(FakeBlaze):
-        async def close(self):
+    class StuckLeaveClient(FakeClient):
+        async def leaveGame(self, game_id):  # noqa: N802
             await never.wait()
 
-    monkeypatch.setattr(card_service, "CardBlazeSession", StuckBlaze)
+    client = StuckLeaveClient([EMPTY_CQ], pid=ADMIN)
+    use_client(monkeypatch, client)
+    monkeypatch.setattr(card_service, "LEAVE_SECONDS", 0.1)
     async with maker() as db:
         view, token = await CardService(db).start(POOL_CREDS, GAME_ID, "card", user=None, ip=None)
     runner = card_service._runners[view.id]
     await asyncio.sleep(0.05)
+    runner.joined = True
     async with maker() as db:
         await CardService(db).cancel(view.id, token, None)
+    # 离服超时也照样关掉 Blaze，再放账号
     assert runner.task.done()
+    assert runner.blaze is not None and runner.blaze.alive is False
     assert ADMIN not in reserved_personas()
     assert view.id not in card_service._runners

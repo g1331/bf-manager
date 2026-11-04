@@ -308,7 +308,7 @@ async def test_remove_account_leaves_server_without_executor(env, test_session, 
     await _bind(ac, gid)
     assert (await ac.delete(f"{API}/groups/{gid}/accounts/{account_id}")).status_code == 204
     item = (await ac.get(f"{API}/groups/{gid}/servers")).json()["items"][0]
-    assert item["executor"] is None and item["executor_problem"] == gss.PROBLEM_NO_EXECUTOR
+    assert item["executor"] is None and item["executor_problem"] == gss.PROBLEM_EXECUTOR_REMOVED
     assert item["status"] == "active"
 
 
@@ -545,3 +545,33 @@ async def test_platform_fallback_hidden_when_pool_disabled(env, test_session, ea
     await test_session.commit()
     got = (await ac.get(f"{API}/groups/{gid}/servers")).json()["items"][0]
     assert got["executor"] is None and got["platform_fallback"] is False
+
+
+async def test_platform_fallback_uses_recheck_over_stale_tracked_list(
+    env, test_session, ea
+) -> None:
+    ac, _, _, _, _, gid = await _group_with_alice(env, test_session)
+    await _seed_pool_account(test_session)
+    ea.admins = {OWNER_PID, POOL_PID}
+    assert (await _bind(ac, gid)).status_code == 201
+    # 收录的名单还记着号池账号是管理员
+    from datetime import UTC, datetime
+
+    from app.models.bf1.rsp_lists import Bf1RspMember, Bf1RspServer
+
+    test_session.add_all(
+        [
+            Bf1RspServer(
+                server_id=SERVER_ID, game_id=GAME_ID, name="测试服", refreshed_at=datetime.now(UTC)
+            ),
+            Bf1RspMember(server_id=SERVER_ID, pid=POOL_PID, role="admin"),
+        ]
+    )
+    await test_session.commit()
+
+    # EA 上已经撤了，复核确认没有平台账号能接：页面不能再显示由平台账号执行
+    ea.admins = {OWNER_PID}
+    await gss.recheck_all(test_session)
+    got = (await ac.get(f"{API}/groups/{gid}/servers")).json()["items"][0]
+    assert got["executor_problem"] == gss.PROBLEM_NO_EXECUTOR
+    assert got["platform_fallback"] is False

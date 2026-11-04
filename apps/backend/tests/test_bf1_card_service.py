@@ -669,3 +669,18 @@ async def test_stop_waits_for_in_flight_progress_write(maker, monkeypatch):
     # 事件新的在前：停止排在进度之后写入，两条都在
     messages = [e["message"] for e in job.events]
     assert messages[0].startswith("已停止") and "进度" in messages[1:]
+
+
+async def test_api_locate_returns_current_game_id(client, monkeypatch):
+    from app.api.v1.games.bf1 import card as card_api
+
+    found: dict[int, int | None] = {SERVER_ID: 9}
+
+    async def locate(db, server_id):
+        return found.get(server_id)
+
+    monkeypatch.setattr(card_api, "locate_game_id", locate)
+    res = await client.post("/api/v1/bf1/card/locate", json={"server_id": SERVER_ID})
+    assert res.status_code == 200 and res.json() == {"game_id": 9}
+    res = await client.post("/api/v1/bf1/card/locate", json={"server_id": SERVER_ID + 1})
+    assert res.status_code == 400 and "没找到这台服" in res.json()["error"]["message"]

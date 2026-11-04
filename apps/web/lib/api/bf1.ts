@@ -1192,6 +1192,13 @@ const cardHeaders = (token: string | null) => (token ? { "X-Card-Token": token }
 export const cardApi = {
   servers: (creds: CardCredentials) =>
     api.post<CardAccountServers>("/bf1/card/servers", creds, { timeoutMs: 45_000 }),
+  /** 列表里的服当前的 gameId：重启会换 gameId，没人的服列表里记的不一定是最新的 */
+  locate: (serverId: number) =>
+    api.post<{ game_id: number }>(
+      "/bf1/card/locate",
+      { server_id: serverId },
+      { timeoutMs: 45_000 },
+    ),
   precheck: (gameId: number, creds: CardCredentials) =>
     api.post<CardPrecheck>(
       "/bf1/card/precheck",

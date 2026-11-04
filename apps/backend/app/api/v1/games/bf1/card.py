@@ -12,11 +12,14 @@ from fastapi import APIRouter, Header, Request
 
 from app.api.client_ip import client_ip
 from app.api.deps import CurrentUserOptional, DbDep
+from app.api.errors import ValidationError
 from app.api.rate_limit import rate_limit
 from app.schemas.bf1.card import (
     CardAccountServers,
     CardCredentials,
     CardJobView,
+    CardLocated,
+    CardLocateRequest,
     CardPrecheck,
     CardPrecheckRequest,
     CardRestoreRequest,
@@ -29,6 +32,7 @@ from app.services.bf1.card_service import (
     resolve_credentials,
     resolve_pool_credentials,
 )
+from app.services.bf1.rsp_list_service import locate_game_id
 
 router = APIRouter()
 
@@ -52,6 +56,15 @@ async def account_servers(
 ) -> CardAccountServers:
     """账号是服主或管理员的服（收录名单里的），页面据此列出可选的服"""
     return await CardService(db).account_servers(payload, user)
+
+
+@router.post("/locate", response_model=CardLocated, dependencies=[rate_limit("card_check")])
+async def locate(payload: CardLocateRequest, db: DbDep) -> CardLocated:
+    """列表里的服当前的 gameId：服务器重启会换 gameId，空服的不一定是最新的"""
+    game_id = await locate_game_id(db, payload.server_id)
+    if game_id is None:
+        raise ValidationError("EA 上没找到这台服，可能已关服或改了名；知道 gameId 的话可以直接填")
+    return CardLocated(game_id=game_id)
 
 
 @router.post("/precheck", response_model=CardPrecheck, dependencies=[rate_limit("card_check")])

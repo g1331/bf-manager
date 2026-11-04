@@ -30,6 +30,14 @@ class CardRestoreRequest(CardCredentials):
     pass
 
 
+class CardLocateRequest(BaseModel):
+    server_id: int = Field(..., gt=0)
+
+
+class CardLocated(BaseModel):
+    game_id: int
+
+
 class CardServer(PlayerRspServer):
     """这个账号能卡行动的一台服（来自收录的私服名单）"""
 

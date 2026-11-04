@@ -21,10 +21,13 @@ from app.domain.games.bf6.client import STATS_CATEGORY
 from app.domain.games.bf6.wire import DimensionedStat, PlayerStats
 from app.schemas.bf6.player import (
     Bf6Career,
+    Bf6CareerBests,
+    Bf6GadgetStats,
     Bf6KitStats,
     Bf6MapStats,
     Bf6ModeStats,
     Bf6PlayerStats,
+    Bf6RedsecStats,
     Bf6VehicleStats,
     Bf6WeaponStats,
 )
@@ -51,6 +54,40 @@ _CAREER_FIELDS = {
     "healing": "Dmg_Healed_Total",
     "vehicle_kills": "kw_veh",
     "melee_kills": "Kills_Melee_Total",
+    "xp": "xp_all",
+    "ads_kills": "Kills_ADS_Total",
+    "hipfire_kills": "Kills_Hipfire_Total",
+    "multi_kills": "Kills_Multi_Total",
+    "long_distance_kills": "Kills_LongDist_Total",
+    "takedowns": "tkdw_melee",
+    "resupplies": "Resupply_Teammates_Total",
+    "spot_assists": "Assists_Spot_Total",
+}
+
+# _inround_cb / _inlife_cb 是单局 / 单条命的最高纪录；kill_longDist_last_cb 是最远击杀距离（米）
+_BEST_FIELDS = {
+    "round_kills": "kills_inround_cb",
+    "round_score": "score_all_inround_cb",
+    "life_kills": "kills_inlife_cb",
+    "longest_kill_m": "kill_longDist_last_cb",
+    "round_headshots": "kills_headshots_inround_cb",
+    "round_defends": "obj_defend_inround_cb",
+    "round_revives": "revives_inround_cb",
+    "round_damage": "dmg_inround_cb",
+}
+
+# granitebr 是大逃杀单人、双人、四人的合计
+_REDSEC_FIELDS = {
+    "matches": "matches_gm_granitebr",
+    "wins": "wins_gm_granitebr",
+    "top3": "top3_br_total",
+    "top10": "topten_gm_granitebr",
+    "kills": "kills_gm_granitebr",
+    "time_seconds": "tp_gm_granitebr",
+    "longest_win_streak": "winstreak_br",
+    "round_squad_wipes": "squadwipes_br_inround_cb",
+    "intel_pickups": "intel_pickup_gm_granitebr",
+    "round_chests": "looted_chests_inround_cb",
 }
 
 _WEAPON_PREFIXES = {
@@ -79,6 +116,28 @@ _VEHICLE_PREFIXES = {
 # 载具前缀下的汇总行：空中 / 地面 / 水面，以及直升机、喷气机两个子类
 _VEHICLE_CATEGORIES = {"air", "sur", "nav", "air_helis", "air_jets"}
 
+_GADGET_PREFIXES = {
+    "uses": "uses_gad_",
+    "kills": "kw_gad_",
+    "damage": "dmg_gad_",
+    "time_seconds": "tp_gad_",
+    "repairs": "repair_gad_",
+    "vehicles_destroyed": "vehd_gad_",
+}
+# 配备前缀下的汇总行：temp 是全部合计，grenades / callins / deployable 是大类合计，
+# gl / mine / rl / il / ubsg 是各自子型号（gl_he、rl_ungui……）之和
+_GADGET_AGGREGATES = {
+    "temp",
+    "grenades",
+    "callins",
+    "deployable",
+    "gl",
+    "mine",
+    "rl",
+    "il",
+    "ubsg",
+}
+
 _KIT_PREFIXES = {
     "kills": "kw_kit_",
     "deaths": "deaths_kit_",
@@ -106,14 +165,29 @@ _MAP_PREFIXES = {
 # lvlmp 是全部多人地图合计，lvlftp 是免费模式合计
 _MAP_AGGREGATES = {"mp", "ftp"}
 
-# oblitall、rr_all 是同一玩法几个变体的合计；modbuilder0 与 modbuilder 数值相同
-_MODE_AGGREGATES = {"all", "official", "mp", "oblitall", "rr_all", "modbuilder0"}
+# 模式前缀下的合计行：oblitall = oblit + sqdoblit，rr_all = rr_solo，
+# granitebr = 大逃杀单人 + 双人 + 四人，granite = granitebr + 试炼场，modbuilder = modbuilder0（门户）
+_MODE_AGGREGATES = {
+    "all",
+    "official",
+    "mp",
+    "oblitall",
+    "rr_all",
+    "granite",
+    "granitebr",
+    "modbuilder",
+}
 
 
 def ratio(numerator: int | None, denominator: float | None, digits: int = 4) -> float | None:
     if numerator is None or not denominator:
         return None
     return round(numerator / denominator, digits)
+
+
+def _win_rate(wins: int | None, matches: int | None) -> float | None:
+    # EA 不返回值为 0 的统计行：打过却没赢过时没有 wins 行，胜率是 0 而不是未知
+    return ratio(wins or 0, matches) if matches else None
 
 
 def _per_minute(value: int | None, seconds: int | None) -> float | None:
@@ -160,9 +234,20 @@ def normalize(player: PlayerStats | None, nucleus_id: int, fetched_at: datetime)
     career.kd = ratio(career.human_kills, career.deaths)
     career.kpm = _per_minute(career.human_kills, career.time_seconds)
     career.spm = _per_minute(career.score, career.time_seconds)
-    career.win_rate = ratio(career.wins, career.matches)
+    career.win_rate = _win_rate(career.wins, career.matches)
     career.accuracy = ratio(career.shots_hit, career.shots_fired)
     career.headshot_rate = ratio(career.headshots, career.kills)
+
+    bests = Bf6CareerBests.model_validate(
+        {key: stats.get(name) for key, name in _BEST_FIELDS.items()}
+    )
+
+    redsec: Bf6RedsecStats | None = None
+    if stats.get(_REDSEC_FIELDS["matches"]):
+        redsec = Bf6RedsecStats.model_validate(
+            {key: stats.get(name) for key, name in _REDSEC_FIELDS.items()}
+        )
+        redsec.win_rate = _win_rate(redsec.wins, redsec.matches)
 
     weapons: list[Bf6WeaponStats] = []
     weapon_categories: list[Bf6WeaponStats] = []
@@ -185,6 +270,12 @@ def normalize(player: PlayerStats | None, nucleus_id: int, fetched_at: datetime)
         vehicle_row.kpm = _per_minute(vehicle_row.kills, vehicle_row.time_seconds)
         (vehicle_categories if item in _VEHICLE_CATEGORIES else vehicles).append(vehicle_row)
 
+    gadgets = [
+        Bf6GadgetStats.model_validate({"id": item, **values})
+        for item, values in _group(stats, _GADGET_PREFIXES).items()
+        if item not in _GADGET_AGGREGATES
+    ]
+
     kits = [
         Bf6KitStats.model_validate({"id": item, **values})
         for item, values in _group(stats, _KIT_PREFIXES).items()
@@ -201,7 +292,7 @@ def normalize(player: PlayerStats | None, nucleus_id: int, fetched_at: datetime)
         if item not in _MODE_AGGREGATES
     ]
     for mode in modes:
-        mode.win_rate = ratio(mode.wins, mode.matches)
+        mode.win_rate = _win_rate(mode.wins, mode.matches)
 
     maps = [
         Bf6MapStats.model_validate({"id": item, **values})
@@ -209,16 +300,19 @@ def normalize(player: PlayerStats | None, nucleus_id: int, fetched_at: datetime)
         if item not in _MAP_AGGREGATES
     ]
     for map_row in maps:
-        map_row.win_rate = ratio(map_row.wins, map_row.matches)
+        map_row.win_rate = _win_rate(map_row.wins, map_row.matches)
 
     return Bf6PlayerStats(
         nucleus_id=nucleus_id,
         has_data=bool(stats),
         career=career,
+        bests=bests,
+        redsec=redsec,
         weapons=_desc(weapons, "kills"),
         weapon_categories=_desc(weapon_categories, "kills"),
         vehicles=_desc(vehicles, "kills"),
         vehicle_categories=_desc(vehicle_categories, "kills"),
+        gadgets=sorted(gadgets, key=lambda g: (g.kills or 0, g.uses or 0), reverse=True),
         kits=_desc(kits, "time_seconds"),
         modes=_desc(modes, "time_seconds"),
         maps=_desc(maps, "time_seconds"),

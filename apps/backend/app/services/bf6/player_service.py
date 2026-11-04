@@ -34,6 +34,8 @@ _EVENT_TTL = 3600
 _RESOLVE_TTL = 3600
 _RESOLVE_MISS_TTL = 600
 _STATS_TTL = 1200
+# 返回结构变了就换版本号，旧结构的缓存不再读
+_STATS_KEY = "bf6:stats:v2:{}"
 
 _inflight: dict[int, asyncio.Task[Bf6PlayerStats]] = {}
 
@@ -140,7 +142,7 @@ async def _fetch_and_cache(session_factory: SessionFactory, nucleus_id: int) -> 
     started = time.monotonic()
     result = await _fetch_stats(session_factory, nucleus_id)
     logger.info("BF6 战绩 nucleus={} 用时 {:.1f}s", nucleus_id, time.monotonic() - started)
-    await _cache_set(f"bf6:stats:{nucleus_id}", result.model_dump(mode="json"), _STATS_TTL)
+    await _cache_set(_STATS_KEY.format(nucleus_id), result.model_dump(mode="json"), _STATS_TTL)
     return result
 
 
@@ -152,7 +154,7 @@ def _settle(nucleus_id: int, task: asyncio.Task[Bf6PlayerStats]) -> None:
 
 
 async def get_player_stats(session_factory: SessionFactory, nucleus_id: int) -> Bf6PlayerStats:
-    cached = await _cache_get(f"bf6:stats:{nucleus_id}")
+    cached = await _cache_get(_STATS_KEY.format(nucleus_id))
     if isinstance(cached, dict):
         return Bf6PlayerStats(**cached)
 

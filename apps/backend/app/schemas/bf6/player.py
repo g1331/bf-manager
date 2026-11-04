@@ -48,6 +48,15 @@ class Bf6Career(BaseModel):
     vehicle_kills: int | None = None
     melee_kills: int | None = None
     distance_m: int | None = None
+    xp: int | None = None
+    ads_kills: int | None = None
+    hipfire_kills: int | None = None
+    multi_kills: int | None = None
+    long_distance_kills: int | None = None
+    # 近战处决
+    takedowns: int | None = None
+    resupplies: int | None = None
+    spot_assists: int | None = None
 
     kd: float | None = None
     kpm: float | None = None
@@ -56,6 +65,36 @@ class Bf6Career(BaseModel):
     accuracy: float | None = None
     headshot_rate: float | None = None
     best_class: str | None = None
+
+
+class Bf6CareerBests(BaseModel):
+    """生涯之最：单局 / 单条命的最高纪录。"""
+
+    round_kills: int | None = None
+    round_score: int | None = None
+    life_kills: int | None = None
+    # 最远击杀距离，米
+    longest_kill_m: int | None = None
+    round_headshots: int | None = None
+    round_defends: int | None = None
+    round_revives: int | None = None
+    round_damage: int | None = None
+
+
+class Bf6RedsecStats(BaseModel):
+    """禁区冲突大逃杀（单人 / 双人 / 四人合计）。"""
+
+    matches: int | None = None
+    wins: int | None = None
+    top3: int | None = None
+    top10: int | None = None
+    kills: int | None = None
+    time_seconds: int | None = None
+    longest_win_streak: int | None = None
+    round_squad_wipes: int | None = None
+    intel_pickups: int | None = None
+    round_chests: int | None = None
+    win_rate: float | None = None
 
 
 class Bf6WeaponStats(BaseModel):
@@ -82,6 +121,17 @@ class Bf6VehicleStats(BaseModel):
     distance_m: int | None = None
     spawns: int | None = None
     kpm: float | None = None
+
+
+class Bf6GadgetStats(BaseModel):
+    # 统计名里 _gad_ 之后的部分：c4、rl_ungui、gren_frag……
+    id: str
+    uses: int | None = None
+    kills: int | None = None
+    damage: int | None = None
+    time_seconds: int | None = None
+    repairs: int | None = None
+    vehicles_destroyed: int | None = None
 
 
 class Bf6KitStats(BaseModel):
@@ -121,11 +171,15 @@ class Bf6PlayerStats(BaseModel):
     # EA 有没有返回这名玩家的多人统计；False 时页面显示“无数据”而不是一排 0
     has_data: bool
     career: Bf6Career
+    bests: Bf6CareerBests
+    # 没玩过大逃杀时为 None
+    redsec: Bf6RedsecStats | None
     weapons: list[Bf6WeaponStats]
     # 武器大类汇总（突击步枪、冲锋枪……），id 为 ar / smg 这类
     weapon_categories: list[Bf6WeaponStats]
     vehicles: list[Bf6VehicleStats]
     vehicle_categories: list[Bf6VehicleStats]
+    gadgets: list[Bf6GadgetStats]
     kits: list[Bf6KitStats]
     modes: list[Bf6ModeStats]
     # EA 的地图统计只有场次、胜负和时长，没有击杀

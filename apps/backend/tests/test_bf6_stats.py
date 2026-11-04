@@ -62,6 +62,9 @@ def _sample() -> PlayerStats:
         _g("kw_wp_sg_m87a1", 2),
         _g("sfw_wp_sg_m87a1", 10),
         _g("shw_wp_sg_m87a1", 37),
+        _g("kw_wp_sg", 2),
+        _g("sfw_wp_sg", 10),
+        _g("shw_wp_sg", 37),
         # 载具
         _g("kw_veh_tank_abrams", 3),
         _g("tp_veh_tank_abrams", 120),
@@ -165,7 +168,8 @@ def test_normalize_career_and_breakdowns() -> None:
     assert (l110.kills, l110.accuracy, l110.headshot_rate, l110.kpm) == (30, 0.25, 0.2667, 3.0)
     assert l110.damage is None
     # temp（全部武器合计）不单列，pst_temp 归为手枪大类 pst
-    assert [w.id for w in result.weapon_categories] == ["mg", "pst"]
+    assert [w.id for w in result.weapon_categories] == ["mg", "sg", "pst"]
+    assert result.weapon_categories[1].accuracy is None
 
     assert [v.id for v in result.vehicles] == ["tank_abrams"]
     assert sorted(v.id for v in result.vehicle_categories) == ["air", "air_jets"]
@@ -182,12 +186,112 @@ def test_normalize_career_and_breakdowns() -> None:
     )  # 来自 global 维度，不是 GameMode 维度的 7
 
 
+def _player(*rows: DimensionedStat) -> PlayerStats:
+    return PlayerStats(
+        player=Player(nucleus_id=1, persona_id=0, platform=7),
+        categories=(CategoryStats("glacier_mp", dimensioned_stats=rows),),
+    )
+
+
+def test_normalize_mode_aggregates_are_not_listed_as_modes() -> None:
+    names = [
+        "cq",
+        "brsquad",
+        "graniteDuo",
+        "gntgauntlet",
+        "modbuilder0",
+        "all",
+        "official",
+        "mp",
+        "oblitall",
+        "rr_all",
+        "granite",
+        "granitebr",
+        "modbuilder",
+    ]
+    result = normalize(_player(*(_g(f"matches_gm_{n}", 1) for n in names)), 1, NOW)
+    # modbuilder0 是门户本身，modbuilder 只是它的合计
+    assert sorted(m.id for m in result.modes) == [
+        "brsquad",
+        "cq",
+        "gntgauntlet",
+        "graniteDuo",
+        "modbuilder0",
+    ]
+
+
+def test_normalize_career_extras_bests_and_redsec() -> None:
+    result = normalize(
+        _player(
+            _g("xp_all", 9000),
+            _g("Kills_ADS_Total", 70),
+            _g("Kills_Hipfire_Total", 30),
+            _g("tkdw_melee", 3),
+            _g("Resupply_Teammates_Total", 12),
+            _g("kills_inround_cb", 41),
+            _g("kill_longDist_last_cb", 492),
+            _g("matches_gm_granitebr", 10),
+            _g("wins_gm_granitebr", 2),
+            _g("top3_br_total", 4),
+            _g("winstreak_br", 2),
+        ),
+        1,
+        NOW,
+    )
+    career = result.career
+    assert (career.xp, career.ads_kills, career.hipfire_kills) == (9000, 70, 30)
+    assert (career.takedowns, career.resupplies, career.spot_assists) == (3, 12, None)
+    assert (result.bests.round_kills, result.bests.longest_kill_m) == (41, 492)
+    assert result.bests.round_score is None
+    redsec = result.redsec
+    assert redsec is not None
+    assert (redsec.matches, redsec.wins, redsec.top3, redsec.win_rate) == (10, 2, 4, 0.2)
+    assert redsec.longest_win_streak == 2
+
+
+def test_win_rate_is_zero_when_wins_row_is_missing() -> None:
+    result = normalize(_player(_g("matches_gm_granitebr", 3), _g("matches_gm_cq", 2)), 1, NOW)
+    assert result.redsec is not None
+    assert result.redsec.win_rate == 0.0
+    assert result.modes[0].win_rate == 0.0
+    assert result.career.win_rate is None
+
+
+def test_normalize_gadgets_skip_aggregate_rows() -> None:
+    result = normalize(
+        _player(
+            _g("uses_gad_rl_ungui", 100),
+            _g("kw_gad_rl_ungui", 20),
+            _g("dmg_gad_rl_ungui", 5000),
+            _g("vehd_gad_rl_ungui", 4),
+            _g("uses_gad_rl", 100),
+            _g("kw_gad_rl", 20),
+            _g("uses_gad_repair", 900),
+            _g("repair_gad_repair", 30000),
+            _g("uses_gad_temp", 1000),
+            _g("uses_gad_grenades", 5),
+            _g("uses_gad_gren_frag", 5),
+            _g("kw_gad_gren_frag", 1),
+        ),
+        1,
+        NOW,
+    )
+    # 先按击杀、再按使用次数排
+    assert [g.id for g in result.gadgets] == ["rl_ungui", "gren_frag", "repair"]
+    rl = result.gadgets[0]
+    assert (rl.uses, rl.kills, rl.damage, rl.vehicles_destroyed) == (100, 20, 5000, 4)
+    assert result.gadgets[2].repairs == 30000
+
+
 def test_normalize_missing_player_is_empty_not_zero() -> None:
     result = normalize(None, 42, NOW)
     assert not result.has_data
     assert result.career.kills is None
     assert result.career.kd is None
+    assert result.bests.round_kills is None
+    assert result.redsec is None
     assert result.weapons == []
+    assert result.gadgets == []
 
 
 # ---------------------------------------------------------------------------

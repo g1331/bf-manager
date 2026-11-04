@@ -121,11 +121,13 @@ async def refresh_stale_lists(
     """
     now = datetime.now(UTC)
     current: dict[int, tuple[int, str]] = {}
+    seen: dict[int, set[int]] = {}
     for s in summaries:
         gid = int(s.game_id or 0)
         sid = server_ids.get(gid)
         if sid and s.name:
             current[sid] = (gid, s.name)
+            seen.setdefault(sid, set()).add(gid)
     stored = (
         (
             await db.execute(
@@ -138,13 +140,15 @@ async def refresh_stale_lists(
         else []
     )
     refreshed = {sid: _aware(ts) for sid, ts, _ in stored}
-    # 服务器重启会换 gameId：名单不用重拉，先把记的 gameId 跟上，按名单列出的服才点得进去
+    # 服务器重启会换 gameId：名单不用重拉，先把记的 gameId 跟上，按名单列出的服才点得进去。
+    # 重启那一分钟新旧两个实例可能同时在快照里，分不清哪个是新的就不动
     for sid, _, gid in stored:
-        if gid != current[sid][0]:
+        gids = seen[sid]
+        if gid not in gids and len(gids) == 1:
             await db.execute(
                 update(Bf1RspServer)
                 .where(Bf1RspServer.server_id == sid)
-                .values(game_id=current[sid][0])
+                .values(game_id=next(iter(gids)))
             )
     epoch = datetime.min.replace(tzinfo=UTC)
     due = sorted(

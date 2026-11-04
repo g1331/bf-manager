@@ -288,11 +288,11 @@ async def _latest_admin_audit(db: AsyncSession) -> int:
     return latest or 0
 
 
-async def _insert_placeholder(db: AsyncSession, client_secret: str, refresh_token: str) -> None:
-    """第一次保存时还没有凭据行，FOR UPDATE 锁不住不存在的行：先占位再锁。"""
+async def _insert_placeholder(db: AsyncSession, client_secret: str, refresh_token: str) -> bool:
+    """第一次保存时还没有凭据行，FOR UPDATE 锁不住不存在的行：先占位再锁。占了位返回 True。"""
     cipher = get_cipher()
     insert = pg_insert if db.get_bind().dialect.name == "postgresql" else sqlite_insert
-    await db.execute(
+    result = await db.execute(
         insert(Bf6Credential)
         .values(
             id=BF6_CREDENTIAL_ID,
@@ -301,6 +301,7 @@ async def _insert_placeholder(db: AsyncSession, client_secret: str, refresh_toke
         )
         .on_conflict_do_nothing(index_elements=[Bf6Credential.id])
     )
+    return bool(getattr(result, "rowcount", 0))
 
 
 async def _persist_grant(session_factory: SessionFactory, unsaved: _Unsaved) -> None:
@@ -537,12 +538,16 @@ async def _lock_recovered_row(db: AsyncSession) -> Bf6Credential:
         first = next((u for u in await _all_unsaved() if u.admin is not None), None)
         if first is None or first.client_secret is None:
             raise Bf6NotConfiguredError("后台还没有填写 BF6 凭据")
-        await _insert_placeholder(db, first.client_secret, first.grant.refresh_token)
+        created = await _insert_placeholder(db, first.client_secret, first.grant.refresh_token)
         row = await _lock_row(db)
-        if not await _recover_unsaved(db, row):
+        if await _recover_unsaved(db, row):
+            return await _lock_row(db)
+        if created:
+            # 占位行没补进任何凭据，不能留下
             await db.rollback()
             raise Bf6NotConfiguredError("后台还没有填写 BF6 凭据")
-        return await _lock_row(db)
+        # 期间别的保存已经把凭据写进去了
+        return row
     if await _recover_unsaved(db, row):
         row = await _lock_row(db)
     return row

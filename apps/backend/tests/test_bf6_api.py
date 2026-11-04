@@ -850,6 +850,31 @@ async def test_first_save_commit_failure_is_recovered(
     assert stash.store == {}
 
 
+async def test_first_recovery_racing_successful_save_uses_saved_row(
+    admin, monkeypatch: pytest.MonkeyPatch, session_factory
+) -> None:
+    _client, user = admin
+    req, grant = _admin_req(user), _admin_grant()
+    # 第一次保存已换到 grant、还没写库，查询这时进入恢复流程
+    await credential_service._remember(
+        credential_service._Unsaved(grant, 0, time.time(), req.client_secret, req.admin)
+    )
+    original = credential_service._insert_placeholder
+    raced = False
+
+    async def insert_after_save(db: AsyncSession, secret: str, token: str) -> bool:
+        nonlocal raced
+        if not raced:
+            raced = True
+            # 恢复流程占位之前，原保存抢先写进库并清理了待补写记录
+            await credential_service._store_admin_grant(session_factory, req, grant)
+        return await original(db, secret, token)
+
+    monkeypatch.setattr(credential_service, "_insert_placeholder", insert_after_save)
+    assert await credential_service.get_access_token(session_factory) == "admin-access"
+    assert len(await _audits(session_factory)) == 1
+
+
 async def test_not_configured_without_pending_grant(session_factory) -> None:
     with pytest.raises(credential_service.Bf6NotConfiguredError):
         await credential_service.get_access_token(session_factory)

@@ -21,7 +21,7 @@ from typing import Any
 
 from loguru import logger
 from redis.exceptions import RedisError
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.exc import SQLAlchemyError
@@ -127,6 +127,9 @@ class _AdminWrite:
     ip: str | None
     secret_changed: bool
     write_id: str
+    # 开始保存时库里最新一条凭据审计的 id。之后又有审计，说明期间有别的管理员保存写进去了；
+    # 审计 id 由数据库分配、只增不减，不依赖各进程的时钟
+    after_audit: int
 
 
 @dataclass(frozen=True)
@@ -135,7 +138,7 @@ class _Unsaved:
 
     后台刷新得到的（admin 为 None）：base_generation 是换 token 时库里的版本，补写时版本没变才写；
     变了说明期间有人写进了更新的凭据，或者这份其实已经写进去、又被下一次刷新轮换掉，这份作废。
-    管理员保存得到的：总是覆盖库里的值，除非已经写过，或之后又有管理员保存了更新的凭据。
+    管理员保存得到的：补写时覆盖库里的值，除非期间已有别的管理员保存写进去（含它自己）。
     """
 
     grant: bf6.TokenGrant
@@ -257,7 +260,6 @@ def _write_admin(db: AsyncSession, row: Bf6Credential, unsaved: _Unsaved) -> Non
                 if row.refresh_expires_at
                 else None,
                 "write_id": admin.write_id,
-                "issued_at": unsaved.created_at,
             },
             result="success",
             ip=admin.ip,
@@ -265,26 +267,40 @@ def _write_admin(db: AsyncSession, row: Bf6Credential, unsaved: _Unsaved) -> Non
     )
 
 
-async def _admin_superseded(db: AsyncSession, unsaved: _Unsaved) -> bool:
-    """这份管理员凭据不该再写：已经写过（commit 成功但没收到确认），或之后又有管理员保存了更新的。
-
-    凭据和审计在同一个事务里，看审计就知道写没写进去。
-    """
-    admin = unsaved.admin
-    assert admin is not None
+async def _admin_writes_since(db: AsyncSession, admin: _AdminWrite) -> list[str]:
+    """这次保存开始之后写进库的管理员保存（按 write_id）。凭据和审计同一事务，有审计就是写进去了。"""
     payloads = await db.scalars(
-        select(AuditLog.payload)
-        .where(AuditLog.game == AUDIT_GAME, AuditLog.action == _AUDIT_ACTION)
-        .order_by(AuditLog.id.desc())
-        .limit(10)
+        select(AuditLog.payload).where(
+            AuditLog.game == AUDIT_GAME,
+            AuditLog.action == _AUDIT_ACTION,
+            AuditLog.id > admin.after_audit,
+        )
     )
-    for p in payloads:
-        if p.get("write_id") == admin.write_id:
-            return True
-        issued = p.get("issued_at")
-        if isinstance(issued, int | float) and issued > unsaved.created_at:
-            return True
-    return False
+    return [str(p.get("write_id")) for p in payloads]
+
+
+async def _latest_admin_audit(db: AsyncSession) -> int:
+    latest = await db.scalar(
+        select(func.max(AuditLog.id)).where(
+            AuditLog.game == AUDIT_GAME, AuditLog.action == _AUDIT_ACTION
+        )
+    )
+    return latest or 0
+
+
+async def _insert_placeholder(db: AsyncSession, client_secret: str, refresh_token: str) -> None:
+    """第一次保存时还没有凭据行，FOR UPDATE 锁不住不存在的行：先占位再锁。"""
+    cipher = get_cipher()
+    insert = pg_insert if db.get_bind().dialect.name == "postgresql" else sqlite_insert
+    await db.execute(
+        insert(Bf6Credential)
+        .values(
+            id=BF6_CREDENTIAL_ID,
+            encrypted_client_secret=cipher.encrypt(client_secret),
+            encrypted_refresh_token=cipher.encrypt(refresh_token),
+        )
+        .on_conflict_do_nothing(index_elements=[Bf6Credential.id])
+    )
 
 
 async def _persist_grant(session_factory: SessionFactory, unsaved: _Unsaved) -> None:
@@ -327,27 +343,35 @@ async def _persist_grant(session_factory: SessionFactory, unsaved: _Unsaved) -> 
 
 
 async def _recover_unsaved(db: AsyncSession, row: Bf6Credential) -> bool:
-    """把之前没写进库的 grant 按先后补写（调用方已锁住这一行）。补写了返回 True。"""
+    """把之前没写进库的 grant 补写（调用方已锁住这一行）。补写了返回 True。
+
+    后台刷新得到的按版本先后补，只有接得上库里当前版本的才写；管理员保存的只写最新一份，
+    期间已有别的管理员保存写进去的作废。管理员的放在最后，保证它的凭据最终生效。
+    """
     pending = await _all_unsaved()
     if not pending:
         return False
-    applied = admin_applied = False
-    for unsaved in pending:
-        if unsaved.admin is not None:
-            if not await _admin_superseded(db, unsaved):
-                _write_admin(db, row, unsaved)
-                applied = admin_applied = True
-        elif row.generation == unsaved.base_generation:
+    applied = False
+    for unsaved in sorted((u for u in pending if u.admin is None), key=lambda u: u.base_generation):
+        if row.generation == unsaved.base_generation:
             _write(row, unsaved)
             applied = True
-    if applied:
+    current = [
+        (u.admin.after_audit, u.created_at, u)
+        for u in pending
+        if u.admin is not None and not await _admin_writes_since(db, u.admin)
+    ]
+    if current:
+        # 剩下的几份互相并发，期间都没有别的保存写进去，哪份都能用；取最后开始的
+        _write_admin(db, row, max(current, key=lambda c: c[:2])[2])
+    if applied or current:
         await db.commit()
         logger.info("BF6 已补写上次没写进库的 token")
     for unsaved in pending:
         await _forget(unsaved)
-    if admin_applied:
+    if current:
         _session.clear()
-    return applied
+    return applied or bool(current)
 
 
 def _validate_refresh_token(refresh_token: str) -> None:
@@ -381,27 +405,16 @@ async def _store_admin_grant(
     """管理员的新凭据总是覆盖库里的。写库前先备份：写库失败、卡住或停机，下次刷新都能补写。"""
     unsaved = _Unsaved(grant, 0, time.time(), req.client_secret, req.admin)
     await _remember(unsaved)
-    cipher = get_cipher()
     for attempt in range(1, _PERSIST_ATTEMPTS + 1):
         try:
             async with session_factory() as db:
-                insert = pg_insert if db.get_bind().dialect.name == "postgresql" else sqlite_insert
-                # 第一次保存时还没有这一行，FOR UPDATE 锁不住不存在的行：先占位再锁
-                await db.execute(
-                    insert(Bf6Credential)
-                    .values(
-                        id=BF6_CREDENTIAL_ID,
-                        encrypted_client_secret=cipher.encrypt(req.client_secret),
-                        encrypted_refresh_token=cipher.encrypt(grant.refresh_token),
-                    )
-                    .on_conflict_do_nothing(index_elements=[Bf6Credential.id])
-                )
+                await _insert_placeholder(db, req.client_secret, grant.refresh_token)
                 row = await db.get(
                     Bf6Credential, BF6_CREDENTIAL_ID, with_for_update=True, populate_existing=True
                 )
                 assert row is not None
-                # 别的进程补写过，或上一次 commit 成功但没收到确认
-                if not await _admin_superseded(db, unsaved):
+                # 别的进程补写过，或上一次 commit 成功但没收到确认；别人的保存不拦，后保存的生效
+                if req.admin.write_id not in await _admin_writes_since(db, req.admin):
                     _write_admin(db, row, unsaved)
                     await db.commit()
                 break
@@ -460,6 +473,7 @@ async def save_credentials(
                 EaBinding.user_id == actor.id, EaBinding.is_primary.is_(True)
             )
         )
+        after_audit = await _latest_admin_audit(db)
     req = _SaveRequest(
         refresh_token=refresh_token,
         client_secret=client_secret,
@@ -469,6 +483,7 @@ async def save_credentials(
             ip=ip,
             secret_changed=secret_changed,
             write_id=uuid.uuid4().hex,
+            after_audit=after_audit,
         ),
     )
 
@@ -510,13 +525,33 @@ async def _lock_row(db: AsyncSession) -> Bf6Credential:
     return row
 
 
+async def _lock_recovered_row(db: AsyncSession) -> Bf6Credential:
+    """锁住凭据行，先补写上次没写进库的新 token（库里的旧值已经作废）。
+
+    第一次保存就没写进库时还没有这一行：用待补写的管理员凭据占位，补写进去。
+    """
+    row = await db.get(
+        Bf6Credential, BF6_CREDENTIAL_ID, with_for_update=True, populate_existing=True
+    )
+    if row is None:
+        first = next((u for u in await _all_unsaved() if u.admin is not None), None)
+        if first is None or first.client_secret is None:
+            raise Bf6NotConfiguredError("后台还没有填写 BF6 凭据")
+        await _insert_placeholder(db, first.client_secret, first.grant.refresh_token)
+        row = await _lock_row(db)
+        if not await _recover_unsaved(db, row):
+            await db.rollback()
+            raise Bf6NotConfiguredError("后台还没有填写 BF6 凭据")
+        return await _lock_row(db)
+    if await _recover_unsaved(db, row):
+        row = await _lock_row(db)
+    return row
+
+
 async def _refresh(session_factory: SessionFactory, max_age: int | None) -> str:
     try:
         async with session_factory() as db:
-            row = await _lock_row(db)
-            # 上次没写进库的新 token 要先补上，库里的旧值已经作废
-            if await _recover_unsaved(db, row):
-                row = await _lock_row(db)
+            row = await _lock_recovered_row(db)
             # 等锁期间别的进程可能已经刷新过
             cached = _cached_access(row, time.time(), max_age)
             if cached:
@@ -552,11 +587,11 @@ async def get_access_token(session_factory: SessionFactory, *, max_age: int | No
     global _refreshing  # noqa: PLW0603
     async with session_factory() as db:
         row = await db.get(Bf6Credential, BF6_CREDENTIAL_ID)
-        if row is None:
-            raise Bf6NotConfiguredError("后台还没有填写 BF6 凭据")
-        cached = _cached_access(row, time.time(), max_age)
-        if cached:
-            return cached
+        # 没有凭据行时也可能有第一次保存没写进库的凭据，交给刷新流程补写
+        if row is not None:
+            cached = _cached_access(row, time.time(), max_age)
+            if cached:
+                return cached
 
     # 进程内同一时刻只发起一次刷新，其余请求等它的结果；跨进程靠行锁
     if _refreshing is None or _refreshing.done():

@@ -116,7 +116,8 @@ def fake_ea(monkeypatch: pytest.MonkeyPatch) -> FakeEA:
 
 @pytest.fixture
 def session_factory(test_session):
-    return async_sessionmaker(test_session.bind, expire_on_commit=False)
+    # 和生产的会话配置一致：不自动 flush
+    return async_sessionmaker(test_session.bind, expire_on_commit=False, autoflush=False)
 
 
 @pytest.fixture
@@ -639,12 +640,19 @@ async def test_admin_save_commit_ack_lost_writes_one_audit(
     assert len(logs) == 1
 
 
-def _admin_req(user, write_id: str = "w-1") -> credential_service._SaveRequest:
+def _admin_req(
+    user, write_id: str = "w-1", after_audit: int = 0
+) -> credential_service._SaveRequest:
     return credential_service._SaveRequest(
         refresh_token=_rt(),
         client_secret="new-secret",
         admin=credential_service._AdminWrite(
-            actor_id=user.id, persona_id=0, ip="1.2.3.4", secret_changed=True, write_id=write_id
+            actor_id=user.id,
+            persona_id=0,
+            ip="1.2.3.4",
+            secret_changed=True,
+            write_id=write_id,
+            after_audit=after_audit,
         ),
     )
 
@@ -786,6 +794,66 @@ async def test_older_admin_grant_does_not_override_newer_save(
     assert get_cipher().decrypt(row.encrypted_refresh_token) == "admin-new"
     assert [log.payload["write_id"] for log in await _audits(session_factory)] == ["new"]
     assert stash.store == {}
+
+
+async def test_admin_save_order_does_not_depend_on_clock(
+    admin, monkeypatch: pytest.MonkeyPatch, session_factory, stash: FakeCache
+) -> None:
+    _client, user = admin
+    await _seed(session_factory, access_left=0)
+    clock = {"now": 200.0}
+    monkeypatch.setattr(credential_service.time, "time", lambda: clock["now"])
+    # 一份更早的保存一直没写进库，它所在进程的时钟偏快
+    stale = credential_service._Unsaved(
+        _admin_grant("stale-token"), 0, 300.0, "new-secret", _admin_req(user, "stale").admin
+    )
+    await credential_service._remember(stale)
+    await credential_service._store_admin_grant(
+        session_factory, _admin_req(user, "old"), _admin_grant("old-token")
+    )
+    # 之后的保存落在时钟偏慢的进程上，照样生效
+    clock["now"] = 100.0
+    await credential_service._store_admin_grant(
+        session_factory, _admin_req(user, "new", after_audit=1), _admin_grant("new-token")
+    )
+    async with session_factory() as db:
+        row = await credential_service._lock_row(db)
+        assert not await credential_service._recover_unsaved(db, row)
+    row = await _row(session_factory)
+    assert row is not None
+    assert get_cipher().decrypt(row.encrypted_refresh_token) == "new-token"
+    assert [log.payload["write_id"] for log in await _audits(session_factory)] == ["old", "new"]
+    assert stash.store == {}
+
+
+async def test_first_save_commit_failure_is_recovered(
+    admin, fake_ea: FakeEA, monkeypatch: pytest.MonkeyPatch, session_factory, stash: FakeCache
+) -> None:
+    _client, user = admin
+    failing = _fail_commits(monkeypatch)
+    failing["left"] = 100
+    with pytest.raises(OperationalError):
+        await credential_service._store_admin_grant(
+            session_factory, _admin_req(user), _admin_grant()
+        )
+    assert await _row(session_factory) is None
+    # 重启：只剩 Redis 里那份，数据库里还没有凭据行
+    failing["left"] = 0
+    monkeypatch.setattr(credential_service, "_unsaved", {})
+    assert await credential_service.get_access_token(session_factory) == "admin-access"
+    assert fake_ea.calls == []
+    row = await _row(session_factory)
+    assert row is not None
+    assert get_cipher().decrypt(row.encrypted_refresh_token) == "admin-rotated"
+    assert row.updated_by == user.id
+    assert len(await _audits(session_factory)) == 1
+    assert stash.store == {}
+
+
+async def test_not_configured_without_pending_grant(session_factory) -> None:
+    with pytest.raises(credential_service.Bf6NotConfiguredError):
+        await credential_service.get_access_token(session_factory)
+    assert await _row(session_factory) is None
 
 
 async def test_overlong_user_id_is_upstream_error() -> None:

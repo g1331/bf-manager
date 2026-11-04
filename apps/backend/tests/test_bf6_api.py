@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import json
 import time
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+import httpx
 import pytest
 from app.api.deps import get_session_factory
+from app.api.errors import EABusyError
 from app.core.security import get_cipher
 from app.domain.games.bf6 import client as bf6
 from app.domain.games.bf6 import resolver
@@ -18,7 +21,8 @@ from app.models import AuditLog
 from app.models.bf6_credential import BF6_CREDENTIAL_ID, Bf6Credential
 from app.services.bf6 import credential_service, player_service
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.exc import OperationalError
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 URL = "/api/v1/admin/settings/bf6-credentials"
 
@@ -67,6 +71,13 @@ def session_factory(test_session):
     return async_sessionmaker(test_session.bind, expire_on_commit=False)
 
 
+@pytest.fixture
+def admin(admin_client, session_factory):
+    client, user = admin_client
+    client._transport.app.dependency_overrides[get_session_factory] = lambda: session_factory
+    return client, user
+
+
 async def _row(session_factory) -> Bf6Credential | None:
     async with session_factory() as db:
         return await db.get(Bf6Credential, BF6_CREDENTIAL_ID)
@@ -78,9 +89,9 @@ async def _row(session_factory) -> Bf6Credential | None:
 
 
 async def test_save_validates_with_ea_and_stores_rotated_token(
-    admin_client, fake_ea: FakeEA, session_factory
+    admin, fake_ea: FakeEA, session_factory
 ) -> None:
-    client, _admin = admin_client
+    client, _admin = admin
     rt = _rt()
 
     resp = await client.put(URL, json={"refresh_token": rt})
@@ -129,19 +140,17 @@ async def test_save_validates_with_ea_and_stores_rotated_token(
     ],
 )
 async def test_save_rejects_bad_token_without_calling_ea(
-    admin_client, fake_ea: FakeEA, token: str, message: str
+    admin, fake_ea: FakeEA, token: str, message: str
 ) -> None:
-    client, _ = admin_client
+    client, _ = admin
     resp = await client.put(URL, json={"refresh_token": token, "client_secret": "s"})
     assert resp.status_code == 400
     assert message in resp.json()["error"]["message"]
     assert fake_ea.calls == []
 
 
-async def test_save_rejected_by_ea_is_not_stored(
-    admin_client, fake_ea: FakeEA, session_factory
-) -> None:
-    client, _ = admin_client
+async def test_save_rejected_by_ea_is_not_stored(admin, fake_ea: FakeEA, session_factory) -> None:
+    client, _ = admin
     fake_ea.error = bf6.Bf6CredentialError("EA 拒绝了 client secret（invalid_client）")
     resp = await client.put(URL, json={"refresh_token": _rt(), "client_secret": "bad"})
     assert resp.status_code == 400
@@ -342,3 +351,159 @@ async def test_resolve_endpoint_and_negative_cache(
         "/api/v1/bf6/players/resolve", params={"name": "x", "platform": "nintendo"}
     )
     assert resp.status_code == 422
+
+
+async def test_invalid_input_is_not_echoed(admin, fake_ea: FakeEA) -> None:
+    client, _ = admin
+    for body in (
+        {"refresh_token": "SENSITIVE_TOKEN", "client_secret": "SENSITIVE_SECRET"},
+        {"refresh_token": "SENSITIVE_" * 2000, "client_secret": "s"},
+        {"refresh_token": _rt(), "client_secret": "SENSITIVE_SECRET" * 40},
+    ):
+        resp = await client.put(URL, json=body)
+        assert resp.status_code == 400
+        assert "SENSITIVE" not in resp.text
+    assert fake_ea.calls == []
+
+
+# ---------------------------------------------------------------------------
+# 轮换后的 token 不能丢
+# ---------------------------------------------------------------------------
+
+
+async def test_cancelled_caller_does_not_lose_rotated_token(
+    monkeypatch: pytest.MonkeyPatch, session_factory
+) -> None:
+    await _seed(session_factory, access_left=0)
+    release = asyncio.Event()
+    calls: list[str] = []
+
+    async def slow_ea(client_secret: str, refresh_token: str, *, now: int) -> bf6.TokenGrant:
+        calls.append(refresh_token)
+        await release.wait()
+        return bf6.TokenGrant("access-new", now + 86400, "rotated-new", now + 9 * 86400)
+
+    monkeypatch.setattr(bf6, "refresh_access_token", slow_ea)
+    caller = asyncio.create_task(credential_service.get_access_token(session_factory))
+    while not calls:
+        await asyncio.sleep(0)
+    # 停机时 poller 被 cancel：EA 那边已经在轮换
+    caller.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await caller
+    release.set()
+    await credential_service.drain()
+
+    row = await _row(session_factory)
+    assert row is not None
+    assert get_cipher().decrypt(row.encrypted_refresh_token) == "rotated-new"
+
+
+async def test_commit_failure_retries_with_same_grant(
+    fake_ea: FakeEA, monkeypatch: pytest.MonkeyPatch, session_factory
+) -> None:
+    await _seed(session_factory, access_left=0)
+    original = AsyncSession.commit
+    failures = {"left": 1}
+
+    async def flaky_commit(self: AsyncSession) -> None:
+        if failures["left"]:
+            failures["left"] -= 1
+            raise OperationalError("COMMIT", {}, Exception("connection reset"))
+        await original(self)
+
+    monkeypatch.setattr(AsyncSession, "commit", flaky_commit)
+    monkeypatch.setattr(credential_service.asyncio, "sleep", _no_sleep)
+    assert await credential_service.get_access_token(session_factory) == "access-1"
+    # 只找 EA 换了一次，写库重试用的是同一份新 token
+    assert fake_ea.calls == [("sec", "rt-0")]
+    row = await _row(session_factory)
+    assert row is not None
+    assert get_cipher().decrypt(row.encrypted_refresh_token) == "rotated-1"
+
+
+async def _no_sleep(_seconds: float) -> None:
+    return None
+
+
+# ---------------------------------------------------------------------------
+# 上游响应异常
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        httpx.Response(200, text="<html>maintenance</html>"),
+        httpx.Response(200, json=[]),
+        httpx.Response(200, json={"access_token": "a", "refresh_token": "r", "expires_in": "bad"}),
+        httpx.Response(200, json={"refresh_token": "r"}),
+        httpx.Response(502, text="<html>bad gateway</html>"),
+    ],
+)
+async def test_malformed_token_response_is_upstream_error(response: httpx.Response) -> None:
+    transport = httpx.MockTransport(lambda _request: response)
+    async with httpx.AsyncClient(transport=transport) as http:
+        with pytest.raises(bf6.Bf6Error) as exc:
+            await bf6.refresh_access_token("s", "r", now=0, http=http)
+    assert not isinstance(exc.value, bf6.Bf6CredentialError)
+    assert "maintenance" not in str(exc.value)
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        httpx.Response(200, text="<html>"),
+        httpx.Response(200, json=[1]),
+        httpx.Response(200, json={"playerStatsSummary": {"userId": "abc"}}),
+    ],
+)
+async def test_malformed_drop_api_response_is_upstream_error(response: httpx.Response) -> None:
+    transport = httpx.MockTransport(lambda _request: response)
+    async with httpx.AsyncClient(transport=transport) as http:
+        with pytest.raises(bf6.Bf6Error):
+            await resolver.lookup(http, "x", "EVT", None)
+
+
+async def test_malformed_refresh_is_recorded(
+    monkeypatch: pytest.MonkeyPatch, session_factory
+) -> None:
+    await _seed(session_factory, access_left=0)
+
+    async def broken(client_secret: str, refresh_token: str, *, now: int) -> bf6.TokenGrant:
+        raise bf6.Bf6Error("EA 换 token 的响应不是 JSON")
+
+    monkeypatch.setattr(bf6, "refresh_access_token", broken)
+    with pytest.raises(bf6.Bf6Error):
+        await credential_service.get_access_token(session_factory)
+    row = await _row(session_factory)
+    assert row is not None and row.last_error == "EA 换 token 的响应不是 JSON"
+
+
+# ---------------------------------------------------------------------------
+# 公共预算
+# ---------------------------------------------------------------------------
+
+
+async def test_resolve_respects_public_budget(
+    api, monkeypatch: pytest.MonkeyPatch, memory_cache: dict[str, Any]
+) -> None:
+    upstream: list[str] = []
+
+    async def fetch_event(_http) -> str:
+        upstream.append("event")
+        return "EVT"
+
+    async def lookup(_http, name, event, platform):
+        upstream.append("lookup")
+
+    async def exhausted() -> None:
+        raise EABusyError(30)
+
+    monkeypatch.setattr(resolver, "fetch_current_event", fetch_event)
+    monkeypatch.setattr(resolver, "lookup", lookup)
+    monkeypatch.setattr(player_service.ea_budget, "acquire", exhausted)
+    resp = await api.get("/api/v1/bf6/players/resolve", params={"name": "someone"})
+    assert resp.status_code == 503
+    assert resp.json()["error"]["code"] == "EA_BUSY"
+    assert upstream == []

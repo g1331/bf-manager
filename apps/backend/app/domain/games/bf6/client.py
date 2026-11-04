@@ -88,6 +88,31 @@ def jwt_exp(token: str) -> int | None:
     return int(exp) if isinstance(exp, int | float) else None
 
 
+def _parse_grant(response: httpx.Response, refresh_token: str, now: int) -> TokenGrant:
+    try:
+        payload = response.json()
+    except ValueError as e:
+        raise Bf6Error("EA 换 token 的响应不是 JSON") from e
+    if not isinstance(payload, dict):
+        raise Bf6Error("EA 换 token 的响应结构不对")
+    access = payload.get("access_token")
+    if not isinstance(access, str) or not access:
+        raise Bf6Error("EA 换 token 的响应里没有 access_token")
+    new_refresh = payload.get("refresh_token") or refresh_token
+    if not isinstance(new_refresh, str):
+        raise Bf6Error("EA 换 token 的响应里 refresh_token 不是字符串")
+    try:
+        expires_in = int(payload.get("expires_in") or 0)
+    except (TypeError, ValueError) as e:
+        raise Bf6Error("EA 换 token 的响应里 expires_in 不是数字") from e
+    return TokenGrant(
+        access_token=access,
+        access_expires_at=jwt_exp(access) or now + expires_in,
+        refresh_token=new_refresh,
+        refresh_expires_at=jwt_exp(new_refresh),
+    )
+
+
 async def refresh_access_token(
     client_secret: str, refresh_token: str, *, now: int, http: httpx.AsyncClient | None = None
 ) -> TokenGrant:
@@ -111,10 +136,10 @@ async def refresh_access_token(
         error = ""
         try:
             body = response.json()
-            if isinstance(body, dict):
-                error = str(body.get("error") or "")
         except ValueError:
-            pass
+            body = None
+        if isinstance(body, dict):
+            error = str(body.get("error") or "")
         if error == "invalid_client":
             raise Bf6CredentialError(
                 "EA 拒绝了 client secret（invalid_client），需要换成当前可用的值"
@@ -128,18 +153,7 @@ async def refresh_access_token(
             retryable=response.status_code >= 500,
         )
 
-    payload = response.json()
-    access = str(payload.get("access_token") or "")
-    if not access:
-        raise Bf6Error("EA 换 token 的响应里没有 access_token")
-    new_refresh = str(payload.get("refresh_token") or "") or refresh_token
-    expires_in = int(payload.get("expires_in") or 0)
-    return TokenGrant(
-        access_token=access,
-        access_expires_at=jwt_exp(access) or now + expires_in,
-        refresh_token=new_refresh,
-        refresh_expires_at=jwt_exp(new_refresh),
-    )
+    return _parse_grant(response, refresh_token, now)
 
 
 # ---------------------------------------------------------------------------

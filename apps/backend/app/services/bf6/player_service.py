@@ -66,6 +66,7 @@ async def _current_event(http: httpx.AsyncClient, *, refresh: bool = False) -> s
         cached = await _cache_get(_EVENT_KEY)
         if isinstance(cached, str) and cached:
             return cached
+    await ea_budget.acquire()
     event_id = await resolver.fetch_current_event(http)
     await _cache_set(_EVENT_KEY, event_id, _EVENT_TTL)
     return event_id
@@ -85,11 +86,13 @@ async def resolve_player(name: str, platform: resolver.Bf6Platform | None) -> Bf
     try:
         async with httpx.AsyncClient(timeout=20) as http:
             event_id = await _current_event(http)
+            await ea_budget.acquire()
             found = await resolver.lookup(http, query, event_id, platform)
             if found is None:
                 # 换季后缓存里的 event id 可能已失效，拿最新的再确认一次
                 latest = await _current_event(http, refresh=True)
                 if latest != event_id:
+                    await ea_budget.acquire()
                     found = await resolver.lookup(http, query, latest, platform)
     except bf6.Bf6Error as e:
         raise _upstream_error(e) from e

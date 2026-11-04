@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class Bf6CredentialStatusResponse(BaseModel):
@@ -18,6 +18,7 @@ class Bf6CredentialStatusResponse(BaseModel):
 
 
 class Bf6CredentialUpdate(BaseModel):
-    refresh_token: str = Field(min_length=20, max_length=16384)
+    # 不在这里加长度约束：FastAPI 的 422 会把原值放进 input 回给客户端。长度在服务层校验，报错不带原值
+    refresh_token: str
     # 留空沿用已保存的值；首次保存必填
-    client_secret: str | None = Field(default=None, max_length=512)
+    client_secret: str | None = None

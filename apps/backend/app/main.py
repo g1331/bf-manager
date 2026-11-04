@@ -38,6 +38,7 @@ from app.services.bf1.exchange_service import exchange_poller
 from app.services.bf1.overview_service import overview_poller
 from app.services.bf1.round_service import restore_tracker_state, save_tracker_state
 from app.services.bf1.timed_vip_service import timed_vip_poller
+from app.services.bf6.credential_service import drain as bf6_drain_refresh
 from app.services.bf6.credential_service import refresh_poller as bf6_refresh_poller
 from app.services.ea_login_finalizer import EALoginFinalizer
 from app.services.group_server_service import group_server_poller
@@ -100,6 +101,8 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         task.cancel()
         with contextlib.suppress(asyncio.CancelledError):
             await task
+    # BF6 刷新拿到新 token 后旧值就作废了，必须等它写进库再关连接池
+    await bf6_drain_refresh()
     if "bf1" in settings.games and settings.bf1_match_tracking:
         await save_tracker_state()
     await close_task_manager()

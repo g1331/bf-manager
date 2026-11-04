@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.api.client_ip import client_ip
-from app.api.deps import CurrentAdmin, DbDep
+from app.api.deps import CurrentAdmin, DbDep, SessionFactoryDep
 from app.models import User
 from app.schemas.admin import (
     AdminMetrics,
@@ -77,11 +77,14 @@ async def get_bf6_credentials(_user: CurrentAdmin, db: DbDep) -> Bf6CredentialSt
 
 @router.put("/settings/bf6-credentials", response_model=Bf6CredentialStatusResponse)
 async def set_bf6_credentials(
-    payload: Bf6CredentialUpdate, user: CurrentAdmin, db: DbDep, request: Request
+    payload: Bf6CredentialUpdate,
+    user: CurrentAdmin,
+    session_factory: SessionFactoryDep,
+    request: Request,
 ) -> Bf6CredentialStatusResponse:
     """保存前会立即用这组凭据向 EA 刷新一次，EA 不认就返回 400 且不保存。"""
     status = await bf6_credential_service.save_credentials(
-        db,
+        session_factory,
         refresh_token=payload.refresh_token,
         client_secret=payload.client_secret,
         actor=user,

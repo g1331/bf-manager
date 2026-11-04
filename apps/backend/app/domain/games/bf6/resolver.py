@@ -43,6 +43,10 @@ class ResolvedPlayer:
     has_current_season_stats: bool
 
 
+def _str_or_none(value: Any) -> str | None:
+    return value if isinstance(value, str) else None
+
+
 def normalize_name(name: str) -> str:
     """去首尾空白和零宽字符、合并连续空白、NFC 归一（中文名从别处复制来常带这些）。"""
     value = unicodedata.normalize("NFC", name.strip()).translate(_ZERO_WIDTH)
@@ -65,6 +69,13 @@ def _find_key(obj: Any, key: str) -> Any:
     return None
 
 
+def _json(response: httpx.Response) -> Any:
+    try:
+        return response.json()
+    except ValueError as e:
+        raise Bf6Error(f"Drop API 返回的不是 JSON（HTTP {response.status_code}）") from e
+
+
 async def fetch_current_event(http: httpx.AsyncClient) -> str:
     try:
         response = await http.get(
@@ -74,7 +85,7 @@ async def fetch_current_event(http: httpx.AsyncClient) -> str:
         raise Bf6Error(f"取当前赛季失败：{type(e).__name__}", retryable=True) from e
     if response.status_code != 200:
         raise Bf6Error(f"取当前赛季失败：HTTP {response.status_code}", retryable=True)
-    event = _find_key(response.json(), "gameEvent")
+    event = _find_key(_json(response), "gameEvent")
     event_id = event.get("id") if isinstance(event, dict) else None
     if not event_id:
         raise Bf6Error("highlights 响应里没有 gameEvent.id")
@@ -99,18 +110,26 @@ async def lookup(
         raise Bf6Error(
             f"查玩家失败：HTTP {response.status_code}", retryable=response.status_code >= 500
         )
-    data = response.json()
+    data = _json(response)
+    if not isinstance(data, dict):
+        raise Bf6Error("查玩家的响应结构不对")
     summary = data.get("playerStatsSummary") or {}
     record = summary or data.get("noStatsData") or {}
+    if not isinstance(record, dict):
+        raise Bf6Error("查玩家的响应结构不对")
     user_id = record.get("userId")
     if not user_id:
         return None
+    try:
+        nucleus_id = int(user_id)
+    except (TypeError, ValueError) as e:
+        raise Bf6Error("查玩家的响应里 userId 不是数字") from e
     avatar = record.get("userAvatar")
     return ResolvedPlayer(
-        nucleus_id=int(user_id),
-        display_name=record.get("playerDisplayName"),
-        platform=record.get("platform"),
-        avatar_url=(avatar.get("large") or avatar.get("medium"))
+        nucleus_id=nucleus_id,
+        display_name=_str_or_none(record.get("playerDisplayName")),
+        platform=_str_or_none(record.get("platform")),
+        avatar_url=_str_or_none(avatar.get("large") or avatar.get("medium"))
         if isinstance(avatar, dict)
         else None,
         has_current_season_stats=bool(summary),

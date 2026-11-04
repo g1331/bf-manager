@@ -10,13 +10,16 @@ from __future__ import annotations
 
 import asyncio
 import time
+from collections.abc import Coroutine
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from typing import Any
 
 from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.errors import AppError, EAApiError
@@ -91,18 +94,72 @@ def _apply_grant(row: Bf6Credential, grant: bf6.TokenGrant, now: datetime) -> No
     row.last_error_at = None
 
 
-async def save_credentials(
-    db: AsyncSession,
-    *,
-    refresh_token: str,
-    client_secret: str | None,
-    actor: User,
-    ip: str | None = None,
-) -> CredentialStatus:
-    """保存后台填写的凭据。client_secret 留空表示沿用已保存的值（只换 refresh token 的情况）。"""
-    refresh_token = refresh_token.strip()
-    client_secret = (client_secret or "").strip() or None
-    secret_changed = client_secret is not None
+# 已经向 EA 换到新 token、还没确认写进库的任务。EA 一轮换旧值就作废，这些任务不能随调用方
+# 一起被取消（客户端断开、停机时 poller 被 cancel），停机前要等它们写完再关数据库
+_pending: set[asyncio.Task[Any]] = set()
+_refreshing: asyncio.Task[str] | None = None
+_PERSIST_ATTEMPTS = 3
+
+
+def _detach[T](coro: Coroutine[Any, Any, T]) -> asyncio.Task[T]:
+    task = asyncio.create_task(coro)
+    _pending.add(task)
+    task.add_done_callback(_pending.discard)
+    return task
+
+
+async def drain(timeout: float = 30) -> None:
+    """停机时调用：等进行中的刷新把新 token 写完。"""
+    if _pending:
+        await asyncio.wait(set(_pending), timeout=timeout)
+
+
+async def _persist_grant(
+    session_factory: SessionFactory, grant: bf6.TokenGrant, *, client_secret: str | None = None
+) -> None:
+    """把已经拿到的 grant 写进库。失败就用同一份 grant 重试——旧 refresh token 已经作废，不能再拿去换。"""
+    cipher = get_cipher()
+    for attempt in range(1, _PERSIST_ATTEMPTS + 1):
+        try:
+            async with session_factory() as db:
+                insert = pg_insert if db.get_bind().dialect.name == "postgresql" else sqlite_insert
+                if client_secret is not None:
+                    # 第一次保存时还没有这一行，FOR UPDATE 锁不住不存在的行：先占位再锁
+                    await db.execute(
+                        insert(Bf6Credential)
+                        .values(
+                            id=BF6_CREDENTIAL_ID,
+                            encrypted_client_secret=cipher.encrypt(client_secret),
+                            encrypted_refresh_token=cipher.encrypt(grant.refresh_token),
+                        )
+                        .on_conflict_do_nothing(index_elements=[Bf6Credential.id])
+                    )
+                row = await db.get(
+                    Bf6Credential, BF6_CREDENTIAL_ID, with_for_update=True, populate_existing=True
+                )
+                if row is None:
+                    raise Bf6NotConfiguredError("BF6 凭据已被删除")
+                if client_secret is not None:
+                    row.encrypted_client_secret = cipher.encrypt(client_secret)
+                _apply_grant(row, grant, datetime.now(UTC))
+                await db.commit()
+                return
+        except (SQLAlchemyError, OSError) as e:
+            if attempt == _PERSIST_ATTEMPTS:
+                logger.critical(
+                    "BF6 refresh token 已轮换但写库失败 {} 次，需要在后台重新填写凭据: {!r}",
+                    attempt,
+                    e,
+                )
+                raise
+            logger.error("BF6 新 token 写库失败（第 {} 次），稍后重试: {!r}", attempt, e)
+            await asyncio.sleep(attempt)
+
+
+def _validate_refresh_token(refresh_token: str) -> None:
+    # 报错只说原因，不回显输入
+    if not 20 <= len(refresh_token) <= 16384:
+        raise AppError(400, "BF6_CREDENTIAL_INVALID", "refresh token 长度不对")
     claims = bf6.jwt_claims(refresh_token)
     if not claims:
         raise AppError(400, "BF6_CREDENTIAL_INVALID", "refresh token 格式不对，应为三段式 JWT")
@@ -114,65 +171,74 @@ async def save_credentials(
     if isinstance(exp, int | float) and exp <= time.time():
         raise AppError(400, "BF6_CREDENTIAL_INVALID", "这个 refresh token 已过期")
 
-    row = await db.get(Bf6Credential, BF6_CREDENTIAL_ID, populate_existing=True)
-    if client_secret is None:
-        if row is None:
-            raise AppError(400, "BF6_CREDENTIAL_INVALID", "首次保存需要填写 client secret")
-        client_secret = get_cipher().decrypt(row.encrypted_client_secret)
 
+async def _verify_and_store(
+    session_factory: SessionFactory, refresh_token: str, client_secret: str
+) -> None:
     try:
         grant = await bf6.refresh_access_token(client_secret, refresh_token, now=int(time.time()))
     except bf6.Bf6CredentialError as e:
         raise AppError(400, "BF6_CREDENTIAL_REJECTED", str(e)) from e
     except bf6.Bf6Error as e:
         raise EAApiError("BF6_UPSTREAM_ERROR", f"验证凭据时 EA 没有正常响应：{e}") from e
+    await _persist_grant(session_factory, grant, client_secret=client_secret)
 
-    # 第一次保存时还没有这一行，FOR UPDATE 锁不住不存在的行：先占位再锁
-    insert = pg_insert if db.get_bind().dialect.name == "postgresql" else sqlite_insert
-    cipher = get_cipher()
-    await db.execute(
-        insert(Bf6Credential)
-        .values(
-            id=BF6_CREDENTIAL_ID,
-            encrypted_client_secret=cipher.encrypt(client_secret),
-            encrypted_refresh_token=cipher.encrypt(grant.refresh_token),
-        )
-        .on_conflict_do_nothing(index_elements=[Bf6Credential.id])
-    )
-    row = await db.get(
-        Bf6Credential, BF6_CREDENTIAL_ID, with_for_update=True, populate_existing=True
-    )
-    assert row is not None
-    row.encrypted_client_secret = cipher.encrypt(client_secret)
-    _apply_grant(row, grant, datetime.now(UTC))
-    row.updated_by = actor.id
 
-    persona = await db.scalar(
-        select(EaBinding.persona_id).where(
-            EaBinding.user_id == actor.id, EaBinding.is_primary.is_(True)
-        )
-    )
-    db.add(
-        AuditLog(
-            user_id=actor.id,
-            acting_persona_id=persona or 0,
-            game=AUDIT_GAME,
-            action="bf6_credentials_update",
-            payload={
-                "client_secret_changed": secret_changed,
-                "refresh_expires_at": row.refresh_expires_at.isoformat()
-                if row.refresh_expires_at
-                else None,
-            },
-            result="success",
-            ip=ip,
-        )
-    )
-    await db.commit()
-    # updated_at 由数据库生成，提交后已过期；异步会话里不能懒加载，显式读回
-    await db.refresh(row)
+async def save_credentials(
+    session_factory: SessionFactory,
+    *,
+    refresh_token: str,
+    client_secret: str | None,
+    actor: User,
+    ip: str | None = None,
+) -> CredentialStatus:
+    """保存后台填写的凭据。client_secret 留空表示沿用已保存的值（只换 refresh token 的情况）。"""
+    refresh_token = refresh_token.strip()
+    client_secret = (client_secret or "").strip() or None
+    secret_changed = client_secret is not None
+    _validate_refresh_token(refresh_token)
+    if client_secret is not None and len(client_secret) > 512:
+        raise AppError(400, "BF6_CREDENTIAL_INVALID", "client secret 长度不对")
+
+    if client_secret is None:
+        async with session_factory() as db:
+            row = await db.get(Bf6Credential, BF6_CREDENTIAL_ID)
+            if row is None:
+                raise AppError(400, "BF6_CREDENTIAL_INVALID", "首次保存需要填写 client secret")
+            client_secret = get_cipher().decrypt(row.encrypted_client_secret)
+
+    await asyncio.shield(_detach(_verify_and_store(session_factory, refresh_token, client_secret)))
     _session.clear()
-    return _status(row)
+
+    async with session_factory() as db:
+        row = await db.get(Bf6Credential, BF6_CREDENTIAL_ID, populate_existing=True)
+        assert row is not None
+        row.updated_by = actor.id
+        persona = await db.scalar(
+            select(EaBinding.persona_id).where(
+                EaBinding.user_id == actor.id, EaBinding.is_primary.is_(True)
+            )
+        )
+        db.add(
+            AuditLog(
+                user_id=actor.id,
+                acting_persona_id=persona or 0,
+                game=AUDIT_GAME,
+                action="bf6_credentials_update",
+                payload={
+                    "client_secret_changed": secret_changed,
+                    "refresh_expires_at": row.refresh_expires_at.isoformat()
+                    if row.refresh_expires_at
+                    else None,
+                },
+                result="success",
+                ip=ip,
+            )
+        )
+        await db.commit()
+        # updated_at 由数据库生成，提交后已过期；异步会话里不能懒加载，显式读回
+        await db.refresh(row)
+        return _status(row)
 
 
 async def _record_error(session_factory: SessionFactory, message: str) -> None:
@@ -198,15 +264,7 @@ def _cached_access(row: Bf6Credential, now: float, max_age: int | None) -> str |
     return get_cipher().decrypt(row.encrypted_access_token)
 
 
-async def get_access_token(session_factory: SessionFactory, *, max_age: int | None = None) -> str:
-    async with session_factory() as db:
-        row = await db.get(Bf6Credential, BF6_CREDENTIAL_ID)
-        if row is None:
-            raise Bf6NotConfiguredError("后台还没有填写 BF6 凭据")
-        cached = _cached_access(row, time.time(), max_age)
-        if cached:
-            return cached
-
+async def _refresh(session_factory: SessionFactory, max_age: int | None) -> str:
     try:
         async with session_factory() as db:
             row = await db.get(
@@ -214,7 +272,7 @@ async def get_access_token(session_factory: SessionFactory, *, max_age: int | No
             )
             if row is None:
                 raise Bf6NotConfiguredError("后台还没有填写 BF6 凭据")
-            # 等锁期间别人可能已经刷新过
+            # 等锁期间别的进程可能已经刷新过
             cached = _cached_access(row, time.time(), max_age)
             if cached:
                 return cached
@@ -227,20 +285,34 @@ async def get_access_token(session_factory: SessionFactory, *, max_age: int | No
             _apply_grant(row, grant, datetime.now(UTC))
             try:
                 await db.commit()
-            except Exception:
-                # EA 已经轮换，旧 refresh token 作废，新的又没存上：只能让管理员重新填
-                logger.critical("BF6 refresh token 已轮换但写库失败，需要在后台重新填写凭据")
-                raise
-            logger.info(
-                "BF6 access token 已刷新，refresh token 有效期到 {}", row.refresh_expires_at
-            )
-            return grant.access_token
+            except (SQLAlchemyError, OSError) as e:
+                logger.error("BF6 新 token 写库失败，改用新会话重试: {!r}", e)
+                await db.rollback()
+                await _persist_grant(session_factory, grant)
     except Bf6NotConfiguredError:
         raise
     except bf6.Bf6Error as e:
         logger.warning("BF6 access token 刷新失败: {}", e)
         await _record_error(session_factory, str(e))
         raise
+    logger.info("BF6 access token 已刷新，refresh token 有效期到 {}", _ts(grant.refresh_expires_at))
+    return grant.access_token
+
+
+async def get_access_token(session_factory: SessionFactory, *, max_age: int | None = None) -> str:
+    global _refreshing  # noqa: PLW0603
+    async with session_factory() as db:
+        row = await db.get(Bf6Credential, BF6_CREDENTIAL_ID)
+        if row is None:
+            raise Bf6NotConfiguredError("后台还没有填写 BF6 凭据")
+        cached = _cached_access(row, time.time(), max_age)
+        if cached:
+            return cached
+
+    # 进程内同一时刻只发起一次刷新，其余请求等它的结果；跨进程靠行锁
+    if _refreshing is None or _refreshing.done():
+        _refreshing = _detach(_refresh(session_factory, max_age))
+    return await asyncio.shield(_refreshing)
 
 
 class _SessionCache:

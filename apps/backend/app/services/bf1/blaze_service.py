@@ -49,6 +49,7 @@ from app.schemas.bf1.server import (
 from app.services.bf1.server_service import operation_map_list
 from app.services.ea_account_service import (
     EAAccountService,
+    borrowed_personas,
     gateway_personas,
     pick_lock,
     reserved_personas,
@@ -126,16 +127,17 @@ class _BlazeConnectionPool:
                 logger.info("Blaze 连接重建（{}），旧连接存活 {:.0f} 分钟", reason, age / 60)
             await self._close_locked()
 
-            if self._creds is not None and self._creds.persona_id in reserved_personas():
+            if self._creds is not None and self._creds.persona_id in (
+                reserved_personas() | borrowed_personas()
+            ):
                 self._creds = None
             if self._creds is None:
                 # 避开 Gateway 正拿在手里的号：在途请求随后刷新令牌或完整登录会把新会话踢掉。
                 # 挑号和登记在同一把锁里，Gateway 不会在我们查库的同时拿走同一个号。
-                # 卡行动借走的号完全不碰：同一账号只能有一条 Blaze 会话
+                # 卡行动独占的号完全不碰（同一账号只能有一条 Blaze 会话）；按指定账号借用中的号
+                # 可能正在完整登录，也不挑，除非没有别的号
                 async with pick_lock():
-                    creds = await EAAccountService(db).pick_available(
-                        avoid=gateway_personas(), exclude=reserved_personas()
-                    )
+                    creds = await self._pick(db)
                     set_blaze_persona(creds.persona_id)
                 self._creds = creds
             # 登录前就登记，Gateway 从这时起避开这个号，免得登录刚完成就被它刷新令牌踢掉
@@ -153,6 +155,20 @@ class _BlazeConnectionPool:
             self._socket = new_socket
             self._created_at = time.monotonic()
             return new_socket
+
+    async def _pick(self, db: AsyncSession) -> EACredentials:
+        service = EAAccountService(db)
+        borrowed = borrowed_personas()
+        try:
+            return await service.pick_available(
+                avoid=gateway_personas(), exclude=reserved_personas() | borrowed
+            )
+        except EAApiError as exc:
+            if not borrowed or exc.code != "NO_EA_ACCOUNT_AVAILABLE":
+                raise
+        return await service.pick_available(
+            avoid=gateway_personas() | borrowed, exclude=reserved_personas()
+        )
 
     async def _connect_and_login(self, creds: EACredentials) -> BlazeSocket:
         auth_code = await _fetch_blaze_authcode(creds)

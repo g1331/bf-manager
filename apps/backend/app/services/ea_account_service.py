@@ -76,6 +76,9 @@ _gateway_in_use: Counter[int] = Counter()
 # 卡行动借用中的号池账号：任务要用它挂一条 Blaze 会话十几分钟，生产 Blaze 和公共查询都不碰它，
 # 否则同号的 Blaze 会话互相挤掉、Gateway 刷新令牌也会把卡行动的会话注销
 _reserved: set[int] = set()
+# 服管、卡行动预检 / 恢复按指定账号借用中的号池账号。借用时可能要完整登录，生产 Blaze 先让出、
+# 借用期间也不挑它；公共查询照常可用（同号的 Gateway 请求之间互不影响）
+_borrowed: Counter[int] = Counter()
 # 每个事件循环一把（测试里每个用例一个循环，asyncio.Lock 不能跨循环用）
 _pick_locks: weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, asyncio.Lock] = (
     weakref.WeakKeyDictionary()
@@ -122,8 +125,26 @@ def reserved_personas() -> set[int]:
     return set(_reserved)
 
 
+@contextlib.contextmanager
+def borrowing(persona_id: int) -> Iterator[None]:
+    """按指定账号借用号池账号期间登记，Blaze 选号时不挑它"""
+    _borrowed[persona_id] += 1
+    try:
+        yield
+    finally:
+        _borrowed[persona_id] -= 1
+        if _borrowed[persona_id] <= 0:
+            del _borrowed[persona_id]
+
+
+def borrowed_personas() -> set[int]:
+    return set(_borrowed)
+
+
 def reserve_persona(persona_id: int) -> bool:
-    """登记卡行动借用的号池账号；已被别的任务借走时返回 False"""
+    """登记卡行动借用的号池账号；已被别的任务借走时返回 False。
+
+    要在 pick_lock 里调用：和公共查询挑号、按指定账号借用的登记互斥"""
     if persona_id in _reserved:
         return False
     _reserved.add(persona_id)

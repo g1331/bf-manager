@@ -10,7 +10,7 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.errors import AppError, EAApiError
+from app.api.errors import AppError, EAApiError, ValidationError
 from app.core import ea_budget
 from app.core.security import get_cipher
 from app.domain.ea.account_pool import EACredentials
@@ -19,6 +19,7 @@ from app.models import EaBinding, GroupEaAccount
 from app.services.ea_account_service import (
     EAAccountService,
     blaze_persona,
+    borrowing,
     gateway_using,
     pick_lock,
     reserved_personas,
@@ -95,17 +96,27 @@ async def get_bf1_client_for_pool_account(
     """异步上下文：用号池里指定的账号构造 client（服管、卡行动借用恰好是那台服管理员的号）。
 
     记账、登录态缓存和 :func:`get_bf1_client` 一样；不过全站公共预算，服管操作不是公共查询。
+    借用期间登记为 borrowing：生产 Blaze 正连着这个号就先让出、之后也不挑它，因为登录态没缓存时
+    这里要完整登录，同号的 Blaze 会话约一分钟后会被注销。卡行动独占中的号直接拒绝。
     账号不存在或已停用时抛 NO_EA_ACCOUNT_AVAILABLE。
     """
     account_service = EAAccountService(db)
     with contextlib.ExitStack() as held:
         async with pick_lock():
+            if persona_id in reserved_personas():
+                raise ValidationError("这个平台账号正在给别的服卡行动，请稍后再试")
             creds = await account_service.credentials_for(persona_id)
             if creds is None:
                 raise EAApiError(
                     code="NO_EA_ACCOUNT_AVAILABLE", message="这个平台账号已停用或不存在"
                 )
             held.enter_context(gateway_using(creds.persona_id))
+            held.enter_context(borrowing(creds.persona_id))
+        if blaze_persona() == creds.persona_id:
+            # blaze_service 经 server_service 依赖本模块，顶层导入会成环
+            from app.services.bf1.blaze_service import release_blaze_account  # noqa: PLC0415
+
+            await release_blaze_account(creds.persona_id)
         async with _pooled_client(account_service, creds) as client:
             yield client
 

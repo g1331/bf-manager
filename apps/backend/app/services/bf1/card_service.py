@@ -68,6 +68,8 @@ from app.services.bf1.rsp_list_service import list_managed_servers
 from app.services.bf1.server_service import _to_member
 from app.services.ea_account_service import (
     EAAccountService,
+    gateway_personas,
+    pick_lock,
     release_persona,
     reserve_persona,
     reserved_personas,
@@ -85,6 +87,8 @@ HOLD_SECONDS = 5
 ANCHOR_JOIN_TRIES = 3
 # 抽图时服里有别人，每轮多等这么久（CardTool 同款）
 OCCUPIED_WAIT_SECONDS = 10
+# 借平台账号时等它手上的 Gateway 请求结束，最多这么久
+RESERVE_WAIT_SECONDS = 15
 
 SLEEP: Callable[[float], Awaitable[None]] = asyncio.sleep
 
@@ -440,18 +444,28 @@ class CardService:
         return await self.view(job.id), token
 
     async def _reserve_pool_account(self, persona_id: int) -> None:
-        """任务独占借来的号池账号：号池得还剩别的号给生产查询用；登记后让生产 Blaze 先让出它，
-        再做 Gateway 完整登录，免得把生产会话挤掉"""
-        others = [
-            pid
-            for pid in await EAAccountService(self.db).enabled_personas()
-            if pid != persona_id and pid not in reserved_personas()
-        ]
-        if not others:
-            raise ValidationError("平台账号池里没有别的可用账号了，现在借不出来，请改用自己的账号")
-        if not reserve_persona(persona_id):
-            raise ValidationError("这个平台账号正在给别的服卡行动，请稍后再试")
+        """任务独占借来的号池账号：号池得还剩别的号给生产查询用。
+
+        登记和公共查询挑号在同一把锁里；登记后等手里正拿着这个号的 Gateway 请求结束，再让生产
+        Blaze 让出它，之后才做 Gateway 完整登录，免得把别处的会话挤掉、也免得被别处刷新令牌踢掉"""
+        async with pick_lock():
+            others = [
+                pid
+                for pid in await EAAccountService(self.db).enabled_personas()
+                if pid != persona_id and pid not in reserved_personas()
+            ]
+            if not others:
+                raise ValidationError(
+                    "平台账号池里没有别的可用账号了，现在借不出来，请改用自己的账号"
+                )
+            if not reserve_persona(persona_id):
+                raise ValidationError("这个平台账号正在给别的服卡行动，请稍后再试")
         try:
+            deadline = time.monotonic() + RESERVE_WAIT_SECONDS
+            while persona_id in gateway_personas():
+                if time.monotonic() > deadline:
+                    raise ValidationError("这个平台账号正在处理别的请求，请稍后再试")
+                await asyncio.sleep(0.2)
             await release_blaze_account(persona_id)
         except BaseException:
             release_persona(persona_id)
@@ -508,8 +522,10 @@ class CardService:
         await self._job(job_id, token, user)
         runner = _runners.get(job_id)
         if runner is not None and runner.task is not None:
-            runner.cancel_reason = "cancelled"
-            runner.task.cancel()
+            # 只取消一次：再取消会打断正在收尾的清理
+            if runner.cancel_reason != "cancelled":
+                runner.cancel_reason = "cancelled"
+                runner.task.cancel()
             with contextlib.suppress(asyncio.CancelledError, Exception):
                 await asyncio.wait_for(asyncio.shield(runner.task), 15)
         return await self.view(job_id)
@@ -727,15 +743,18 @@ class _Runner:
             await self._cleanup()
 
     async def _cleanup(self) -> None:
-        with contextlib.suppress(Exception):
-            await asyncio.shield(self.leave())
-        if self.blaze is not None:
+        try:
             with contextlib.suppress(Exception):
-                await asyncio.shield(self.blaze.close())
-        await _close(self.client)
-        if self.creds.pool_persona_id is not None:
-            release_persona(self.creds.pool_persona_id)
-        _runners.pop(self.job_id, None)
+                await asyncio.shield(self.leave())
+            if self.blaze is not None:
+                with contextlib.suppress(Exception):
+                    await asyncio.shield(self.blaze.close())
+            await _close(self.client)
+        finally:
+            # 收尾途中再被取消（进程关闭）也要放掉独占的账号和这台服
+            if self.creds.pool_persona_id is not None:
+                release_persona(self.creds.pool_persona_id)
+            _runners.pop(self.job_id, None)
 
     async def _card(self) -> None:
         st = self.srv.state

@@ -512,3 +512,77 @@ async def test_resolve_pool_credentials_checks_site_role(maker, monkeypatch, poo
         creds = await card_service.resolve_pool_credentials(db, user, GAME_ID)
     assert (creds.remid, creds.sid, creds.pool_persona_id) == ("pool-remid", "pool-sid", ADMIN)
     assert "pool-remid" not in repr(creds)
+
+
+async def test_pool_reservation_waits_for_in_flight_gateway_use(maker, monkeypatch, pool_env):
+    from app.services.ea_account_service import gateway_using, reserved_personas
+
+    use_client(monkeypatch, FakeClient([details("BreakthroughLarge", OPS, soldiers=12)], pid=ADMIN))
+    order: list[str] = []
+    orig_release = card_service.release_blaze_account
+
+    async def release(pid):
+        order.append("blaze-released")
+        await orig_release(pid)
+
+    monkeypatch.setattr(card_service, "release_blaze_account", release)
+
+    async def in_flight():
+        with gateway_using(ADMIN):
+            await asyncio.sleep(0.3)
+            order.append("gateway-done")
+
+    holder = asyncio.create_task(in_flight())
+    await asyncio.sleep(0)
+    async with maker() as db:
+        view, _ = await CardService(db).start(POOL_CREDS, GAME_ID, "anchor", user=None, ip=None)
+    await holder
+    assert order == ["gateway-done", "blaze-released"]
+    await wait_done(maker, view.id)
+    assert ADMIN not in reserved_personas()
+
+    # 一直有请求拿着这个号：等不到就放弃借用
+    monkeypatch.setattr(card_service, "RESERVE_WAIT_SECONDS", 0.2)
+    with gateway_using(ADMIN):
+        async with maker() as db:
+            with pytest.raises(ValidationError, match="正在处理别的请求"):
+                await CardService(db).start(POOL_CREDS, GAME_ID, "anchor", user=None, ip=None)
+    assert ADMIN not in reserved_personas()
+
+
+async def test_cancel_during_cleanup_still_releases_pool_account(maker, monkeypatch, pool_env):
+    from app.services.ea_account_service import reserved_personas
+
+    client = FakeClient([EMPTY_CQ], pid=ADMIN)
+    use_client(monkeypatch, client)
+    closing = asyncio.Event()
+    never = asyncio.Event()
+
+    class SlowCloseBlaze(FakeBlaze):
+        async def close(self):
+            closing.set()
+            await never.wait()
+
+    monkeypatch.setattr(card_service, "CardBlazeSession", SlowCloseBlaze)
+    async with maker() as db:
+        view, token = await CardService(db).start(POOL_CREDS, GAME_ID, "card", user=None, ip=None)
+    runner = card_service._runners[view.id]
+    await asyncio.sleep(0.05)
+
+    async def stop():
+        async with maker() as db:
+            await CardService(db).cancel(view.id, token, None)
+
+    first = asyncio.create_task(stop())
+    await asyncio.wait_for(closing.wait(), 5)
+    # 收尾卡在关 Blaze 时又点了一次停止：只取消一次，不会打断收尾
+    second = asyncio.create_task(stop())
+    await asyncio.sleep(0.05)
+    assert runner.task.cancelling() == 1
+    # 进程关闭时直接再取消：finally 里照样放掉账号和这台服
+    runner.task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await runner.task
+    await asyncio.gather(first, second)
+    assert ADMIN not in reserved_personas()
+    assert view.id not in card_service._runners

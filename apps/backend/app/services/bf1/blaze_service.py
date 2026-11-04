@@ -51,6 +51,7 @@ from app.services.ea_account_service import (
     EAAccountService,
     gateway_personas,
     pick_lock,
+    reserved_personas,
     set_blaze_persona,
 )
 
@@ -125,11 +126,16 @@ class _BlazeConnectionPool:
                 logger.info("Blaze 连接重建（{}），旧连接存活 {:.0f} 分钟", reason, age / 60)
             await self._close_locked()
 
+            if self._creds is not None and self._creds.persona_id in reserved_personas():
+                self._creds = None
             if self._creds is None:
                 # 避开 Gateway 正拿在手里的号：在途请求随后刷新令牌或完整登录会把新会话踢掉。
-                # 挑号和登记在同一把锁里，Gateway 不会在我们查库的同时拿走同一个号
+                # 挑号和登记在同一把锁里，Gateway 不会在我们查库的同时拿走同一个号。
+                # 卡行动借走的号完全不碰：同一账号只能有一条 Blaze 会话
                 async with pick_lock():
-                    creds = await EAAccountService(db).pick_available(avoid=gateway_personas())
+                    creds = await EAAccountService(db).pick_available(
+                        avoid=gateway_personas(), exclude=reserved_personas()
+                    )
                     set_blaze_persona(creds.persona_id)
                 self._creds = creds
             # 登录前就登记，Gateway 从这时起避开这个号，免得登录刚完成就被它刷新令牌踢掉
@@ -188,6 +194,16 @@ class _BlazeConnectionPool:
             self._creds = None
             set_blaze_persona(None)
 
+    async def release_account(self, persona_id: int) -> None:
+        """卡行动要借这个号：正连着它就断开并放弃粘住的凭据，下次查询换号重连"""
+        async with self._lock:
+            if self._creds is None or self._creds.persona_id != persona_id:
+                return
+            logger.info("Blaze 让出账号 {}（卡行动借用），下次查询换号重连", persona_id)
+            await self._close_locked()
+            self._creds = None
+            set_blaze_persona(None)
+
     async def invalidate(self) -> None:
         """标记当前连接失效（查询期间网络异常时调用），下次查询触发重建。"""
         async with self._lock:
@@ -198,6 +214,12 @@ class _BlazeConnectionPool:
 
 
 _pool = _BlazeConnectionPool()
+
+
+async def release_blaze_account(persona_id: int) -> None:
+    await _pool.release_account(persona_id)
+
+
 # 快照经 socket.callback 收推送，同一时间只能有一个快照占用回调。
 _snapshot_lock = asyncio.Lock()
 

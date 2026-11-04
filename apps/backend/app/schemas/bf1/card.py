@@ -8,11 +8,13 @@ from app.core.literals import CardJobKind, CardJobStatus
 
 
 class CardCredentials(BaseModel):
-    """服主或管理员的凭据：匿名填 remid + sid；登录用户可改用主绑定账号（use_binding）"""
+    """服主或管理员的凭据：匿名填 remid + sid；登录用户可改用主绑定账号（use_binding），
+    或借用号池里是这台服服主或管理员的账号（use_pool，要求本站管理员以上权限）"""
 
     remid: str = Field("", max_length=2048)
     sid: str = Field("", max_length=2048)
     use_binding: bool = False
+    use_pool: bool = False
 
 
 class CardPrecheckRequest(CardCredentials):

@@ -338,3 +338,177 @@ async def test_api_requires_credentials_and_token(client, test_session):
     res = await client.get("/api/v1/bf1/card/jobs/1", headers={"X-Card-Token": "good"})
     assert res.status_code == 200
     assert res.json()["can_restore"] is True
+
+
+# ----------------------------------------------------------------------------- 借号池账号
+
+POOL_CREDS = OwnerCredentials(remid="r", sid="s", pool_persona_id=ADMIN)
+
+
+@pytest.fixture
+def pool_env(monkeypatch):
+    """号池里有 ADMIN 和另一个号；记下让 Blaze 让号和走号池 client 的调用"""
+    from app.services import ea_account_service
+
+    state: dict[str, Any] = {"enabled": [ADMIN, 5], "released": [], "pool_clients": []}
+
+    class _Accounts:
+        def __init__(self, db):
+            pass
+
+        async def enabled_personas(self):
+            return list(state["enabled"])
+
+    async def _release(pid):
+        state["released"].append(pid)
+
+    monkeypatch.setattr(card_service, "EAAccountService", _Accounts)
+    monkeypatch.setattr(card_service, "release_blaze_account", _release)
+    yield state
+    for pid in (ADMIN, 5):
+        ea_account_service.release_persona(pid)
+
+
+async def test_pool_account_is_reserved_while_card_runs(maker, monkeypatch, pool_env):
+    from app.services.ea_account_service import reserved_personas
+
+    client = FakeClient([details("BreakthroughLarge", OPS, soldiers=12)], pid=ADMIN)
+    gate = asyncio.Event()
+    orig_state = client.getServerDetails
+
+    async def slow_state(game_id):
+        await gate.wait()
+        return await orig_state(game_id)
+
+    client.getServerDetails = slow_state
+    use_client(monkeypatch, client)
+    async with maker() as db:
+        view, _ = await CardService(db).start(POOL_CREDS, GAME_ID, "anchor", user=None, ip=None)
+        # 生产 Blaze 先让出这个号，任务期间它被独占
+        assert pool_env["released"] == [ADMIN]
+        assert ADMIN in reserved_personas()
+        # 同一个号不能同时借给另一台服
+        with pytest.raises(ValidationError, match="正在给别的服卡行动"):
+            await CardService(db).start(POOL_CREDS, GAME_ID + 1, "anchor", user=None, ip=None)
+    gate.set()
+    job = await wait_done(maker, view.id)
+    assert job.status == "succeeded", job.events
+    assert ADMIN not in reserved_personas()
+
+
+async def test_pool_account_released_when_start_fails(maker, monkeypatch, pool_env):
+    from app.services.ea_account_service import reserved_personas
+
+    use_client(monkeypatch, FakeClient([details("Conquest", ["MP_Alps"], soldiers=3)], pid=ADMIN))
+    async with maker() as db:
+        with pytest.raises(ValidationError, match="空服"):
+            await CardService(db).start(POOL_CREDS, GAME_ID, "card", user=None, ip=None)
+    assert ADMIN not in reserved_personas()
+
+
+async def test_pool_account_needs_another_account_left(maker, monkeypatch, pool_env):
+    from app.services.ea_account_service import reserved_personas
+
+    pool_env["enabled"] = [ADMIN]
+    use_client(monkeypatch, FakeClient([EMPTY_CQ], pid=ADMIN))
+    async with maker() as db:
+        with pytest.raises(ValidationError, match="没有别的可用账号"):
+            await CardService(db).start(POOL_CREDS, GAME_ID, "card", user=None, ip=None)
+    assert pool_env["released"] == []
+    assert ADMIN not in reserved_personas()
+
+
+async def test_pool_precheck_and_restore_use_cached_pool_client(maker, monkeypatch, pool_env):
+    """预检和恢复走号池 client（沿用登录态），不做完整登录"""
+    from contextlib import asynccontextmanager
+
+    client = FakeClient([EMPTY_CQ], pid=ADMIN, update_result="无权限")
+    use_client(monkeypatch, client)
+
+    @asynccontextmanager
+    async def _pool_client(db, persona_id):
+        pool_env["pool_clients"].append(persona_id)
+        yield client
+
+    async def _no_login(_creds):
+        raise AssertionError("号池账号的预检和恢复不该完整登录")
+
+    monkeypatch.setattr(card_service, "get_bf1_client_for_pool_account", _pool_client)
+    async with maker() as db:
+        view, token = await CardService(db).start(POOL_CREDS, GAME_ID, "card", user=None, ip=None)
+    job = await wait_done(maker, view.id)
+    assert job.status == "failed"
+
+    monkeypatch.setattr(card_service, "_login", _no_login)
+    client.update_result = {"result": "success"}
+    async with maker() as db:
+        pre = await CardService(db).precheck(POOL_CREDS, GAME_ID)
+        assert pre.is_admin
+        restored = await CardService(db).restore(view.id, token, None, POOL_CREDS)
+    assert restored.restored_at is not None
+    assert pool_env["pool_clients"] == [ADMIN, ADMIN]
+
+
+async def test_resolve_pool_credentials_checks_site_role(maker, monkeypatch, pool_env):
+    from types import SimpleNamespace
+
+    from app.core.security import get_cipher
+    from app.models import EAAccount
+
+    roles: dict[str, Any] = {"ok": False}
+
+    class _Authz:
+        def __init__(self, db):
+            pass
+
+        async def require_role(self, **kw):
+            assert kw["min_role"] == "admin"
+            if not roles["ok"]:
+                raise ForbiddenError("无权管理此服务器")
+
+    candidates: list[int] = []
+
+    async def _pool_admins(db, game_id, *, fresh=False):
+        assert fresh
+        return list(candidates)
+
+    async def _admin_ids(db, game_id, *, fresh=False):
+        return frozenset({ADMIN})
+
+    monkeypatch.setattr(card_service, "ServerAuthzService", _Authz)
+    monkeypatch.setattr(card_service, "pool_admin_personas", _pool_admins)
+    monkeypatch.setattr(card_service, "server_admin_ids", _admin_ids)
+    from app.services.ea_account_service import EAAccountService as RealAccounts
+
+    monkeypatch.setattr(card_service, "EAAccountService", RealAccounts)
+    user = SimpleNamespace(id=1)
+
+    async with maker() as db:
+        cipher = get_cipher()
+        db.add(
+            EAAccount(
+                persona_id=ADMIN,
+                encrypted_remid=cipher.encrypt("pool-remid"),
+                encrypted_sid=cipher.encrypt("pool-sid"),
+                enabled=True,
+            )
+        )
+        await db.commit()
+
+        with pytest.raises(ValidationError, match="登录后"):
+            await card_service.resolve_pool_credentials(db, None, GAME_ID)
+        with pytest.raises(ForbiddenError, match="借用平台账号需要"):
+            await card_service.resolve_pool_credentials(db, user, GAME_ID)
+        roles["ok"] = True
+        with pytest.raises(ValidationError, match="都不是这台服的服主或管理员"):
+            await card_service.resolve_pool_credentials(db, user, GAME_ID)
+        from app.services import ea_account_service
+
+        ea_account_service.reserve_persona(ADMIN)
+        with pytest.raises(ValidationError, match="正在给别的服卡行动"):
+            await card_service.resolve_pool_credentials(db, user, GAME_ID)
+        ea_account_service.release_persona(ADMIN)
+        candidates.append(ADMIN)
+        creds = await card_service.resolve_pool_credentials(db, user, GAME_ID)
+    assert (creds.remid, creds.sid, creds.pool_persona_id) == ("pool-remid", "pool-sid", ADMIN)
+    assert "pool-remid" not in repr(creds)

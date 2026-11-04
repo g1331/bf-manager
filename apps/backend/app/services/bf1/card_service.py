@@ -1,8 +1,9 @@
 """BF1 一键卡行动：预检、任务编排、停止、恢复。
 
 判断与请求体在 card_engine（纯函数），Blaze 进服在 card_blaze。这里负责：
-- 用服主或管理员的凭据（匿名填的 remid + sid，或登录用户的主绑定）登录 Gateway，核对它在
-  这台服的 rspInfo 里是服主或管理员；不回落号池；
+- 用服主或管理员的凭据（匿名填的 remid + sid、登录用户的主绑定，或借用号池里恰好是这台服
+  服主或管理员的账号）登录 Gateway，核对它在这台服的 rspInfo 里是服主或管理员。借号池账号
+  要求用户在本站对这台服有管理员以上权限；任务期间这个号归任务独占，生产 Blaze 和公共查询让开；
 - 每个任务一个 asyncio 任务，凭据只在任务内存里，结束即丢弃；进度、事件和设置快照落库，
   快照含服务器密码，加密存放；
 - 护栏：同一台服同时一个任务、全站最多 MAX_CONCURRENT 个，抽图最多 MAX_ATTEMPTS 轮或
@@ -20,7 +21,8 @@ import hmac
 import json
 import secrets
 import time
-from collections.abc import Awaitable, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable
+from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any, cast
@@ -40,6 +42,7 @@ from app.api.errors import (
 from app.core import ea_metrics
 from app.core.security import get_cipher
 from app.db.session import get_sessionmaker
+from app.domain.games.bf1.client_provider import pool_admin_personas, server_admin_ids
 from app.domain.games.bf1.gateway import BF1GatewayClient
 from app.domain.games.bf1.gateway_errors import EAGatewayError, gateway_failure
 from app.domain.games.bf1.maps import translate_map_name, translate_mode_name
@@ -47,10 +50,19 @@ from app.models import User
 from app.models.bf1 import Bf1AutoSwitch, Bf1CardJob
 from app.schemas.bf1.card import CardCredentials, CardEvent, CardJobView, CardPrecheck
 from app.services.audit_service import AuditService
+from app.services.authz_service import ServerAuthzService
 from app.services.bf1 import card_engine as engine
+from app.services.bf1.blaze_service import release_blaze_account
 from app.services.bf1.card_blaze import CardBlazeSession
+from app.services.bf1.gateway_factory import get_bf1_client_for_pool_account
 from app.services.bf1.gateway_result import to_ea_error
 from app.services.bf1.server_service import _to_member
+from app.services.ea_account_service import (
+    EAAccountService,
+    release_persona,
+    reserve_persona,
+    reserved_personas,
+)
 from app.services.ea_binding_service import EaBindingService
 
 MAX_ATTEMPTS = 120
@@ -89,9 +101,11 @@ class OwnerCredentials:
     sid: str
     # 来自主绑定时回写刷新后的 sid / session
     binding_id: int | None = None
+    # 借用号池账号时是它的 persona_id，刷新后的 sid / session 回写号池
+    pool_persona_id: int | None = None
 
     def __repr__(self) -> str:  # 别让凭据进日志
-        return f"OwnerCredentials(binding_id={self.binding_id})"
+        return f"OwnerCredentials(binding_id={self.binding_id}, pool={self.pool_persona_id})"
 
 
 def resolve_credentials(req: CardCredentials, user: User | None) -> OwnerCredentials:
@@ -113,15 +127,50 @@ def resolve_credentials(req: CardCredentials, user: User | None) -> OwnerCredent
     return OwnerCredentials(remid=remid, sid=sid)
 
 
+async def resolve_pool_credentials(
+    db: AsyncSession, user: User | None, game_id: int, *, persona_id: int | None = None
+) -> OwnerCredentials:
+    """借用号池里是这台服服主或管理员的账号。persona_id 给定时用这个号（恢复要用开始时的同一个）"""
+    if user is None:
+        raise ValidationError("登录后才能借用平台账号")
+    try:
+        await ServerAuthzService(db).require_role(
+            user=user, game="bf1", server_id=game_id, min_role="admin"
+        )
+    except ForbiddenError:
+        raise ForbiddenError("借用平台账号需要你在本站是这台服的服主或管理员") from None
+    if persona_id is None:
+        candidates = await pool_admin_personas(db, game_id, fresh=True)
+        if not candidates:
+            busy = reserved_personas() & await server_admin_ids(db, game_id)
+            raise ValidationError(
+                "能管理这台服的平台账号正在给别的服卡行动，请稍后再试"
+                if busy
+                else "平台账号都不是这台服的服主或管理员"
+            )
+        persona_id = candidates[0]
+    creds = await EAAccountService(db).credentials_for(persona_id)
+    if creds is None:
+        raise ValidationError("这个平台账号已停用")
+    return OwnerCredentials(remid=creds.remid, sid=creds.sid, pool_persona_id=persona_id)
+
+
 async def _login(creds: OwnerCredentials) -> BF1GatewayClient:
     """用服主或管理员的凭据登录 Gateway；失败时关闭连接并抛错"""
-    binding_id = creds.binding_id
+    binding_id, pool_pid = creds.binding_id, creds.pool_persona_id
 
     async def _on_refresh(_pid: int, new_sid: str | None, new_session: str | None) -> None:
-        if binding_id is None:
+        if binding_id is None and pool_pid is None:
             return
         async with get_sessionmaker()() as db:
-            await EaBindingService(db).update_session(binding_id, sid=new_sid, session=new_session)
+            if pool_pid is not None:
+                await EAAccountService(db).update_session(
+                    pool_pid, sid=new_sid, session=new_session
+                )
+            else:
+                await EaBindingService(db).update_session(
+                    binding_id or 0, sid=new_sid, session=new_session
+                )
 
     client = BF1GatewayClient(
         pid=0, remid=creds.remid, sid=creds.sid, on_session_refreshed=_on_refresh
@@ -142,6 +191,25 @@ async def _close(client: BF1GatewayClient) -> None:
         http_session = getattr(client, "http_session", None)
         if http_session is not None:
             await http_session.close()
+
+
+@asynccontextmanager
+async def _gateway(db: AsyncSession, creds: OwnerCredentials) -> AsyncIterator[BF1GatewayClient]:
+    """预检、恢复这类一次性调用的 client。号池账号沿用缓存的登录态，不做完整登录：
+    它可能正挂着生产 Blaze 会话，同号完整登录约一分钟后会把那条会话踢掉"""
+    if creds.pool_persona_id is not None:
+        async with get_bf1_client_for_pool_account(db, creds.pool_persona_id) as client:
+            if not client.check_login or not client.pid:
+                raise EAApiError(
+                    code="CARD_LOGIN_FAILED", message="平台账号登录 EA 失败，请稍后再试"
+                )
+            yield client
+        return
+    client = await _login(creds)
+    try:
+        yield client
+    finally:
+        await _close(client)
 
 
 def _result(res: Any, what: str) -> dict[str, Any]:
@@ -230,11 +298,8 @@ class CardService:
         self.db = db
 
     async def precheck(self, creds: OwnerCredentials, game_id: int) -> CardPrecheck:
-        client = await _login(creds)
-        try:
+        async with _gateway(self.db, creds) as client:
             srv = await _server_info(client, game_id)
-        finally:
-            await _close(client)
         auto = await self.db.scalar(
             select(Bf1AutoSwitch.enabled).where(Bf1AutoSwitch.game_id == game_id)
         )
@@ -272,7 +337,15 @@ class CardService:
             raise ValidationError("这台服已经有一个卡行动任务在跑")
         if len(_runners) >= MAX_CONCURRENT:
             raise TooManyRequestsError("同时卡行动的服太多了，请过几分钟再试", retry_after=120)
-        client = await _login(creds)
+        pool_pid = creds.pool_persona_id
+        if pool_pid is not None:
+            await self._reserve_pool_account(pool_pid)
+        try:
+            client = await _login(creds)
+        except BaseException:
+            if pool_pid is not None:
+                release_persona(pool_pid)
+            raise
         try:
             srv = await _server_info(client, game_id)
             if not srv.can_manage(int(client.pid)):
@@ -311,6 +384,8 @@ class CardService:
             await self.db.commit()
         except BaseException:
             await _close(client)
+            if pool_pid is not None:
+                release_persona(pool_pid)
             raise
         runner = _Runner(job.id, kind, srv, snap, client, creds)
         _runners[job.id] = runner
@@ -318,6 +393,33 @@ class CardService:
         runner.task = asyncio.create_task(runner.run(), context=contextvars.Context())
         await self._audit(job, "card_start" if kind == "card" else "card_anchor")
         return await self.view(job.id), token
+
+    async def _reserve_pool_account(self, persona_id: int) -> None:
+        """任务独占借来的号池账号：号池得还剩别的号给生产查询用；登记后让生产 Blaze 先让出它，
+        再做 Gateway 完整登录，免得把生产会话挤掉"""
+        others = [
+            pid
+            for pid in await EAAccountService(self.db).enabled_personas()
+            if pid != persona_id and pid not in reserved_personas()
+        ]
+        if not others:
+            raise ValidationError("平台账号池里没有别的可用账号了，现在借不出来，请改用自己的账号")
+        if not reserve_persona(persona_id):
+            raise ValidationError("这个平台账号正在给别的服卡行动，请稍后再试")
+        try:
+            await release_blaze_account(persona_id)
+        except BaseException:
+            release_persona(persona_id)
+            raise
+
+    async def restore_credentials(
+        self, job_id: int, token: str | None, user: User | None, req: CardCredentials
+    ) -> OwnerCredentials:
+        """恢复用的凭据；借平台账号时只能用开始任务时那一个"""
+        if not req.use_pool:
+            return resolve_credentials(req, user)
+        job = await self._job(job_id, token, user)
+        return await resolve_pool_credentials(self.db, user, job.game_id, persona_id=job.persona_id)
 
     async def _job(self, job_id: int, token: str | None, user: User | None) -> Bf1CardJob:
         job = await self.db.get(Bf1CardJob, job_id)
@@ -376,15 +478,12 @@ class CardService:
         if not job.snapshot_enc:
             raise ValidationError("这个任务没有保存原设置，无法恢复")
         snap = engine.Snapshot.from_dict(json.loads(get_cipher().decrypt(job.snapshot_enc)))
-        client = await _login(creds)
-        try:
+        async with _gateway(self.db, creds) as client:
             if int(client.pid) != job.persona_id:
                 raise ForbiddenError("请使用开始任务时的同一个账号")
             err = await _apply_update(
                 client, job.server_id, engine.update_params(job.server_id, snap)
             )
-        finally:
-            await _close(client)
         if err:
             await self._audit(job, "card_restore", error=err)
             raise EAApiError(code="CARD_RESTORE_FAILED", message=f"恢复失败：{err}")
@@ -589,6 +688,8 @@ class _Runner:
             with contextlib.suppress(Exception):
                 await asyncio.shield(self.blaze.close())
         await _close(self.client)
+        if self.creds.pool_persona_id is not None:
+            release_persona(self.creds.pool_persona_id)
         _runners.pop(self.job_id, None)
 
     async def _card(self) -> None:

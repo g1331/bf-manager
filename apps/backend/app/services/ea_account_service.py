@@ -45,6 +45,20 @@ def _to_item(account: EAAccount) -> EAAccountItem:
     )
 
 
+def _credentials(account: EAAccount) -> EACredentials:
+    cipher = get_cipher()
+    return EACredentials(
+        persona_id=account.persona_id,
+        display_name=account.display_name,
+        remid=cipher.decrypt(account.encrypted_remid),
+        sid=cipher.decrypt(account.encrypted_sid),
+        session=cipher.decrypt(account.encrypted_session) if account.encrypted_session else None,
+        access_token=cipher.decrypt(account.encrypted_access_token)
+        if account.encrypted_access_token
+        else None,
+    )
+
+
 # 连续失败到这个次数时触发验证，验证不通过才停用
 FAILURE_DISABLE_THRESHOLD = 10
 # 正在做阈值验证的账号 id：并发请求同时撞上阈值时只验证一次
@@ -59,6 +73,9 @@ _verifying: set[int] = set()
 # Blaze 被注销）。锁里只有一次查库，登录和业务请求都在锁外。
 _blaze_account: dict[str, int] = {}
 _gateway_in_use: Counter[int] = Counter()
+# 卡行动借用中的号池账号：任务要用它挂一条 Blaze 会话十几分钟，生产 Blaze 和公共查询都不碰它，
+# 否则同号的 Blaze 会话互相挤掉、Gateway 刷新令牌也会把卡行动的会话注销
+_reserved: set[int] = set()
 # 每个事件循环一把（测试里每个用例一个循环，asyncio.Lock 不能跨循环用）
 _pick_locks: weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, asyncio.Lock] = (
     weakref.WeakKeyDictionary()
@@ -101,11 +118,29 @@ def gateway_personas() -> set[int]:
     return set(_gateway_in_use)
 
 
+def reserved_personas() -> set[int]:
+    return set(_reserved)
+
+
+def reserve_persona(persona_id: int) -> bool:
+    """登记卡行动借用的号池账号；已被别的任务借走时返回 False"""
+    if persona_id in _reserved:
+        return False
+    _reserved.add(persona_id)
+    return True
+
+
+def release_persona(persona_id: int) -> None:
+    _reserved.discard(persona_id)
+
+
 class EAAccountService:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
-    async def pick_available(self, *, avoid: Collection[int] = ()) -> EACredentials:
+    async def pick_available(
+        self, *, avoid: Collection[int] = (), exclude: Collection[int] = ()
+    ) -> EACredentials:
         """取一个可用 EA 账号：失败计数最低者优先，同分取最久未使用。
 
         只按最久未使用挑号时，一个凭据失效的账号（失败后 last_used_at 不更新）会被
@@ -114,38 +149,40 @@ class EAAccountService:
 
         avoid 里的账号失败计数按多 1 次排：都健康时总挑别的号；别的号失败过一次时两者同分、
         按最久未使用轮换，别的号成功一次就清零回到首选，失败两次才整体让给 avoid 里的号。
+        exclude 里的账号不参与挑选。
         """
         rank = (
             EAAccount.failure_count + case((EAAccount.persona_id.in_(list(avoid)), 1), else_=0)
             if avoid
             else EAAccount.failure_count
         )
-        stmt = (
-            select(EAAccount)
-            .where(EAAccount.enabled.is_(True))
-            .order_by(rank.asc(), EAAccount.last_used_at.asc().nulls_first())
-            .limit(1)
-        )
+        stmt = select(EAAccount).where(EAAccount.enabled.is_(True))
+        if exclude:
+            stmt = stmt.where(EAAccount.persona_id.not_in(list(exclude)))
+        stmt = stmt.order_by(rank.asc(), EAAccount.last_used_at.asc().nulls_first()).limit(1)
         account = await self.db.scalar(stmt)
         if account is None:
             raise EAApiError(
                 code="NO_EA_ACCOUNT_AVAILABLE",
                 message="平台未配置可用 EA 账号，无法代查询 EA API",
             )
+        return _credentials(account)
 
-        cipher = get_cipher()
-        return EACredentials(
-            persona_id=account.persona_id,
-            display_name=account.display_name,
-            remid=cipher.decrypt(account.encrypted_remid),
-            sid=cipher.decrypt(account.encrypted_sid),
-            session=cipher.decrypt(account.encrypted_session)
-            if account.encrypted_session
-            else None,
-            access_token=cipher.decrypt(account.encrypted_access_token)
-            if account.encrypted_access_token
-            else None,
+    async def enabled_personas(self) -> list[int]:
+        """启用中的账号，失败计数少的在前"""
+        rows = await self.db.scalars(
+            select(EAAccount.persona_id)
+            .where(EAAccount.enabled.is_(True))
+            .order_by(EAAccount.failure_count.asc(), EAAccount.id.asc())
         )
+        return list(rows.all())
+
+    async def credentials_for(self, persona_id: int) -> EACredentials | None:
+        """指定账号的凭据；账号不存在或已停用时返回 None"""
+        account = await self.db.scalar(
+            select(EAAccount).where(EAAccount.persona_id == persona_id, EAAccount.enabled.is_(True))
+        )
+        return _credentials(account) if account is not None else None
 
     async def mark_used(self, persona_id: int) -> None:
         # 数据库侧原子自增 use_count：账号池小时多个并发请求会命中同一 persona，

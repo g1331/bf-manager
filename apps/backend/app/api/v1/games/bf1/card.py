@@ -1,7 +1,7 @@
 """BF1 一键卡行动路由（不要求登录）
 
-凭据是服主或管理员的 remid + sid（或登录用户的主绑定），这里只核对它确实是这台服的服主或
-管理员。任务开始时返回一次性 token，匿名用户凭它查看、停止、恢复；登录用户自己的任务凭账号即可。
+凭据是服主或管理员的 remid + sid（或登录用户的主绑定、号池里是这台服管理员的账号），这里只
+核对它确实是这台服的服主或管理员。任务开始时返回一次性 token，匿名用户凭它查看、停止、恢复；登录用户自己的任务凭账号即可。
 """
 
 from __future__ import annotations
@@ -14,6 +14,7 @@ from app.api.client_ip import client_ip
 from app.api.deps import CurrentUserOptional, DbDep
 from app.api.rate_limit import rate_limit
 from app.schemas.bf1.card import (
+    CardCredentials,
     CardJobView,
     CardPrecheck,
     CardPrecheckRequest,
@@ -21,9 +22,23 @@ from app.schemas.bf1.card import (
     CardStartRequest,
     CardStartResult,
 )
-from app.services.bf1.card_service import CardService, resolve_credentials
+from app.services.bf1.card_service import (
+    CardService,
+    OwnerCredentials,
+    resolve_credentials,
+    resolve_pool_credentials,
+)
 
 router = APIRouter()
+
+
+async def _credentials(
+    db: DbDep, payload: CardCredentials, user: CurrentUserOptional, game_id: int
+) -> OwnerCredentials:
+    if payload.use_pool:
+        return await resolve_pool_credentials(db, user, game_id)
+    return resolve_credentials(payload, user)
+
 
 TokenHeader = Annotated[str | None, Header(alias="X-Card-Token")]
 # 任务页每 2 秒轮询一次进度，用宽松的只读额度
@@ -34,7 +49,7 @@ _read = rate_limit("read")
 async def precheck(
     payload: CardPrecheckRequest, db: DbDep, user: CurrentUserOptional
 ) -> CardPrecheck:
-    creds = resolve_credentials(payload, user)
+    creds = await _credentials(db, payload, user, payload.game_id)
     return await CardService(db).precheck(creds, payload.game_id)
 
 
@@ -42,7 +57,7 @@ async def precheck(
 async def start(
     payload: CardStartRequest, db: DbDep, user: CurrentUserOptional, request: Request
 ) -> CardStartResult:
-    creds = resolve_credentials(payload, user)
+    creds = await _credentials(db, payload, user, payload.game_id)
     job, token = await CardService(db).start(
         creds, payload.game_id, payload.kind, user=user, ip=client_ip(request)
     )
@@ -73,5 +88,6 @@ async def restore_job(
     user: CurrentUserOptional,
     token: TokenHeader = None,
 ) -> CardJobView:
-    creds = resolve_credentials(payload, user)
-    return await CardService(db).restore(job_id, token, user, creds)
+    service = CardService(db)
+    creds = await service.restore_credentials(job_id, token, user, payload)
+    return await service.restore(job_id, token, user, creds)

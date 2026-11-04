@@ -69,7 +69,7 @@ async def test_pool_registers_blaze_account_and_clears_it(monkeypatch) -> None:
         def __init__(self, db: Any) -> None:
             pass
 
-        async def pick_available(self, *, avoid: Any = ()) -> EACredentials:
+        async def pick_available(self, *, avoid: Any = (), exclude: Any = ()) -> EACredentials:
             avoided.append(set(avoid))
             return creds
 
@@ -118,7 +118,7 @@ async def test_gateway_client_avoids_current_blaze_account(monkeypatch) -> None:
         def __init__(self, db: Any) -> None:
             pass
 
-        async def pick_available(self, *, avoid: Any = ()) -> EACredentials:
+        async def pick_available(self, *, avoid: Any = (), exclude: Any = ()) -> EACredentials:
             asked.append(tuple(avoid))
             raise _StopError
 
@@ -142,7 +142,7 @@ async def test_gateway_client_registers_account_while_held(monkeypatch) -> None:
         def __init__(self, db: Any) -> None:
             pass
 
-        async def pick_available(self, *, avoid: Any = ()) -> EACredentials:
+        async def pick_available(self, *, avoid: Any = (), exclude: Any = ()) -> EACredentials:
             return creds
 
         async def mark_used(self, persona_id: int) -> None:
@@ -192,7 +192,7 @@ class _Pool:
             def __init__(self, db: Any) -> None:
                 pass
 
-            async def pick_available(self, *, avoid: Any = ()) -> EACredentials:
+            async def pick_available(self, *, avoid: Any = (), exclude: Any = ()) -> EACredentials:
                 avoid = set(avoid)
                 pool.calls.append(avoid)
                 if len(pool.calls) == 1:
@@ -320,3 +320,42 @@ async def test_blaze_pick_failure_or_cancelled_login_leaves_no_registration(monk
         assert len(pool.calls) == calls + 1
     finally:
         ea_account_service.set_blaze_persona(None)
+
+
+async def test_pool_skips_reserved_account_and_releases_it(monkeypatch) -> None:
+    accounts = {
+        pid: EACredentials(persona_id=pid, display_name=None, remid="r", sid="s") for pid in (1, 2)
+    }
+    excluded: list[set[int]] = []
+
+    class _Service:
+        def __init__(self, db: Any) -> None:
+            pass
+
+        async def pick_available(self, *, avoid: Any = (), exclude: Any = ()) -> EACredentials:
+            excluded.append(set(exclude))
+            return next(c for pid, c in accounts.items() if pid not in exclude)
+
+    async def login_ok(self: Any, c: EACredentials) -> _Socket:
+        return _Socket()
+
+    monkeypatch.setattr(blaze_service, "EAAccountService", _Service)
+    monkeypatch.setattr(_BlazeConnectionPool, "_connect_and_login", login_ok)
+    pool = _BlazeConnectionPool()
+    try:
+        await pool.get_socket(None)  # type: ignore[arg-type]
+        assert ea_account_service.blaze_persona() == 1
+        # 别的号被借走时不受影响
+        await pool.release_account(2)
+        assert ea_account_service.blaze_persona() == 1
+        # 卡行动借走 1 号：立刻断开、放弃粘住的凭据，下次查询换 2 号
+        assert ea_account_service.reserve_persona(1)
+        assert not ea_account_service.reserve_persona(1)
+        await pool.release_account(1)
+        assert ea_account_service.blaze_persona() is None
+        await pool.get_socket(None)  # type: ignore[arg-type]
+        assert ea_account_service.blaze_persona() == 2
+        assert excluded[-1] == {1}
+    finally:
+        ea_account_service.release_persona(1)
+        await pool.close_all()

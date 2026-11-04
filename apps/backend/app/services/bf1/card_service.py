@@ -161,10 +161,13 @@ async def resolve_pool_credentials(
     if persona_id is None:
         candidates = await pool_admin_personas(db, game_id, fresh=True)
         if not candidates:
-            busy = reserved_personas() & await server_admin_ids(db, game_id)
+            admin_ids = await server_admin_ids(db, game_id)
+            if not admin_ids:
+                # 服务器重启会换 gameId，旧的查不到
+                raise ValidationError("查不到这台服的管理员名单，可能已关服或 gameId 变了")
             raise ValidationError(
                 "能管理这台服的平台账号正在给别的服卡行动，请稍后再试"
-                if busy
+                if reserved_personas() & admin_ids
                 else "平台账号都不是这台服的服主或管理员"
             )
         persona_id = candidates[0]

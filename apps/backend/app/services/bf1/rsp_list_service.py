@@ -15,7 +15,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from loguru import logger
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.errors import EAApiError
@@ -121,25 +121,35 @@ async def refresh_stale_lists(
     """
     now = datetime.now(UTC)
     current: dict[int, tuple[int, str]] = {}
+    seen: dict[int, set[int]] = {}
     for s in summaries:
         gid = int(s.game_id or 0)
         sid = server_ids.get(gid)
         if sid and s.name:
             current[sid] = (gid, s.name)
-    refreshed = (
-        {
-            sid: _aware(ts)
-            for sid, ts in (
-                await db.execute(
-                    select(Bf1RspServer.server_id, Bf1RspServer.refreshed_at).where(
-                        Bf1RspServer.server_id.in_(list(current))
-                    )
-                )
-            ).all()
-        }
+            seen.setdefault(sid, set()).add(gid)
+    stored = (
+        (
+            await db.execute(
+                select(
+                    Bf1RspServer.server_id, Bf1RspServer.refreshed_at, Bf1RspServer.game_id
+                ).where(Bf1RspServer.server_id.in_(list(current)))
+            )
+        ).all()
         if current
-        else {}
+        else []
     )
+    refreshed = {sid: _aware(ts) for sid, ts, _ in stored}
+    # 服务器重启会换 gameId：名单不用重拉，先把记的 gameId 跟上，按名单列出的服才点得进去。
+    # 重启那一分钟新旧两个实例可能同时在快照里，分不清哪个是新的就不动
+    for sid, _, gid in stored:
+        gids = seen[sid]
+        if gid not in gids and len(gids) == 1:
+            await db.execute(
+                update(Bf1RspServer)
+                .where(Bf1RspServer.server_id == sid)
+                .values(game_id=next(iter(gids)))
+            )
     epoch = datetime.min.replace(tzinfo=UTC)
     due = sorted(
         (sid for sid in current if now - refreshed.get(sid, epoch) >= REFRESH_INTERVAL),

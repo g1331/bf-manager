@@ -160,3 +160,45 @@ async def test_managed_servers_by_personas(test_session, monkeypatch) -> None:
         (8, "admin", "B 服"),
     ]
     assert await list_managed_servers(test_session, [9]) == []
+
+
+async def test_refresh_follows_new_game_id_without_refetch(test_session, monkeypatch) -> None:
+    now = datetime.now(UTC)
+    test_session.add(Bf1RspServer(server_id=11, game_id=1, name="a", refreshed_at=now))
+    await test_session.commit()
+    asked: list[int] = []
+
+    async def fake_extras(self, gid):
+        asked.append(gid)
+
+    monkeypatch.setattr(BF1ServerService, "get_extras", fake_extras)
+    # 服务器重启换了 gameId：名单刚刷过不重拉，只把 gameId 改成新的
+    assert await refresh_stale_lists(test_session, [_s(7, "a")], {7: 11}) == 0
+    assert asked == []
+    srv = await test_session.get(Bf1RspServer, 11)
+    await test_session.refresh(srv)
+    assert srv.game_id == 7
+
+
+async def test_refresh_keeps_game_id_while_old_and_new_instances_overlap(
+    test_session, monkeypatch
+) -> None:
+    now = datetime.now(UTC)
+    # 解析 serverId 时已按新实例写成 7
+    test_session.add(Bf1RspServer(server_id=11, game_id=7, name="a", refreshed_at=now))
+    await test_session.commit()
+
+    async def fake_extras(self, gid):
+        return
+
+    monkeypatch.setattr(BF1ServerService, "get_extras", fake_extras)
+    # 重启那一分钟旧实例 1 还在快照里，排在新实例后面：不能改回旧的
+    await refresh_stale_lists(test_session, [_s(7, "a"), _s(1, "a")], {7: 11, 1: 11})
+    srv = await test_session.get(Bf1RspServer, 11)
+    await test_session.refresh(srv)
+    assert srv.game_id == 7
+    # sqlite 读回的是无时区时间，留在会话里会让清理过期服时的比较出错
+    test_session.expunge_all()
+    # 两个都不是记的那个时也分不清，先不动
+    await refresh_stale_lists(test_session, [_s(8, "a"), _s(9, "a")], {8: 11, 9: 11})
+    assert (await test_session.get(Bf1RspServer, 11)).game_id == 7

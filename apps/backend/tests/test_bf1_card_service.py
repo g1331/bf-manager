@@ -472,8 +472,10 @@ async def test_resolve_pool_credentials_checks_site_role(maker, monkeypatch, poo
         assert fresh
         return list(candidates)
 
+    admin_ids = {ADMIN}
+
     async def _admin_ids(db, game_id, *, fresh=False):
-        return frozenset({ADMIN})
+        return frozenset(admin_ids)
 
     monkeypatch.setattr(card_service, "ServerAuthzService", _Authz)
     monkeypatch.setattr(card_service, "pool_admin_personas", _pool_admins)
@@ -500,6 +502,11 @@ async def test_resolve_pool_credentials_checks_site_role(maker, monkeypatch, poo
         with pytest.raises(ForbiddenError, match="借用平台账号需要"):
             await card_service.resolve_pool_credentials(db, user, GAME_ID)
         roles["ok"] = True
+        # 服务器重启换了 gameId，旧的查不到名单
+        admin_ids.clear()
+        with pytest.raises(ValidationError, match="查不到这台服"):
+            await card_service.resolve_pool_credentials(db, user, GAME_ID)
+        admin_ids.add(ADMIN)
         with pytest.raises(ValidationError, match="都不是这台服的服主或管理员"):
             await card_service.resolve_pool_credentials(db, user, GAME_ID)
         from app.services import ea_account_service

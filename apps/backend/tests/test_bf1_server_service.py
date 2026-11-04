@@ -9,7 +9,12 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 from app.schemas.bf1.server import ServerLifecycle
-from app.services.bf1.server_service import _to_extras, _to_rotation, _to_summary
+from app.services.bf1.server_service import (
+    _to_extras,
+    _to_rotation,
+    _to_summary,
+    persisted_game_id_of,
+)
 
 
 def _make_search_item() -> dict:
@@ -283,6 +288,35 @@ def test_to_summary_official_flag_from_nested_server_info() -> None:
     # serverInfo 缺 serverType 时降为非官方，详情接口偶发缺字段不应误判官服
     del raw["serverInfo"]["serverType"]
     assert _to_summary(raw).is_official is False
+
+
+def test_to_summary_persisted_game_id_from_guid() -> None:
+    """详情接口的 serverInfo 只有 guid 没有 persistedGameId；前端靠它判断能否换图"""
+    raw = _make_full_detail()
+    assert "persistedGameId" not in raw["serverInfo"]
+    assert _to_summary(raw).persisted_game_id == "1a9f5032-0cc0-4c0a-a83b-f229463ea39e"
+
+
+def test_to_summary_persisted_game_id_none_when_missing() -> None:
+    raw = _make_full_detail()
+    del raw["serverInfo"]["guid"]
+    raw.pop("rspInfo", None)
+    assert _to_summary(raw).persisted_game_id is None
+
+
+def test_persisted_game_id_of_search_item_and_fallbacks() -> None:
+    # searchServers 的列表项没有 serverInfo 包裹，guid 就在服务器项上
+    assert persisted_game_id_of({"gameId": "123", "guid": "item-guid"}) == "item-guid"
+    # 只有 rspInfo.server 带值时用它兜底
+    detail = {"serverInfo": {"gameId": "1"}, "rspInfo": {"server": {"persistedGameId": "rsp"}}}
+    assert persisted_game_id_of(detail) == "rsp"
+    # 优先级：显式 persistedGameId > guid > rspInfo
+    detail["serverInfo"]["guid"] = "guid"
+    assert persisted_game_id_of(detail) == "guid"
+    detail["serverInfo"]["persistedGameId"] = "explicit"
+    assert persisted_game_id_of(detail) == "explicit"
+    # 空字符串不算有值
+    assert persisted_game_id_of({"serverInfo": {"guid": ""}}) is None
 
 
 def test_to_extras_full_payload() -> None:

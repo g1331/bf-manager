@@ -3,8 +3,8 @@
 /**
  * 「我的服务器」：当前登录用户有服管角色（自动识别的服主 / 管理员，或人工授权）的服务器列表。
  *
- * 列表来源是后端按服管角色枚举的 ServerMembership：当用户访问自己作为 EA 服主 / 管理员的服务器
- * 详情时，鉴权层会按 EA 名单识别并落库，此后该服即出现在本页。链接用末次解析到的 gameId 跳详情；
+ * 列表来源是后端按服管角色枚举的 ServerMembership、所在群挂的服，以及收录的私服名单里绑定账号是
+ * 服主 / 管理员的服（名单几小时刷新一次，只覆盖有人进过的服）。链接用末次解析到的 gameId 跳详情；
  * gameId 为空（尚未在线时识别）时不可点。与全量「服务器浏览器」分列两个子标签，避免在大列表里找自己的服。
  */
 
@@ -86,7 +86,7 @@ export default function MyServersPage() {
       ) : q.isError ? (
         <EmptyNote text="加载失败，请稍后重试。" />
       ) : items.length === 0 ? (
-        <EmptyNote text="暂无你管理的服务器。访问你作为服主 / 管理员的服务器详情后，会自动出现在这里。" />
+        <EmptyNote text="暂无你管理的服务器。访问你作为服主 / 管理员的服务器详情后，也会出现在这里。" />
       ) : (
         <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((s) => (

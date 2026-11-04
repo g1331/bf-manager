@@ -65,6 +65,7 @@ def _server_item(v: gss.GroupServerView) -> GroupServerItem:
         status=gs.status,
         status_reason=gs.status_reason,
         executor_problem=gs.executor_problem,
+        platform_fallback=v.platform_fallback,
         last_verified_at=gs.last_verified_at,
         created_at=gs.created_at,
     )

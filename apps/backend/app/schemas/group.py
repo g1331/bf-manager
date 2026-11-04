@@ -171,8 +171,10 @@ class GroupServerItem(BaseModel):
     # active：群成员在这台服上有权限；revoked：绑定人已不是服主或管理员，权限失效
     status: GroupServerStatus
     status_reason: str | None
-    # 执行账号的问题（没指定、登录失败、不是管理员），不影响权限，但服管操作会失败
+    # 执行账号的问题（没指定、登录失败、不是管理员），不影响权限
     executor_problem: str | None
+    # 本站号池里有这台服的管理员：没指定群服务账号或它出问题时，服管操作由平台账号执行
+    platform_fallback: bool = False
     last_verified_at: datetime | None
     created_at: datetime
 

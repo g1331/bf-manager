@@ -49,6 +49,23 @@ from app.services.bf1.server_filters import (
 from app.services.bf1.server_snapshot_cache import read_server_snapshot
 
 
+def persisted_game_id_of(raw: dict[str, Any]) -> str | None:
+    """EA 服务器详情里的 persistedGameId（RSP.chooseLevel 用它寻址）。
+
+    getFullServerDetails 的 serverInfo 不带 persistedGameId 字段，只在 guid 里给同一个值；
+    rspInfo.server.persistedGameId 也是它。
+    """
+    server_info = raw.get("serverInfo") or raw
+    rsp_server = (raw.get("rspInfo") or {}).get("server") or {}
+    return (
+        server_info.get("persistedGameId")
+        or raw.get("persistedGameId")
+        or server_info.get("guid")
+        or rsp_server.get("persistedGameId")
+        or None
+    )
+
+
 def _to_summary(raw: dict[str, Any]) -> ServerSummary:
     server_info = raw.get("serverInfo") or raw
     map_name = server_info.get("mapName") or raw.get("mapName")
@@ -81,7 +98,7 @@ def _to_summary(raw: dict[str, Any]) -> ServerSummary:
     return ServerSummary(
         server_id=int(server_info.get("serverId") or raw.get("serverId") or 0),
         game_id=int(gid) if (gid := server_info.get("gameId")) else None,
-        persisted_game_id=server_info.get("persistedGameId") or raw.get("persistedGameId"),
+        persisted_game_id=persisted_game_id_of(raw),
         name=server_info.get("name") or raw.get("name") or "",
         map_name=map_name,
         map_display_name=translate_map_name(map_name),
@@ -236,9 +253,7 @@ def _to_extras(raw: dict[str, Any]) -> ServerExtras:
         server_id = int(server_id_raw) if server_id_raw is not None else None
     except (TypeError, ValueError):
         server_id = None
-    persisted_game_id = (
-        server_info.get("persistedGameId") or raw.get("persistedGameId") or server_info.get("guid")
-    )
+    persisted_game_id = persisted_game_id_of(raw)
 
     bookmark_count_raw = server_info.get("serverBookmarkCount")
     try:

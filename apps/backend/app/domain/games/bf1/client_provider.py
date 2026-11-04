@@ -1,7 +1,7 @@
 """BF1 客户端获取策略（凭据来源抽象）
 
 服管操作统一用 GroupFirstBF1ClientProvider：群组服务账号 → 发起者 binding 里留存的老凭据 →
-都不行就报错。号池账号不是用户服务器的管理员，不再给服管操作兜底。
+号池里恰好是这台服服主或管理员的账号 → 都不行就报错。号池里不是本服管理员的账号不拿来兜底。
 
 封装「按何种策略选择 EA 凭据」的决策。BindingFirstBF1ClientProvider 优先用发起者
 自己的 EA binding 凭据（EA 后端看到的操作者即 admin 本人），不可用时降级到全局
@@ -13,7 +13,8 @@ provider.acquire() 返回一个 async context manager，进入时构造已登录
 退出时清理资源（http session、池标记等）。若 provider 判断无可用凭据源，
 应在 acquire 进入阶段抛出 EaBindingRequiredError。
 
-provider 可选暴露 ``credential_source`` 属性（"group_account" / "binding" / "pool"），在 acquire
+provider 可选暴露 ``credential_source`` 属性（"group_account" / "binding" / "pool_admin" /
+"pool"），在 acquire
 进入阶段写入本次实际使用的凭据来源，供 service 层写进审计 payload 排查降级。
 该属性不属于 Protocol 约定，消费方必须用 getattr 软读取。
 """
@@ -21,6 +22,7 @@ provider 可选暴露 ``credential_source`` 属性（"group_account" / "binding"
 from __future__ import annotations
 
 import sys
+import time
 from collections.abc import AsyncIterator
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from typing import Any, Protocol, cast, runtime_checkable
@@ -37,8 +39,46 @@ from app.services.bf1.gateway_factory import (
     get_bf1_client,
     get_bf1_client_for_binding,
     get_bf1_client_for_group_account,
+    get_bf1_client_for_pool_account,
 )
+from app.services.bf1.server_service import BF1ServerService
+from app.services.ea_account_service import EAAccountService, blaze_persona, reserved_personas
 from app.services.ea_binding_service import EaBindingService
+
+# 服主 + 管理员名单的缓存：自动换图、计时 VIP 这些后台任务每轮都要挑执行账号，不缓存的话
+# 没有群服务账号的服每轮都多一次 getFullServerDetails
+_ADMIN_IDS_TTL_SECONDS = 120
+_admin_ids_cache: dict[int, tuple[float, frozenset[int]]] = {}
+
+
+async def server_admin_ids(
+    db: AsyncSession, game_id: int, *, fresh: bool = False
+) -> frozenset[int]:
+    """这台服 EA 侧的服主和管理员 persona_id。不是 RSP 私服或查不到时为空；EA 暂时不可用时抛 EAApiError"""
+    now = time.monotonic()
+    cached = _admin_ids_cache.get(game_id)
+    if not fresh and cached is not None and cached[0] > now:
+        return cached[1]
+    info = await BF1ServerService(db).get_admin_identity(game_id)
+    ids: frozenset[int] = frozenset()
+    if info is not None:
+        owner_pid, admin_pids, _, _ = info
+        ids = frozenset([*admin_pids, *([owner_pid] if owner_pid else [])])
+    _admin_ids_cache[game_id] = (now + _ADMIN_IDS_TTL_SECONDS, ids)
+    return ids
+
+
+async def pool_admin_personas(db: AsyncSession, game_id: int, *, fresh: bool = False) -> list[int]:
+    """号池里是这台服服主或管理员的启用账号。卡行动借走的号不算；Blaze 正在用的排最后，
+    它的 Gateway 登录态可能没缓存，完整登录会把生产 Blaze 会话挤掉"""
+    reserved = reserved_personas()
+    usable = [pid for pid in await EAAccountService(db).enabled_personas() if pid not in reserved]
+    if not usable:
+        return []
+    admin_ids = await server_admin_ids(db, game_id, fresh=fresh)
+    blaze = blaze_persona()
+    pids = [pid for pid in usable if pid in admin_ids]
+    return sorted(pids, key=lambda pid: pid == blaze)
 
 
 @runtime_checkable
@@ -229,7 +269,8 @@ class GroupFirstBF1ClientProvider:
     1. 发起者所在、且挂着这台服的群给这台服指定的服务账号（可能有多个群，正常的排前面），
        逐个登录并探测是不是本服 RSP 管理员；
     2. 发起者自己的 binding 凭据（只有 remid 时代留下来的老凭据才有）；
-    3. pool_fallback=True 时走号池（只给不需要管理员身份的调用方留着），否则抛
+    3. 号池里恰好是这台服服主或管理员的账号（按 EA 公开的管理员名单认，不逐个登录探测）；
+    4. pool_fallback=True 时走号池（只给不需要管理员身份的调用方留着），否则抛
        ExecutorUnavailableError。
 
     挑选全部发生在 acquire 进入阶段；client 交给调用方之后出的错原样抛出，不换账号重试
@@ -255,10 +296,13 @@ class GroupFirstBF1ClientProvider:
         self.executor_persona_id: int | None = None
         # 探测时遇到的暂时性故障：没有账号可用时据此报「EA 暂时不可用」而不是「没有管理员账号」
         self._probe_error: EAGatewayError | None = None
+        # 查本服管理员名单时 EA 暂时不可用，用途同上
+        self._pool_error: EAApiError | None = None
 
     @asynccontextmanager
     async def acquire(self) -> AsyncIterator[BF1GatewayClient]:
         self._probe_error = None
+        self._pool_error = None
         entered = await self._try_group_accounts()
         if entered is not None:
             self.credential_source = "group_account"
@@ -272,6 +316,10 @@ class GroupFirstBF1ClientProvider:
                 cm, client = via_binding
                 entered = (cm, client, int(client.pid or 0))
                 self.credential_source = "binding"
+        if entered is None:
+            entered = await self._try_pool_admin_accounts()
+            if entered is not None:
+                self.credential_source = "pool_admin"
         if entered is not None:
             cm, client, persona_id = entered
             self.executor_persona_id = persona_id or None
@@ -286,6 +334,8 @@ class GroupFirstBF1ClientProvider:
         if not self.pool_fallback:
             if self._probe_error is not None:
                 raise _probe_unavailable(self._probe_error)
+            if self._pool_error is not None:
+                raise self._pool_error
             raise ExecutorUnavailableError()
         self.credential_source = "pool"
         async with get_bf1_client(self.db) as client:
@@ -334,6 +384,30 @@ class GroupFirstBF1ClientProvider:
                 await cm.__aexit__(*sys.exc_info())
                 raise
             return cm, client, account.persona_id
+        return None
+
+    async def _try_pool_admin_accounts(
+        self,
+    ) -> tuple[AbstractAsyncContextManager[BF1GatewayClient], BF1GatewayClient, int] | None:
+        try:
+            candidates = await pool_admin_personas(self.db, self.game_id)
+        except EAApiError as exc:
+            logger.warning("查服务器 game_id={} 的管理员名单失败: {!r}", self.game_id, exc)
+            if exc.retryable:
+                self._pool_error = exc
+            return None
+        for persona_id in candidates:
+            cm = get_bf1_client_for_pool_account(self.db, persona_id)
+            try:
+                client = await cm.__aenter__()
+            except Exception as exc:
+                logger.warning("号池账号 {} 登录异常: {!r}", persona_id, exc)
+                continue
+            if not client.access_token:
+                logger.warning("号池账号 {} 登录失败，换下一个", persona_id)
+                await cm.__aexit__(None, None, None)
+                continue
+            return cm, client, persona_id
         return None
 
     async def _record_failure(self, account: GroupEaAccount, error: str) -> None:

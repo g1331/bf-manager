@@ -138,3 +138,25 @@ async def test_detail_writes_back_but_throttled(test_session) -> None:
     # 真官服（无服主）不记
     await remember_detail_lists(test_session, 3, "官服", ServerExtras(server_id=None))
     assert await test_session.get(Bf1RspServer, 3) is None
+
+
+async def test_managed_servers_by_personas(test_session, monkeypatch) -> None:
+    from app.services.bf1.rsp_list_service import list_managed_servers
+
+    monkeypatch.setattr(rsp_list_service, "read_server_snapshot", _no_snapshot)
+    await store_lists(test_session, 11, 1, "B 服", _extras(11, owner=7, admins=[8], vips=[9]))
+    await store_lists(test_session, 22, 2, "A 服", _extras(22, owner=8, admins=[7]))
+    await test_session.commit()
+
+    assert await list_managed_servers(test_session, []) == []
+    # VIP 不算；按服名排，同一台服服主在前
+    got = [
+        (pid, role, s.name) for pid, role, s in await list_managed_servers(test_session, [7, 8, 9])
+    ]
+    assert got == [
+        (8, "owner", "A 服"),
+        (7, "admin", "A 服"),
+        (7, "owner", "B 服"),
+        (8, "admin", "B 服"),
+    ]
+    assert await list_managed_servers(test_session, [9]) == []

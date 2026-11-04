@@ -1,5 +1,8 @@
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { gadgetInfo, mapInfo, modeInfo, vehicleInfo, weaponInfo } from "./catalog";
+import { GADGETS, MAPS, MODES, VEHICLES, WEAPONS } from "./catalog-data";
 import { bf6PlayerHref, parsePlatform, platformLabel } from "./player-link";
 
 describe("BF6 图鉴", () => {
@@ -35,6 +38,20 @@ describe("BF6 图鉴", () => {
     expect(modeInfo("strike").name).toBe("打击点");
     expect(modeInfo("rr_solo").art).toBe("/bf6/mode-art/granite.webp");
     expect(modeInfo("graniteSolo").art).toBe("/bf6/mode-art/granite.webp");
+  });
+
+  it("标了有图的条目都能在 public/bf6 找到文件", () => {
+    const urls = [
+      ...Object.keys(WEAPONS).map((id) => weaponInfo(id).img),
+      ...Object.keys(VEHICLES).map((id) => vehicleInfo(id).img),
+      ...Object.keys(GADGETS).map((id) => gadgetInfo(id).img),
+      ...Object.keys(MAPS).map((id) => mapInfo(id).img),
+      ...Object.keys(MODES).flatMap((id) => [modeInfo(id).icon, modeInfo(id).art]),
+    ].filter((url): url is string => url !== null);
+    const missing = urls.filter(
+      (url) => !existsSync(fileURLToPath(new URL(`../../public${url}`, import.meta.url))),
+    );
+    expect(missing).toEqual([]);
   });
 
   it("水面载具单独分组", () => {

@@ -100,6 +100,7 @@ class EaBindingService:
         )
         if existing is not None:
             if existing.user_id == user.id:
+                existing.ea_user_id = ea_user_id or existing.ea_user_id
                 existing.display_name = display_name or existing.display_name
                 existing.avatar_url = avatar_url or existing.avatar_url
                 existing.last_verified_at = now

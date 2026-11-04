@@ -683,6 +683,98 @@ class _BF1GatewayBase:
         logger.success(f"BF1账号{self.pid}desktop_access_token 已更新，有效期 {expires_in}s")
         return token
 
+    async def _sal_post(
+        self, payload: dict[str, Any], *, op: str, action: str
+    ) -> dict[str, Any] | EAGatewayError:
+        """向 EA App 的 SAL GraphQL 发一次请求，返回解析后的 JSON；action 是失败文案的前缀"""
+        token = await self._ensure_desktop_token()
+        if not token:
+            return EAGatewayError("EA Desktop 通道未获取到 access_token", kind="auth")
+        url = "https://service-aggregation-layer.juno.ea.com/graphql"
+        header = {
+            "Host": "service-aggregation-layer.juno.ea.com",
+            "accept": "*/*",
+            "authorization": f"Bearer {token}",
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) QtWebEngine/5.15.2 Chrome/83.0.4103.122 Safari/537.36"
+            ),
+            "content-type": "application/json",
+            "Origin": "https://pc.ea.com",
+            "Referer": "https://pc.ea.com/zh-hans",
+            "Accept-Encoding": "gzip, deflate, br",
+        }
+        ea_metrics.count("sal", op)
+        try:
+            async with self.http_session.post(
+                url=url,
+                headers=header,
+                data=json.dumps(payload),
+                timeout=aiohttp.ClientTimeout(total=15),
+                proxy=_get_proxy(),
+            ) as response:
+                body_text = await response.text()
+                if response.status == 401:
+                    # token 可能被 EA 提前作废，清空缓存以便下一次重新获取
+                    self.desktop_access_token = None
+                    self.desktop_access_token_expires_at = 0.0
+                    logger.warning(
+                        f"SAL GraphQL 返回 401，已重置 desktop_access_token: {body_text[:200]}"
+                    )
+                    return EAGatewayError("EA Desktop token 已失效", kind="auth")
+                if response.status != 200:
+                    logger.error(
+                        f"SAL GraphQL 请求失败 status={response.status} body={body_text[:300]}"
+                    )
+                    return EAGatewayError(
+                        f"{action}失败: HTTP {response.status}", kind="bad_response"
+                    )
+                data = json.loads(body_text)
+        except asyncio.exceptions.TimeoutError:
+            return EAGatewayError("网络超时!", kind="network")
+        except aiohttp.ClientError as e:
+            logger.warning(f"{action}连接失败: {type(e).__name__}: {e}")
+            return EAGatewayError(f"{action}失败: 连接 EA 失败", kind="network")
+        except Exception as e:
+            logger.exception(f"{action}异常: {e}")
+            return EAGatewayError(f"{action}失败: 处理返回数据出错", kind="internal")
+        if not isinstance(data, dict):
+            return EAGatewayError(f"{action}失败: 返回格式不对", kind="bad_response")
+        return data
+
+    async def getPlayerByPd(self, pd: int) -> GatewayResult:
+        """按 EA 账号 ID（pd，即 nucleusId）查 EA 账号的昵称和头像，各游戏通用。
+
+        返回 ``{"pd": int, "personaId": int, "displayName": str, "avatar": str | None}``；
+        查无此人时 EA 回 null（或 GraphQL 错误），按 ``ea`` 失败返回。
+        """
+        query = (
+            f"query {{ playerByPd(pd: {int(pd)}) {{ "
+            "pd psd displayName avatar { medium { path } } } }"
+        )
+        data = await self._sal_post(
+            {"query": query},
+            op="getPlayerByPd",
+            action="查询 EA 账号",
+        )
+        if isinstance(data, EAGatewayError):
+            return data
+        player = (data.get("data") or {}).get("playerByPd")
+        if data.get("errors") or not isinstance(player, dict):
+            errors = str(data["errors"])[:200] if data.get("errors") else None
+            return EAGatewayError(
+                f"查询 EA 账号失败: {errors}" if errors else f"查无此 EA 账号: {pd}",
+                kind="ea",
+                ea_message=errors,
+            )
+        avatar = ((player.get("avatar") or {}).get("medium") or {}).get("path")
+        return {
+            "pd": int(player.get("pd") or pd),
+            "personaId": int(player["psd"]) if player.get("psd") else None,
+            "displayName": player.get("displayName"),
+            "avatar": avatar or None,
+        }
+
     async def getPersonasByName(self, player_name: str) -> GatewayResult:
         """根据玩家昵称解析 persona 基本信息。
 
@@ -704,10 +796,6 @@ class _BF1GatewayBase:
             }
         无匹配时 personas 为空列表；请求失败返回字符串错误描述。
         """
-        token = await self._ensure_desktop_token()
-        if not token:
-            return EAGatewayError("EA Desktop 通道未获取到 access_token", kind="auth")
-
         graphql_query = (
             "query SearchPlayer($searchText: String!, $pageNumber: Int!, $pageSize: Int!) {\n"
             "  players(searchText: $searchText, paging: {pageNumber: $pageNumber, pageSize: $pageSize}) {\n"
@@ -780,55 +868,9 @@ class _BF1GatewayBase:
             },
             "query": graphql_query,
         }
-        url = "https://service-aggregation-layer.juno.ea.com/graphql"
-        header = {
-            "Host": "service-aggregation-layer.juno.ea.com",
-            "accept": "*/*",
-            "authorization": f"Bearer {token}",
-            "User-Agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                "(KHTML, like Gecko) QtWebEngine/5.15.2 Chrome/83.0.4103.122 Safari/537.36"
-            ),
-            "content-type": "application/json",
-            "Origin": "https://pc.ea.com",
-            "Referer": "https://pc.ea.com/zh-hans",
-            "Accept-Encoding": "gzip, deflate, br",
-        }
-        ea_metrics.count("sal", "getPersonasByName")
-        try:
-            async with self.http_session.post(
-                url=url,
-                headers=header,
-                data=json.dumps(payload),
-                timeout=aiohttp.ClientTimeout(total=15),
-                proxy=_get_proxy(),
-            ) as response:
-                body_text = await response.text()
-                if response.status == 401:
-                    # token 可能被 EA 提前作废，清空缓存以便下一次重新获取
-                    self.desktop_access_token = None
-                    self.desktop_access_token_expires_at = 0.0
-                    logger.warning(
-                        f"SAL GraphQL 返回 401，已重置 desktop_access_token: {body_text[:200]}"
-                    )
-                    return EAGatewayError("EA Desktop token 已失效", kind="auth")
-                if response.status != 200:
-                    logger.error(
-                        f"SAL GraphQL 请求失败 status={response.status} body={body_text[:300]}"
-                    )
-                    return EAGatewayError(
-                        f"按昵称查询失败: HTTP {response.status}", kind="bad_response"
-                    )
-                data = json.loads(body_text)
-        except asyncio.exceptions.TimeoutError:
-            return EAGatewayError("网络超时!", kind="network")
-        except aiohttp.ClientError as e:
-            logger.warning(f"按昵称查询连接失败: {type(e).__name__}: {e}")
-            return EAGatewayError("按昵称查询失败: 连接 EA 失败", kind="network")
-        except Exception as e:
-            logger.exception(f"按昵称查询玩家异常: {e}")
-            return EAGatewayError("按昵称查询失败: 处理返回数据出错", kind="internal")
-
+        data = await self._sal_post(payload, op="getPersonasByName", action="按昵称查询")
+        if isinstance(data, EAGatewayError):
+            return data
         if isinstance(data, dict) and data.get("errors"):
             logger.warning(f"按昵称查询返回错误: {data['errors']}")
             return {"personas": []}

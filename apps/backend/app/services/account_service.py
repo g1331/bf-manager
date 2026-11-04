@@ -102,6 +102,7 @@ class EaEmailMatch:
     persona_id: int
     ea_user_id: int | None
     display_name: str
+    avatar_url: str | None = None
 
 
 async def lookup_ea_by_email(db: AsyncSession, email: str) -> EaEmailMatch | None:
@@ -128,6 +129,7 @@ async def lookup_ea_by_email(db: AsyncSession, email: str) -> EaEmailMatch | Non
         persona_id=int(p["personaId"]),
         ea_user_id=int(p["pidId"]) if p.get("pidId") else None,
         display_name=str(p.get("displayName") or ""),
+        avatar_url=p.get("avatar") or None,
     )
 
 
@@ -550,6 +552,7 @@ async def _build_register_mail(  # noqa: PLR0911 按情形逐个返回比嵌套�
                         "persona_id": match.persona_id,
                         "ea_user_id": match.ea_user_id,
                         "display_name": match.display_name,
+                        "avatar_url": match.avatar_url,
                         "group_invite_id": group_invite_id,
                     },
                     ip=ip,
@@ -589,6 +592,7 @@ async def _build_register_mail(  # noqa: PLR0911 按情形逐个返回比嵌套�
                 "persona_id": match.persona_id,
                 "ea_user_id": match.ea_user_id,
                 "display_name": match.display_name,
+                "avatar_url": match.avatar_url,
                 "invite_id": None if group_invite_id else invite_id,
                 "group_invite_id": group_invite_id,
             },
@@ -834,6 +838,7 @@ async def _finish_register(db: AsyncSession, row: EmailVerification, password: s
                 persona_id=persona_id,
                 ea_user_id=payload.get("ea_user_id"),
                 display_name=payload.get("display_name"),
+                avatar_url=payload.get("avatar_url"),
                 verified_via="email",
                 is_primary=True,
                 is_frozen=False,
@@ -872,6 +877,7 @@ async def _finish_claim(db: AsyncSession, row: EmailVerification, password: str)
             raise AccountError("LINK_INVALID", "链接无效或已过期，请重新申请", 404)
         binding.verified_via = "email"
         binding.ea_user_id = payload.get("ea_user_id") or binding.ea_user_id
+        binding.avatar_url = payload.get("avatar_url") or binding.avatar_url
     now = _now()
     user.email = row.email
     user.email_verified_at = now

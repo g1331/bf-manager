@@ -83,9 +83,26 @@ def jwt_claims(token: str) -> dict[str, Any]:
     return data if isinstance(data, dict) else {}
 
 
+# 时间戳和有效期的合理范围：比这更大的值只能是上游出错
+_MAX_TIMESTAMP = 2**33
+_MAX_EXPIRES_IN = 366 * 86400
+
+
+def bounded_int(value: object, upper: int) -> int | None:
+    """JSON 里的整数（或整值浮点），在 [0, upper] 内才返回；bool、小数、inf、nan 都不算。"""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, float):
+        if not value.is_integer():  # inf / nan 也不是整值
+            return None
+        value = int(value)
+    if isinstance(value, int) and 0 <= value <= upper:
+        return value
+    return None
+
+
 def jwt_exp(token: str) -> int | None:
-    exp = jwt_claims(token).get("exp")
-    return int(exp) if isinstance(exp, int | float) else None
+    return bounded_int(jwt_claims(token).get("exp"), _MAX_TIMESTAMP)
 
 
 def _parse_grant(response: httpx.Response, refresh_token: str, now: int) -> TokenGrant:
@@ -101,10 +118,9 @@ def _parse_grant(response: httpx.Response, refresh_token: str, now: int) -> Toke
     new_refresh = payload.get("refresh_token") or refresh_token
     if not isinstance(new_refresh, str):
         raise Bf6Error("EA 换 token 的响应里 refresh_token 不是字符串")
-    try:
-        expires_in = int(payload.get("expires_in") or 0)
-    except (TypeError, ValueError) as e:
-        raise Bf6Error("EA 换 token 的响应里 expires_in 不是数字") from e
+    expires_in = bounded_int(payload.get("expires_in", 0), _MAX_EXPIRES_IN)
+    if expires_in is None:
+        raise Bf6Error("EA 换 token 的响应里 expires_in 不是合理的秒数")
     return TokenGrant(
         access_token=access,
         access_expires_at=jwt_exp(access) or now + expires_in,

@@ -15,7 +15,7 @@ from urllib.parse import quote
 
 import httpx
 
-from app.domain.games.bf6.client import Bf6Error
+from app.domain.games.bf6.client import Bf6Error, bounded_int
 
 DROP_BASE = "https://drop-api.ea.com"
 GAME_SLUG = "battlefield-6"
@@ -120,10 +120,14 @@ async def lookup(
     user_id = record.get("userId")
     if not user_id:
         return None
-    try:
-        nucleus_id = int(user_id)
-    except (TypeError, ValueError) as e:
-        raise Bf6Error("查玩家的响应里 userId 不是数字") from e
+    # 正常是十进制数字串；数字类型也接受，但必须是 64 位以内的正整数
+    nucleus_id = (
+        int(user_id)
+        if isinstance(user_id, str) and user_id.isascii() and user_id.isdigit()
+        else bounded_int(user_id, 2**63 - 1)
+    )
+    if not nucleus_id or nucleus_id >= 2**63:
+        raise Bf6Error("查玩家的响应里 userId 不是合法的 ID")
     avatar = record.get("userAvatar")
     return ResolvedPlayer(
         nucleus_id=nucleus_id,

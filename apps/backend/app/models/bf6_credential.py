@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String, Text
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base, TimestampMixin
@@ -31,3 +31,5 @@ class Bf6Credential(Base, TimestampMixin):
     last_error: Mapped[str | None] = mapped_column(String(255))
     last_error_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     updated_by: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    # 每写入一次新 token 加一。写库失败后补写时核对它，过期的 token 不能盖掉后来写进去的
+    generation: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")

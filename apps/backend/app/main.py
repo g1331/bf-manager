@@ -8,6 +8,8 @@ from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, Response
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from loguru import logger
@@ -171,6 +173,17 @@ def create_app() -> FastAPI:
             },
             headers=exc.headers,
         )
+
+    # 参数校验失败：保持 FastAPI 默认的 {detail: [...]} 结构，但去掉 input——
+    # 它会把提交的原文（密码、token 等）带回响应
+    @app.exception_handler(RequestValidationError)
+    async def _validation_error_handler(
+        request: Request, exc: RequestValidationError
+    ) -> JSONResponse:
+        errors = [
+            {k: v for k, v in err.items() if k not in ("input", "url")} for err in exc.errors()
+        ]
+        return JSONResponse(status_code=422, content={"detail": jsonable_encoder(errors)})
 
     @app.exception_handler(StarletteHTTPException)
     async def _http_error_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:

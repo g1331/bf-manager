@@ -39,16 +39,23 @@ def _rt(exp_in: int = 9 * 86400, azp: str = bf6.CLIENT_ID) -> str:
 
 
 class FakeEA:
-    """替身 /connect/token：记录调用参数，每次返回新的 access / refresh token。"""
+    """替身 /connect/token：记录调用参数，每次返回新的 access / refresh token。
+
+    和真的一样，refresh token 只能用一次，再拿用过的去换会被拒。
+    """
 
     def __init__(self) -> None:
         self.calls: list[tuple[str, str]] = []
         self.error: bf6.Bf6Error | None = None
+        self.used: set[str] = set()
 
     async def __call__(self, client_secret: str, refresh_token: str, *, now: int) -> bf6.TokenGrant:
         self.calls.append((client_secret, refresh_token))
         if self.error:
             raise self.error
+        if refresh_token in self.used:
+            raise bf6.Bf6CredentialError("refresh token 已失效或已被轮换（invalid_grant）")
+        self.used.add(refresh_token)
         n = len(self.calls)
         return bf6.TokenGrant(
             access_token=f"access-{n}",
@@ -56,6 +63,34 @@ class FakeEA:
             refresh_token=f"rotated-{n}",
             refresh_expires_at=now + 9 * 86400,
         )
+
+
+class FakeCache:
+    def __init__(self) -> None:
+        self.store: dict[str, Any] = {}
+
+    async def get(self, key: str) -> Any:
+        return self.store.get(key)
+
+    async def set(self, key: str, value: Any, ttl: int | None = None) -> None:
+        self.store[key] = value
+
+    async def delete(self, *keys: str) -> int:
+        return sum(self.store.pop(k, None) is not None for k in keys)
+
+
+@pytest.fixture(autouse=True)
+def stash(monkeypatch: pytest.MonkeyPatch) -> FakeCache:
+    """凭据服务存待补写 token 用的 Redis，换成内存；每个用例从干净的进程状态开始。"""
+    cache = FakeCache()
+
+    async def get_cache() -> FakeCache:
+        return cache
+
+    monkeypatch.setattr(credential_service, "get_cache", get_cache)
+    monkeypatch.setattr(credential_service, "_unsaved", None)
+    monkeypatch.setattr(credential_service, "_refreshing", None)
+    return cache
 
 
 @pytest.fixture
@@ -363,6 +398,15 @@ async def test_invalid_input_is_not_echoed(admin, fake_ea: FakeEA) -> None:
         resp = await client.put(URL, json=body)
         assert resp.status_code == 400
         assert "SENSITIVE" not in resp.text
+    # 类型不对走的是参数校验（422），同样不能带回原文
+    for body in (
+        {"refresh_token": ["SENSITIVE_TOKEN"], "client_secret": {"secret": "SENSITIVE_SECRET"}},
+        ["SENSITIVE_TOKEN"],
+    ):
+        resp = await client.put(URL, json=body)
+        assert resp.status_code == 422
+        assert "SENSITIVE" not in resp.text
+        assert resp.json()["detail"][0]["loc"][0] == "body"
     assert fake_ea.calls == []
 
 
@@ -426,6 +470,160 @@ async def _no_sleep(_seconds: float) -> None:
     return None
 
 
+def _fail_commits(monkeypatch: pytest.MonkeyPatch, *, after_commit: bool = False) -> dict[str, int]:
+    """让 commit 失败 left 次；after_commit=True 时先真的提交再报错（提交确认丢失）。"""
+    original = AsyncSession.commit
+    state = {"left": 0}
+
+    async def commit(self: AsyncSession) -> None:
+        if state["left"]:
+            state["left"] -= 1
+            if after_commit:
+                await original(self)
+            raise OperationalError("COMMIT", {}, Exception("connection reset"))
+        await original(self)
+
+    monkeypatch.setattr(AsyncSession, "commit", commit)
+    monkeypatch.setattr(credential_service.asyncio, "sleep", _no_sleep)
+    return state
+
+
+async def test_exhausted_retries_keep_rotated_token_for_next_process(
+    fake_ea: FakeEA, monkeypatch: pytest.MonkeyPatch, session_factory, stash: FakeCache
+) -> None:
+    await _seed(session_factory, access_left=0)
+    failing = _fail_commits(monkeypatch)
+    failing["left"] = 100
+    with pytest.raises(OperationalError):
+        await credential_service.get_access_token(session_factory)
+    assert credential_service._UNSAVED_KEY in stash.store
+
+    # 数据库恢复、进程也换了（内存里那份没了），只剩 Redis 里的
+    failing["left"] = 0
+    monkeypatch.setattr(credential_service, "_unsaved", None)
+    assert await credential_service.get_access_token(session_factory) == "access-1"
+    # 没有再拿作废的 rt-0 去换
+    assert fake_ea.calls == [("sec", "rt-0")]
+    row = await _row(session_factory)
+    assert row is not None
+    assert get_cipher().decrypt(row.encrypted_refresh_token) == "rotated-1"
+    assert stash.store == {}
+
+
+async def test_drain_timeout_leaves_grant_in_redis(
+    fake_ea: FakeEA, monkeypatch: pytest.MonkeyPatch, session_factory, stash: FakeCache
+) -> None:
+    await _seed(session_factory, access_left=0)
+    original = AsyncSession.commit
+    blocked = asyncio.Event()
+
+    async def stuck_commit(self: AsyncSession) -> None:
+        blocked.set()
+        await asyncio.Event().wait()  # 数据库卡住，永远等不到
+
+    monkeypatch.setattr(AsyncSession, "commit", stuck_commit)
+    caller = asyncio.create_task(credential_service.get_access_token(session_factory))
+    await blocked.wait()
+    await credential_service.drain(timeout=0.01)
+    assert credential_service._UNSAVED_KEY in stash.store
+
+    # 事件循环退出：卡住的任务被取消；重启后从 Redis 补写
+    for task in list(credential_service._pending):
+        task.cancel()
+    caller.cancel()
+    await asyncio.gather(caller, *credential_service._pending, return_exceptions=True)
+    monkeypatch.setattr(AsyncSession, "commit", original)
+    monkeypatch.setattr(credential_service, "_unsaved", None)
+    monkeypatch.setattr(credential_service, "_refreshing", None)
+    assert await credential_service.get_access_token(session_factory) == "access-1"
+    assert fake_ea.calls == [("sec", "rt-0")]
+
+
+async def test_lost_commit_ack_is_not_written_twice(
+    fake_ea: FakeEA, monkeypatch: pytest.MonkeyPatch, session_factory
+) -> None:
+    await _seed(session_factory, access_left=0)
+    _fail_commits(monkeypatch, after_commit=True)["left"] = 1
+    assert await credential_service.get_access_token(session_factory) == "access-1"
+    row = await _row(session_factory)
+    assert row is not None
+    assert row.generation == 1
+    assert get_cipher().decrypt(row.encrypted_refresh_token) == "rotated-1"
+
+
+async def test_stale_retry_does_not_override_newer_admin_save(
+    admin, fake_ea: FakeEA, session_factory
+) -> None:
+    client, _ = admin
+    await _seed(session_factory, access_left=0)
+    # 后台刷新换到了 rotated-x，第一次 commit 失败、还没来得及重试
+    stale = credential_service._Unsaved(
+        bf6.TokenGrant("access-x", int(time.time()) + 86400, "rotated-x", None), base_generation=0
+    )
+    # 这时管理员保存了新凭据
+    resp = await client.put(URL, json={"refresh_token": _rt(), "client_secret": "new-secret"})
+    assert resp.status_code == 200
+    await credential_service._persist_grant(session_factory, stale)
+
+    row = await _row(session_factory)
+    assert row is not None
+    cipher = get_cipher()
+    assert cipher.decrypt(row.encrypted_client_secret) == "new-secret"
+    assert cipher.decrypt(row.encrypted_refresh_token) == "rotated-1"
+
+
+async def test_cancelled_save_still_writes_audit_and_drops_old_session(
+    admin, monkeypatch: pytest.MonkeyPatch, session_factory
+) -> None:
+    _client, user = admin
+    await _seed(session_factory, access_left=86400)
+    credential_service._session.token, credential_service._session.expires_at = "old", 2**31
+    release = asyncio.Event()
+
+    async def slow_ea(client_secret: str, refresh_token: str, *, now: int) -> bf6.TokenGrant:
+        await release.wait()
+        return bf6.TokenGrant("access-new", now + 86400, "rotated-new", now + 9 * 86400)
+
+    monkeypatch.setattr(bf6, "refresh_access_token", slow_ea)
+    save = asyncio.create_task(
+        credential_service.save_credentials(
+            session_factory, refresh_token=_rt(), client_secret=None, actor=user, ip="1.2.3.4"
+        )
+    )
+    while not credential_service._pending:
+        await asyncio.sleep(0)
+    save.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await save
+    release.set()
+    await credential_service.drain()
+
+    row = await _row(session_factory)
+    assert row is not None
+    assert get_cipher().decrypt(row.encrypted_refresh_token) == "rotated-new"
+    assert row.updated_by == user.id
+    async with session_factory() as db:
+        logs = (await db.scalars(select(AuditLog).where(AuditLog.game == "bf6"))).all()
+    assert len(logs) == 1 and logs[0].ip == "1.2.3.4"
+    assert credential_service._session.token == ""
+
+
+async def test_admin_save_commit_ack_lost_writes_one_audit(
+    admin, fake_ea: FakeEA, monkeypatch: pytest.MonkeyPatch, session_factory
+) -> None:
+    client, _ = admin
+    await _seed(session_factory, access_left=86400)
+    _fail_commits(monkeypatch, after_commit=True)["left"] = 1
+    resp = await client.put(URL, json={"refresh_token": _rt()})
+    assert resp.status_code == 200, resp.text
+    row = await _row(session_factory)
+    assert row is not None
+    assert row.generation == 1
+    async with session_factory() as db:
+        logs = (await db.scalars(select(AuditLog).where(AuditLog.game == "bf6"))).all()
+    assert len(logs) == 1
+
+
 # ---------------------------------------------------------------------------
 # 上游响应异常
 # ---------------------------------------------------------------------------
@@ -438,6 +636,8 @@ async def _no_sleep(_seconds: float) -> None:
         httpx.Response(200, json=[]),
         httpx.Response(200, json={"access_token": "a", "refresh_token": "r", "expires_in": "bad"}),
         httpx.Response(200, json={"refresh_token": "r"}),
+        httpx.Response(200, content=b'{"access_token": "a", "expires_in": 1e309}'),
+        httpx.Response(200, json={"access_token": "a", "expires_in": True}),
         httpx.Response(502, text="<html>bad gateway</html>"),
     ],
 )
@@ -456,6 +656,9 @@ async def test_malformed_token_response_is_upstream_error(response: httpx.Respon
         httpx.Response(200, text="<html>"),
         httpx.Response(200, json=[1]),
         httpx.Response(200, json={"playerStatsSummary": {"userId": "abc"}}),
+        httpx.Response(200, content=b'{"playerStatsSummary": {"userId": 1e309}}'),
+        httpx.Response(200, json={"playerStatsSummary": {"userId": 12.5}}),
+        httpx.Response(200, json={"playerStatsSummary": {"userId": "99999999999999999999"}}),
     ],
 )
 async def test_malformed_drop_api_response_is_upstream_error(response: httpx.Response) -> None:

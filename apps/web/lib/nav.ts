@@ -73,7 +73,7 @@ function gameModule(g: GameMeta): RailModule {
       tabs: [],
     };
   }
-  // 已启用的游戏——目前仅 BF1。默认页 /stats 即该游戏的全服概况。
+  // BF1 的默认页 /stats 即该游戏的全服概况。
   if (g.id === "bf1") {
     return {
       key: g.id,
@@ -94,6 +94,18 @@ function gameModule(g: GameMeta): RailModule {
         { label: "卡行动", code: "Card", href: "/bf1/card" },
         { label: "图鉴", code: "Codex", href: "/bf1/codex" },
       ],
+    };
+  }
+  if (g.id === "bf6") {
+    return {
+      key: g.id,
+      label: g.displayName,
+      href: "/bf6/players",
+      kind: "game",
+      section: "games",
+      match: ["/bf6"],
+      image: g.cardImage,
+      tabs: [{ label: "战绩查询", code: "Career", href: "/bf6/players", match: ["/bf6/player"] }],
     };
   }
   // 其它未来启用的游戏：先给空 tab 集，待对应模块上线时补齐。

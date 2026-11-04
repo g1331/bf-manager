@@ -14,6 +14,7 @@ import { UserMenu } from "./UserMenu";
 const DETAIL_ROUTES: Array<{ prefix: string | RegExp; title: string; fallback: string }> = [
   { prefix: "/bf1/server/", title: "服务器", fallback: "/bf1/servers" },
   { prefix: "/bf1/player/", title: "玩家战绩", fallback: "/bf1/players" },
+  { prefix: "/bf6/player/", title: "BF6 战绩", fallback: "/bf6/players" },
   { prefix: "/bf1/platoon/", title: "战队", fallback: "/bf1/platoons" },
   { prefix: "/me/groups/", title: "群组", fallback: "/me/groups" },
   // 图鉴下的分区列表（/bf1/codex/medals 等）不算详情页，只有百科条目 c003、cxp113 这类才是

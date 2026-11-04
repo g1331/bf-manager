@@ -3,7 +3,7 @@
  * 与后端 GameRegistry 对应，包含展示信息与路由信息
  */
 
-export type GameId = "bf1" | "bfv" | "bf2042";
+export type GameId = "bf1" | "bf6" | "bfv" | "bf2042";
 
 export interface GameMeta {
   id: GameId;
@@ -18,6 +18,8 @@ export interface GameMeta {
   iconPath: string;
   /** 着陆页游戏卡片用的官方封面 key art（public/） */
   cardImage: string;
+  /** 封面图里没有游戏 logo 时，卡片上叠加的文字标识 */
+  cardWordmark?: string;
 }
 
 export const GAMES: Record<GameId, GameMeta> = {
@@ -30,6 +32,17 @@ export const GAMES: Record<GameId, GameMeta> = {
     tagline: "战争废土，重返一战",
     iconPath: "/games/bf1.svg",
     cardImage: "/bf1/backgrounds/general/general-5.jpg",
+  },
+  bf6: {
+    id: "bf6",
+    displayName: "Battlefield 6",
+    shortName: "BF6",
+    themeToken: "bf6",
+    enabled: true,
+    tagline: "全面战争，现代战场",
+    iconPath: "/games/bf6.svg",
+    cardImage: "/bf6/key-art.webp",
+    cardWordmark: "BATTLEFIELD 6",
   },
   bfv: {
     id: "bfv",

@@ -7,6 +7,7 @@
  * - :root 浅色主题（琥珀金品牌色 + 暖色中性底）
  * - .dark 深色主题（中性深黑底 + 琥珀强调；战场氛围由背景图层承载，UI 面板保持中性不染色）
  * - [data-theme="bf1"] 游戏专属覆盖（深色背景同走中性，仅主按钮色相偏橙）
+ * - [data-theme="bf6"] BF6 的信号橙，配 --color-bf6-* 一组面板色
  * ====================================================================== */
 
 @layer base {
@@ -101,6 +102,14 @@
   }
 }
 
+@layer base {
+  [data-theme="bf6"] {
+    --primary: oklch(0.68 0.21 38);
+    --primary-foreground: oklch(0.14 0 0);
+    --ring: oklch(0.68 0.21 38);
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -129,6 +138,54 @@
   /* 游戏内百科卡片的卡其色：卡面名字、底边条、解锁条件 */
   --color-codex: #a49b6c;
   --color-codex-light: #cfc59a;
+  /* BF6：信号橙 + 冷灰面板，取自游戏 UI */
+  --color-bf6: #ff5a1f;
+  --color-bf6-soft: #ff7a3c;
+  --color-bf6-bg: #0a0b0c;
+  --color-bf6-panel: #131517;
+  --color-bf6-line: #24282b;
+  --color-bf6-line-strong: #2f3438;
+  --color-bf6-fg: #ece9e4;
+  --color-bf6-fg2: #b9bcbf;
+  --color-bf6-mute: #7d8287;
+  --color-bf6-win: #35c98a;
+  --color-bf6-loss: #e5484d;
+}
+
+/* BF6 面板切角：左下、右上各切一刀，--cut 调切口大小 */
+@utility bf6-cut {
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--cut, 14px)) 0,
+    100% var(--cut, 14px),
+    100% 100%,
+    var(--cut, 14px) 100%,
+    0 calc(100% - var(--cut, 14px))
+  );
+}
+
+/* BF6 面板角标：左上橙色、右下灰色的直角刻线 */
+@utility bf6-ticks {
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    pointer-events: none;
+  }
+  &::before {
+    left: -1px;
+    top: -1px;
+    border-left: 1px solid var(--color-bf6);
+    border-top: 1px solid var(--color-bf6);
+  }
+  &::after {
+    right: -1px;
+    bottom: -1px;
+    border-right: 1px solid color-mix(in srgb, var(--color-bf6-fg2) 50%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--color-bf6-fg2) 50%, transparent);
+  }
 }
 
 @layer base {

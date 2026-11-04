@@ -345,7 +345,7 @@ function GamesSection() {
 
   return (
     <section ref={ref} className="bg-black px-4 py-28 sm:px-6 lg:py-36">
-      <div className="mx-auto max-w-5xl">
+      <div className="mx-auto max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -360,7 +360,7 @@ function GamesSection() {
           </h2>
         </motion.div>
 
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {allGames.map((game, i) => (
             <motion.div
               key={game.id}
@@ -401,6 +401,11 @@ function GameCard({ game }: { game: (typeof GAMES)[keyof typeof GAMES] }) {
           <span className="inline-action font-display text-[11px] font-medium tracking-[0.15em] text-white/80 uppercase">
             即将到来
           </span>
+        </div>
+      ) : null}
+      {game.cardWordmark ? (
+        <div className="font-display absolute inset-x-0 top-[40%] text-center text-[30px] leading-none font-bold tracking-[0.04em] text-white [text-shadow:0_2px_18px_rgba(0,0,0,0.7)]">
+          {game.cardWordmark}
         </div>
       ) : null}
       <div className="relative flex h-full flex-col justify-end p-5">

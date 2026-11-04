@@ -243,7 +243,7 @@ async def locate_game_id(db: AsyncSession, server_id: int) -> int | None:
     """收录的这台服当前的 gameId。
 
     服务器重启会换 gameId，空服又不在快照里，名单记的可能早已过期。按服名向 EA 搜一次（含空服），
-    逐个核对 serverId，找到就连名单一起写回。没收录、改了名或已关服时返回 None。
+    逐个核对 serverId，找到就写回（详情带着名单时连名单一起换）。没收录、改了名或已关服时返回 None。
     """
     srv = await db.get(Bf1RspServer, server_id)
     if srv is None:
@@ -257,7 +257,11 @@ async def locate_game_id(db: AsyncSession, server_id: int) -> int | None:
     for gid in gids[:LOCATE_CANDIDATES]:
         got = await service.get_extras(gid)
         if got is not None and got[0].server_id == server_id:
-            await store_lists(db, server_id, gid, got[1] or srv.name, got[0])
+            if got[0].owner:
+                await store_lists(db, server_id, gid, got[1] or srv.name, got[0])
+            else:
+                # 没带名单的详情不能当成名单清空，只跟上 gameId
+                srv.game_id = gid
             await db.commit()
             return gid
     return None

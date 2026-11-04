@@ -250,3 +250,27 @@ async def test_locate_returns_none_when_untracked_or_gone(test_session, monkeypa
     await test_session.commit()
     assert await rsp_list_service.locate_game_id(test_session, 11) is None
     assert calls == []
+
+
+async def test_locate_without_lists_keeps_members(test_session, monkeypatch) -> None:
+    from app.schemas.bf1.server import ServerListResponse
+
+    await store_lists(test_session, 11, 7, "空服", _extras(11, owner=5, admins=[6]))
+    await test_session.commit()
+
+    async def search(self, keyword=None, **kw):
+        return ServerListResponse(total=1, items=[_s(9, "空服", 0)])
+
+    async def extras(self, gid):
+        # 详情里只有 serverInfo、没有 rspInfo：服主和名单都是空的
+        return ServerExtras(server_id=11), "空服"
+
+    monkeypatch.setattr(BF1ServerService, "search", search)
+    monkeypatch.setattr(BF1ServerService, "get_extras", extras)
+    assert await rsp_list_service.locate_game_id(test_session, 11) == 9
+    test_session.expunge_all()
+    assert (await test_session.get(Bf1RspServer, 11)).game_id == 9
+    members = await test_session.scalars(
+        select(Bf1RspMember.pid).where(Bf1RspMember.server_id == 11)
+    )
+    assert sorted(members.all()) == [5, 6]

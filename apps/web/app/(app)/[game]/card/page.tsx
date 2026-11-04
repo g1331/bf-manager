@@ -11,7 +11,7 @@
  * 所以 gameId 也能直接填。
  */
 
-import { Suspense, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -182,10 +182,20 @@ function CardOperation() {
   });
   const setJob = (j: CardJob) => qc.setQueryData(bf1Keys.cardJob(j.id), j);
 
+  // 检查的目标：改 gameId、换账号或凭据、重新点选都会换一个，之前发出去的定位和检查回来也不再生效
+  const target = useRef(0);
+  const resetCheck = () => {
+    target.current += 1;
+    setCheck(null);
+  };
+
   const precheck = useMutation({
-    mutationFn: (g: number) => cardApi.precheck(g, creds),
-    onSuccess: setCheck,
-    onError: (e) => {
+    mutationFn: ({ g }: { g: number; v: number }) => cardApi.precheck(g, creds),
+    onSuccess: (c, { v }) => {
+      if (v === target.current) setCheck(c);
+    },
+    onError: (e, { v }) => {
+      if (v !== target.current) return;
       setCheck(null);
       toast.error(errText(e));
     },
@@ -193,15 +203,18 @@ function CardOperation() {
 
   // 没人的服不在快照里，列表记的 gameId 可能是重启前的，先问一次当前的
   const locate = useMutation({
-    mutationFn: (s: CardServer) =>
+    mutationFn: ({ s }: { s: CardServer; v: number }) =>
       s.player_count != null
         ? Promise.resolve({ game_id: s.game_id })
         : cardApi.locate(s.server_id),
-    onSuccess: ({ game_id }) => {
+    onSuccess: ({ game_id }, { v }) => {
+      if (v !== target.current) return;
       setGameId(String(game_id));
-      precheck.mutate(game_id);
+      precheck.mutate({ g: game_id, v });
     },
-    onError: (e) => toast.error(errText(e)),
+    onError: (e, { v }) => {
+      if (v === target.current) toast.error(errText(e));
+    },
   });
 
   const start = useMutation({
@@ -276,7 +289,7 @@ function CardOperation() {
                 type="button"
                 onClick={() => {
                   setCredMode(o.v);
-                  setCheck(null);
+                  resetCheck();
                 }}
                 className={cn(
                   "compact-action px-3 py-1.5 text-xs ring-1 transition-colors",
@@ -302,7 +315,7 @@ function CardOperation() {
                   value={remid}
                   onChange={(e) => {
                     setRemid(e.target.value);
-                    setCheck(null);
+                    resetCheck();
                     identify.reset();
                   }}
                   placeholder="EA 账号的 remid"
@@ -318,7 +331,7 @@ function CardOperation() {
                   value={sid}
                   onChange={(e) => {
                     setSid(e.target.value);
-                    setCheck(null);
+                    resetCheck();
                     identify.reset();
                   }}
                   placeholder="EA 账号的 sid"
@@ -367,8 +380,8 @@ function CardOperation() {
           onPick={(s) => {
             setPicked(s.server_id);
             setGameId(String(s.game_id));
-            setCheck(null);
-            locate.mutate(s);
+            resetCheck();
+            locate.mutate({ s, v: target.current });
           }}
         />
         <form
@@ -377,7 +390,10 @@ function CardOperation() {
             e.preventDefault();
             if (!credsReady) toast.error("请先填写账号的 remid 和 sid");
             else if (!gidValid) toast.error("请填写服务器的 gameId（数字）");
-            else precheck.mutate(gid);
+            else {
+              resetCheck();
+              precheck.mutate({ g: gid, v: target.current });
+            }
           }}
         >
           <DarkInput
@@ -386,7 +402,7 @@ function CardOperation() {
             onChange={(e) => {
               setGameId(e.target.value);
               setPicked(null);
-              setCheck(null);
+              resetCheck();
             }}
             placeholder="gameId，服务器详情页地址里的数字"
             className="h-11 min-w-0 flex-1"

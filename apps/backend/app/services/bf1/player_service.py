@@ -15,7 +15,7 @@ from app.domain.games.bf1.gateway import BF1GatewayClient
 from app.schemas.bf1.player import PersonaBrief, PersonaSearchResult
 from app.services.bf1 import blaze_service
 from app.services.bf1.gateway_factory import get_bf1_client
-from app.services.bf1.gateway_result import expect_ok
+from app.services.bf1.gateway_result import expect_ok, persona_info
 
 
 async def _fetch_sal_avatar(
@@ -202,8 +202,7 @@ class BF1PlayerService:
                 action="查询玩家",
                 not_found=f"persona {persona_id}",
             )
-            result = res.get("result", {}) or {}
-            info = result.get(str(persona_id)) or result.get("personas", {}).get(str(persona_id))
+            info = persona_info(res, persona_id)
             if not info:
                 raise NotFoundError(resource=f"persona {persona_id}")
             display_name = info.get("displayName", "")

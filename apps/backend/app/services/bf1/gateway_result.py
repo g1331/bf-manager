@@ -51,3 +51,18 @@ def expect_ok(
     if err is None:
         return cast(dict[str, Any], res)
     raise to_app_error(err, code=code, action=action, not_found=not_found)
+
+
+def persona_info(res: Any, persona_id: int) -> dict[str, Any] | None:
+    """从 RSP.getPersonasByIds 的成功返回里取一个 persona。
+
+    EA 把 persona 直接放在 ``result.<personaId>`` 下；兼容少数实现包一层 ``personas`` 的写法。
+    请求失败或查不到返回 None。
+    """
+    if gateway_failure(res) is not None or not isinstance(res, dict):
+        return None
+    result = res.get("result") or {}
+    if not isinstance(result, dict):
+        return None
+    info = result.get(str(persona_id)) or (result.get("personas") or {}).get(str(persona_id))
+    return info if isinstance(info, dict) else None

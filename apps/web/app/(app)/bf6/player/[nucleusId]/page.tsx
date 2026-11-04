@@ -27,6 +27,8 @@ import { bf6Queries } from "@/lib/queries/bf6";
 
 const TAB_KEYS = ["overview", "weapons", "vehicles", "gadgets", "maps", "modes"] as const;
 
+const LINK = "hover:text-bf6-fg whitespace-nowrap underline-offset-2 hover:underline";
+
 export default function Bf6PlayerPage() {
   const { nucleusId } = useParams<{ nucleusId: string }>();
   const id = Number(nucleusId);
@@ -133,16 +135,19 @@ function PlayerView({ nucleusId, stats }: { nucleusId: number; stats: Bf6PlayerS
           {new Date(stats.fetched_at).toLocaleString("zh-CN", { hour12: false })}
         </span>
         <span>
-          部分配备图标来自{" "}
-          <a
-            href="https://game-icons.net"
-            target="_blank"
-            rel="noreferrer"
-            className="hover:text-bf6-fg underline-offset-2 hover:underline"
-          >
+          部分配备图标：Lorc、Delapouite、Skoll、DarkZaitzev /{" "}
+          <a href="https://game-icons.net" target="_blank" rel="noreferrer" className={LINK}>
             game-icons.net
           </a>
-          （CC BY 3.0）
+          ，
+          <a
+            href="https://creativecommons.org/licenses/by/3.0/"
+            target="_blank"
+            rel="noreferrer"
+            className={LINK}
+          >
+            CC BY 3.0
+          </a>
         </span>
       </p>
     </div>

@@ -174,7 +174,7 @@ export function AccountsSection({ group }: { group: GroupDetail }) {
           {accounts.isLoading
             ? "加载中…"
             : isOwner
-              ? "还没有服务账号。先添加一个，再把服挂到群上。"
+              ? "还没有服务账号。服里有本站平台账号当管理员的话，可以不加直接挂服。"
               : "群主还没有添加服务账号。"}
         </p>
       )}
@@ -286,7 +286,11 @@ function ServerRow({
         <div className="text-muted-foreground text-xs leading-relaxed">
           执行账号{" "}
           <span className="text-foreground">
-            {item.executor ? accountLabel(item.executor) : "未指定"}
+            {item.executor
+              ? accountLabel(item.executor)
+              : item.platform_fallback
+                ? "平台账号"
+                : "未指定"}
           </span>
           {" · "}
           {item.bound_by_name ?? "已注销的账号"} 以{item.bound_via === "owner" ? "服主" : "管理员"}
@@ -294,7 +298,8 @@ function ServerRow({
         </div>
         {item.executor_problem && !revoked ? (
           <div className="text-xs leading-relaxed text-amber-400">
-            {item.executor_problem}，服管操作会失败
+            {item.executor_problem}
+            {item.platform_fallback ? "，暂由平台账号执行" : "，服管操作会失败"}
           </div>
         ) : null}
       </div>
@@ -388,10 +393,10 @@ function BindSheet({
       open={open}
       onOpenChange={onOpenChange}
       title="把服挂到群上"
-      description="挂上后群里的人都能在这台服上踢人、换边、封禁、加 V、换图，操作由服务账号执行。"
+      description="挂上后群里的人都能在这台服上踢人、换边、封禁、加 V、换图，操作由服务账号执行；群里的账号都不是这台服的管理员时，改用本站号池里是它管理员的平台账号。"
       confirmText="挂上"
       loading={bind.isPending}
-      confirmDisabled={gameId === null || accounts.length === 0}
+      confirmDisabled={gameId === null}
       onConfirm={() => bind.mutate()}
     >
       <div className="space-y-4">
@@ -425,7 +430,7 @@ function BindSheet({
           ) : (
             <p className="text-muted-foreground text-sm leading-relaxed">
               没有可以挂的服。只能挂你绑定的 EA
-              账号是服主或管理员的服：先打开那台服的服务器页，识别出你的身份后它会出现在这里。
+              账号是服主或管理员的服；没出现的话，打开那台服的服务器页识别一次。
             </p>
           )}
         </div>
@@ -455,11 +460,13 @@ function BindSheet({
               ))}
             </div>
             <p className="text-muted-foreground text-xs leading-relaxed">
-              自动选会从默认账号开始，挑第一个是这台服管理员的。
+              自动选会从默认账号开始，挑第一个是这台服管理员的；都不是时改用本站平台账号。
             </p>
           </div>
         ) : (
-          <p className="text-destructive text-sm">群里还没有服务账号，先在上面添加一个。</p>
+          <p className="text-muted-foreground text-xs leading-relaxed">
+            群里还没有服务账号，挂上后由本站平台账号执行；平台账号也不是这台服的管理员时挂不上。
+          </p>
         )}
       </div>
     </ConfirmSheet>

@@ -132,8 +132,10 @@ export interface GroupServer {
   /** revoked：绑定人已不是服主或管理员，群成员在这台服上的权限失效 */
   status: "active" | "revoked";
   status_reason: string | null;
-  /** 执行账号的问题：不影响权限，但服管操作会失败 */
+  /** 执行账号的问题：不影响权限 */
   executor_problem: string | null;
+  /** 本站号池里有这台服的管理员：没指定群服务账号或它出问题时，服管操作由平台账号执行 */
+  platform_fallback: boolean;
   last_verified_at: string | null;
   created_at: string;
 }

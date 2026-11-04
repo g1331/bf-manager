@@ -28,6 +28,7 @@ from app.core.config import get_settings
 from app.core.literals import GroupServerStatus, GroupServerVia
 from app.core.security import get_cipher
 from app.models import (
+    Bf1RspMember,
     EaBinding,
     Group,
     GroupEaAccount,
@@ -38,6 +39,7 @@ from app.models import (
 )
 from app.services.bf1.gateway_factory import get_bf1_client_for_group_account
 from app.services.bf1.server_service import BF1ServerService, current_game_ids
+from app.services.ea_account_service import EAAccountService
 from app.services.group_service import GroupError, _audit, _lock_group, require_member
 from app.services.mail import templates
 from app.services.mail.sender import get_mail_sender
@@ -296,6 +298,22 @@ class GroupServerView:
     server: Server
     bound_by_name: str | None
     executor: GroupEaAccount | None
+    # 号池里有这台服的管理员（按收录的名单看）：群服务账号缺失或出问题时服管操作由它执行
+    platform_fallback: bool = False
+
+
+async def _platform_covered(db: AsyncSession, server_ids: list[int]) -> set[int]:
+    pids = await EAAccountService(db).enabled_personas()
+    if not pids or not server_ids:
+        return set()
+    rows = await db.scalars(
+        select(Bf1RspMember.server_id).where(
+            Bf1RspMember.server_id.in_(server_ids),
+            Bf1RspMember.pid.in_(pids),
+            Bf1RspMember.role.in_(("owner", "admin")),
+        )
+    )
+    return set(rows.all())
 
 
 async def _views(db: AsyncSession, rows: list[tuple[GroupServer, Server]]) -> list[GroupServerView]:
@@ -310,6 +328,7 @@ async def _views(db: AsyncSession, rows: list[tuple[GroupServer, Server]]) -> li
         if account_ids
         else {}
     )
+    covered = await _platform_covered(db, [server.server_id for _, server in rows])
     out = []
     for gs, server in rows:
         out.append(
@@ -318,6 +337,9 @@ async def _views(db: AsyncSession, rows: list[tuple[GroupServer, Server]]) -> li
                 server=server,
                 bound_by_name=await _display_name(db, gs.bound_by_user_id),
                 executor=accounts.get(gs.executor_account_id or 0),
+                # 挂服时没指定群服务账号、执行账号也没问题的，只能是号池账号在执行
+                platform_fallback=server.server_id in covered
+                or (gs.executor_account_id is None and gs.executor_problem is None),
             )
         )
     return out
@@ -337,30 +359,48 @@ async def list_servers(db: AsyncSession, group_id: int, actor: User) -> list[Gro
     return await _views(db, [(gs, s) for gs, s in rows])
 
 
+async def _platform_executor(db: AsyncSession, identity: ServerIdentity) -> int | None:
+    """号池里是这台服服主或管理员的账号：群里没有能用的服务账号时，服管操作借它执行"""
+    for pid in await EAAccountService(db).enabled_personas():
+        if identity.manages(pid) is not None:
+            return pid
+    return None
+
+
+async def _checked_account(
+    db: AsyncSession, group_id: int, account_id: int, identity: ServerIdentity
+) -> GroupEaAccount:
+    account = await _account(db, group_id, account_id)
+    if identity.manages(account.persona_id) is None:
+        raise GroupError(
+            "GROUP_EXECUTOR_NOT_ADMIN",
+            f"服务账号 {account.display_name or account.persona_id} 不是这台服的服主或管理员，"
+            "先在游戏里把它加成管理员",
+        )
+    return account
+
+
 async def _pick_executor(
     db: AsyncSession, group_id: int, account_id: int | None, identity: ServerIdentity
-) -> GroupEaAccount:
-    """选执行账号：指定了就校验它；没指定按默认账号优先，挑第一个是这台服服主或管理员的"""
+) -> GroupEaAccount | None:
+    """选执行账号：指定了就校验它；没指定按默认账号优先，挑第一个是这台服服主或管理员的。
+
+    群里的账号都不行、但本站号池里有这台服的管理员时返回 None：不指定群服务账号，由平台账号执行"""
     if account_id is not None:
-        account = await _account(db, group_id, account_id)
-        if identity.manages(account.persona_id) is None:
-            raise GroupError(
-                "GROUP_EXECUTOR_NOT_ADMIN",
-                f"服务账号 {account.display_name or account.persona_id} 不是这台服的服主或管理员，"
-                "先在游戏里把它加成管理员",
-            )
-        return account
+        return await _checked_account(db, group_id, account_id, identity)
     accounts = await db.scalars(
         select(GroupEaAccount)
         .where(GroupEaAccount.group_id == group_id)
         .order_by(GroupEaAccount.is_default.desc(), GroupEaAccount.id)
     )
     candidates = list(accounts.all())
-    if not candidates:
-        raise GroupError("GROUP_NO_ACCOUNT", "群里还没有服务账号，先添加一个")
     for account in candidates:
         if identity.manages(account.persona_id) is not None:
             return account
+    if await _platform_executor(db, identity) is not None:
+        return None
+    if not candidates:
+        raise GroupError("GROUP_NO_ACCOUNT", "群里还没有服务账号，先添加一个")
     raise GroupError(
         "GROUP_EXECUTOR_NOT_ADMIN",
         "群里的服务账号都不是这台服的服主或管理员，先在游戏里把其中一个加成管理员",
@@ -416,7 +456,7 @@ async def bind_server(
         action = "group_server_rebind"
     gs.bound_by_user_id = actor.id
     gs.bound_via = via
-    gs.executor_account_id = executor.id
+    gs.executor_account_id = executor.id if executor else None
     gs.status = "active"
     gs.status_reason = None
     gs.executor_problem = None
@@ -432,7 +472,8 @@ async def bind_server(
             "game_id": game_id,
             "server_name": server.name,
             "bound_via": via,
-            "executor_persona_id": executor.persona_id,
+            "executor_persona_id": executor.persona_id if executor else None,
+            "executor": "group_account" if executor else "platform",
         },
         ip=ip,
     )
@@ -474,7 +515,7 @@ async def set_server_executor(
     await _lock_group(db, group_id)
     await require_member(db, group_id, actor, "owner")
     gs, server = await _group_server(db, group_id, gs_id)
-    executor = await _pick_executor(db, group_id, account_id, identity)
+    executor = await _checked_account(db, group_id, account_id, identity)
     gs.executor_account_id = executor.id
     gs.executor_problem = None
     await _audit(
@@ -717,7 +758,8 @@ async def _executor_problem(
         else None
     )
     if executor is None:
-        return PROBLEM_NO_EXECUTOR
+        # 挂服时就没指定群服务账号的，是号池账号在执行；它也不再是管理员才算问题
+        return None if await _platform_executor(db, identity) is not None else PROBLEM_NO_EXECUTOR
     if executor.status == "invalid":
         return PROBLEM_EXECUTOR_INVALID
     if identity.manages(executor.persona_id) is None:

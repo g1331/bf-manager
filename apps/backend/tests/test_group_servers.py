@@ -439,3 +439,68 @@ async def test_my_servers_raises_lower_role_to_group_admin(env, test_session, ea
     _login_cookie(ac, alice)
     mine = (await ac.get(f"{API}/bf1/server-admin/mine")).json()["items"]
     assert [(i["role"], i["via_group"]) for i in mine] == [("admin", "测试 群")]
+
+
+POOL_PID = 6006  # 本站号池里的账号，EA 上是这台服的管理员
+
+
+async def _seed_pool_account(db, pid: int = POOL_PID) -> None:
+    from app.models import EAAccount
+
+    cipher = get_cipher()
+    db.add(
+        EAAccount(
+            persona_id=pid,
+            encrypted_remid=cipher.encrypt("pool-remid"),
+            encrypted_sid=cipher.encrypt("pool-sid"),
+            enabled=True,
+        )
+    )
+    await db.commit()
+
+
+async def test_group_server_runs_on_platform_account_without_group_account(
+    env, test_session, ea, monkeypatch
+) -> None:
+    ac, outbox, _, alice, _, gid = await _group_with_alice(env, test_session)
+
+    # 群里没有服务账号、号池里也没有这台服的管理员：挂不上
+    resp = await _bind(ac, gid)
+    assert resp.status_code == 400 and resp.json()["error"]["code"] == "GROUP_NO_ACCOUNT"
+
+    await _seed_pool_account(test_session)
+    ea.admins = {OWNER_PID, POOL_PID}
+    resp = await _bind(ac, gid)
+    assert resp.status_code == 201, resp.text
+    assert resp.json()["executor"] is None and resp.json()["platform_fallback"] is True
+    item = (await ac.get(f"{API}/groups/{gid}/servers")).json()["items"][0]
+    assert item["executor_problem"] is None and item["platform_fallback"] is True
+
+    @asynccontextmanager
+    async def pool_client(db, persona_id):
+        yield FakeClient(ea, persona_id)
+
+    monkeypatch.setattr(cp, "get_bf1_client_for_pool_account", pool_client)
+    _login_cookie(ac, alice)
+    resp = await ac.post(f"{API}/bf1/server-admin/{GAME_ID}/kick", json={"persona_id": 42})
+    assert resp.status_code == 200, resp.text
+    assert ea.kicked == [(POOL_PID, 42)]
+    log = await test_session.scalar(select(AuditLog).where(AuditLog.action == "kick_player"))
+    assert log.executor_persona_id == POOL_PID
+    assert log.payload["credential_source"] == "pool_admin"
+
+    # 复核：平台账号还是管理员就不算问题，不发信
+    sent = len(outbox.outbox)
+    await gss.recheck_all(test_session)
+    gs = await test_session.scalar(select(GroupServer))
+    await test_session.refresh(gs)
+    assert gs.executor_problem is None and len(outbox.outbox) == sent
+
+    # 平台账号被撤了管理员：标成没有执行账号，服管操作报没有可用账号
+    ea.admins = {OWNER_PID}
+    cp._admin_ids_cache.clear()
+    await gss.recheck_all(test_session)
+    await test_session.refresh(gs)
+    assert gs.executor_problem == gss.PROBLEM_NO_EXECUTOR
+    resp = await ac.post(f"{API}/bf1/server-admin/{GAME_ID}/kick", json={"persona_id": 43})
+    assert resp.status_code == 403

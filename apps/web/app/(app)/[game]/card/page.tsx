@@ -11,7 +11,7 @@
  * 所以 gameId 也能直接填。
  */
 
-import { Suspense, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -30,6 +30,7 @@ import {
   type CardJob,
   type CardJobStatus,
   type CardPrecheck,
+  type CardServer,
 } from "@/lib/api/bf1";
 import { bf1Keys, bf1Queries } from "@/lib/queries/bf1";
 import { mapLabel, modeLabel } from "@/lib/bf1/catalog";
@@ -144,6 +145,8 @@ function CardOperation() {
   const [remid, setRemid] = useState("");
   const [sid, setSid] = useState("");
   const [gameId, setGameId] = useState(params.get("gameId") ?? "");
+  // 从列表点选的服（按稳定的 serverId 认，gameId 定位后可能变）
+  const [picked, setPicked] = useState<number | null>(null);
   const [check, setCheck] = useState<CardPrecheck | null>(null);
   const [confirm, setConfirm] = useState<"card" | "anchor" | null>(null);
   const stored = useStoredJob();
@@ -179,12 +182,38 @@ function CardOperation() {
   });
   const setJob = (j: CardJob) => qc.setQueryData(bf1Keys.cardJob(j.id), j);
 
+  // 检查的目标：改 gameId、换账号或凭据、重新点选都会换一个，之前发出去的定位和检查回来也不再生效
+  const target = useRef(0);
+  const resetCheck = () => {
+    target.current += 1;
+    setCheck(null);
+  };
+
   const precheck = useMutation({
-    mutationFn: (g: number) => cardApi.precheck(g, creds),
-    onSuccess: setCheck,
-    onError: (e) => {
+    mutationFn: ({ g }: { g: number; v: number }) => cardApi.precheck(g, creds),
+    onSuccess: (c, { v }) => {
+      if (v === target.current) setCheck(c);
+    },
+    onError: (e, { v }) => {
+      if (v !== target.current) return;
       setCheck(null);
       toast.error(errText(e));
+    },
+  });
+
+  // 没人的服不在快照里，列表记的 gameId 可能是重启前的，先问一次当前的
+  const locate = useMutation({
+    mutationFn: ({ s }: { s: CardServer; v: number }) =>
+      s.player_count != null
+        ? Promise.resolve({ game_id: s.game_id })
+        : cardApi.locate(s.server_id),
+    onSuccess: ({ game_id }, { v }) => {
+      if (v !== target.current) return;
+      setGameId(String(game_id));
+      precheck.mutate({ g: game_id, v });
+    },
+    onError: (e, { v }) => {
+      if (v === target.current) toast.error(errText(e));
     },
   });
 
@@ -260,7 +289,7 @@ function CardOperation() {
                 type="button"
                 onClick={() => {
                   setCredMode(o.v);
-                  setCheck(null);
+                  resetCheck();
                 }}
                 className={cn(
                   "compact-action px-3 py-1.5 text-xs ring-1 transition-colors",
@@ -286,7 +315,7 @@ function CardOperation() {
                   value={remid}
                   onChange={(e) => {
                     setRemid(e.target.value);
-                    setCheck(null);
+                    resetCheck();
                     identify.reset();
                   }}
                   placeholder="EA 账号的 remid"
@@ -302,7 +331,7 @@ function CardOperation() {
                   value={sid}
                   onChange={(e) => {
                     setSid(e.target.value);
-                    setCheck(null);
+                    resetCheck();
                     identify.reset();
                   }}
                   placeholder="EA 账号的 sid"
@@ -342,15 +371,17 @@ function CardOperation() {
           result={servers.data}
           loading={servers.isPending && (mode === "manual" ? identify.isPending : loggedIn)}
           error={servers.isError ? errText(servers.error) : null}
-          selected={gidValid ? gid : null}
+          selected={picked}
+          locating={locate.isPending}
           onIdentify={() => {
             if (!credsReady) toast.error("请先填写账号的 remid 和 sid");
             else identify.mutate();
           }}
-          onPick={(g) => {
-            setGameId(String(g));
-            setCheck(null);
-            precheck.mutate(g);
+          onPick={(s) => {
+            setPicked(s.server_id);
+            setGameId(String(s.game_id));
+            resetCheck();
+            locate.mutate({ s, v: target.current });
           }}
         />
         <form
@@ -359,7 +390,10 @@ function CardOperation() {
             e.preventDefault();
             if (!credsReady) toast.error("请先填写账号的 remid 和 sid");
             else if (!gidValid) toast.error("请填写服务器的 gameId（数字）");
-            else precheck.mutate(gid);
+            else {
+              resetCheck();
+              precheck.mutate({ g: gid, v: target.current });
+            }
           }}
         >
           <DarkInput
@@ -367,17 +401,18 @@ function CardOperation() {
             value={gameId}
             onChange={(e) => {
               setGameId(e.target.value);
-              setCheck(null);
+              setPicked(null);
+              resetCheck();
             }}
             placeholder="gameId，服务器详情页地址里的数字"
             className="h-11 min-w-0 flex-1"
           />
           <button
             type="submit"
-            disabled={precheck.isPending}
+            disabled={precheck.isPending || locate.isPending}
             className="h-11 shrink-0 bg-white px-5 text-sm font-semibold text-black transition-colors hover:bg-white/85 disabled:opacity-50"
           >
-            {precheck.isPending ? "检查中…" : "检查"}
+            {precheck.isPending || locate.isPending ? "检查中…" : "检查"}
           </button>
         </form>
 
@@ -428,6 +463,7 @@ function AccountServers({
   loading,
   error,
   selected,
+  locating,
   onIdentify,
   onPick,
 }: {
@@ -435,9 +471,11 @@ function AccountServers({
   result: CardAccountServers | undefined;
   loading: boolean;
   error: string | null;
+  /** 选中的 serverId */
   selected: number | null;
+  locating: boolean;
   onIdentify: () => void;
-  onPick: (gameId: number) => void;
+  onPick: (server: CardServer) => void;
 }) {
   if (mode === "manual" && !result && !loading && !error) {
     return (
@@ -475,10 +513,11 @@ function AccountServers({
           <li key={s.server_id}>
             <button
               type="button"
-              onClick={() => onPick(s.game_id)}
+              onClick={() => onPick(s)}
+              disabled={locating}
               className={cn(
-                "flex min-h-11 w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-white/[0.06]",
-                selected === s.game_id && "bg-white/[0.08]",
+                "flex min-h-11 w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-white/[0.06] disabled:cursor-wait",
+                selected === s.server_id && "bg-white/[0.08]",
               )}
             >
               <span className="min-w-0 flex-1 truncate text-sm text-white/90">{s.name}</span>

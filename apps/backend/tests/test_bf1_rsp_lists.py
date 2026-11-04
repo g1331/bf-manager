@@ -202,3 +202,75 @@ async def test_refresh_keeps_game_id_while_old_and_new_instances_overlap(
     # 两个都不是记的那个时也分不清，先不动
     await refresh_stale_lists(test_session, [_s(8, "a"), _s(9, "a")], {8: 11, 9: 11})
     assert (await test_session.get(Bf1RspServer, 11)).game_id == 7
+
+
+def _search_returns(monkeypatch, items: list[ServerSummary], calls: list[int]) -> None:
+    from app.schemas.bf1.server import ServerListResponse
+
+    async def search(self, keyword=None, **kw):
+        assert kw["include_empty"] is True
+        return ServerListResponse(total=len(items), items=items)
+
+    async def extras(self, gid):
+        calls.append(gid)
+        # gameId 9 是这台服重启后的新实例，8 是同名的另一台
+        return (_extras(11 if gid == 9 else 22, owner=5), "空服")
+
+    monkeypatch.setattr(BF1ServerService, "search", search)
+    monkeypatch.setattr(BF1ServerService, "get_extras", extras)
+
+
+async def test_locate_keeps_current_game_id_without_detail_calls(test_session, monkeypatch) -> None:
+    await store_lists(test_session, 11, 7, "空服", _extras(11, owner=5))
+    await test_session.commit()
+    calls: list[int] = []
+    _search_returns(monkeypatch, [_s(7, "空服", 0), _s(9, "空服二号", 0)], calls)
+    assert await rsp_list_service.locate_game_id(test_session, 11) == 7
+    assert calls == []
+
+
+async def test_locate_finds_new_instance_and_writes_back(test_session, monkeypatch) -> None:
+    await store_lists(test_session, 11, 7, "空服", _extras(11, owner=5))
+    await test_session.commit()
+    test_session.expunge_all()
+    calls: list[int] = []
+    # 服务器重启换了 gameId，名单记的 7 已经搜不到；同名的两台逐个核对 serverId
+    _search_returns(monkeypatch, [_s(8, "空服", 0), _s(9, "空服", 0), _s(3, "空服 别的", 0)], calls)
+    assert await rsp_list_service.locate_game_id(test_session, 11) == 9
+    assert calls == [8, 9]
+    test_session.expunge_all()
+    assert (await test_session.get(Bf1RspServer, 11)).game_id == 9
+
+
+async def test_locate_returns_none_when_untracked_or_gone(test_session, monkeypatch) -> None:
+    calls: list[int] = []
+    _search_returns(monkeypatch, [], calls)
+    assert await rsp_list_service.locate_game_id(test_session, 11) is None
+    await store_lists(test_session, 11, 7, "空服", _extras(11, owner=5))
+    await test_session.commit()
+    assert await rsp_list_service.locate_game_id(test_session, 11) is None
+    assert calls == []
+
+
+async def test_locate_without_lists_keeps_members(test_session, monkeypatch) -> None:
+    from app.schemas.bf1.server import ServerListResponse
+
+    await store_lists(test_session, 11, 7, "空服", _extras(11, owner=5, admins=[6]))
+    await test_session.commit()
+
+    async def search(self, keyword=None, **kw):
+        return ServerListResponse(total=1, items=[_s(9, "空服", 0)])
+
+    async def extras(self, gid):
+        # 详情里只有 serverInfo、没有 rspInfo：服主和名单都是空的
+        return ServerExtras(server_id=11), "空服"
+
+    monkeypatch.setattr(BF1ServerService, "search", search)
+    monkeypatch.setattr(BF1ServerService, "get_extras", extras)
+    assert await rsp_list_service.locate_game_id(test_session, 11) == 9
+    test_session.expunge_all()
+    assert (await test_session.get(Bf1RspServer, 11)).game_id == 9
+    members = await test_session.scalars(
+        select(Bf1RspMember.pid).where(Bf1RspMember.server_id == 11)
+    )
+    assert sorted(members.all()) == [5, 6]

@@ -39,6 +39,8 @@ REFRESH_PER_ROUND = 3
 DETAIL_MIN_AGE = timedelta(minutes=10)
 # 这么久没刷新到的服（一直没人或已到期关服）连名单一起清掉
 STALE_AFTER = timedelta(days=30)
+# 定位当前 gameId 时，按服名搜到的实例最多逐个核对这么多
+LOCATE_CANDIDATES = 3
 
 
 def _aware(ts: datetime) -> datetime:
@@ -235,3 +237,31 @@ async def list_player_servers(db: AsyncSession, persona_id: int) -> PlayerRspSer
             continue
         getattr(out, role).append(_to_item(srv, live))
     return out
+
+
+async def locate_game_id(db: AsyncSession, server_id: int) -> int | None:
+    """收录的这台服当前的 gameId。
+
+    服务器重启会换 gameId，空服又不在快照里，名单记的可能早已过期。按服名向 EA 搜一次（含空服），
+    逐个核对 serverId，找到就写回（详情带着名单时连名单一起换）。没收录、改了名或已关服时返回 None。
+    """
+    srv = await db.get(Bf1RspServer, server_id)
+    if srv is None:
+        return None
+    service = BF1ServerService(db)
+    found = await service.search(srv.name[:64], include_empty=True, limit=20)
+    named = [s for s in found.items if s.game_id and s.name == srv.name]
+    gids = [int(s.game_id or 0) for s in named or found.items if s.game_id]
+    if srv.game_id in gids:
+        return srv.game_id
+    for gid in gids[:LOCATE_CANDIDATES]:
+        got = await service.get_extras(gid)
+        if got is not None and got[0].server_id == server_id:
+            if got[0].owner:
+                await store_lists(db, server_id, gid, got[1] or srv.name, got[0])
+            else:
+                # 没带名单的详情不能当成名单清空，只跟上 gameId
+                srv.game_id = gid
+            await db.commit()
+            return gid
+    return None

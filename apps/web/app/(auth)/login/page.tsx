@@ -18,6 +18,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Button } from "@/components/ui/button";
 import { AuthCard } from "@/components/auth/AuthCard";
 import {
@@ -197,7 +198,7 @@ function LoginForm() {
               <FormItem>
                 <FormLabel>密码</FormLabel>
                 <FormControl>
-                  <Input type="password" autoComplete="current-password" {...field} />
+                  <PasswordInput autoComplete="current-password" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -248,7 +249,7 @@ function LoginForm() {
                   <FormItem>
                     <FormLabel>密码</FormLabel>
                     <FormControl>
-                      <Input type="password" autoComplete="current-password" {...field} />
+                      <PasswordInput autoComplete="current-password" {...field} />
                     </FormControl>
                     <FormDescription>本地账号仅供平台管理员使用。</FormDescription>
                     <FormMessage />

@@ -11,6 +11,7 @@ import { PlayerAvatar } from "@/components/common/PlayerAvatar";
 import type { BanStatus, CareerHonors, PlayerPlatoon, PlayerStatsSummary } from "@/lib/api/bf1";
 import { rarityByRank, rarityHex } from "@/lib/bf1/rarity";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@/components/ui/tooltip";
 import { classLabel, fmtFixed, fmtFull, fmtHours, fmtPct, isKnownClass, winRate } from "./format";
 
 /**
@@ -152,15 +153,16 @@ export function PlayerHeroBanner({
                 <Clock4 className="size-3.5" />
                 {fmtHours(summary.time_played_seconds)}
               </span>
-              <button
-                type="button"
-                onClick={copyPid}
-                className="flex items-center gap-1.5 tabular-nums transition-colors hover:text-white"
-                title="复制 PID"
-              >
-                PID {personaId}
-                <Copy className="size-3" />
-              </button>
+              <Tooltip content="复制 PID">
+                <button
+                  type="button"
+                  onClick={copyPid}
+                  className="flex items-center gap-1.5 tabular-nums transition-colors hover:text-white"
+                >
+                  PID {personaId}
+                  <Copy className="size-3" />
+                </button>
+              </Tooltip>
             </div>
           </div>
         </div>
@@ -247,17 +249,18 @@ function OnlineChip({
       "inline-flex max-w-full items-center gap-2 border border-emerald-400/40 bg-emerald-500/10 px-2 py-0.5 text-emerald-300 sm:max-w-[26rem]";
     // 知道在哪台服时点进服务器详情
     return href ? (
-      <Link
-        href={href}
-        title="查看这台服务器"
-        className={cn(
-          chip,
-          "transition-colors hover:border-emerald-300/70 hover:bg-emerald-500/20",
-        )}
-      >
-        {body}
-        <ChevronRight className="-mr-1 size-3.5 shrink-0" />
-      </Link>
+      <Tooltip content="查看这台服务器">
+        <Link
+          href={href}
+          className={cn(
+            chip,
+            "transition-colors hover:border-emerald-300/70 hover:bg-emerald-500/20",
+          )}
+        >
+          {body}
+          <ChevronRight className="-mr-1 size-3.5 shrink-0" />
+        </Link>
+      </Tooltip>
     ) : (
       <span className={chip}>{body}</span>
     );

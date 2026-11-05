@@ -3,6 +3,7 @@
 import { Fragment } from "react";
 import type { OperationProgress } from "@/lib/api/bf1";
 import { FACTION_SLUG } from "@/lib/bf1/factions";
+import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 /** 游戏 HUD 里的区域箭头：右侧尖角、左侧内凹 */
@@ -26,18 +27,19 @@ export function OperationTrack({ operation }: { operation: OperationProgress }) 
             {i > 0 ? <span className="mx-0.5 h-px w-2 bg-white/30" aria-hidden /> : null}
             <div className={cn("flex items-center gap-1", i > map_index && "opacity-50")}>
               {m.image_url ? (
-                <img
-                  src={m.image_url}
-                  alt=""
-                  title={m.name}
-                  className={cn(
-                    "h-[18px] w-8 object-cover",
-                    i === map_index ? "ring-1 ring-amber-400" : "opacity-70",
-                  )}
-                />
+                <Tooltip content={m.name}>
+                  <img
+                    src={m.image_url}
+                    alt={m.name}
+                    className={cn(
+                      "h-[18px] w-8 object-cover",
+                      i === map_index ? "ring-1 ring-amber-400" : "opacity-70",
+                    )}
+                  />
+                </Tooltip>
               ) : null}
               {m.sectors ? (
-                <span className="flex" title={m.name}>
+                <span className="flex" aria-hidden>
                   {Array.from({ length: m.sectors }, (_, s) => {
                     const taken = i < map_index || (i === map_index && s < sectors_taken);
                     const fighting = i === map_index && s === sectors_taken;
@@ -76,11 +78,12 @@ function FactionFlag({ faction }: { faction: string | null }) {
   const slug = faction ? FACTION_SLUG[faction] : undefined;
   if (!slug) return null;
   return (
-    <img
-      src={`/factions/${slug}.png`}
-      alt={faction ?? ""}
-      title={faction ?? ""}
-      className="size-6 object-contain drop-shadow"
-    />
+    <Tooltip content={faction}>
+      <img
+        src={`/factions/${slug}.png`}
+        alt={faction ?? ""}
+        className="size-6 object-contain drop-shadow"
+      />
+    </Tooltip>
   );
 }

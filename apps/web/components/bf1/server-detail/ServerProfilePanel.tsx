@@ -10,6 +10,7 @@ import { PlayerAvatar } from "@/components/common/PlayerAvatar";
 import type { ServerExtras } from "@/lib/api/bf1";
 import { bf1Queries } from "@/lib/queries/bf1";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@/components/ui/tooltip";
 
 /** 服务器档案：服主、战队、租期与各类 ID */
 export function ServerProfilePanel({
@@ -167,27 +168,28 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 function IdRow({ label, value }: { label: string; value: string }) {
   const [copied, setCopied] = useState(false);
   return (
-    <button
-      type="button"
-      onClick={() => {
-        void navigator.clipboard?.writeText(value).then(() => {
-          setCopied(true);
-          setTimeout(() => setCopied(false), 1200);
-        });
-      }}
-      className="group flex w-full items-center gap-3 text-left text-xs"
-      title="点击复制"
-    >
-      <span className="w-16 shrink-0 text-white/40">{label}</span>
-      <span className="min-w-0 flex-1 truncate font-mono text-white/70 group-hover:text-white">
-        {value}
-      </span>
-      {copied ? (
-        <Check className="size-3.5 shrink-0 text-emerald-400" />
-      ) : (
-        <Copy className="size-3.5 shrink-0 text-white/25 group-hover:text-white/60" />
-      )}
-    </button>
+    <Tooltip content="点击复制">
+      <button
+        type="button"
+        onClick={() => {
+          void navigator.clipboard?.writeText(value).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1200);
+          });
+        }}
+        className="group flex w-full items-center gap-3 text-left text-xs"
+      >
+        <span className="w-16 shrink-0 text-white/40">{label}</span>
+        <span className="min-w-0 flex-1 truncate font-mono text-white/70 group-hover:text-white">
+          {value}
+        </span>
+        {copied ? (
+          <Check className="size-3.5 shrink-0 text-emerald-400" />
+        ) : (
+          <Copy className="size-3.5 shrink-0 text-white/25 group-hover:text-white/60" />
+        )}
+      </button>
+    </Tooltip>
   );
 }
 

@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tooltip } from "@/components/ui/tooltip";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AdminPageSkeleton } from "@/components/layout/PageSkeleton";
 import { SectionHeading } from "@/components/layout/SectionHeading";
@@ -145,12 +146,9 @@ export default function ApiKeysAdminPage() {
       className: "whitespace-nowrap",
       cell: (k) =>
         k.revoked_at ? (
-          <span
-            className="text-muted-foreground text-sm"
-            title={`${formatTime(k.revoked_at)} 吊销`}
-          >
-            已吊销
-          </span>
+          <Tooltip content={`${formatTime(k.revoked_at)} 吊销`}>
+            <span className="text-muted-foreground cursor-help text-sm">已吊销</span>
+          </Tooltip>
         ) : (
           <div className="flex gap-4">
             <Button

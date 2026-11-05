@@ -13,6 +13,7 @@ import {
   medalImage,
 } from "@/lib/bf1/codex/collection";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@/components/ui/tooltip";
 import { Panel } from "./CareerOverview";
 
 const MEDAL_GROUPS = groupBy(MEDALS, (m) => m.category);
@@ -142,29 +143,30 @@ function MedalTile({
       ? `${name}，未解锁，${state.stages_done} / ${state.stages_total} 阶段`
       : `${name}，未解锁`;
   return (
-    <Link
-      href={`/bf1/codex/medals/${code}`}
-      prefetch={false}
-      title={label}
-      aria-label={label}
-      className="group compact-action block"
-    >
-      <img
-        src={medalImage(code)}
-        alt=""
-        width={256}
-        height={256}
-        loading="lazy"
-        decoding="async"
-        className={cn(
-          "aspect-square w-full object-contain transition-opacity group-hover:opacity-100",
-          done ? "" : "opacity-30 grayscale",
-        )}
-      />
-      <div className="h-4 text-center text-[10px] text-white/50 tabular-nums">
-        {partial ? `${state.stages_done}/${state.stages_total}` : ""}
-      </div>
-    </Link>
+    <Tooltip content={label}>
+      <Link
+        href={`/bf1/codex/medals/${code}`}
+        prefetch={false}
+        aria-label={label}
+        className="group compact-action block"
+      >
+        <img
+          src={medalImage(code)}
+          alt=""
+          width={256}
+          height={256}
+          loading="lazy"
+          decoding="async"
+          className={cn(
+            "aspect-square w-full object-contain transition-opacity group-hover:opacity-100",
+            done ? "" : "opacity-30 grayscale",
+          )}
+        />
+        <div className="h-4 text-center text-[10px] text-white/50 tabular-nums">
+          {partial ? `${state.stages_done}/${state.stages_total}` : ""}
+        </div>
+      </Link>
+    </Tooltip>
   );
 }
 
@@ -186,30 +188,31 @@ function DogtagTile({
       ? `${name}，未解锁，${state?.acquired} / ${state?.needed}`
       : `${name}，未解锁`;
   return (
-    <Link
-      href={`/bf1/codex/dogtags/${id}`}
-      prefetch={false}
-      title={label}
-      aria-label={label}
-      className="group compact-action block"
-    >
-      <img
-        src={dogtagImage(id)}
-        alt=""
-        width={300}
-        height={300}
-        loading="lazy"
-        decoding="async"
-        className={cn(
-          "aspect-square w-full rounded-full transition-opacity group-hover:opacity-100",
-          done ? "" : "opacity-25 grayscale",
-        )}
-      />
-      {ratio != null && ratio > 0 ? (
-        <div className="mx-1 mt-1 h-0.5 bg-white/10">
-          <div className="h-full bg-amber-400/70" style={{ width: `${ratio * 100}%` }} />
-        </div>
-      ) : null}
-    </Link>
+    <Tooltip content={label}>
+      <Link
+        href={`/bf1/codex/dogtags/${id}`}
+        prefetch={false}
+        aria-label={label}
+        className="group compact-action block"
+      >
+        <img
+          src={dogtagImage(id)}
+          alt=""
+          width={300}
+          height={300}
+          loading="lazy"
+          decoding="async"
+          className={cn(
+            "aspect-square w-full rounded-full transition-opacity group-hover:opacity-100",
+            done ? "" : "opacity-25 grayscale",
+          )}
+        />
+        {ratio != null && ratio > 0 ? (
+          <div className="mx-1 mt-1 h-0.5 bg-white/10">
+            <div className="h-full bg-amber-400/70" style={{ width: `${ratio * 100}%` }} />
+          </div>
+        ) : null}
+      </Link>
+    </Tooltip>
   );
 }

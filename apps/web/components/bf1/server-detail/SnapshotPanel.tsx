@@ -410,7 +410,7 @@ function RosterTable({
                       target="_blank"
                       rel="noopener noreferrer"
                       className="min-w-0 truncate font-medium hover:underline"
-                      title={`${p.name ?? p.persona_id}（在新标签查看战绩）`}
+                      title={String(p.name ?? p.persona_id)}
                     >
                       {p.name ?? p.persona_id}
                     </Link>

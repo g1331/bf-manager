@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@/components/ui/tooltip";
 import { useSession } from "@/hooks/useSession";
 import { MODULES, isModuleActive, type RailModule } from "@/lib/nav";
 
@@ -53,13 +54,15 @@ export function AppRail() {
       </div>
 
       {/* 底部系统区：门户首页，绝对定位钉底 */}
-      <Link
-        href="/"
-        className="group absolute bottom-6 left-1/2 flex size-12 -translate-x-1/2 items-center justify-center text-white/45 transition-colors hover:text-white"
-      >
-        <Globe className="size-5" />
-        <RailTooltip>门户首页</RailTooltip>
-      </Link>
+      <Tooltip content="门户首页" side="right">
+        <Link
+          href="/"
+          aria-label="门户首页"
+          className="absolute bottom-6 left-1/2 flex size-12 -translate-x-1/2 items-center justify-center text-white/45 transition-colors hover:text-white"
+        >
+          <Globe className="size-5" />
+        </Link>
+      </Tooltip>
     </nav>
   );
 }
@@ -103,7 +106,6 @@ function RailLink({ module: m, active }: { module: RailModule; active: boolean }
           )}
         />
       ) : null}
-      <RailTooltip>{m.label}</RailTooltip>
     </>
   );
 
@@ -112,27 +114,23 @@ function RailLink({ module: m, active }: { module: RailModule; active: boolean }
 
   if (m.disabled || m.href === "#") {
     return (
-      <span className={cn(baseClass, "cursor-not-allowed")} aria-disabled="true">
-        {inner}
-      </span>
+      <Tooltip content={m.label} side="right">
+        <span
+          className={cn(baseClass, "cursor-not-allowed")}
+          aria-disabled="true"
+          aria-label={m.label}
+        >
+          {inner}
+        </span>
+      </Tooltip>
     );
   }
 
   return (
-    <Link href={m.href} className={baseClass}>
-      {inner}
-    </Link>
-  );
-}
-
-/** rail 悬停提示标签：纯 CSS，悬停时从图标右侧浮出。 */
-function RailTooltip({ children }: { children: React.ReactNode }) {
-  return (
-    <span
-      role="tooltip"
-      className="pointer-events-none absolute left-full z-50 ml-1 hidden border border-white/15 bg-black/90 px-2 py-1 text-xs font-medium whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100 lg:block"
-    >
-      {children}
-    </span>
+    <Tooltip content={m.label} side="right">
+      <Link href={m.href} className={baseClass} aria-label={m.label}>
+        {inner}
+      </Link>
+    </Tooltip>
   );
 }

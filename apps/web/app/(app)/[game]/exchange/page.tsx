@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { skinRarityFromName, skinRarityHex } from "@/lib/bf1/rarity";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@/components/ui/tooltip";
 import { bf1Queries } from "@/lib/queries/bf1";
 
 const RARITY_ORDER: Record<string, number> = { Superior: 0, Enhanced: 1, Standard: 2 };
@@ -151,18 +152,19 @@ function PeriodButton({
   children: React.ReactNode;
 }) {
   return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      disabled={disabled}
-      onClick={onClick}
-      className={cn(
-        "flex size-9 items-center justify-center rounded-sm border border-white/15 bg-black/40 text-white/70 transition-colors",
-        "hover:text-white disabled:opacity-30 disabled:hover:text-white/70",
-      )}
-    >
-      {children}
-    </button>
+    <Tooltip content={label}>
+      <button
+        type="button"
+        aria-label={label}
+        disabled={disabled}
+        onClick={onClick}
+        className={cn(
+          "flex size-9 items-center justify-center rounded-sm border border-white/15 bg-black/40 text-white/70 transition-colors",
+          "hover:text-white disabled:opacity-30 disabled:hover:text-white/70",
+        )}
+      >
+        {children}
+      </button>
+    </Tooltip>
   );
 }

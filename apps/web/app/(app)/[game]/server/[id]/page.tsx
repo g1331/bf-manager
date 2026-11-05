@@ -741,7 +741,7 @@ function PlayerRow({ player, seq, game }: { player: BlazePlayer; seq: number; ga
           target="_blank"
           rel="noopener noreferrer"
           className="flex min-w-0 items-center gap-1.5 hover:underline"
-          title={`${player.display_name}（在新标签查看战绩）`}
+          title={player.display_name}
         >
           {dot ? <span className={cn("size-1.5 shrink-0 rounded-full", dot)} /> : null}
           <span
@@ -828,7 +828,7 @@ function ConnectingBars({ className }: { className?: string }) {
 function LatencyCell({ latency, loading }: { latency: number; loading?: boolean }) {
   if (loading) {
     return (
-      <div className="flex items-center justify-center gap-1" title="正在载入">
+      <div className="flex items-center justify-center gap-1">
         <ConnectingBars />
         <span className="text-[11px] whitespace-nowrap text-white/50">载入</span>
       </div>

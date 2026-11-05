@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
+import { Tooltip } from "@/components/ui/tooltip";
 import { SectionHeading } from "@/components/layout/SectionHeading";
 import {
   FactionFlag,
@@ -135,9 +136,11 @@ function RoundCard({
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 to-black/30" />
         {active ? <span className="absolute inset-x-0 bottom-0 h-0.5 bg-amber-400" /> : null}
         {winner ? (
-          <span className="absolute right-2.5 bottom-2 flex" title={`${winner} 胜`}>
-            <FactionFlag faction={winner} won className="size-6" />
-          </span>
+          <Tooltip content={`${winner} 胜`}>
+            <span className="absolute right-2.5 bottom-2 z-10 flex">
+              <FactionFlag faction={winner} won className="size-6" />
+            </span>
+          </Tooltip>
         ) : null}
         <div className="relative flex h-full flex-col justify-between px-2.5 py-1.5">
           <div className="flex items-center justify-between gap-2 text-[11px] text-white/70 tabular-nums">

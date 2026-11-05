@@ -8,6 +8,7 @@ import { ChevronRight, Code, KeyRound, ScrollText, ShieldCheck, Users } from "lu
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AdminPageSkeleton } from "@/components/layout/PageSkeleton";
 import { SectionHeading } from "@/components/layout/SectionHeading";
+import { Tooltip } from "@/components/ui/tooltip";
 import { useSession } from "@/hooks/useSession";
 import {
   type AdminMetrics,
@@ -188,11 +189,14 @@ function DailyTrend({ daily }: { daily: DailyCount[] }) {
             <div key={d.date} className="flex flex-1 flex-col items-center gap-1.5">
               <span className="text-muted-foreground text-[10px] tabular-nums">{d.requests}</span>
               <div className="flex w-full flex-1 items-end">
-                <div
-                  className="bg-foreground/25 hover:bg-foreground/40 w-full rounded-sm transition-colors"
-                  style={{ height: `${Math.max(2, (d.requests / max) * 100)}%` }}
-                  title={`${d.date} · ${d.requests} 次 · 活跃 ${d.active_users} 人 · 游客 ${d.guests} 人`}
-                />
+                <Tooltip
+                  content={`${d.date} · ${d.requests} 次 · 活跃 ${d.active_users} 人 · 游客 ${d.guests} 人`}
+                >
+                  <div
+                    className="bg-foreground/25 hover:bg-foreground/40 w-full rounded-sm transition-colors"
+                    style={{ height: `${Math.max(2, (d.requests / max) * 100)}%` }}
+                  />
+                </Tooltip>
               </div>
               <span className="text-muted-foreground text-[10px] tabular-nums">
                 {d.date.slice(5)}
@@ -296,11 +300,12 @@ function EaHourly({ hours }: { hours: EaHourCount[] }) {
           return (
             <div key={h.hour} className="flex flex-1 flex-col items-center gap-1">
               <div className="flex w-full flex-1 items-end">
-                <div
-                  className="bg-foreground/25 hover:bg-foreground/40 w-full rounded-sm transition-colors"
-                  style={{ height: `${Math.max(2, (h.count / max) * 100)}%` }}
-                  title={`${label} · ${h.count} 次`}
-                />
+                <Tooltip content={`${label} · ${h.count} 次`}>
+                  <div
+                    className="bg-foreground/25 hover:bg-foreground/40 w-full rounded-sm transition-colors"
+                    style={{ height: `${Math.max(2, (h.count / max) * 100)}%` }}
+                  />
+                </Tooltip>
               </div>
               <span className="text-muted-foreground text-[9px] tabular-nums">
                 {at.getHours() % 3 === 0 ? label.slice(0, 2) : "\u00a0"}
@@ -327,9 +332,9 @@ function EaSources({ sources }: { sources: EaSourceCount[] }) {
             <tr>
               <th className="pb-2 text-left font-normal">来源</th>
               <th className="pb-2 text-right font-normal">请求</th>
-              <th className="pb-2 text-right font-normal" title="Stats.getStats 查询的人次">
-                查询人次
-              </th>
+              <Tooltip content="Stats.getStats 查询的人次">
+                <th className="cursor-help pb-2 text-right font-normal">查询人次</th>
+              </Tooltip>
             </tr>
           </thead>
           <tbody className="tabular-nums">

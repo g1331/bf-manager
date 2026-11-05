@@ -17,6 +17,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Clock, Plus, Search, X, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { PlayerAvatar } from "@/components/common/PlayerAvatar";
@@ -282,7 +283,7 @@ export function MembersPanel({
                       target="_blank"
                       rel="noopener noreferrer"
                       className="truncate text-sm text-white hover:underline"
-                      title={`${name}（在新标签查看战绩）`}
+                      title={name}
                     >
                       {name}
                     </Link>
@@ -303,35 +304,39 @@ export function MembersPanel({
                   <div className="font-mono text-[11px] text-white/40">{m.persona_id}</div>
                 </div>
                 {kind === "vips" && can("addVip") ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="compact-action shrink-0 px-2.5 opacity-70 group-hover:opacity-100"
-                    aria-label={`调整 ${name} 的 VIP`}
-                    title="调整时长"
-                    onClick={() => act("addVip", { persona_id: m.persona_id, display_name: name })}
-                  >
-                    <Clock className="size-3.5" />
-                  </Button>
+                  <Tooltip content="调整时长">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="compact-action shrink-0 px-2.5 opacity-70 group-hover:opacity-100"
+                      aria-label={`调整 ${name} 的 VIP`}
+                      onClick={() =>
+                        act("addVip", { persona_id: m.persona_id, display_name: name })
+                      }
+                    >
+                      <Clock className="size-3.5" />
+                    </Button>
+                  </Tooltip>
                 ) : null}
                 {canRemove ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={cn(
-                      "compact-action shrink-0 opacity-70 group-hover:opacity-100",
-                      kind === "vips" && "px-2.5",
-                    )}
-                    // VIP 行多一个调整按钮，两个都只留图标，给名字和徽标让出宽度
-                    aria-label={kind === "vips" ? `移除 ${name} 的 VIP` : undefined}
-                    title={kind === "vips" ? meta.removeLabel : undefined}
-                    onClick={() =>
-                      act(meta.removeKind, { persona_id: m.persona_id, display_name: name })
-                    }
-                  >
-                    <X className="size-3.5" />
-                    {kind === "vips" ? null : meta.removeLabel}
-                  </Button>
+                  <Tooltip content={kind === "vips" ? meta.removeLabel : null}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        "compact-action shrink-0 opacity-70 group-hover:opacity-100",
+                        kind === "vips" && "px-2.5",
+                      )}
+                      // VIP 行多一个调整按钮，两个都只留图标，给名字和徽标让出宽度
+                      aria-label={kind === "vips" ? `移除 ${name} 的 VIP` : undefined}
+                      onClick={() =>
+                        act(meta.removeKind, { persona_id: m.persona_id, display_name: name })
+                      }
+                    >
+                      <X className="size-3.5" />
+                      {kind === "vips" ? null : meta.removeLabel}
+                    </Button>
+                  </Tooltip>
                 ) : null}
               </li>
             );
@@ -473,28 +478,30 @@ function VipQueueSection({
                   </div>
                 </div>
                 {canAdjust ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="compact-action shrink-0 px-2.5 opacity-70 group-hover:opacity-100"
-                    aria-label={`调整 ${name} 的排队时长`}
-                    title="调整时长"
-                    onClick={() => onAdjust(item)}
-                  >
-                    <Clock className="size-3.5" />
-                  </Button>
+                  <Tooltip content="调整时长">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="compact-action shrink-0 px-2.5 opacity-70 group-hover:opacity-100"
+                      aria-label={`调整 ${name} 的排队时长`}
+                      onClick={() => onAdjust(item)}
+                    >
+                      <Clock className="size-3.5" />
+                    </Button>
+                  </Tooltip>
                 ) : null}
                 {canRemove ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="compact-action shrink-0 px-2.5 opacity-70 group-hover:opacity-100"
-                    aria-label={`把 ${name} 移出待生效队列`}
-                    title="撤销"
-                    onClick={() => onRemove(item)}
-                  >
-                    <X className="size-3.5" />
-                  </Button>
+                  <Tooltip content="撤销">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="compact-action shrink-0 px-2.5 opacity-70 group-hover:opacity-100"
+                      aria-label={`把 ${name} 移出待生效队列`}
+                      onClick={() => onRemove(item)}
+                    >
+                      <X className="size-3.5" />
+                    </Button>
+                  </Tooltip>
                 ) : null}
               </li>
             );

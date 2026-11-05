@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { UsersRound, UserPlus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@/components/ui/tooltip";
 import { useSession } from "@/hooks/useSession";
 import { PlayerAvatar } from "@/components/common/PlayerAvatar";
 import {
@@ -58,25 +59,26 @@ export function FriendsRail() {
     <aside ref={rootRef} className="sticky top-0 z-50 hidden h-screen w-14 shrink-0 lg:block">
       {/* 收起态：入口贴顶部 header 行、紧邻账户区，作为右上角社交入口 */}
       <div className="flex justify-center pt-6">
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className={cn(
-            "relative flex size-9 items-center justify-center rounded-full transition-colors hover:text-white",
-            open ? "text-white" : "text-white/55",
-          )}
-          aria-label={playing ? `好友与派对，${playing} 人在服` : "好友与派对"}
-          aria-expanded={open}
-          aria-controls="friends-panel"
-          title="好友与派对"
-        >
-          <UsersRound className="size-5" />
-          {playing ? (
-            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-500 px-1 text-[10px] leading-none font-semibold text-black tabular-nums">
-              {playing}
-            </span>
-          ) : null}
-        </button>
+        <Tooltip content="好友与派对" side="left">
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className={cn(
+              "relative flex size-9 items-center justify-center rounded-full transition-colors hover:text-white",
+              open ? "text-white" : "text-white/55",
+            )}
+            aria-label={playing ? `好友与派对，${playing} 人在服` : "好友与派对"}
+            aria-expanded={open}
+            aria-controls="friends-panel"
+          >
+            <UsersRound className="size-5" />
+            {playing ? (
+              <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-500 px-1 text-[10px] leading-none font-semibold text-black tabular-nums">
+                {playing}
+              </span>
+            ) : null}
+          </button>
+        </Tooltip>
       </div>
 
       {/* 展开态：从舞台右缘滑出、浮在主内容之上；舞台 overflow-hidden 会裁掉收起时移出的部分 */}

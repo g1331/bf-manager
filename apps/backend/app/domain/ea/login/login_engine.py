@@ -55,6 +55,7 @@ from app.domain.ea.login.form_parser import (
     is_send_code_challenge,
     page_diagnostic,
     parse_set_cookie_pair,
+    send_code_form_payload,
 )
 
 # EA 登录流程的起始 URL：sparta-companion-web 是 BF1 战地伴侣使用的 OAuth client。
@@ -425,7 +426,7 @@ class EALoginEngine:
     async def _request_code(self, session: aiohttp.ClientSession, method: str) -> str:
         """让 EA 发送验证码，返回脱敏后的目标邮箱（非邮件方式为空串）。
 
-        选择页与发送页都用当前页表单的字段打底（带上页面里的隐藏字段），再覆盖
+        选择页用登录表单、发送页用实际的发送表单的字段打底（带上隐藏字段），再覆盖
         方式与提交事件；只有选择页才带 ``maskedDestination``。EA 收下请求后应当
         进入验证码输入页，否则把页面诊断文本（含错误提示）带进异常。
         """
@@ -434,7 +435,9 @@ class EALoginEngine:
         overrides = {"codeType": method, "_codeType": method, "_eventId": "submit"}
         if has_code_type_radios(page):
             overrides["maskedDestination"] = masked
-        payload = build_form_payload(page, overrides) | overrides
+            payload = build_form_payload(page, overrides) | overrides
+        else:
+            payload = send_code_form_payload(page, overrides) | overrides
         resp, resp_text = await self._post(
             session, self._post_password_url, payload, stage="2fa_request"
         )

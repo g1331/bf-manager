@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Iterable
+from urllib.parse import urlsplit
 
 from lxml import html as lxml_html
 
@@ -22,6 +23,12 @@ _REDIRECT_RE = re.compile(r'window\.location="([^"]+)"')
 
 # 2026-11 起 EA 的二次验证发送页（只有「Send Code」按钮）的表单路径。
 _SEND_CODE_MARKER = "dynamicchallenge/sendCode"
+
+# 发送页里「Send Code」提交按钮（button 文本或 submit input 的 value，忽略大小写）。
+_SEND_BUTTON_XPATH = (
+    './/button[contains(translate(normalize-space(.),"SEND","send"),"send")]'
+    '|.//input[@type="submit" and contains(translate(@value,"SEND","send"),"send")]'
+)
 
 # 发送页正文「We'll send a verification code to 76*****@qq.com.」里的脱敏邮箱。
 _MASKED_EMAIL_RE = re.compile(r"([^\s@]*\*[^\s@]*@[^\s]+)")
@@ -72,9 +79,21 @@ def build_form_payload(
     forms = tree.xpath(f'//form[@id="{form_id}"]') or tree.xpath("//form")
     if not forms:
         return values.copy()
+    return _form_payload(forms[0], values)
 
+
+def send_code_form_payload(html_text: str, values: dict[str, str]) -> dict[str, str]:
+    """用「Send Code」发送页里实际的发送表单构造 payload，规则同 :func:`build_form_payload`。
+
+    找不到发送表单时返回 ``values`` 的浅拷贝。
+    """
+    form = _find_send_code_form(lxml_html.fromstring(html_text), html_text)
+    return values.copy() if form is None else _form_payload(form, values)
+
+
+def _form_payload(form: lxml_html.HtmlElement, values: dict[str, str]) -> dict[str, str]:
     payload: dict[str, str] = {}
-    for element in forms[0].xpath(".//input[@name]"):
+    for element in form.xpath(".//input[@name]"):
         name = element.get("name")
         if not name:
             continue
@@ -109,9 +128,12 @@ def extract_available_auth_methods(html_text: str) -> list[str]:
         value = radio.get("value")
         if value:
             methods.append(value)
-    if methods or not is_send_code_challenge(html_text):
+    if methods:
         return methods
-    for raw in tree.xpath('//input[@name="codeType" or @name="_codeType"]/@value'):
+    form = _find_send_code_form(tree, html_text)
+    if form is None:
+        return []
+    for raw in form.xpath('.//input[@name="codeType" or @name="_codeType"]/@value'):
         value = raw.strip()
         if value and value not in methods:
             methods.append(value)
@@ -119,18 +141,34 @@ def extract_available_auth_methods(html_text: str) -> list[str]:
 
 
 def is_send_code_challenge(html_text: str) -> bool:
-    """判断是否为 EA 的「Send Code」二次验证发送页（无方式选择）。
+    """判断是否为 EA 的「Send Code」二次验证发送页（无方式选择）。"""
+    return _find_send_code_form(lxml_html.fromstring(html_text), html_text) is not None
 
-    认表单路径 ``dynamicchallenge/sendCode`` 或页面标题「Two Factor Log In」；
-    仍带 password 输入框的页面不算（那是登录页本身）。
+
+def _find_send_code_form(
+    tree: lxml_html.HtmlElement, html_text: str
+) -> lxml_html.HtmlElement | None:
+    """定位发送页里提交「发送验证码」的那个 form。
+
+    - 页面有密码框、验证码输入框或 ``window.location`` 跳转时不是发送页；
+    - 优先取 action 含 ``dynamicchallenge/sendCode`` 的 form；
+    - 否则页面需带该路径或标题含「Two Factor」，再取含「Send」提交按钮的 form。
     """
-    if _SEND_CODE_MARKER in html_text:
-        return True
-    tree = lxml_html.fromstring(html_text)
-    if tree.xpath('//input[@type="password"]'):
-        return False
+    if tree.xpath('//input[@type="password" or @name="oneTimeCode"]'):
+        return None
+    if extract_redirect_url(html_text):
+        return None
+    forms = tree.xpath("//form")
+    for form in forms:
+        if _SEND_CODE_MARKER in (form.get("action") or ""):
+            return form
     title = " ".join(tree.xpath("//title//text()")).lower()
-    return "two factor" in title
+    if _SEND_CODE_MARKER not in html_text and "two factor" not in title:
+        return None
+    for form in forms:
+        if form.xpath(_SEND_BUTTON_XPATH):
+            return form
+    return None
 
 
 def has_code_type_radios(html_text: str) -> bool:
@@ -260,7 +298,7 @@ def _form_outline(tree: lxml_html.HtmlElement) -> str:
     """列出页面所有 form 的 action 路径与 input ``name:type``（不含任何 value）。"""
     parts: list[str] = []
     for form in tree.xpath("//form"):
-        action = (form.get("action") or "").split("?", 1)[0]
+        action = urlsplit(form.get("action") or "").path
         inputs = ",".join(
             f"{el.get('name')}:{(el.get('type') or 'text').lower()}"
             for el in form.xpath(".//input[@name]")
@@ -334,4 +372,5 @@ __all__ = [
     "looks_like_login_form",
     "page_diagnostic",
     "parse_set_cookie_pair",
+    "send_code_form_payload",
 ]

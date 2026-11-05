@@ -1,5 +1,5 @@
 /**
- * BF6 读查询的 queryKey 与 queryFn。两个接口都会打到 EA，后端各自缓存（找人 1 小时、战绩 20 分钟），
+ * BF6 读查询的 queryKey 与 queryFn。找人和战绩会打到 EA，后端各自缓存（找人 1 小时、战绩 20 分钟），
  * 前端 staleTime 跟着放长，来回切页不重复请求。
  */
 import { queryOptions } from "@tanstack/react-query";
@@ -9,6 +9,7 @@ export const bf6Keys = {
   resolve: (name: string, platform: Bf6Platform | null) =>
     ["bf6-resolve", name.toLowerCase(), platform] as const,
   stats: (nucleusId: number) => ["bf6-stats", nucleusId] as const,
+  matches: (nucleusId: number) => ["bf6-matches", nucleusId] as const,
 };
 
 export const bf6Queries = {
@@ -23,5 +24,12 @@ export const bf6Queries = {
       queryKey: bf6Keys.stats(nucleusId),
       queryFn: ({ signal }) => bf6Api.getStats(nucleusId, { signal }),
       staleTime: 10 * 60_000,
+    }),
+  /** 对局估算只读库，后台每 10–30 分钟更新一次 */
+  matches: (nucleusId: number) =>
+    queryOptions({
+      queryKey: bf6Keys.matches(nucleusId),
+      queryFn: ({ signal }) => bf6Api.getMatches(nucleusId, { signal }),
+      staleTime: 60_000,
     }),
 };

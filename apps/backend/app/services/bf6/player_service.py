@@ -5,6 +5,8 @@
 - 名字解析 1 小时，查无此人 10 分钟；
 - 归一化后的战绩 20 分钟。原始响应可达 1.5 MB，不缓存也不下发。
 
+每次向 EA 读到生涯都交给 ``match_service`` 存快照、算对局估算；后台复查也走这里的 ``fetch_batch``。
+
 同一玩家的并发请求在进程内合并成一次上游调用；真正打到 EA 的那次计入公共查询预算。
 """
 
@@ -18,16 +20,18 @@ from typing import Any
 import httpx
 from loguru import logger
 from redis.exceptions import RedisError
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.api.errors import EAApiError, EARejectedError
 from app.core import ea_budget
 from app.core.cache import get_cache
 from app.domain.games.bf6 import client as bf6
 from app.domain.games.bf6 import resolver
+from app.domain.games.bf6.wire import PlayerStats
 from app.schemas.bf6.player import Bf6PlayerStats, Bf6ResolvedPlayer
 from app.services.account_service import SessionFactory
-from app.services.bf6 import credential_service
-from app.services.bf6.stats_normalizer import normalize
+from app.services.bf6 import credential_service, match_service
+from app.services.bf6.stats_normalizer import global_stats, normalize_global
 
 _EVENT_KEY = "bf6:event"
 _EVENT_TTL = 3600
@@ -120,30 +124,66 @@ def _not_found(query: str) -> EARejectedError:
     )
 
 
+async def _get_stats(session_factory: SessionFactory, nucleus_ids: list[int]) -> list[PlayerStats]:
+    """会话被网关拒绝时换一个新会话重试一次。"""
+    try:
+        token = await credential_service.get_session_jwt(session_factory)
+        return await bf6.get_stats(token, nucleus_ids)
+    except bf6.Bf6SessionExpiredError:
+        token = await credential_service.get_session_jwt(session_factory, renew=True)
+        return await bf6.get_stats(token, nucleus_ids)
+
+
 async def _fetch_stats(session_factory: SessionFactory, nucleus_id: int) -> Bf6PlayerStats:
     await ea_budget.acquire()
     try:
-        try:
-            token = await credential_service.get_session_jwt(session_factory)
-            players = await bf6.get_stats(token, [nucleus_id])
-        except bf6.Bf6SessionExpiredError:
-            token = await credential_service.get_session_jwt(session_factory, renew=True)
-            players = await bf6.get_stats(token, [nucleus_id])
+        players = await _get_stats(session_factory, [nucleus_id])
     except bf6.Bf6Error as e:
         logger.warning("BF6 getStats 失败 nucleus={}: {}", nucleus_id, e)
         raise _upstream_error(e) from e
     player = next((p for p in players if p.player.nucleus_id == nucleus_id), None)
     if player is None and len(players) == 1:
         player = players[0]
-    return normalize(player, nucleus_id, datetime.now(UTC))
+    now = datetime.now(UTC)
+    stats = global_stats(player)
+    try:
+        await match_service.record(session_factory, nucleus_id, stats, now, viewed=True)
+    except SQLAlchemyError as e:
+        # 对局估算是附带的，写不进去不影响查战绩
+        logger.warning("BF6 快照写库失败 nucleus={}: {!r}", nucleus_id, e)
+    return normalize_global(stats, nucleus_id, now)
 
 
 async def _fetch_and_cache(session_factory: SessionFactory, nucleus_id: int) -> Bf6PlayerStats:
     started = time.monotonic()
     result = await _fetch_stats(session_factory, nucleus_id)
     logger.info("BF6 战绩 nucleus={} 用时 {:.1f}s", nucleus_id, time.monotonic() - started)
-    await _cache_set(_STATS_KEY.format(nucleus_id), result.model_dump(mode="json"), _STATS_TTL)
+    await _cache_stats(result)
     return result
+
+
+async def _cache_stats(result: Bf6PlayerStats) -> None:
+    await _cache_set(
+        _STATS_KEY.format(result.nucleus_id), result.model_dump(mode="json"), _STATS_TTL
+    )
+
+
+async def fetch_batch(
+    session_factory: SessionFactory, nucleus_ids: list[int]
+) -> dict[int, dict[str, int]]:
+    """后台复查用：一次读一批人的生涯，顺带刷新他们的战绩缓存。不计入公共查询预算。"""
+    players = await _get_stats(session_factory, nucleus_ids)
+    now = datetime.now(UTC)
+    wanted = set(nucleus_ids)
+    out: dict[int, dict[str, int]] = {}
+    for player in players:
+        nucleus_id = player.player.nucleus_id
+        stats = global_stats(player)
+        if nucleus_id not in wanted or not stats:
+            continue
+        out[nucleus_id] = stats
+        await _cache_stats(normalize_global(stats, nucleus_id, now))
+    return out
 
 
 def _settle(nucleus_id: int, task: asyncio.Task[Bf6PlayerStats]) -> None:
@@ -156,6 +196,10 @@ def _settle(nucleus_id: int, task: asyncio.Task[Bf6PlayerStats]) -> None:
 async def get_player_stats(session_factory: SessionFactory, nucleus_id: int) -> Bf6PlayerStats:
     cached = await _cache_get(_STATS_KEY.format(nucleus_id))
     if isinstance(cached, dict):
+        try:
+            await match_service.touch(session_factory, nucleus_id, datetime.now(UTC))
+        except SQLAlchemyError as e:
+            logger.warning("BF6 记录查看时间失败 nucleus={}: {!r}", nucleus_id, e)
         return Bf6PlayerStats(**cached)
 
     # 上游调用放进独立任务：发起请求的客户端断开也不会取消它，其余等待者照样拿到结果

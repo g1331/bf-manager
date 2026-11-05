@@ -3,7 +3,7 @@
 /**
  * BF6 玩家战绩页（作战档案）
  *
- * 首屏是主玩兵种立绘 + K/D 与核心数据，下面是吸顶分区：概览 / 武器 / 载具 / 配备 / 地图 / 模式，
+ * 首屏是主玩兵种立绘 + K/D 与核心数据，下面是吸顶分区：概览 / 对局 / 武器 / 载具 / 配备 / 地图 / 模式，
  * 当前分区记在 URL hash。数据都是 EA 的生涯统计，后端缓存 20 分钟。
  */
 
@@ -17,6 +17,7 @@ import { DetailError, DetailNote } from "@/components/bf1/visual/DetailBackgroun
 import { Bf6Hero } from "@/components/bf6/Bf6Hero";
 import { GadgetsTab, VehiclesTab, WeaponsTab } from "@/components/bf6/Bf6Gear";
 import { MapsTab, ModesTab } from "@/components/bf6/Bf6Maps";
+import { MatchesTab } from "@/components/bf6/Bf6Matches";
 import { Bf6Overview, type Bf6Tab } from "@/components/bf6/Bf6Overview";
 import { PlayerDetailSkeleton } from "@/components/layout/PageSkeleton";
 import { useBack } from "@/hooks/useNavigation";
@@ -25,7 +26,15 @@ import { parsePlatform } from "@/lib/bf6/player-link";
 import { pushBf6RecentPlayer, useBf6RecentPlayers } from "@/lib/bf6/recent-players";
 import { bf6Queries } from "@/lib/queries/bf6";
 
-const TAB_KEYS = ["overview", "weapons", "vehicles", "gadgets", "maps", "modes"] as const;
+const TAB_KEYS = [
+  "overview",
+  "matches",
+  "weapons",
+  "vehicles",
+  "gadgets",
+  "maps",
+  "modes",
+] as const;
 
 const LINK = "hover:text-bf6-fg whitespace-nowrap underline-offset-2 hover:underline";
 
@@ -82,8 +91,12 @@ function PlayerView({ nucleusId, stats }: { nucleusId: number; stats: Bf6PlayerS
     }
   }, [confirmed]);
 
+  // 战绩请求会顺带开始记录，对局列表在它之后再读
+  const matchesQ = useQuery(bf6Queries.matches(nucleusId));
+
   const tabs = [
     { key: "overview" as const, label: "概览" },
+    { key: "matches" as const, label: "对局", count: matchesQ.data?.matches.length },
     { key: "weapons" as const, label: "武器", count: stats.weapons.length },
     { key: "vehicles" as const, label: "载具", count: stats.vehicles.length },
     { key: "gadgets" as const, label: "配备", count: stats.gadgets.length },
@@ -122,6 +135,7 @@ function PlayerView({ nucleusId, stats }: { nucleusId: number; stats: Bf6PlayerS
         className="mt-6 sm:mt-8"
       >
         {tab === "overview" && <Bf6Overview stats={stats} onShowTab={showTab} />}
+        {tab === "matches" && <MatchesTab nucleusId={nucleusId} />}
         {tab === "weapons" && <WeaponsTab stats={stats} />}
         {tab === "vehicles" && <VehiclesTab stats={stats} />}
         {tab === "gadgets" && <GadgetsTab stats={stats} />}

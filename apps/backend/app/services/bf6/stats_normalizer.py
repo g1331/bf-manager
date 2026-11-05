@@ -101,10 +101,10 @@ _WEAPON_PREFIXES = {
     "ads_kills": "adskw_wp_",
 }
 # 武器前缀下的大类汇总行；手枪的汇总叫 pst_temp，统一成 pst
-_WEAPON_CATEGORIES = {"ar", "crb", "smg", "mg", "snp", "sg", "dmr", "pst"}
-_WEAPON_CATEGORY_ALIASES = {"pst_temp": "pst"}
+WEAPON_CATEGORIES = {"ar", "crb", "smg", "mg", "snp", "sg", "dmr", "pst"}
+WEAPON_CATEGORY_ALIASES = {"pst_temp": "pst"}
 # temp 是全部武器合计，和大类汇总重复，不单列
-_WEAPON_TOTAL = "temp"
+WEAPON_TOTAL = "temp"
 
 _VEHICLE_PREFIXES = {
     "kills": "kw_veh_",
@@ -114,7 +114,7 @@ _VEHICLE_PREFIXES = {
     "spawns": "spawns_veh_",
 }
 # 载具前缀下的汇总行：空中 / 地面 / 水面，以及直升机、喷气机两个子类
-_VEHICLE_CATEGORIES = {"air", "sur", "nav", "air_helis", "air_jets"}
+VEHICLE_CATEGORIES = {"air", "sur", "nav", "air_helis", "air_jets"}
 
 _GADGET_PREFIXES = {
     "uses": "uses_gad_",
@@ -163,11 +163,11 @@ _MAP_PREFIXES = {
     "time_seconds": "tp_lvl",
 }
 # lvlmp 是全部多人地图合计，lvlftp 是免费模式合计
-_MAP_AGGREGATES = {"mp", "ftp"}
+MAP_AGGREGATES = {"mp", "ftp"}
 
 # 模式前缀下的合计行：oblitall = oblit + sqdoblit，rr_all = rr_solo，
 # granitebr = 大逃杀单人 + 双人 + 四人，granite = granitebr + 试炼场，modbuilder = modbuilder0（门户）
-_MODE_AGGREGATES = {
+MODE_AGGREGATES = {
     "all",
     "official",
     "mp",
@@ -213,18 +213,22 @@ def _dims(stat: DimensionedStat) -> dict[str, str]:
     return {dim.key: dim.value for dim in stat.dimensions}
 
 
-def normalize(player: PlayerStats | None, nucleus_id: int, fetched_at: datetime) -> Bf6PlayerStats:
-    """player 为 None 表示 EA 没返回这名玩家。"""
+def global_stats(player: PlayerStats | None) -> dict[str, int]:
+    """取出 ``glacier_mp`` 的 global 维度（生涯）统计：{统计名: 值}。player 为 None 表示 EA 没返回这名玩家。"""
     categories = player.categories if player else ()
     category = next((c for c in categories if c.category_id == STATS_CATEGORY), None)
     rows = category.dimensioned_stats if category else ()
+    return {row.name: row.value for row in rows if _dims(row) == {"global": "global"}}
 
-    stats: dict[str, int] = {}
-    for row in rows:
-        dims = _dims(row)
-        if dims == {"global": "global"}:
-            stats[row.name] = row.value
 
+def normalize(player: PlayerStats | None, nucleus_id: int, fetched_at: datetime) -> Bf6PlayerStats:
+    """player 为 None 表示 EA 没返回这名玩家。"""
+    return normalize_global(global_stats(player), nucleus_id, fetched_at)
+
+
+def normalize_global(
+    stats: dict[str, int], nucleus_id: int, fetched_at: datetime
+) -> Bf6PlayerStats:
     career = Bf6Career.model_validate(
         {key: stats.get(name) for key, name in _CAREER_FIELDS.items()}
     )
@@ -252,23 +256,23 @@ def normalize(player: PlayerStats | None, nucleus_id: int, fetched_at: datetime)
     weapons: list[Bf6WeaponStats] = []
     weapon_categories: list[Bf6WeaponStats] = []
     for raw_id, values in _group(stats, _WEAPON_PREFIXES).items():
-        if raw_id == _WEAPON_TOTAL:
+        if raw_id == WEAPON_TOTAL:
             continue
-        item = _WEAPON_CATEGORY_ALIASES.get(raw_id, raw_id)
+        item = WEAPON_CATEGORY_ALIASES.get(raw_id, raw_id)
         weapon = Bf6WeaponStats.model_validate({"id": item, **values})
         # 霰弹按弹丸计命中、按发计射击，命中率会超过 100%，不给
         if item != "sg" and not item.startswith("sg_"):
             weapon.accuracy = ratio(weapon.shots_hit, weapon.shots_fired)
         weapon.headshot_rate = ratio(weapon.headshots, weapon.kills)
         weapon.kpm = _per_minute(weapon.kills, weapon.time_seconds)
-        (weapon_categories if item in _WEAPON_CATEGORIES else weapons).append(weapon)
+        (weapon_categories if item in WEAPON_CATEGORIES else weapons).append(weapon)
 
     vehicles: list[Bf6VehicleStats] = []
     vehicle_categories: list[Bf6VehicleStats] = []
     for item, values in _group(stats, _VEHICLE_PREFIXES).items():
         vehicle_row = Bf6VehicleStats.model_validate({"id": item, **values})
         vehicle_row.kpm = _per_minute(vehicle_row.kills, vehicle_row.time_seconds)
-        (vehicle_categories if item in _VEHICLE_CATEGORIES else vehicles).append(vehicle_row)
+        (vehicle_categories if item in VEHICLE_CATEGORIES else vehicles).append(vehicle_row)
 
     gadgets = [
         Bf6GadgetStats.model_validate({"id": item, **values})
@@ -289,7 +293,7 @@ def normalize(player: PlayerStats | None, nucleus_id: int, fetched_at: datetime)
     modes = [
         Bf6ModeStats.model_validate({"id": item, **values})
         for item, values in _group(stats, _MODE_PREFIXES).items()
-        if item not in _MODE_AGGREGATES
+        if item not in MODE_AGGREGATES
     ]
     for mode in modes:
         mode.win_rate = _win_rate(mode.wins, mode.matches)
@@ -297,7 +301,7 @@ def normalize(player: PlayerStats | None, nucleus_id: int, fetched_at: datetime)
     maps = [
         Bf6MapStats.model_validate({"id": item, **values})
         for item, values in _group(stats, _MAP_PREFIXES).items()
-        if item not in _MAP_AGGREGATES
+        if item not in MAP_AGGREGATES
     ]
     for map_row in maps:
         map_row.win_rate = _win_rate(map_row.wins, map_row.matches)

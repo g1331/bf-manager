@@ -167,6 +167,60 @@ export interface Bf6PlayerStats {
   fetched_at: string;
 }
 
+/** 对局估算里某个模式或地图打了几场 */
+export interface Bf6MatchSplit {
+  id: string;
+  matches: number;
+  wins: number;
+  losses: number;
+}
+
+export interface Bf6MatchItem {
+  id: string;
+  kills: number;
+  time_seconds: number;
+}
+
+/**
+ * 一条对局估算：同一玩家两次读取生涯之间的变化。间隔内打了几场就合并成几场；
+ * matches 为 0 表示有战斗时间但没计场次（中途退出等）。
+ */
+export interface Bf6MatchEstimate {
+  id: number;
+  /** 这段的对局在 started_after 之后结束，observed_at 时读到 */
+  started_after: string;
+  observed_at: string;
+  matches: number;
+  wins: number;
+  losses: number;
+  modes: Bf6MatchSplit[];
+  maps: Bf6MatchSplit[];
+  /** 含 AI；K/D、KPM 用 human_kills */
+  kills: number;
+  human_kills: number;
+  deaths: number;
+  score: number;
+  time_seconds: number;
+  damage: number;
+  assists: number;
+  revives: number;
+  headshots: number;
+  xp: number;
+  kit: string | null;
+  weapons: Bf6MatchItem[];
+  vehicles: Bf6MatchItem[];
+  kd: number | null;
+  kpm: number | null;
+}
+
+export interface Bf6MatchList {
+  /** 是否在记录这名玩家 */
+  tracking: boolean;
+  tracked_since: string | null;
+  last_checked_at: string | null;
+  matches: Bf6MatchEstimate[];
+}
+
 export const bf6Api = {
   resolvePlayer: (name: string, platform: Bf6Platform | null, opts?: RequestOpts) => {
     const qs = new URLSearchParams({ name });
@@ -176,4 +230,7 @@ export const bf6Api = {
 
   getStats: (nucleusId: number, opts?: RequestOpts) =>
     api.get<Bf6PlayerStats>(`/bf6/players/${nucleusId}/stats`, opts),
+
+  getMatches: (nucleusId: number, opts?: RequestOpts) =>
+    api.get<Bf6MatchList>(`/bf6/players/${nucleusId}/matches`, opts),
 };

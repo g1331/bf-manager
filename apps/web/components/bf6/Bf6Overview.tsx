@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 import { MapCard, RedsecPanel, mapCards } from "./Bf6Maps";
 import { MaskIcon, Panel, PanelTitle, SectionTitle, Stat } from "./primitives";
 
-export type Bf6Tab = "overview" | "weapons" | "vehicles" | "gadgets" | "maps" | "modes";
+export type Bf6Tab = "overview" | "matches" | "weapons" | "vehicles" | "gadgets" | "maps" | "modes";
 
 export function Bf6Overview({
   stats,

@@ -17,12 +17,14 @@ from app.schemas.bf1.server import (
     ServerPlayersResponse,
     ServerRosterPage,
     ServerRosterSnapshot,
+    ServerVisits,
 )
 from app.services.bf1.blaze_service import get_server_players
 from app.services.bf1.round_service import list_server_rounds, parse_tz, server_round_days
 from app.services.bf1.rsp_list_service import remember_detail_lists
 from app.services.bf1.server_filters import server_filter_options
 from app.services.bf1.server_player_count_service import (
+    find_visits,
     get_leaderboard,
     get_roster_snapshot,
     list_map_stats,
@@ -143,6 +145,16 @@ async def get_server_snapshots(
 ) -> ServerRosterPage:
     # 名单随全服统计每分钟记录一次，保留 7 天
     return await list_roster_points(db, game_id, before=before, limit=limit)
+
+
+@router.get("/{game_id}/visits", dependencies=[_read], response_model=ServerVisits)
+async def get_server_visits(
+    game_id: int,
+    db: DbDep,
+    q: str = Query(..., min_length=2, max_length=64, description="名字片段（不分大小写）或 PID"),
+) -> ServerVisits:
+    # 快照找人：这台服 7 天内名单里对上的人和各自每段在服时间，只读库
+    return await find_visits(db, game_id, q)
 
 
 @router.get("/{game_id}/snapshots/{ts}", dependencies=[_read], response_model=ServerRosterSnapshot)

@@ -334,6 +334,40 @@ def tally_playtime(
     return out
 
 
+def tally_visits(rows: Iterable[tuple[date, int, str]]) -> list[dict[str, Any]]:
+    """一个人在一台服（可含重启前后的几个 game_id）的 (UTC 日期, game_id, 事件串) → 在服时段。
+
+    同一秒的事件一起处理（服重启时旧实例记离开、新实例记进入），任一实例在服就算在服；跨天第 0 秒的
+    延续事件不打断时段。返回按开始时间升序的 {start, end, seated}：end 为空表示到最近一轮还在服，
+    seated 表示这一段进过两队（为假时只排了队或在观战）。
+    """
+    events: list[tuple[int, int, int]] = []
+    for day, gid, evs in rows:
+        base = int(datetime(day.year, day.month, day.day, tzinfo=UTC).timestamp())
+        events += [(base + at, gid, state) for at, state in decode_events(evs)]
+    events.sort(key=lambda e: e[0])
+    states: dict[int, int] = {}
+    out: list[dict[str, Any]] = []
+    current: dict[str, Any] | None = None
+    i = 0
+    while i < len(events):
+        ts = events[i][0]
+        while i < len(events) and events[i][0] == ts:
+            states[events[i][1]] = events[i][2]
+            i += 1
+        live = [st for st in states.values() if st != LEFT]
+        if live and current is None:
+            current = {"start": ts, "end": None, "seated": False}
+            out.append(current)
+        if current is not None:
+            if any(st in (TEAM1, TEAM2) for st in live):
+                current["seated"] = True
+            if not live:
+                current["end"] = ts
+                current = None
+    return out
+
+
 async def read_playtime(
     db: AsyncSession, game_ids: Iterable[int], since: int, until: int
 ) -> dict[int, dict[str, Any]]:

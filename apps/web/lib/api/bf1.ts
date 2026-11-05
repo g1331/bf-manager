@@ -404,6 +404,10 @@ export interface ServerVisit {
   start: number;
   end: number | null;
   seated: boolean;
+  /** 跳到名单用的采样时刻：进服后第一次采样；离开那一轮（等于 end 时名单里标为退出），
+   * 断档时没有那一轮就是离开前最后一次看到他。段内没有采样时为空 */
+  start_at: number | null;
+  end_at: number | null;
 }
 
 export interface ServerVisits {

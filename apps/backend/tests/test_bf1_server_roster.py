@@ -282,6 +282,10 @@ async def test_find_visits_by_name_or_pid(test_session, monkeypatch: pytest.Monk
         (b, "p1010", [(t[1], None, True)]),
     ]
     assert res.more is False
+    # 正常离开：离开那一轮有采样，跳过去名单里能看到他退出
+    done = res.players[0].visits[1]
+    assert (done.start_at, done.end_at) == (t[0], t[2])
+    assert res.players[0].visits[0].start_at == t[3] and res.players[0].visits[0].end_at is None
     # PID 完全对上排第一，名字里含这串数字的排后面
     found = await spc.find_visits(test_session, 1, "101")
     assert [p.persona_id for p in found.players] == [a, b]
@@ -300,3 +304,38 @@ async def test_visits_route_validates_query(client) -> None:
     assert res.status_code == 422
     res = await client.get("/api/v1/bf1/servers/1/visits", params={"q": "nobody"})
     assert res.status_code == 200 and res.json() == {"players": [], "more": False}
+
+
+async def test_find_visits_ranks_recent_before_truncating(
+    test_session, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(spc, "datetime", _Clock)
+    monkeypatch.setattr(spc, "roster_tracker", RosterTracker())
+    start = datetime.now(UTC).replace(second=0, microsecond=0) - timedelta(hours=1)
+    roster: dict[int, int] = {}
+    # p101…p111 依次进服，同属「名字开头对上」，最近来的 p111 必须在前 10 人里
+    for i, pid in enumerate(range(101, 112)):
+        roster[pid] = TEAM1
+        await _round(test_session, start + timedelta(minutes=i), dict(roster))
+    _Clock.current = start + timedelta(minutes=12)
+    res = await spc.find_visits(test_session, 1, "p1")
+    assert [p.persona_id for p in res.players] == list(range(111, 101, -1))
+    assert res.more is True
+
+
+async def test_find_visits_gap_leave_points_to_last_seen(
+    test_session, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(spc, "datetime", _Clock)
+    monkeypatch.setattr(spc, "roster_tracker", RosterTracker())
+    start = datetime.now(UTC).replace(second=0, microsecond=0) - timedelta(hours=1)
+    t0, t1 = start, start + timedelta(minutes=1)
+    await _round(test_session, t0, {101: TEAM1})
+    await _round(test_session, t1, {101: TEAM1})
+    # 断档 10 分钟后只有 202：101 的离开补记在 t1 后一分钟，那一刻没有名单
+    await _round(test_session, t1 + timedelta(minutes=10), {202: TEAM2})
+    _Clock.current = t1 + timedelta(minutes=11)
+    v = (await spc.find_visits(test_session, 1, "p101")).players[0].visits[0]
+    ts = lambda d: int(d.timestamp())  # noqa: E731
+    assert (v.start, v.end) == (ts(t0), ts(t1) + 60)
+    assert (v.start_at, v.end_at) == (ts(t0), ts(t1))

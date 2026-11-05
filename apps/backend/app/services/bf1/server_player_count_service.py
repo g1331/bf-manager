@@ -12,7 +12,8 @@ bf1_game_instances：有服主的服重启后靠 RSP serverId 串起各个实例
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from bisect import bisect_left
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 from loguru import logger
@@ -363,6 +364,40 @@ async def get_leaderboard(
     )
 
 
+async def _sample_times(db: AsyncSession, game_ids: list[int], since: date) -> list[int]:
+    """这台服（各实例）保留期内有名单的采样时刻，升序去重"""
+    rows = await db.scalars(
+        select(Bf1ServerPlayerCount.sampled_at).where(
+            Bf1ServerPlayerCount.game_id.in_(game_ids),
+            Bf1ServerPlayerCount.sampled_at
+            >= datetime(since.year, since.month, since.day, tzinfo=UTC),
+            Bf1ServerPlayerCount.joined_count.is_not(None),
+        )
+    )
+    # sqlite 读回的是无时区时间，按写入时的 UTC 补上
+    return sorted({int(t.replace(tzinfo=t.tzinfo or UTC).timestamp()) for t in rows})
+
+
+def _visit(samples: list[int], v: dict[str, Any]) -> ServerVisit:
+    """tally_visits 的一段在服时间，附上对应的名单采样时刻。
+
+    事件时刻不一定有采样：断档时离开补记在上一轮后一分钟，保留期第一天的时段从零点的延续事件开始。
+    start_at 取进服后的第一次采样；end_at 在离开那一轮有采样时就是它（名单里这个人标为退出），
+    否则取离开前最后一次看到他在服的采样。段内没有采样时为空。
+    """
+    start, end = v["start"], v["end"]
+    i = bisect_left(samples, start)
+    start_at = samples[i] if i < len(samples) and (end is None or samples[i] < end) else None
+    end_at: int | None = None
+    if end is not None:
+        j = bisect_left(samples, end)
+        if j < len(samples) and samples[j] == end:
+            end_at = end
+        elif j > 0 and samples[j - 1] >= start:
+            end_at = samples[j - 1]
+    return ServerVisit(start=start, end=end, seated=v["seated"], start_at=start_at, end_at=end_at)
+
+
 # 找人时最多列几个人、每人最多几段
 VISIT_PLAYERS = 10
 VISITS_PER_PLAYER = 50
@@ -399,8 +434,6 @@ async def find_visits(db: AsyncSession, game_id: int, q: str) -> ServerVisits:
         low = name.lower()
         return 0 if pid == pid_q or low == q.lower() else 1 if low.startswith(q.lower()) else 2
 
-    found = sorted(found, key=lambda r: (rank(r[1], r[0]), len(r[1]), r[1]))
-    top = dict(found[:VISIT_PLAYERS])
     rows = (
         await db.execute(
             select(
@@ -411,30 +444,36 @@ async def find_visits(db: AsyncSession, game_id: int, q: str) -> ServerVisits:
             ).where(
                 Bf1ServerPlayerDay.game_id.in_(game_ids),
                 Bf1ServerPlayerDay.day >= since,
-                Bf1ServerPlayerDay.pid.in_(list(top)),
+                Bf1ServerPlayerDay.pid.in_([pid for pid, _ in found]),
             )
         )
     ).tuples()
     by_pid: dict[int, list[tuple[Any, int, str]]] = {}
     for pid, day, gid, events in rows:
         by_pid.setdefault(pid, []).append((day, gid, events))
+    # 所有对上的人都先拼出时段，按「对上的程度、最近一次进服」排好再截取，免得最近来过的人被挤掉
+    visits_of = {
+        pid: tally_visits(sorted(by_pid.get(pid, []), key=lambda r: r[0])) for pid, _ in found
+    }
+    ranked = sorted(
+        found,
+        key=lambda r: (
+            rank(r[1], r[0]),
+            -(visits_of[r[0]][-1]["start"] if visits_of[r[0]] else 0),
+            r[1],
+        ),
+    )
+    samples = await _sample_times(db, game_ids, since)
     players = []
-    for pid, name in top.items():
-        visits = tally_visits(sorted(by_pid.get(pid, []), key=lambda r: r[0]))
-        visits.reverse()
+    for pid, name in ranked[:VISIT_PLAYERS]:
+        visits = visits_of[pid][::-1][:VISITS_PER_PLAYER]
         players.append(
             ServerVisitPlayer(
                 persona_id=pid,
                 name=name,
-                visits=[ServerVisit(**v) for v in visits[:VISITS_PER_PLAYER]],
+                visits=[_visit(samples, v) for v in visits],
             )
         )
-    players.sort(
-        key=lambda p: (
-            rank(p.name or "", p.persona_id),
-            -(p.visits[0].start if p.visits else 0),
-        )
-    )
     return ServerVisits(players=players, more=len(found) > VISIT_PLAYERS)
 
 

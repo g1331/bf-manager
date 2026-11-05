@@ -99,7 +99,12 @@ export function SnapshotPanel({
   });
   const items = useMemo(() => list.data?.pages.flatMap((p) => p.items) ?? [], [list.data]);
   const shown = changedOnly ? items.filter((p) => p.joined || p.left) : items;
-  const active = shown.find((p) => p.ts === selected) ?? shown[0] ?? null;
+  // 找人跳过来的时刻可能没人进出，被「只看有人进出」滤掉时也照样选中它
+  const active =
+    shown.find((p) => p.ts === selected) ??
+    items.find((p) => p.ts === selected) ??
+    shown[0] ??
+    null;
 
   return (
     <Bf1Panel
@@ -608,9 +613,11 @@ function VisitResults({
                 >
                   <button
                     type="button"
+                    disabled={v.start_at == null}
                     onClick={() => {
+                      if (v.start_at == null) return;
                       setPicked(v.start);
-                      onJump(v.start, p.persona_id);
+                      onJump(v.start_at, p.persona_id);
                     }}
                     className="compact-action min-h-11 min-w-0 flex-1 px-3 py-1.5 text-left hover:bg-white/[0.07] lg:min-h-0"
                   >
@@ -624,16 +631,17 @@ function VisitResults({
                       {v.seated ? null : <span>只排队 / 观战</span>}
                     </div>
                   </button>
-                  {v.end ? (
+                  {v.end_at != null ? (
                     <button
                       type="button"
                       onClick={() => {
                         setPicked(v.start);
-                        onJump(v.end!, p.persona_id);
+                        onJump(v.end_at!, p.persona_id);
                       }}
                       className="compact-action shrink-0 border-l border-white/10 px-2.5 text-[11px] text-white/50 hover:bg-white/[0.07] hover:text-white"
                     >
-                      离开时
+                      {/* 断档时没有离开那一轮的名单，只能看最后一次在服 */}
+                      {v.end_at === v.end ? "离开时" : "最后在服"}
                     </button>
                   ) : null}
                 </li>

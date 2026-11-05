@@ -185,6 +185,10 @@ class ServerVisit(BaseModel):
     end: int | None = None
     # 这一段进过两队；为假时只排了队或在观战
     seated: bool
+    # 跳到名单用的采样时刻：进服后第一次采样；离开那一轮（end_at == end，名单里标为退出），
+    # 断档时没有那一轮就是离开前最后一次看到他在服。段内没有采样时为空
+    start_at: int | None = None
+    end_at: int | None = None
 
 
 class ServerVisitPlayer(BaseModel):

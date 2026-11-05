@@ -17,6 +17,7 @@ import {
 } from "@/lib/api/bf1";
 import { bf1Keys, bf1Queries } from "@/lib/queries/bf1";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@/components/ui/tooltip";
 
 const CONFIRM_SECONDS = 5;
 const LOOP_OPTIONS = [
@@ -321,32 +322,31 @@ export function AutoSwitchPanel({
                     </span>
                   ) : null}
                 </span>
-                <div
-                  className="inline-flex items-center text-xs tabular-nums ring-1 ring-white/15"
-                  title="打几次再进入下一项"
-                >
-                  <button
-                    type="button"
-                    aria-label="减少次数"
-                    disabled={!canEdit || it.repeat <= 1}
-                    onClick={() => setItem(i, { repeat: it.repeat - 1 })}
-                    className="compact-action grid size-7 place-items-center text-white/60 enabled:hover:bg-white enabled:hover:text-black disabled:opacity-30"
-                  >
-                    <Minus className="size-3" />
-                  </button>
-                  <span className="w-12 text-center">
-                    {active ? `${v.done + 1}/${it.repeat}` : `× ${it.repeat}`}
-                  </span>
-                  <button
-                    type="button"
-                    aria-label="增加次数"
-                    disabled={!canEdit || it.repeat >= 9}
-                    onClick={() => setItem(i, { repeat: it.repeat + 1 })}
-                    className="compact-action grid size-7 place-items-center text-white/60 enabled:hover:bg-white enabled:hover:text-black disabled:opacity-30"
-                  >
-                    <Plus className="size-3" />
-                  </button>
-                </div>
+                <Tooltip content="打几次再进入下一项">
+                  <div className="inline-flex items-center text-xs tabular-nums ring-1 ring-white/15">
+                    <button
+                      type="button"
+                      aria-label="减少次数"
+                      disabled={!canEdit || it.repeat <= 1}
+                      onClick={() => setItem(i, { repeat: it.repeat - 1 })}
+                      className="compact-action grid size-7 place-items-center text-white/60 enabled:hover:bg-white enabled:hover:text-black disabled:opacity-30"
+                    >
+                      <Minus className="size-3" />
+                    </button>
+                    <span className="w-12 text-center">
+                      {active ? `${v.done + 1}/${it.repeat}` : `× ${it.repeat}`}
+                    </span>
+                    <button
+                      type="button"
+                      aria-label="增加次数"
+                      disabled={!canEdit || it.repeat >= 9}
+                      onClick={() => setItem(i, { repeat: it.repeat + 1 })}
+                      className="compact-action grid size-7 place-items-center text-white/60 enabled:hover:bg-white enabled:hover:text-black disabled:opacity-30"
+                    >
+                      <Plus className="size-3" />
+                    </button>
+                  </div>
+                </Tooltip>
                 {canEdit ? (
                   <div className="flex gap-1">
                     <IconButton label="上移" disabled={i === 0} onClick={() => move(i, -1)}>
@@ -465,16 +465,17 @@ function IconButton({
   children: React.ReactNode;
 }) {
   return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      disabled={disabled}
-      onClick={onClick}
-      className="compact-action grid size-7 place-items-center text-white/60 ring-1 ring-white/10 enabled:hover:bg-white enabled:hover:text-black disabled:opacity-30"
-    >
-      {children}
-    </button>
+    <Tooltip content={label}>
+      <button
+        type="button"
+        aria-label={label}
+        disabled={disabled}
+        onClick={onClick}
+        className="compact-action grid size-7 place-items-center text-white/60 ring-1 ring-white/10 enabled:hover:bg-white enabled:hover:text-black disabled:opacity-30"
+      >
+        {children}
+      </button>
+    </Tooltip>
   );
 }
 

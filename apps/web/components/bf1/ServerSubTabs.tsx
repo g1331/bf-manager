@@ -9,6 +9,7 @@
 
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@/components/ui/tooltip";
 
 type SubTab = "browse" | "mine";
 
@@ -24,13 +25,11 @@ export function ServerSubTabs({ game, active }: { game: string; active: SubTab }
       {tabs.map((t) => {
         if (!t.enabled || !t.href) {
           return (
-            <span
-              key={t.key}
-              title="需玩家账号维度数据，暂未接入"
-              className="flex h-11 shrink-0 cursor-default items-center font-medium tracking-wide whitespace-nowrap text-white/30"
-            >
-              {t.label}
-            </span>
+            <Tooltip key={t.key} content="暂未开放" side="bottom">
+              <span className="flex h-11 shrink-0 cursor-default items-center font-medium tracking-wide whitespace-nowrap text-white/30">
+                {t.label}
+              </span>
+            </Tooltip>
           );
         }
         const isActive = t.key === active;

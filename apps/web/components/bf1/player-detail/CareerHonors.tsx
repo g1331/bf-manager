@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { SectionHeading } from "@/components/layout/SectionHeading";
-import { RibbonStrip } from "@/components/bf1/rounds/RoundHonors";
+import { RibbonHint, RibbonStrip } from "@/components/bf1/rounds/RoundHonors";
+import { Tooltip } from "@/components/ui/tooltip";
 import type {
   CareerHonors,
   CareerMap,
@@ -98,17 +99,18 @@ function RibbonWall({ ribbons, game }: { ribbons: CareerRibbon[]; game: string }
                 const n = counts.get(r.code) ?? 0;
                 return (
                   <li key={r.code}>
-                    <Link
-                      href={`/${game}/codex/ribbons#${r.code}`}
-                      title={`${r.name}：${r.description}`}
-                      className={cn(
-                        "inline-action flex items-center gap-1.5 text-[11px] tabular-nums transition-opacity hover:opacity-100",
-                        n ? "text-white/75" : "opacity-30 grayscale",
-                      )}
-                    >
-                      <RibbonStrip code={r.code} />
-                      <span>{n ? `×${fmtFull(n)}` : ""}</span>
-                    </Link>
+                    <Tooltip content={<RibbonHint name={r.name} description={r.description} />}>
+                      <Link
+                        href={`/${game}/codex/ribbons#${r.code}`}
+                        className={cn(
+                          "inline-action flex items-center gap-1.5 text-[11px] tabular-nums transition-opacity hover:opacity-100",
+                          n ? "text-white/75" : "opacity-30 grayscale",
+                        )}
+                      >
+                        <RibbonStrip code={r.code} />
+                        <span>{n ? `×${fmtFull(n)}` : ""}</span>
+                      </Link>
+                    </Tooltip>
                   </li>
                 );
               })}

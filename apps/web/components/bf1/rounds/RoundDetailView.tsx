@@ -12,6 +12,7 @@ import { HINT_UNDERLINE, InfoHint } from "@/components/common/InfoHint";
 import { HonorBadges, boardScore } from "@/components/bf1/rounds/RoundHonors";
 import { FACTION_SLUG } from "@/lib/bf1/factions";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@/components/ui/tooltip";
 import { TipLine } from "@/components/bf1/codex/TipLine";
 
 export function formatRoundTime(ts: number): string {
@@ -63,17 +64,17 @@ export function KitIcon({ kit, className }: { kit: string | null; className?: st
   const src = kit ? KIT_ICONS[kit] : undefined;
   if (src) {
     return (
-      <img
-        src={src}
-        alt={kitLabel(kit)}
-        title={kitLabel(kit)}
-        className={cn("size-4 shrink-0 object-contain opacity-75", className)}
-      />
+      <Tooltip content={kitLabel(kit)}>
+        <img
+          src={src}
+          alt={kitLabel(kit)}
+          className={cn("size-4 shrink-0 object-contain opacity-75", className)}
+        />
+      </Tooltip>
     );
   }
   return (
     <span
-      title={kitLabel(kit)}
       className={cn(
         "inline-flex size-4 shrink-0 items-center justify-center text-[9px] leading-none text-white/25",
         className,
@@ -450,15 +451,6 @@ function PlayerRow({
   // 从玩家页点开时，这个人的明细默认展开
   const [open, setOpen] = useState(highlighted);
   const tag = STATUS_TAG[p.status];
-  const minutes = Math.round(p.seconds / 60);
-  const hint = [
-    p.name ?? String(p.persona_id),
-    kitLabel(p.kit),
-    minutes ? `在场 ${minutes} 分钟` : null,
-    p.spm != null ? `SPM ${p.spm}` : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
   return (
     <Fragment>
       <tr
@@ -478,7 +470,7 @@ function PlayerRow({
           {seq}
         </td>
         <td className="w-full max-w-0 py-[7px] pl-2">
-          <div className="flex min-w-0 items-center gap-2" title={hint}>
+          <div className="flex min-w-0 items-center gap-2">
             <KitIcon kit={p.kit} />
             <Link
               href={`/${game}/player/${p.persona_id}`}

@@ -7,6 +7,7 @@ import { classLabel } from "@/components/bf1/player-detail/format";
 import { RIBBONS, ribbonImage } from "@/lib/bf1/codex/collection";
 import { InfoHint } from "@/components/common/InfoHint";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@/components/ui/tooltip";
 
 const RIBBON_BY_CODE = new Map(RIBBONS.map((r) => [r.code, r]));
 
@@ -21,20 +22,18 @@ export function HonorBadges({ player: p, className }: { player: RoundPlayer; cla
   return (
     <span className={cn("flex shrink-0 items-center gap-1", className)}>
       {p.mvp ? (
-        <span
-          title="本局 MVP（游戏评选）"
-          className="rounded-sm bg-amber-400 px-1 text-[9.5px] leading-[1.6] font-extrabold tracking-wide text-black"
-        >
-          MVP
-        </span>
+        <Tooltip content="本局 MVP（游戏评选）">
+          <span className="rounded-sm bg-amber-400 px-1 text-[9.5px] leading-[1.6] font-extrabold tracking-wide text-black">
+            MVP
+          </span>
+        </Tooltip>
       ) : null}
       {p.ace_squad ? (
-        <span
-          title="本局王牌小队（游戏评选）"
-          className="rounded-sm border border-amber-400/60 px-1 text-[9.5px] leading-[1.45] font-bold text-amber-300"
-        >
-          王牌
-        </span>
+        <Tooltip content="本局王牌小队（游戏评选）">
+          <span className="rounded-sm border border-amber-400/60 px-1 text-[9.5px] leading-[1.45] font-bold text-amber-300">
+            王牌
+          </span>
+        </Tooltip>
       ) : null}
     </span>
   );
@@ -64,6 +63,16 @@ export function RibbonStrip({ code, height = 20 }: { code: string; height?: numb
 }
 
 /** 本局拿到的勋带：图 + 次数，悬停看名字和条件，点开进图鉴 */
+/** 勋带提示：名字一行，获得条件一行 */
+export function RibbonHint({ name, description }: { name: string; description: string }) {
+  return (
+    <>
+      <div className="font-semibold text-amber-200">{name}</div>
+      <div className="font-normal text-white/75">{description}</div>
+    </>
+  );
+}
+
 export function RibbonList({ ribbons, game }: { ribbons: RoundRibbon[]; game: string }) {
   return (
     <ul className="flex flex-wrap gap-x-3 gap-y-1.5">
@@ -71,14 +80,17 @@ export function RibbonList({ ribbons, game }: { ribbons: RoundRibbon[]; game: st
         const r = RIBBON_BY_CODE.get(x.code);
         return (
           <li key={x.code}>
-            <Link
-              href={`/${game}/codex/ribbons#${x.code}`}
-              title={r ? `${r.name}：${r.description}` : x.code}
-              className="inline-action flex items-center gap-1 text-[11px] text-white/60 tabular-nums hover:text-amber-300"
+            <Tooltip
+              content={r ? <RibbonHint name={r.name} description={r.description} /> : x.code}
             >
-              <RibbonStrip code={x.code} />
-              {x.count > 1 ? <span>×{x.count}</span> : null}
-            </Link>
+              <Link
+                href={`/${game}/codex/ribbons#${x.code}`}
+                className="inline-action flex items-center gap-1 text-[11px] text-white/60 tabular-nums hover:text-amber-300"
+              >
+                <RibbonStrip code={x.code} />
+                {x.count > 1 ? <span>×{x.count}</span> : null}
+              </Link>
+            </Tooltip>
           </li>
         );
       })}

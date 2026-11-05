@@ -10,6 +10,7 @@ import {
 } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { toast } from "sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { ApiException } from "@/lib/api-client";
 import { initPwa } from "@/lib/pwa";
 import { accountKeys } from "@/lib/queries/account";
@@ -56,7 +57,7 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      <TooltipProvider>{children}</TooltipProvider>
       {process.env.NODE_ENV === "development" ? <ReactQueryDevtools initialIsOpen={false} /> : null}
     </QueryClientProvider>
   );

@@ -17,6 +17,7 @@ import {
 import { HonorBadges, boardScore } from "@/components/bf1/rounds/RoundHonors";
 import { mainWeapon } from "@/components/bf1/rounds/RoundPlayerBreakdown";
 import { RowsSkeleton } from "@/components/layout/PageSkeleton";
+import { Tooltip } from "@/components/ui/tooltip";
 import type { PlayerRound } from "@/lib/api/bf1";
 import { bf1Queries } from "@/lib/queries/bf1";
 import { cn } from "@/lib/utils";
@@ -203,12 +204,11 @@ function RoundCard({
         className={className}
       />
     ) : (
-      <span
-        className={cn("flex items-center justify-center text-white/25", className)}
-        title="阵营未知"
-      >
-        <Flag className="size-5" />
-      </span>
+      <Tooltip content="阵营未知">
+        <span className={cn("flex items-center justify-center text-white/25", className)}>
+          <Flag className="size-5" />
+        </span>
+      </Tooltip>
     );
   const title = (
     <div className="flex min-w-0 items-center gap-1.5">
@@ -233,7 +233,7 @@ function RoundCard({
     r.server_name ? (
       <Link
         href={roundHref(game, r)}
-        title="在服务器详情里查看这一局"
+        title={r.server_name}
         className={cn(
           "inline-action pointer-events-auto relative block max-w-full truncate text-[11px] text-white/50 underline-offset-2 transition-colors hover:text-amber-300 hover:underline",
           className,

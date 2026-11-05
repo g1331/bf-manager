@@ -59,7 +59,6 @@ export function BattlefieldInfo({ kind, id, label, sideOffset = 8, className }: 
     <button
       type="button"
       aria-label={title}
-      title={kind === "map" ? "地图介绍" : "模式介绍"}
       onClick={isDesktop ? undefined : () => onOpenChange(true)}
       className={cn(
         "compact-action inline-flex size-11 shrink-0 items-center justify-center text-white/45 transition-colors hover:text-amber-300 focus-visible:text-amber-300 data-[state=open]:text-amber-300 lg:size-7",

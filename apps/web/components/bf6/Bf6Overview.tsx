@@ -1,6 +1,7 @@
 /**
  * 概览分区：生涯之最 → 战斗表现 / 团队贡献 → 王牌装备 → 兵种 → 武器偏好 → 常玩地图 → 禁区冲突。
  */
+import { Tooltip } from "@/components/ui/tooltip";
 import type { Bf6PlayerStats } from "@/lib/api/bf6";
 import {
   WEAPON_CATEGORIES,
@@ -452,15 +453,18 @@ function WeaponMix({ stats }: { stats: Bf6PlayerStats }) {
     <Panel className="px-4 py-5 sm:px-6 sm:py-5.5">
       <div className="flex h-[34px] gap-0.5">
         {cats.map((w, i) => (
-          <i
+          <Tooltip
             key={w.id}
-            title={label(w.id)}
-            className="block h-full"
-            style={{
-              width: `${share(w.kills, total) * 100}%`,
-              background: MIX_COLORS[i % MIX_COLORS.length],
-            }}
-          />
+            content={`${label(w.id)} · ${Math.round(share(w.kills, total) * 100)}%`}
+          >
+            <i
+              className="block h-full"
+              style={{
+                width: `${share(w.kills, total) * 100}%`,
+                background: MIX_COLORS[i % MIX_COLORS.length],
+              }}
+            />
+          </Tooltip>
         ))}
       </div>
       <div className="mt-4 grid grid-cols-2 gap-x-5 gap-y-3 lg:grid-cols-4">

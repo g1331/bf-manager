@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@/components/ui/tooltip";
 
 export type BanState = "clean" | "hit" | "unknown";
 export type BanSource = "bfban" | "bfeac";
@@ -81,16 +82,17 @@ export function BanBadge({ source, state, size = "md", href }: BanBadgeProps) {
 
   if (href) {
     return (
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={containerClass}
-        style={containerStyle}
-        title={`在 ${meta.label} 查看案件详情`}
-      >
-        {content}
-      </a>
+      <Tooltip content={`在 ${meta.label} 查看案件详情`}>
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={containerClass}
+          style={containerStyle}
+        >
+          {content}
+        </a>
+      </Tooltip>
     );
   }
 

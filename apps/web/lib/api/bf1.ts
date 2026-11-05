@@ -998,7 +998,7 @@ export const bf1Api = {
 
   getServerRounds: (gameId: number, query: ServerRoundsQuery = {}, opts?: RequestOpts) =>
     api.get<RoundPage>(`/bf1/servers/${gameId}/rounds${queryString(query)}`, opts),
-  getServerRoundDays: (gameId: number, tz: number, player?: string | null, opts?: RequestOpts) =>
+  getServerRoundDays: (gameId: number, tz: string, player?: string | null, opts?: RequestOpts) =>
     api.get<ServerRoundDays>(
       `/bf1/servers/${gameId}/rounds/days${queryString({ tz, player })}`,
       opts,
@@ -1007,7 +1007,7 @@ export const bf1Api = {
     api.get<RoundDetail>(`/bf1/rounds/${roundId}`, opts),
   getPlayerRounds: (personaId: number, query: PlayerRoundsQuery = {}, opts?: RequestOpts) =>
     api.get<PlayerRoundPage>(`/bf1/stats/${personaId}/rounds${queryString(query)}`, opts),
-  getPlayerRoundDays: (personaId: number, tz: number, server?: number | null, opts?: RequestOpts) =>
+  getPlayerRoundDays: (personaId: number, tz: string, server?: number | null, opts?: RequestOpts) =>
     api.get<PlayerRoundDays>(
       `/bf1/stats/${personaId}/rounds/days${queryString({ tz, server })}`,
       opts,

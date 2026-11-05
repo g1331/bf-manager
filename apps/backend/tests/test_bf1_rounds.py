@@ -5,9 +5,10 @@ from __future__ import annotations
 import json
 from collections import Counter
 from datetime import UTC, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 import pytest
-from app.api.errors import NotFoundError
+from app.api.errors import NotFoundError, ValidationError
 from app.core import ea_metrics
 from app.domain.games.bf1 import round_awards as ra
 from app.domain.games.bf1 import round_weapons as rw
@@ -385,6 +386,9 @@ async def test_save_and_query_rounds(test_session) -> None:
         await round_service.get_round(test_session, 12345)
 
 
+BJ = ZoneInfo("Asia/Shanghai")
+
+
 async def test_round_calendars_and_filters(test_session) -> None:
     # 北京时间 11-03 23:30；r2 在北京已是 11-04、UTC 还是 11-03
     base = int(datetime(2026, 11, 3, 15, 30, tzinfo=UTC).timestamp())
@@ -426,21 +430,21 @@ async def test_round_calendars_and_filters(test_session) -> None:
         return [(d.day, d.rounds, d.wins, d.kills) for d in res.days]
 
     # 服务器日历：按时区划日期，重启前的实例算同一台
-    cal = await round_service.server_round_days(test_session, 11, tz=480)
+    cal = await round_service.server_round_days(test_session, 11, tz=BJ)
     assert days(cal) == [(nov3, 1, None, None), (nov4, 1, None, None)] and cal.player is None
-    assert days(await round_service.server_round_days(test_session, 10, tz=0)) == [
+    assert days(await round_service.server_round_days(test_session, 10, tz=UTC)) == [
         (nov3, 2, None, None)
     ]
     # 按玩家：名字不分大小写、同名取最近的；也认 PID
-    cal = await round_service.server_round_days(test_session, 11, tz=480, player=" BRAVO ")
+    cal = await round_service.server_round_days(test_session, 11, tz=BJ, player=" BRAVO ")
     assert (cal.player.persona_id, cal.player.name) == (b, "Bravo")
     assert days(cal) == [(nov4, 1, None, None)]
-    cal = await round_service.server_round_days(test_session, 11, tz=480, player=str(a))
+    cal = await round_service.server_round_days(test_session, 11, tz=BJ, player=str(a))
     assert cal.player.persona_id == a and cal.player.name is None and len(cal.days) == 2
-    cal = await round_service.server_round_days(test_session, 11, tz=480, player="3")
+    cal = await round_service.server_round_days(test_session, 11, tz=BJ, player="3")
     assert cal.player.persona_id == 3 and cal.days == []
     with pytest.raises(NotFoundError):
-        await round_service.server_round_days(test_session, 11, tz=480, player="nobody")
+        await round_service.server_round_days(test_session, 11, tz=BJ, player="nobody")
 
     # 服务器对局：某一天、某个人
     ids = lambda page: [r.id for r in page.items]  # noqa: E731
@@ -459,15 +463,15 @@ async def test_round_calendars_and_filters(test_session) -> None:
     assert ids(page) == [r1] and page.next_before is None
 
     # 玩家日历：局数、胜场、击杀；服务器列表按局数排、带现在的 gameId 和名字
-    cal = await round_service.player_round_days(test_session, a, tz=480)
+    cal = await round_service.player_round_days(test_session, a, tz=BJ)
     assert days(cal) == [(nov3, 1, 1, 20), (nov4, 2, 1, 35)]
     assert [(s.server_game_id, s.server_name, s.rounds) for s in cal.servers] == [
         (11, "mine", 2),
         (12, "other", 1),
     ]
-    cal = await round_service.player_round_days(test_session, a, tz=480, server=10)
+    cal = await round_service.player_round_days(test_session, a, tz=BJ, server=10)
     assert days(cal) == [(nov3, 1, 1, 20), (nov4, 1, 1, 30)] and len(cal.servers) == 2
-    empty = await round_service.player_round_days(test_session, 404, tz=480)
+    empty = await round_service.player_round_days(test_session, 404, tz=BJ)
     assert empty.days == [] and empty.servers == []
 
     # 玩家对局：某一天、某台服，翻页仍按对局 id
@@ -499,21 +503,49 @@ async def test_round_calendar_routes(client, test_session) -> None:
     await round_service.save_rounds(
         test_session, [_closed(11, t, [RoundLine(7, 1, FINISHED, _delta(3, win=True))])]
     )
-    res = await client.get("/api/v1/bf1/servers/11/rounds/days", params={"tz": 0})
+    res = await client.get("/api/v1/bf1/servers/11/rounds/days", params={"tz": "UTC"})
     assert res.status_code == 200
     assert res.json()["days"] == [{"day": _day_str(t), "rounds": 1, "wins": None, "kills": None}]
     res = await client.get("/api/v1/bf1/servers/11/rounds/days", params={"player": "nobody"})
     assert res.status_code == 404
-    res = await client.get("/api/v1/bf1/servers/11/rounds/days", params={"tz": 9999})
-    assert res.status_code == 422
+    res = await client.get("/api/v1/bf1/servers/11/rounds/days", params={"tz": "Mars/Olympus"})
+    assert res.status_code == 400
     res = await client.get("/api/v1/bf1/servers/11/rounds", params={"player": 7, "since": t})
     assert [r["player_count"] for r in res.json()["items"]] == [1]
-    res = await client.get("/api/v1/bf1/stats/7/rounds/days", params={"tz": 0, "server": 11})
+    res = await client.get("/api/v1/bf1/stats/7/rounds/days", params={"tz": "UTC", "server": 11})
     body = res.json()
     assert body["days"] == [{"day": _day_str(t), "rounds": 1, "wins": 1, "kills": 3}]
     assert body["servers"] == [{"server_game_id": 11, "server_name": "mine", "rounds": 1}]
     res = await client.get("/api/v1/bf1/stats/7/rounds", params={"server": 11, "until": t})
     assert res.json()["items"] == []
+
+
+async def test_round_calendar_dst_and_renamed_server(test_session) -> None:
+    now = datetime.now(UTC)
+    test_session.add_all(
+        [
+            Bf1GameInstance(
+                game_id=10, server_id=99, name="old", first_seen=now, last_seen=now - timedelta(1)
+            ),
+            Bf1GameInstance(
+                game_id=11, server_id=99, name="renamed", first_seen=now, last_seen=now
+            ),
+        ]
+    )
+    await test_session.commit()
+    # 纽约 10-31 00:30（夏令时 UTC-4）；11 月切回 UTC-5 后用当时的偏移，仍算 10-31
+    ended = int(datetime(2026, 10, 31, 4, 30, tzinfo=UTC).timestamp())
+    await round_service.save_rounds(
+        test_session, [_closed(10, ended, [RoundLine(5, 1, FINISHED, _delta(1, win=True))])]
+    )
+    cal = await round_service.player_round_days(
+        test_session, 5, tz=round_service.parse_tz("America/New_York")
+    )
+    assert [d.day.isoformat() for d in cal.days] == ["2026-10-31"]
+    # 只在旧实例打过，服务器列表也用这台服现在的名字
+    assert [(s.server_game_id, s.server_name) for s in cal.servers] == [(11, "renamed")]
+    with pytest.raises(ValidationError):
+        round_service.parse_tz("../etc/passwd")
 
 
 def _day_str(ts: int) -> str:

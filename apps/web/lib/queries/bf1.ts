@@ -49,7 +49,7 @@ export const bf1Keys = {
   serverSnapshot: (gameId: number, ts: number) => ["bf1-server-snapshot", gameId, ts] as const,
   serverRounds: (gameId: number, filter: RoundsFilter = {}) =>
     ["bf1-server-rounds", gameId, filter] as const,
-  serverRoundDays: (gameId: number, tz: number, player: string | null) =>
+  serverRoundDays: (gameId: number, tz: string, player: string | null) =>
     ["bf1-server-round-days", gameId, tz, player] as const,
   round: (roundId: number) => ["bf1-round", roundId] as const,
   serverGroups: (gameId: number) => ["bf1-server-groups", gameId] as const,
@@ -76,7 +76,7 @@ export const bf1Keys = {
   collection: (personaId: number) => ["bf1-collection", personaId] as const,
   playerRounds: (personaId: number, filter: RoundsFilter = {}) =>
     ["bf1-player-rounds", personaId, filter] as const,
-  playerRoundDays: (personaId: number, tz: number, server: number | null) =>
+  playerRoundDays: (personaId: number, tz: string, server: number | null) =>
     ["bf1-player-round-days", personaId, tz, server] as const,
 
   // 战队
@@ -174,7 +174,7 @@ export const bf1Queries = {
       getNextPageParam: (last) => last.next_before,
     }),
   /** player 是名字或 PID，对不上时 404 */
-  serverRoundDays: (gameId: number, tz: number, player: string | null) =>
+  serverRoundDays: (gameId: number, tz: string, player: string | null) =>
     queryOptions({
       queryKey: bf1Keys.serverRoundDays(gameId, tz, player),
       queryFn: ({ signal }) => bf1Api.getServerRoundDays(gameId, tz, player, { signal }),
@@ -294,7 +294,7 @@ export const bf1Queries = {
       initialPageParam: null as number | null,
       getNextPageParam: (last) => last.next_before,
     }),
-  playerRoundDays: (personaId: number, tz: number, server: number | null) =>
+  playerRoundDays: (personaId: number, tz: string, server: number | null) =>
     queryOptions({
       queryKey: bf1Keys.playerRoundDays(personaId, tz, server),
       queryFn: ({ signal }) => bf1Api.getPlayerRoundDays(personaId, tz, server, { signal }),

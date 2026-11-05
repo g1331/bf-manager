@@ -15,8 +15,9 @@ import asyncio
 import json
 from collections import Counter
 from collections.abc import Callable
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta, tzinfo
 from typing import Any, Literal
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from loguru import logger
 from sqlalchemy import (
@@ -33,7 +34,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.errors import NotFoundError
+from app.api.errors import NotFoundError, ValidationError
 from app.core import ea_metrics
 from app.core.cache import get_redis
 from app.core.config import get_settings
@@ -614,9 +615,17 @@ def _player(
     )
 
 
-def _local_day(ts: int, tz: int) -> date:
-    """unix 秒在偏移 tz 分钟（东正西负）的时区里是哪一天"""
-    return datetime.fromtimestamp(ts + tz * 60, UTC).date()
+def parse_tz(name: str) -> ZoneInfo:
+    """日历接口的时区参数：IANA 时区名，认不出来时按参数错误处理"""
+    try:
+        return ZoneInfo(name)
+    except (ZoneInfoNotFoundError, ValueError) as e:
+        raise ValidationError(f"无法识别的时区：{name}") from e
+
+
+def _local_day(ts: int, tz: tzinfo) -> date:
+    """unix 秒在时区 tz 里是哪一天；按当时的偏移算，跨夏令时也和前端按本地日期取的区间一致"""
+    return datetime.fromtimestamp(ts, tz).date()
 
 
 async def resolve_player(db: AsyncSession, q: str) -> RoundPlayerRef:
@@ -688,9 +697,9 @@ async def list_server_rounds(
 
 
 async def server_round_days(
-    db: AsyncSession, game_id: int, *, tz: int, player: str | None = None
+    db: AsyncSession, game_id: int, *, tz: tzinfo, player: str | None = None
 ) -> ServerRoundDays:
-    """某服每天（按 tz 划分）的对局数，给日历用；player 是名字或 PID，给了就只数这个人打过的局。"""
+    """某服每天（按时区 tz 划分）的对局数，给日历用；player 是名字或 PID，给了就只数这个人打过的局。"""
     ref = await resolve_player(db, player) if player is not None else None
     cond: ColumnElement[bool] = Bf1Round.game_id.in_(await server_game_ids(db, game_id))
     if ref is not None:
@@ -782,9 +791,9 @@ async def list_player_rounds(
 
 
 async def player_round_days(
-    db: AsyncSession, persona_id: int, *, tz: int, server: int | None = None
+    db: AsyncSession, persona_id: int, *, tz: tzinfo, server: int | None = None
 ) -> PlayerRoundDays:
-    """某玩家每天（按 tz 划分）的局数、胜场和击杀，以及打过的服；server 只筛日历，不筛服务器列表。"""
+    """某玩家每天（按时区 tz 划分）的局数、胜场和击杀，以及打过的服；server 只筛日历，不筛服务器列表。"""
     entries = await _player_entries(db, persona_id)
     if not entries:
         return PlayerRoundDays(days=[], servers=[])
@@ -802,11 +811,19 @@ async def player_round_days(
     by_server: dict[int, list[Any]] = {}  # 现在的 gameId → [服名, 局数]
     for gid, _ in rounds.values():
         name, current = servers.get(gid, (None, gid))
-        slot = by_server.setdefault(current, [None, 0])
-        # 服改过名时以现在这个实例的名字为准
-        if slot[0] is None or gid == current:
-            slot[0] = name or slot[0]
+        slot = by_server.setdefault(current, [name, 0])
+        slot[0] = slot[0] or name
         slot[1] += 1
+    # 服重启后改过名时以现在这个实例的名字为准，这个人不一定在新实例上打过
+    for gid, name in (
+        await db.execute(
+            select(Bf1GameInstance.game_id, Bf1GameInstance.name).where(
+                Bf1GameInstance.game_id.in_(list(by_server))
+            )
+        )
+    ).tuples():
+        if name:
+            by_server[gid][0] = name
     only = set(await server_game_ids(db, server)) if server is not None else None
     days: dict[date, list[int]] = {}  # 日期 → [局数, 胜场, 击杀]
     for e in entries:

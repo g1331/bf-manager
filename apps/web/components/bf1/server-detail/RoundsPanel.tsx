@@ -74,6 +74,8 @@ export function RoundsPanel({ gameId, game }: { gameId: number; game: string }) 
   // 选中的局可能比已加载的更早，不在卡片里也照样显示计分板
   const activeId = selected ?? items[0]?.id ?? null;
   const select = (id: number) => {
+    // 换筛选时占位的是上一组卡片，这时选中的局可能不在新结果里
+    if (list.isPlaceholderData) return;
     setSelected(id);
     window.history.replaceState(null, "", `?round=${id}#rounds`);
   };
@@ -132,7 +134,10 @@ export function RoundsPanel({ gameId, game }: { gameId: number; game: string }) 
                   : "还没有记录到对局，每局结束后一两分钟出现在这里"}
         </div>
       ) : (
-        <div className={cn(list.isPlaceholderData && "opacity-60")}>
+        <div
+          aria-busy={list.isPlaceholderData}
+          className={cn(list.isPlaceholderData && "pointer-events-none opacity-60")}
+        >
           <ol className="-mx-1 mt-4 flex snap-x gap-2 overflow-x-auto px-1 pb-2">
             {items.map((r) => (
               <RoundCard

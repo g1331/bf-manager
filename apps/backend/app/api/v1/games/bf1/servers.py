@@ -19,7 +19,7 @@ from app.schemas.bf1.server import (
     ServerRosterSnapshot,
 )
 from app.services.bf1.blaze_service import get_server_players
-from app.services.bf1.round_service import list_server_rounds, server_round_days
+from app.services.bf1.round_service import list_server_rounds, parse_tz, server_round_days
 from app.services.bf1.rsp_list_service import remember_detail_lists
 from app.services.bf1.server_filters import server_filter_options
 from app.services.bf1.server_player_count_service import (
@@ -171,10 +171,10 @@ async def get_server_rounds(
 async def get_server_round_days(
     game_id: int,
     db: DbDep,
-    tz: int = Query(480, ge=-720, le=840, description=TZ_DESCRIPTION),
+    tz: str = Query("Asia/Shanghai", max_length=64, description=TZ_DESCRIPTION),
     player: str | None = Query(
         None, min_length=1, max_length=64, description="玩家名字（不分大小写）或 personaId"
     ),
 ) -> ServerRoundDays:
     # 对局日历：每天的局数；名字和 PID 都对不上时 404
-    return await server_round_days(db, game_id, tz=tz, player=player)
+    return await server_round_days(db, game_id, tz=parse_tz(tz), player=player)

@@ -10,9 +10,9 @@ import { cn } from "@/lib/utils";
 const RETENTION_DAYS = 90;
 const WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
 
-/** 浏览器所在时区的 UTC 偏移（分钟，东正西负），后端按它给日期分组 */
-export function localTz(): number {
-  return -new Date().getTimezoneOffset();
+/** 浏览器所在时区（IANA 名），后端按它给日期分组，和 dayRange 的本地日期边界一致 */
+export function localTz(): string {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Shanghai";
 }
 
 /** 本地日期 → YYYY-MM-DD */

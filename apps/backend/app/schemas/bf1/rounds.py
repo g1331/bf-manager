@@ -7,7 +7,7 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-TZ_DESCRIPTION = "按这个时区划分日期：UTC 偏移分钟数，东正西负，默认北京时间 480"
+TZ_DESCRIPTION = "按这个时区划分日期：IANA 时区名，如 Asia/Shanghai（默认）"
 
 
 class RoundSummary(BaseModel):

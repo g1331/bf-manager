@@ -20,7 +20,7 @@ from app.schemas.bf1.stats import (
 )
 from app.services.bf1.ban_service import BF1BanService
 from app.services.bf1.collection_service import get_collection
-from app.services.bf1.round_service import list_player_rounds, player_round_days
+from app.services.bf1.round_service import list_player_rounds, parse_tz, player_round_days
 from app.services.bf1.rsp_list_service import list_player_servers
 from app.services.bf1.stats_service import BF1StatsService
 
@@ -80,11 +80,11 @@ async def get_player_rounds(
 async def get_player_round_days(
     persona_id: int,
     db: DbDep,
-    tz: int = Query(480, ge=-720, le=840, description=TZ_DESCRIPTION),
+    tz: str = Query("Asia/Shanghai", max_length=64, description=TZ_DESCRIPTION),
     server: int | None = Query(None, description="只数在这台服打的对局（服务器列表不受影响）"),
 ) -> PlayerRoundDays:
     # 对局日历：每天的局数、胜场、击杀，加上打过的服
-    return await player_round_days(db, persona_id, tz=tz, server=server)
+    return await player_round_days(db, persona_id, tz=parse_tz(tz), server=server)
 
 
 @router.get("/{persona_id}/servers", dependencies=[_read], response_model=PlayerRspServers)

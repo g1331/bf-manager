@@ -35,9 +35,14 @@ def _ids(stats: dict[str, int], prefix: str, skip: set[str] | frozenset[str]) ->
     }
 
 
+def regressed(prev: dict[str, int], cur: dict[str, int]) -> bool:
+    """只增不减的累计值（场次、战斗时间、得分）变小了：EA 回了旧数据，或统计被重置。"""
+    return any(cur.get(key, 0) < prev.get(key, 0) for key in _MONOTONIC)
+
+
 def diff(prev: dict[str, int], cur: dict[str, int]) -> Bf6MatchDelta | None:
-    """场次和战斗时间都没涨时返回 None；EA 的累计值变小了（数据回退）也返回 None，调用方直接换成新快照。"""
-    if any(cur.get(key, 0) < prev.get(key, 0) for key in _MONOTONIC):
+    """场次和战斗时间都没涨、或者累计值回退时返回 None。"""
+    if regressed(prev, cur):
         return None
 
     def d(name: str) -> int:

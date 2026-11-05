@@ -219,7 +219,7 @@ async def test_poll_once_records_and_skips_missing(session_factory) -> None:
         return {NID: ONE_CQ_WIN}
 
     t1 = T0 + timedelta(minutes=10)
-    assert await match_service.poll_once(session_factory, fetch, t1) == 2
+    assert await match_service.poll_once(session_factory, fetch, t1, lambda: t1) == 2
     assert asked == [[other, NID]]
     assert await _estimates(session_factory) == 1
     # 没读到的人也算复查过，不会一直占着队首
@@ -259,6 +259,61 @@ async def test_poller_backs_off_when_unavailable(
     with pytest.raises(RuntimeError):
         await match_service.tracker_poller(session_factory, fetch)
     assert sleeps == [match_service._UNAVAILABLE_BACKOFF_SECONDS]
+
+
+async def test_rollback_keeps_baseline_and_counts_once(session_factory) -> None:
+    await match_service.record(session_factory, NID, BASE, T0, viewed=True)
+    t = [T0 + timedelta(minutes=10 * i) for i in range(1, 4)]
+    await match_service.record(session_factory, NID, ONE_CQ_WIN, t[0], viewed=False)
+    # EA 暂时回了旧值，之后又恢复：同一局只记一次
+    assert await match_service.record(session_factory, NID, BASE, t[1], viewed=False) is None
+    assert await match_service.record(session_factory, NID, ONE_CQ_WIN, t[2], viewed=False) is None
+    assert await _estimates(session_factory) == 1
+
+
+async def test_lasting_rollback_rebases(session_factory) -> None:
+    await match_service.record(session_factory, NID, ONE_CQ_WIN, T0, viewed=True)
+    later = T0 + match_service.REBASE_AFTER
+    await match_service.record(session_factory, NID, BASE, later, viewed=False)
+    # 换成新基线后照常做差
+    delta = await match_service.record(
+        session_factory, NID, ONE_CQ_WIN, later + timedelta(minutes=10), viewed=False
+    )
+    assert delta is not None and delta.matches == 1
+
+
+async def test_missing_player_keeps_baseline_time(session_factory) -> None:
+    await match_service.record(session_factory, NID, BASE, T0, viewed=True)
+
+    async def nothing(ids: list[int]) -> dict[int, dict[str, int]]:
+        return {}
+
+    t1, t2 = T0 + timedelta(minutes=10), T0 + timedelta(minutes=20)
+    await match_service.poll_once(session_factory, nothing, t1, lambda: t1)
+    await match_service.record(session_factory, NID, ONE_CQ_WIN, t2, viewed=False)
+    [item] = (await match_service.list_estimates(session_factory, NID)).matches
+    # 漏回的那次没读到数据，区间仍从上一次真正读到的时刻算起
+    assert item.started_after == T0
+    assert item.observed_at == t2
+
+
+async def test_slow_poll_uses_response_time_and_drops_stale(session_factory) -> None:
+    await match_service.record(session_factory, NID, BASE, T0, viewed=True)
+    t_start, t_page, t_done = (T0 + timedelta(minutes=m) for m in (10, 11, 12))
+
+    async def slow(ids: list[int]) -> dict[int, dict[str, int]]:
+        # 后台请求还没回来时，页面先读到了旧值
+        await match_service.record(session_factory, NID, BASE, t_page, viewed=True)
+        return {NID: ONE_CQ_WIN}
+
+    await match_service.poll_once(session_factory, slow, t_start, lambda: t_done)
+    [item] = (await match_service.list_estimates(session_factory, NID)).matches
+    assert (item.started_after, item.observed_at) == (t_page, t_done)
+
+    # 更早发出、更晚回来的旧响应不会把基线拉回去
+    assert await match_service.record(session_factory, NID, BASE, t_done, viewed=True) is None
+    snap = await _snapshot(session_factory)
+    assert snap is not None and match_service._aware(snap.polled_at) == t_done
 
 
 # ---------------------------------------------------------------------------

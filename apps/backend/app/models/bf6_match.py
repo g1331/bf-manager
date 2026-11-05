@@ -23,8 +23,10 @@ class Bf6StatSnapshot(Base):
     stats: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
     # 开始记录的时间
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    # 最近一次读到生涯的时间：之后结束的对局才会出现在下一条估算里
+    # stats 这份基线是什么时候读到的：之后结束的对局才会出现在下一条估算里
     polled_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    # 最近一次尝试复查的时间（EA 没返回这个人也算），决定下次什么时候复查
+    checked_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     # 最近一次生涯有变化的时间，决定复查间隔
     changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     # 最近一次有人打开战绩页的时间；太久没人看就不再复查

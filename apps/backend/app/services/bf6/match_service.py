@@ -25,7 +25,7 @@ from app.schemas.bf6.matches import Bf6MatchDelta, Bf6MatchList
 from app.schemas.bf6.matches import Bf6MatchEstimate as Bf6MatchEstimateOut
 from app.services.account_service import SessionFactory
 from app.services.bf1.server_roster_service import insert_for
-from app.services.bf6.match_delta import diff
+from app.services.bf6.match_delta import diff, regressed
 
 TRACK_WINDOW = timedelta(days=7)
 FAST_INTERVAL = timedelta(minutes=10)
@@ -39,6 +39,8 @@ ESTIMATE_RETENTION = timedelta(days=90)
 # 停止复查后快照再留一段时间，期间有人再看还能接着算
 SNAPSHOT_RETENTION = timedelta(days=30)
 LIST_LIMIT = 30
+# 累计值回退持续这么久才当作统计被重置
+REBASE_AFTER = timedelta(days=1)
 
 
 def _pack(stats: dict[str, int]) -> bytes:
@@ -65,8 +67,12 @@ async def record(
 ) -> Bf6MatchDelta | None:
     """存下这次读到的生涯，返回新写入的估算。stats 为空（EA 没返回、玩家没打过）时什么都不做。
 
-    viewed 为真表示有人打开了战绩页：没记录过的玩家从这时开始记录，记录中的刷新最近查看时间。
-    后台复查传 False，不会让没人看的玩家一直被复查下去。
+    now 是拿到这份响应的时刻。viewed 为真表示有人打开了战绩页：没记录过的玩家从这时开始记录，
+    记录中的刷新最近查看时间。后台复查传 False，不会让没人看的玩家一直被复查下去。
+
+    基线（stats + polled_at）只往前走：比基线还早拿到的响应直接丢掉；累计值比基线小（EA 暂时回了旧值，
+    或页面与后台的响应先后颠倒）时保留基线，免得恢复后把同一局再记一遍。回退持续超过
+    ``REBASE_AFTER`` 才当作统计被重置，换成新基线。
     """
     if not stats:
         return None
@@ -84,6 +90,7 @@ async def record(
                 stats=_pack(stats),
                 created_at=now,
                 polled_at=now,
+                checked_at=now,
                 changed_at=now,
                 viewed_at=now,
             )
@@ -92,24 +99,36 @@ async def record(
             await db.commit()
             return None
 
-        prev = _unpack(row.stats)
-        delta = diff(prev, stats)
-        if delta is not None:
-            db.add(
-                Bf6MatchEstimate(
-                    nucleus_id=nucleus_id,
-                    started_after=_aware(row.polled_at),
-                    observed_at=now,
-                    matches=delta.matches,
-                    payload=delta.model_dump(mode="json"),
-                )
-            )
-        if stats != prev:
-            row.stats = _pack(stats)
-            row.changed_at = now
-        row.polled_at = now
         if viewed:
-            row.viewed_at = now
+            row.viewed_at = max(_aware(row.viewed_at), now)
+        row.checked_at = max(_aware(row.checked_at), now)
+        baseline_at = _aware(row.polled_at)
+        delta: Bf6MatchDelta | None = None
+        prev = _unpack(row.stats)
+        if now <= baseline_at:
+            # 比基线还早拿到的响应：数据不会比基线新，只算复查过
+            pass
+        elif regressed(prev, stats):
+            if now - baseline_at >= REBASE_AFTER:
+                logger.warning("BF6 生涯累计值回退超过一天，重新建基线 nucleus={}", nucleus_id)
+                row.stats = _pack(stats)
+                row.polled_at = row.changed_at = now
+        else:
+            delta = diff(prev, stats)
+            if delta is not None:
+                db.add(
+                    Bf6MatchEstimate(
+                        nucleus_id=nucleus_id,
+                        started_after=baseline_at,
+                        observed_at=now,
+                        matches=delta.matches,
+                        payload=delta.model_dump(mode="json"),
+                    )
+                )
+            if stats != prev:
+                row.stats = _pack(stats)
+                row.changed_at = now
+            row.polled_at = now
         await db.commit()
         return delta
 
@@ -160,14 +179,14 @@ async def due_players(session_factory: SessionFactory, now: datetime) -> list[in
             .where(
                 Bf6StatSnapshot.viewed_at >= now - TRACK_WINDOW,
                 or_(
-                    Bf6StatSnapshot.polled_at <= now - SLOW_INTERVAL,
+                    Bf6StatSnapshot.checked_at <= now - SLOW_INTERVAL,
                     and_(
                         Bf6StatSnapshot.changed_at >= now - ACTIVE_WINDOW,
-                        Bf6StatSnapshot.polled_at <= now - FAST_INTERVAL,
+                        Bf6StatSnapshot.checked_at <= now - FAST_INTERVAL,
                     ),
                 ),
             )
-            .order_by(Bf6StatSnapshot.polled_at)
+            .order_by(Bf6StatSnapshot.checked_at)
             .limit(BATCH)
         )
         return list(rows.all())
@@ -190,24 +209,36 @@ async def purge_expired(session_factory: SessionFactory, now: datetime) -> None:
 FetchBatch = Callable[[list[int]], Awaitable[dict[int, dict[str, int]]]]
 
 
-async def poll_once(session_factory: SessionFactory, fetch: FetchBatch, now: datetime) -> int:
-    """复查一批到期的玩家，返回这批人数。EA 没返回的人（关了数据分享等）保留原快照。"""
+async def poll_once(
+    session_factory: SessionFactory,
+    fetch: FetchBatch,
+    now: datetime,
+    clock: Callable[[], datetime] = lambda: datetime.now(UTC),
+) -> int:
+    """复查一批到期的玩家，返回这批人数。EA 没返回的人（关了数据分享等）保留原快照。
+
+    now 用来挑到期的人；记录用 clock() 取拿到响应的时刻，估算的时间区间才不会早于实际读到的时间。
+    """
     due = await due_players(session_factory, now)
     if not due:
         return 0
     fetched = await fetch(due)
+    observed = max(clock(), now)
     missing = [nid for nid in due if not fetched.get(nid)]
     for nucleus_id in due:
         stats = fetched.get(nucleus_id)
         if stats:
-            await record(session_factory, nucleus_id, stats, now, viewed=False)
+            await record(session_factory, nucleus_id, stats, observed, viewed=False)
     if missing:
-        # 也算复查过，免得这些人一直排在队首
+        # 只记成复查过，免得这些人一直排在队首；基线和它的时间不动
         async with session_factory() as db:
             await db.execute(
                 update(Bf6StatSnapshot)
-                .where(Bf6StatSnapshot.nucleus_id.in_(missing))
-                .values(polled_at=now)
+                .where(
+                    Bf6StatSnapshot.nucleus_id.in_(missing),
+                    Bf6StatSnapshot.checked_at < observed,
+                )
+                .values(checked_at=observed)
             )
             await db.commit()
     return len(due)

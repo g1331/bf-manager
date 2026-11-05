@@ -25,6 +25,7 @@ def upgrade() -> None:
         sa.Column("stats", sa.LargeBinary(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("polled_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("checked_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("changed_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("viewed_at", sa.DateTime(timezone=True), nullable=False),
     )

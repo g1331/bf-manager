@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useReducedMotion } from "framer-motion";
+import { isBf6Path } from "@/lib/nav";
 
 /**
  * BF1 大厅式氛围底层：战场场景图铺底 + 中性压暗 + 径向暗角 + 胶片颗粒。
@@ -37,17 +38,13 @@ const SCENES = {
   ],
 };
 
-function sceneFor(pathname: string): keyof typeof SCENES {
-  return pathname === "/bf6" || pathname.startsWith("/bf6/") ? "bf6" : "bf1";
-}
-
 const SWITCH_INTERVAL_MS = 12_000;
 
 const FILM_GRAIN =
   "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E\")";
 
 export function AmbientBackground() {
-  const scene = sceneFor(usePathname());
+  const scene = isBf6Path(usePathname()) ? "bf6" : "bf1";
 
   return (
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>

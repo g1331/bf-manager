@@ -171,6 +171,11 @@ function pathMatches(pathname: string, prefix: string): boolean {
   return pathname === prefix || pathname.startsWith(`${prefix}/`);
 }
 
+/** BF6 的页面都在独立的 /bf6 路由下 */
+export function isBf6Path(pathname: string): boolean {
+  return pathMatches(pathname, "/bf6");
+}
+
 /**
  * 由当前路径推断激活的一级模块及其二级 tab 集。
  * 各模块 match 前缀互不包含，按声明顺序首个命中即归属；未命中返回空上下文

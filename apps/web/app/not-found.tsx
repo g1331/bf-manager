@@ -1,5 +1,5 @@
-import { TipLine } from "@/components/bf1/codex/TipLine";
 import { ErrorState } from "@/components/common/ErrorState";
+import { NotFoundTip } from "@/components/layout/NotFoundTip";
 
 export const metadata = { title: "页面不存在" };
 
@@ -12,7 +12,7 @@ export default function NotFound() {
         description="链接可能已失效，或者地址输错了。"
         homeHref="/"
       />
-      <TipLine className="w-full max-w-xl" />
+      <NotFoundTip />
     </div>
   );
 }

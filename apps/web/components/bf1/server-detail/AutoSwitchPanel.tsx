@@ -142,6 +142,14 @@ export function AutoSwitchPanel({
   const v = view.data!;
   const name = (code: string) => maps.get(code)?.name ?? code;
   const current = v.plan.items[v.cursor];
+  // 开启前编排要先存好；关闭随时可以
+  const blockedReason = v.enabled
+    ? null
+    : dirty
+      ? "先保存编排"
+      : v.plan.items.length === 0
+        ? "先添加并保存编排"
+        : null;
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -163,30 +171,28 @@ export function AutoSwitchPanel({
             <span className="bg-white/10 px-2 py-0.5 text-xs text-white/60">已关闭</span>
           )}
           {canEdit ? (
-            <button
-              type="button"
-              disabled={toggle.isPending || (!v.enabled && (dirty || v.plan.items.length === 0))}
-              title={
-                !v.enabled && dirty
-                  ? "先保存编排"
-                  : !v.enabled && v.plan.items.length === 0
-                    ? "先添加并保存编排"
-                    : undefined
-              }
-              onClick={() => {
-                if (v.enabled) return toggle.mutate(false);
-                setCountdown(CONFIRM_SECONDS);
-                setConfirmOpen(true);
-              }}
-              className={cn(
-                "ml-auto inline-flex h-9 items-center px-4 text-sm font-semibold transition-colors disabled:opacity-40",
-                v.enabled
-                  ? "bg-white/[0.08] text-white/85 ring-1 ring-white/15 hover:bg-white hover:text-black"
-                  : "bg-emerald-500 text-black hover:bg-emerald-400",
-              )}
-            >
-              {v.enabled ? "关闭自动换图" : "开启自动换图"}
-            </button>
+            <div className="ml-auto flex items-center gap-3">
+              {blockedReason ? (
+                <span className="text-xs text-white/45">{blockedReason}</span>
+              ) : null}
+              <button
+                type="button"
+                disabled={toggle.isPending || blockedReason !== null}
+                onClick={() => {
+                  if (v.enabled) return toggle.mutate(false);
+                  setCountdown(CONFIRM_SECONDS);
+                  setConfirmOpen(true);
+                }}
+                className={cn(
+                  "inline-flex h-9 items-center px-4 text-sm font-semibold transition-colors disabled:opacity-40",
+                  v.enabled
+                    ? "bg-white/[0.08] text-white/85 ring-1 ring-white/15 hover:bg-white hover:text-black"
+                    : "bg-emerald-500 text-black hover:bg-emerald-400",
+                )}
+              >
+                {v.enabled ? "关闭自动换图" : "开启自动换图"}
+              </button>
+            </div>
           ) : null}
         </div>
         <div className="mt-3 text-sm text-white/70">

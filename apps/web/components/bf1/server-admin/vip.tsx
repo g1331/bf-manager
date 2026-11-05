@@ -7,6 +7,7 @@
  */
 
 import { useState } from "react";
+import { InfoHint } from "@/components/common/InfoHint";
 import { Input } from "@/components/ui/input";
 import type { TimedVipItem, TimedVipView } from "@/lib/api/bf1";
 import { cn } from "@/lib/utils";
@@ -73,7 +74,7 @@ export function VipBadge({ status, operation }: { status: VipStatus; operation: 
     return operation ? (
       <Badge className="border-rose-400/40 text-rose-200">已到期 · 等立即生效</Badge>
     ) : (
-      <Badge className="border-rose-400/40 text-rose-200" title={item.last_error ?? undefined}>
+      <Badge className="border-rose-400/40 text-rose-200" hint={item.last_error ?? undefined}>
         到期未移除
       </Badge>
     );
@@ -81,7 +82,7 @@ export function VipBadge({ status, operation }: { status: VipStatus; operation: 
   return (
     <Badge
       className="border-amber-400/40 text-amber-200"
-      title={item.expires_at ? `${formatExpiry(item.expires_at)} 到期` : undefined}
+      hint={item.expires_at ? `${formatExpiry(item.expires_at)} 到期` : undefined}
     >
       剩 {formatSpan(item.remaining_seconds ?? 0)}
     </Badge>
@@ -90,20 +91,23 @@ export function VipBadge({ status, operation }: { status: VipStatus; operation: 
 
 function Badge({
   className,
-  title,
+  hint,
   children,
 }: {
   className?: string;
-  title?: string;
+  /** 点开看的补充说明（到期时间、移除失败原因），手机上也要能看到 */
+  hint?: string;
   children: React.ReactNode;
 }) {
+  const cls = cn("max-w-full truncate border px-1.5 text-[10px] leading-4", className);
+  if (!hint) return <span className={cls}>{children}</span>;
   return (
-    <span
-      title={title}
-      className={cn("max-w-full truncate border px-1.5 text-[10px] leading-4", className)}
+    <InfoHint
+      content={hint}
+      className={cn(cls, "decoration-dotted underline-offset-2 hover:underline")}
     >
       {children}
-    </span>
+    </InfoHint>
   );
 }
 

@@ -765,7 +765,7 @@ export interface ServerDetail {
   summary: ServerSummary;
   description: string | null;
   settings: ServerSettings;
-  /** settings 条目简体名 → EA 官方说明（悬停提示用） */
+  /** settings 条目简体名 → EA 官方说明（点开说明用） */
   setting_descriptions: Record<string, string>;
   map_rotation: MapRotationItem[];
   players: ServerPlayer[];

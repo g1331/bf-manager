@@ -1,8 +1,10 @@
 "use client";
 
 import { ArrowRight } from "lucide-react";
+import { HINT_UNDERLINE, InfoHint } from "@/components/common/InfoHint";
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
 import { SectionHeading } from "@/components/layout/SectionHeading";
+import { cn } from "@/lib/utils";
 import type { ServerSettings } from "@/lib/api/bf1";
 
 /**
@@ -130,18 +132,29 @@ export function ServerAboutPanel({
 
           {scales.length > 0 ? (
             <div className="mt-3 flex flex-wrap gap-2">
-              {scales.map(([name, v]) => (
-                <span
-                  key={name}
-                  title={descriptions[name] ?? name}
-                  className="inline-flex items-baseline gap-1.5 border border-amber-400/30 bg-amber-500/10 px-2 py-1 text-xs"
-                >
-                  <span className="text-white/70">{name}</span>
-                  <span className="font-semibold text-amber-300 tabular-nums">
-                    {Math.round(v * 100)}%
+              {scales.map(([name, v]) => {
+                const chip = (
+                  <>
+                    <span className={cn("text-white/70", descriptions[name] && HINT_UNDERLINE)}>
+                      {name}
+                    </span>
+                    <span className="font-semibold text-amber-300 tabular-nums">
+                      {Math.round(v * 100)}%
+                    </span>
+                  </>
+                );
+                const chipClass =
+                  "inline-flex items-baseline gap-1.5 border border-amber-400/30 bg-amber-500/10 px-2 py-1 text-xs";
+                return descriptions[name] ? (
+                  <InfoHint key={name} content={descriptions[name]} className={chipClass}>
+                    {chip}
+                  </InfoHint>
+                ) : (
+                  <span key={name} className={chipClass}>
+                    {chip}
                   </span>
-                </span>
-              ))}
+                );
+              })}
             </div>
           ) : null}
 

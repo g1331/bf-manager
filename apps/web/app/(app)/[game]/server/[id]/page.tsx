@@ -59,6 +59,7 @@ import type { AuditLogItem } from "@/lib/api/audit";
 import { FACTION_SLUG } from "@/lib/bf1/factions";
 import { canDo } from "@/lib/bf1/server-admin-authz";
 import { cn } from "@/lib/utils";
+import { HINT_UNDERLINE, InfoHint } from "@/components/common/InfoHint";
 import type {
   ServerDetail,
   ServerSettings,
@@ -395,14 +396,17 @@ function SettingsMatrix({
           <dl className="space-y-1.5">
             {col.entries.map(([label, value]) => (
               <div key={label} className="flex items-baseline justify-between gap-3 text-sm">
-                <dt
-                  className={cn(
-                    "min-w-0 truncate text-white/65",
-                    descriptions[label] && "cursor-help",
+                <dt className="min-w-0 truncate text-white/65">
+                  {descriptions[label] ? (
+                    <InfoHint
+                      content={descriptions[label]}
+                      className={cn("block max-w-full truncate", HINT_UNDERLINE)}
+                    >
+                      {label}
+                    </InfoHint>
+                  ) : (
+                    <span title={label}>{label}</span>
                   )}
-                  title={descriptions[label] ?? label}
-                >
-                  {label}
                 </dt>
                 <dd className="shrink-0">
                   <SettingValue value={value} kind={col.kind} />
@@ -1285,6 +1289,9 @@ function RotationGrid({
         </span>
         {stats.length > 0 ? <span>热度条为近 7 天人·分钟，越长越受欢迎</span> : null}
       </div>
+      {canSwitch && !serverInitialized ? (
+        <p className="mb-3 text-xs text-amber-300/80">服务器尚未初始化，暂不可换图</p>
+      ) : null}
       {canSwitch && shortcuts.length > 0 ? (
         <div className="mb-5 bg-black/40 px-4 py-3 ring-1 ring-white/10 backdrop-blur-sm">
           <div className="mb-2 text-xs text-white/45">从头开始一个战役</div>

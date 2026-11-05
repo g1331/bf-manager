@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import {
   Dialog,
   DialogContent,
@@ -167,7 +168,7 @@ function ChangePasswordDialog({
                 <FormItem>
                   <FormLabel>当前密码</FormLabel>
                   <FormControl>
-                    <Input type="password" autoComplete="current-password" {...field} />
+                    <PasswordInput autoComplete="current-password" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -180,12 +181,7 @@ function ChangePasswordDialog({
                 <FormItem>
                   <FormLabel>新密码</FormLabel>
                   <FormControl>
-                    <Input
-                      type="password"
-                      autoComplete="new-password"
-                      placeholder="至少 8 位"
-                      {...field}
-                    />
+                    <PasswordInput autoComplete="new-password" placeholder="至少 8 位" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -198,7 +194,7 @@ function ChangePasswordDialog({
                 <FormItem>
                   <FormLabel>再输一次</FormLabel>
                   <FormControl>
-                    <Input type="password" autoComplete="new-password" {...field} />
+                    <PasswordInput autoComplete="new-password" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -274,9 +270,8 @@ function DeleteAccountDialog({
             <label htmlFor="delete-password" className="text-sm font-medium">
               当前密码
             </label>
-            <Input
+            <PasswordInput
               id="delete-password"
-              type="password"
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

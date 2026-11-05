@@ -16,7 +16,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Button } from "@/components/ui/button";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { confirmMatches, confirmMismatch, newPasswordFields } from "@/components/auth/password";
@@ -165,12 +165,7 @@ function SetPasswordForm({ token, info }: { token: string; info: VerificationInf
               <FormItem>
                 <FormLabel>{info.kind === "reset" ? "新密码" : "登录密码"}</FormLabel>
                 <FormControl>
-                  <Input
-                    type="password"
-                    autoComplete="new-password"
-                    placeholder="至少 8 位"
-                    {...field}
-                  />
+                  <PasswordInput autoComplete="new-password" placeholder="至少 8 位" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -183,7 +178,7 @@ function SetPasswordForm({ token, info }: { token: string; info: VerificationInf
               <FormItem>
                 <FormLabel>再输一次</FormLabel>
                 <FormControl>
-                  <Input type="password" autoComplete="new-password" {...field} />
+                  <PasswordInput autoComplete="new-password" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

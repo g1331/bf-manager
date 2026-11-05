@@ -8,6 +8,7 @@ import type { RoundDetail, RoundPlayer, RoundSummary } from "@/lib/api/bf1";
 import { bf1Queries } from "@/lib/queries/bf1";
 import { classLabel } from "@/components/bf1/player-detail/format";
 import { RoundPlayerBreakdown } from "@/components/bf1/rounds/RoundPlayerBreakdown";
+import { HINT_UNDERLINE, InfoHint } from "@/components/common/InfoHint";
 import { HonorBadges, boardScore } from "@/components/bf1/rounds/RoundHonors";
 import { FACTION_SLUG } from "@/lib/bf1/factions";
 import { cn } from "@/lib/utils";
@@ -199,12 +200,12 @@ function RoundBanner({
               <span className="rounded-sm bg-white/10 px-2 py-0.5 text-white/60">未打完</span>
             ) : null}
             {!r.observed_start ? (
-              <span
-                className="rounded-sm bg-white/10 px-2 py-0.5 text-white/60"
-                title="开始统计时这一局已经开打，开局后很快退出的人可能不全"
+              <InfoHint
+                content="开始统计时这一局已经开打，开局后很快退出的人可能不全"
+                className={cn("rounded-sm bg-white/10 px-2 py-0.5 text-white/60", HINT_UNDERLINE)}
               >
                 中途接手统计
-              </span>
+              </InfoHint>
             ) : null}
           </div>
         </div>

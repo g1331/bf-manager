@@ -5,6 +5,7 @@ import { ArrowDown, ArrowUp, Star, TrendingDown, TrendingUp } from "lucide-react
 import type { RoundPlayer, RoundRibbon, RoundScoreParts } from "@/lib/api/bf1";
 import { classLabel } from "@/components/bf1/player-detail/format";
 import { RIBBONS, ribbonImage } from "@/lib/bf1/codex/collection";
+import { InfoHint } from "@/components/common/InfoHint";
 import { cn } from "@/lib/utils";
 
 const RIBBON_BY_CODE = new Map(RIBBONS.map((r) => [r.code, r]));
@@ -115,25 +116,35 @@ export function GrowthChips({ player: p }: { player: RoundPlayer }) {
   if (!chips.length) return null;
   return (
     <ul className="flex flex-wrap gap-1.5">
-      {chips.map((c) => (
-        <li
-          key={c.key}
-          title={c.title}
-          className={cn(
-            "flex items-center gap-1 rounded-sm px-1.5 py-px text-[11px] whitespace-nowrap",
-            c.tone === "gold"
-              ? "bg-amber-400/12 text-amber-200"
-              : c.tone === "dim"
-                ? "bg-white/[0.06] text-white/55"
-                : "bg-white/[0.08] text-white/80",
-          )}
-        >
-          {c.key.startsWith("star-") ? (
-            <Star className="size-3 fill-amber-300 text-amber-300" />
-          ) : null}
-          {c.text}
-        </li>
-      ))}
+      {chips.map((c) => {
+        const cls = cn(
+          "flex items-center gap-1 rounded-sm px-1.5 py-px text-[11px] whitespace-nowrap",
+          c.tone === "gold"
+            ? "bg-amber-400/12 text-amber-200"
+            : c.tone === "dim"
+              ? "bg-white/[0.06] text-white/55"
+              : "bg-white/[0.08] text-white/80",
+        );
+        const body = (
+          <>
+            {c.key.startsWith("star-") ? (
+              <Star className="size-3 fill-amber-300 text-amber-300" />
+            ) : null}
+            {c.text}
+          </>
+        );
+        return (
+          <li key={c.key} className="flex">
+            {c.title ? (
+              <InfoHint content={c.title} className={cls}>
+                {body}
+              </InfoHint>
+            ) : (
+              <span className={cls}>{body}</span>
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 }
@@ -272,8 +283,8 @@ function CareerShift({ before, after }: { before: number; after: number }) {
   const Icon = up ? TrendingUp : TrendingDown;
   const size = Math.abs(change) < 0.01 ? "<0.01" : Math.abs(change).toFixed(2);
   return (
-    <span
-      title="这一局让生涯值变化的幅度"
+    <InfoHint
+      content="这一局让生涯值变化的幅度"
       className={cn(
         "flex items-center gap-0.5 font-semibold",
         up ? "text-emerald-400" : "text-rose-400",
@@ -282,7 +293,7 @@ function CareerShift({ before, after }: { before: number; after: number }) {
       <Icon className="size-3" />
       {up ? "+" : "−"}
       {size}%
-    </span>
+    </InfoHint>
   );
 }
 

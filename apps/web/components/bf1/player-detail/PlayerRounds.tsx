@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { ChevronDown, Flag } from "lucide-react";
+import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { CalendarDays, ChevronDown, Flag } from "lucide-react";
 import { Panel } from "@/components/bf1/player-detail/CareerOverview";
 import {
   FactionFlag,
@@ -15,27 +15,57 @@ import {
   roundHref,
 } from "@/components/bf1/rounds/RoundDetailView";
 import { HonorBadges, boardScore } from "@/components/bf1/rounds/RoundHonors";
+import {
+  DayBar,
+  RoundCalendar,
+  dayKey,
+  dayRange,
+  localTz,
+} from "@/components/bf1/rounds/RoundCalendar";
 import { mainWeapon } from "@/components/bf1/rounds/RoundPlayerBreakdown";
 import { RowsSkeleton } from "@/components/layout/PageSkeleton";
 import { Tooltip } from "@/components/ui/tooltip";
 import type { PlayerRound } from "@/lib/api/bf1";
-import { bf1Queries } from "@/lib/queries/bf1";
+import { bf1Queries, type RoundsFilter } from "@/lib/queries/bf1";
 import { cn } from "@/lib/utils";
 
 /**
  * 玩家对局：我们跟踪到的每一局（私服和官服都有，保留 90 天），由这一局前后的生涯差值算出。
- * 按天分组；窄屏每局一张以地图为底的卡片，宽屏挂在左侧时间线上。点开看双方全员。
+ * 宽屏左边一张月历（窄屏收进「日期」按钮），点某天只看那天；还能只看某台服。
+ * 列表按天分组；窄屏每局一张以地图为底的卡片，宽屏挂在左侧时间线上。点开看双方全员。
  */
 export function PlayerRounds({ personaId, game }: { personaId: number; game: string }) {
   const [open, setOpen] = useState<number | null>(null);
+  const [day, setDay] = useState<string | null>(null);
+  const [server, setServer] = useState<number | null>(null);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [tz] = useState(localTz);
+  const filter = useMemo<RoundsFilter>(
+    () => ({ ...(day ? dayRange(day) : {}), ...(server ? { server } : {}) }),
+    [day, server],
+  );
+  const calendar = useQuery({
+    ...bf1Queries.playerRoundDays(personaId, tz, server),
+    placeholderData: keepPreviousData,
+  });
   const list = useInfiniteQuery({
-    ...bf1Queries.playerRounds(personaId),
+    ...bf1Queries.playerRounds(personaId, filter),
+    placeholderData: keepPreviousData,
   });
   const items = useMemo(() => list.data?.pages.flatMap((p) => p.items) ?? [], [list.data]);
   const groups = useMemo(() => groupByDay(items), [items]);
+  const days = calendar.data?.days ?? [];
+  const servers = calendar.data?.servers ?? [];
+  const filtered = day != null || server != null;
+
+  const pickDay = (d: string | null) => {
+    setDay(d);
+    setOpen(null);
+    setCalendarOpen(false);
+  };
 
   if (list.isLoading) return <RowsSkeleton rows={6} />;
-  if (items.length === 0)
+  if (items.length === 0 && !filtered)
     return (
       <Panel>
         <div className="py-8 text-center text-sm text-white/40">
@@ -46,52 +76,126 @@ export function PlayerRounds({ personaId, game }: { personaId: number; game: str
   return (
     <Panel>
       {/* 按列表自身宽度排版（侧栏会占掉宽度，视口断点测不准） */}
-      <div className="@container space-y-5">
-        {groups.map((g, i) => {
-          const wins = g.items.filter((it) => outcomeOf(it.player) === "win").length;
-          // 最后一天可能还有没加载的局，局数不全就不写
-          const partial = i === groups.length - 1 && list.hasNextPage;
-          return (
-            <section key={g.key}>
-              <h3 className="mb-2 flex items-baseline justify-between gap-3 text-xs font-bold tracking-[0.04em] text-white/80">
-                {g.label}
-                {partial ? null : (
-                  <span className="text-[11px] font-normal tracking-normal text-white/40 tabular-nums">
-                    {g.items.length} 局 · {wins} 胜
-                  </span>
-                )}
-              </h3>
-              <ol className="relative space-y-2 @2xl:space-y-2.5 @2xl:pl-5 @2xl:before:absolute @2xl:before:inset-y-1.5 @2xl:before:left-1 @2xl:before:w-px @2xl:before:bg-white/15">
-                {g.items.map((it) => (
-                  <li key={it.round.id} className="relative">
-                    <RoundCard
-                      item={it}
-                      game={game}
-                      expanded={open === it.round.id}
-                      onToggle={() => setOpen(open === it.round.id ? null : it.round.id)}
-                    />
-                    {open === it.round.id ? (
-                      <div className="border-x border-b border-white/10 bg-black/25 px-4 pt-4 pb-5">
-                        <RoundDetailView roundId={it.round.id} game={game} highlight={personaId} />
-                      </div>
-                    ) : null}
-                  </li>
-                ))}
-              </ol>
-            </section>
-          );
-        })}
+      <div className="@container">
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={server ?? ""}
+            onChange={(e) => {
+              setServer(e.target.value ? Number(e.target.value) : null);
+              setOpen(null);
+            }}
+            aria-label="只看某台服"
+            className="h-11 min-w-0 flex-1 rounded-sm border border-white/15 bg-black/40 px-2 text-[13px] text-white/85 @3xl:h-8 @3xl:max-w-80 @3xl:text-xs"
+          >
+            <option value="">全部服务器</option>
+            {servers.map((s) => (
+              <option key={s.server_game_id} value={s.server_game_id}>
+                {s.server_name ?? `gameId ${s.server_game_id}`}（{s.rounds} 局）
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            aria-expanded={calendarOpen}
+            onClick={() => setCalendarOpen(!calendarOpen)}
+            className={cn(
+              "flex h-11 shrink-0 items-center gap-1.5 rounded-sm border px-3 text-[13px] @3xl:hidden",
+              calendarOpen || day
+                ? "border-amber-400/50 text-amber-200"
+                : "border-white/15 text-white/70",
+            )}
+          >
+            <CalendarDays className="size-4" />
+            日期
+          </button>
+        </div>
+
+        <div className="mt-4 @3xl:grid @3xl:grid-cols-[15rem_minmax(0,1fr)] @3xl:items-start @3xl:gap-6">
+          <aside
+            className={cn(
+              "mb-4 border border-white/10 bg-black/20 p-3 @3xl:sticky @3xl:top-20 @3xl:mb-0 @3xl:block",
+              calendarOpen ? "block" : "hidden",
+            )}
+          >
+            <RoundCalendar
+              days={days}
+              selected={day}
+              onSelect={pickDay}
+              loading={calendar.isLoading}
+              className="mx-auto max-w-xs"
+            />
+          </aside>
+
+          <div className={cn("min-w-0 space-y-5", list.isPlaceholderData && "opacity-60")}>
+            {day ? <DayBar day={day} days={days} onSelect={pickDay} /> : null}
+            {items.length === 0 ? (
+              <div className="py-10 text-center text-sm text-white/40">
+                {list.isError
+                  ? "对局加载失败，请稍后重试"
+                  : day
+                    ? "这一天没有符合条件的对局"
+                    : "在这台服没有对局"}
+              </div>
+            ) : null}
+            {groups.map((g, i) => {
+              const wins = g.items.filter((it) => outcomeOf(it.player) === "win").length;
+              // 最后一天可能还有没加载的局，局数不全就不写
+              const partial = i === groups.length - 1 && list.hasNextPage;
+              return (
+                <section key={g.key}>
+                  {day ? null : (
+                    <h3 className="mb-2 flex items-baseline justify-between gap-3 text-xs font-bold tracking-[0.04em] text-white/80">
+                      <button
+                        type="button"
+                        onClick={() => pickDay(dayKey(new Date(g.items[0].round.ended_at * 1000)))}
+                        className="inline-action hover:text-amber-300"
+                      >
+                        {g.label}
+                      </button>
+                      {partial ? null : (
+                        <span className="text-[11px] font-normal tracking-normal text-white/40 tabular-nums">
+                          {g.items.length} 局 · {wins} 胜
+                        </span>
+                      )}
+                    </h3>
+                  )}
+                  <ol className="relative space-y-2 @2xl:space-y-2.5 @2xl:pl-5 @2xl:before:absolute @2xl:before:inset-y-1.5 @2xl:before:left-1 @2xl:before:w-px @2xl:before:bg-white/15">
+                    {g.items.map((it) => (
+                      <li key={it.round.id} className="relative">
+                        <RoundCard
+                          item={it}
+                          game={game}
+                          expanded={open === it.round.id}
+                          onToggle={() => setOpen(open === it.round.id ? null : it.round.id)}
+                        />
+                        {open === it.round.id ? (
+                          <div className="border-x border-b border-white/10 bg-black/25 px-4 pt-4 pb-5">
+                            <RoundDetailView
+                              roundId={it.round.id}
+                              game={game}
+                              highlight={personaId}
+                            />
+                          </div>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+              );
+            })}
+            {list.hasNextPage ? (
+              <button
+                type="button"
+                disabled={list.isFetchingNextPage}
+                onClick={() => list.fetchNextPage()}
+                className="h-8 w-full rounded-sm border border-white/15 text-xs text-white/70 hover:bg-white/10 disabled:opacity-50"
+              >
+                {list.isFetchingNextPage ? "加载中…" : "加载更早的"}
+              </button>
+            ) : null}
+          </div>
+        </div>
       </div>
-      {list.hasNextPage ? (
-        <button
-          type="button"
-          disabled={list.isFetchingNextPage}
-          onClick={() => list.fetchNextPage()}
-          className="mt-3 h-8 w-full rounded-sm border border-white/15 text-xs text-white/70 hover:bg-white/10 disabled:opacity-50"
-        >
-          {list.isFetchingNextPage ? "加载中…" : "加载更早的"}
-        </button>
-      ) : null}
       <p className="mt-3 text-[11px] text-white/35">
         只包含本站跟踪到的对局，私服和官服都有，保留 90 天。
       </p>

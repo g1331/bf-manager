@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 
-from sqlalchemy import BigInteger, Date, DateTime, String, Text
+from sqlalchemy import BigInteger, Date, DateTime, Index, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
@@ -30,3 +30,6 @@ class Bf1PlayerName(Base):
     pid: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     name: Mapped[str] = mapped_column(String(64), nullable=False)
     seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    # 按名字（不分大小写）找人：服务器对局按玩家筛选时用
+    __table_args__ = (Index("ix_bf1_player_names_name_lower", func.lower(name)),)

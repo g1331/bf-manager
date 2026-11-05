@@ -8,7 +8,7 @@ from app.api.deps import DbDep
 from app.api.rate_limit import rate_limit
 from app.schemas.bf1.ban import BanStatus
 from app.schemas.bf1.collection import PlayerCollection
-from app.schemas.bf1.rounds import PlayerRoundPage
+from app.schemas.bf1.rounds import TZ_DESCRIPTION, PlayerRoundDays, PlayerRoundPage
 from app.schemas.bf1.server import PlayerRspServers
 from app.schemas.bf1.stats import (
     OnlineStatus,
@@ -20,7 +20,7 @@ from app.schemas.bf1.stats import (
 )
 from app.services.bf1.ban_service import BF1BanService
 from app.services.bf1.collection_service import get_collection
-from app.services.bf1.round_service import list_player_rounds
+from app.services.bf1.round_service import list_player_rounds, parse_tz, player_round_days
 from app.services.bf1.rsp_list_service import list_player_servers
 from app.services.bf1.stats_service import BF1StatsService
 
@@ -63,10 +63,28 @@ async def get_player_rounds(
     persona_id: int,
     db: DbDep,
     before: int | None = Query(None, description="上一页的 next_before（对局 id）"),
+    since: int | None = Query(None, description="只取结束时间不早于这个 unix 秒的对局"),
+    until: int | None = Query(None, description="只取结束时间早于这个 unix 秒的对局"),
+    server: int | None = Query(
+        None, description="只取在这台服打的对局：服务器的任一 gameId，重启前后算同一台"
+    ),
     limit: int = Query(20, ge=1, le=100),
 ) -> PlayerRoundPage:
     # 我们跟踪到的对局（含官服），由生涯差分算出，保留 90 天
-    return await list_player_rounds(db, persona_id, before=before, limit=limit)
+    return await list_player_rounds(
+        db, persona_id, before=before, since=since, until=until, server=server, limit=limit
+    )
+
+
+@router.get("/{persona_id}/rounds/days", dependencies=[_read], response_model=PlayerRoundDays)
+async def get_player_round_days(
+    persona_id: int,
+    db: DbDep,
+    tz: str = Query("Asia/Shanghai", max_length=64, description=TZ_DESCRIPTION),
+    server: int | None = Query(None, description="只数在这台服打的对局（服务器列表不受影响）"),
+) -> PlayerRoundDays:
+    # 对局日历：每天的局数、胜场、击杀，加上打过的服
+    return await player_round_days(db, persona_id, tz=parse_tz(tz), server=server)
 
 
 @router.get("/{persona_id}/servers", dependencies=[_read], response_model=PlayerRspServers)

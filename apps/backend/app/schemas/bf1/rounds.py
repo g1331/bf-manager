@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+from datetime import date
 from typing import Literal
 
 from pydantic import BaseModel
+
+TZ_DESCRIPTION = "按这个时区划分日期：IANA 时区名，如 Asia/Shanghai（默认）"
 
 
 class RoundSummary(BaseModel):
@@ -167,3 +170,38 @@ class PlayerRoundPage(BaseModel):
     items: list[PlayerRound]
     # 下一页传给 before（对局 id）；为空表示没有更早的了
     next_before: int | None = None
+
+
+class RoundDay(BaseModel):
+    """某一天（按请求给的时区）的对局数"""
+
+    day: date
+    rounds: int
+    # 玩家日历才有：这一天打到结算并获胜的局数、总击杀
+    wins: int | None = None
+    kills: int | None = None
+
+
+class RoundPlayerRef(BaseModel):
+    persona_id: int
+    name: str | None = None
+
+
+class ServerRoundDays(BaseModel):
+    days: list[RoundDay]
+    # 按玩家筛选时，名字或 PID 对应到的那个人
+    player: RoundPlayerRef | None = None
+
+
+class PlayerRoundServer(BaseModel):
+    """玩家打过的一台服；重启前后的实例合在一起"""
+
+    server_game_id: int
+    server_name: str | None = None
+    rounds: int
+
+
+class PlayerRoundDays(BaseModel):
+    days: list[RoundDay]
+    # 打过的服按局数从多到少，不受 server 筛选影响
+    servers: list[PlayerRoundServer]

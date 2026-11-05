@@ -22,6 +22,17 @@ export interface ServerListSelection {
   includeEmpty: boolean;
 }
 
+/**
+ * 对局列表的筛选：结束时间在 [since, until) 内（选中某一天时），服务器对局可再按 player（personaId）、
+ * 玩家对局可再按 server（gameId）筛。
+ */
+export interface RoundsFilter {
+  since?: number;
+  until?: number;
+  player?: number;
+  server?: number;
+}
+
 export const bf1Keys = {
   // 服务器
   servers: (selection: ServerListSelection, name: string) =>
@@ -36,7 +47,10 @@ export const bf1Keys = {
   serverSnapshots: (gameId: number, jumpTo: number | null) =>
     ["bf1-server-snapshots", gameId, jumpTo] as const,
   serverSnapshot: (gameId: number, ts: number) => ["bf1-server-snapshot", gameId, ts] as const,
-  serverRounds: (gameId: number) => ["bf1-server-rounds", gameId] as const,
+  serverRounds: (gameId: number, filter: RoundsFilter = {}) =>
+    ["bf1-server-rounds", gameId, filter] as const,
+  serverRoundDays: (gameId: number, tz: string, player: string | null) =>
+    ["bf1-server-round-days", gameId, tz, player] as const,
   round: (roundId: number) => ["bf1-round", roundId] as const,
   serverGroups: (gameId: number) => ["bf1-server-groups", gameId] as const,
 
@@ -60,7 +74,10 @@ export const bf1Keys = {
   playerServers: (personaId: number) => ["bf1-player-servers", personaId] as const,
   recent: (personaId: number) => ["bf1-recent", personaId] as const,
   collection: (personaId: number) => ["bf1-collection", personaId] as const,
-  playerRounds: (personaId: number) => ["bf1-player-rounds", personaId] as const,
+  playerRounds: (personaId: number, filter: RoundsFilter = {}) =>
+    ["bf1-player-rounds", personaId, filter] as const,
+  playerRoundDays: (personaId: number, tz: string, server: number | null) =>
+    ["bf1-player-round-days", personaId, tz, server] as const,
 
   // 战队
   platoonSearch: (q: string) => ["bf1-platoon-search", q.toLowerCase()] as const,
@@ -143,12 +160,24 @@ export const bf1Queries = {
       queryKey: bf1Keys.serverSnapshot(gameId, ts),
       queryFn: ({ signal }) => bf1Api.getServerSnapshot(gameId, ts, { signal }),
     }),
-  serverRounds: (gameId: number) =>
+  /** filter.until 是这一天的结束（不含），翻页时由 next_before 接着往前 */
+  serverRounds: (gameId: number, filter: RoundsFilter = {}) =>
     infiniteQueryOptions({
-      queryKey: bf1Keys.serverRounds(gameId),
-      queryFn: ({ pageParam, signal }) => bf1Api.getServerRounds(gameId, pageParam, { signal }),
+      queryKey: bf1Keys.serverRounds(gameId, filter),
+      queryFn: ({ pageParam, signal }) =>
+        bf1Api.getServerRounds(
+          gameId,
+          { before: pageParam ?? filter.until, since: filter.since, player: filter.player },
+          { signal },
+        ),
       initialPageParam: null as number | null,
       getNextPageParam: (last) => last.next_before,
+    }),
+  /** player 是名字或 PID，对不上时 404 */
+  serverRoundDays: (gameId: number, tz: string, player: string | null) =>
+    queryOptions({
+      queryKey: bf1Keys.serverRoundDays(gameId, tz, player),
+      queryFn: ({ signal }) => bf1Api.getServerRoundDays(gameId, tz, player, { signal }),
     }),
   round: (roundId: number) =>
     queryOptions({
@@ -253,12 +282,22 @@ export const bf1Queries = {
       queryKey: bf1Keys.collection(personaId),
       queryFn: ({ signal }) => bf1Api.getCollection(personaId, { signal }),
     }),
-  playerRounds: (personaId: number) =>
+  playerRounds: (personaId: number, filter: RoundsFilter = {}) =>
     infiniteQueryOptions({
-      queryKey: bf1Keys.playerRounds(personaId),
-      queryFn: ({ pageParam, signal }) => bf1Api.getPlayerRounds(personaId, pageParam, { signal }),
+      queryKey: bf1Keys.playerRounds(personaId, filter),
+      queryFn: ({ pageParam, signal }) =>
+        bf1Api.getPlayerRounds(
+          personaId,
+          { before: pageParam, since: filter.since, until: filter.until, server: filter.server },
+          { signal },
+        ),
       initialPageParam: null as number | null,
       getNextPageParam: (last) => last.next_before,
+    }),
+  playerRoundDays: (personaId: number, tz: string, server: number | null) =>
+    queryOptions({
+      queryKey: bf1Keys.playerRoundDays(personaId, tz, server),
+      queryFn: ({ signal }) => bf1Api.getPlayerRoundDays(personaId, tz, server, { signal }),
     }),
 
   // ===== 战队 =====

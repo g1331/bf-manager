@@ -1,7 +1,7 @@
 """bf6_stat_snapshots / bf6_match_estimates：BF6 对局估算
 
-Revision ID: 20261105_0026
-Revises: 20261104_0025
+Revision ID: 20261105_0027
+Revises: 20261105_0026
 Create Date: 2026-11-05 12:00:00.000000
 """
 
@@ -12,8 +12,8 @@ from collections.abc import Sequence
 import sqlalchemy as sa
 from alembic import op
 
-revision: str = "20261105_0026"
-down_revision: str | None = "20261104_0025"
+revision: str = "20261105_0027"
+down_revision: str | None = "20261105_0026"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

@@ -14,6 +14,7 @@ import re
 from pathlib import Path
 
 import pytest
+from app.core.logging import setup_logging
 from app.domain.ea.login.exceptions import (
     CredentialsExpiredError,
     FormStructureChangedError,
@@ -22,6 +23,7 @@ from app.domain.ea.login.exceptions import (
     WrongPasswordError,
 )
 from app.domain.ea.login.login_engine import EALoginEngine
+from loguru import logger
 
 # ===== 脱敏 HTML 样本（最小骨架，仅含分类器关心的元素）=====
 
@@ -338,6 +340,29 @@ async def test_otc_form_page_requests_email_code():
     assert outcome.available_methods == ["EMAIL"]
     assert outcome.masked_destination == "76*****@qq.com"
     assert session.posts[-1] == {"codeType": "EMAIL", "_codeType": "EMAIL", "_eventId": "submit"}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(("code_type", "event_id"), [("", "sendCode"), ("APP", "resend")])
+async def test_otc_form_logs_page_values_but_submits_fixed_values(code_type, event_id):
+    """页面隐藏字段原值与提交值不同时：提交仍是固定值，日志记下页面原值。"""
+    page = _OTC_FORM_PAGE.replace('value="EMAIL"', f'value="{code_type}"').replace(
+        'value="submit"', f'value="{event_id}"'
+    )
+    engine, session = _engine_and_session([_JUNO_START_PAGE, page, _CODE_ENTRY_PAGE])
+    setup_logging()
+    records: list[dict] = []
+    handler_id = logger.add(lambda m: records.append(m.record["extra"]), level="INFO")
+    try:
+        await engine.start()
+    finally:
+        logger.remove(handler_id)
+    expected_methods = [code_type] if code_type else ["EMAIL"]
+    assert engine._available_methods == expected_methods
+    method = expected_methods[0]
+    assert session.posts[-1] == {"codeType": method, "_codeType": method, "_eventId": "submit"}
+    request_log = next(r for r in records if r.get("step") == "request_2fa_code")
+    assert request_log["page_fields"] == {"codeType": code_type, "_eventId": event_id}
 
 
 @pytest.mark.asyncio

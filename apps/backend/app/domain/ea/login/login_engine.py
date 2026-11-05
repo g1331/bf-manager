@@ -433,10 +433,17 @@ class EALoginEngine:
         page = self._post_password_html
         masked = get_email_method_masked_destination(page) if method == "EMAIL" else ""
         overrides = {"codeType": method, "_codeType": method, "_eventId": "submit"}
+        # 发送页隐藏字段的原值（方式 / 事件名，不含个人信息）记进日志，覆盖值与页面不一致时能看出来
+        page_fields: dict[str, str] = {}
         if has_code_type_radios(page):
             overrides["maskedDestination"] = masked
             payload = build_form_payload(page, overrides) | overrides
         else:
+            page_fields = {
+                k: v
+                for k, v in send_code_form_payload(page, {}).items()
+                if k in ("codeType", "_codeType", "_eventId")
+            }
             payload = send_code_form_payload(page, overrides) | overrides
         resp, resp_text = await self._post(
             session, self._post_password_url, payload, stage="2fa_request"
@@ -447,6 +454,7 @@ class EALoginEngine:
             method=method,
             has_masked_destination=bool(masked),
             form_keys=sorted(payload.keys()),
+            page_fields=page_fields,
         )
         if resp.status != 200:
             raise UpstreamError(f"EA 拒绝请求 {method} 验证码", stage="2fa_request")

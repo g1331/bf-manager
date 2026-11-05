@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import functools
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 
@@ -42,6 +43,8 @@ from app.services.bf1.round_service import restore_tracker_state, save_tracker_s
 from app.services.bf1.timed_vip_service import timed_vip_poller
 from app.services.bf6.credential_service import drain as bf6_drain_refresh
 from app.services.bf6.credential_service import refresh_poller as bf6_refresh_poller
+from app.services.bf6.match_service import tracker_poller as bf6_tracker_poller
+from app.services.bf6.player_service import fetch_batch as bf6_fetch_batch
 from app.services.ea_login_finalizer import EALoginFinalizer
 from app.services.group_server_service import group_server_poller
 from app.services.metrics_service import classify_path, record_request, user_id_from_token
@@ -81,6 +84,12 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         asyncio.create_task(account_deletion_poller(get_sessionmaker())),
         # BF6 凭据每天主动刷新，refresh token 闲置 9 天会失效
         asyncio.create_task(bf6_refresh_poller(get_sessionmaker())),
+        # BF6 对局估算：定时重读最近有人查过的玩家
+        asyncio.create_task(
+            bf6_tracker_poller(
+                get_sessionmaker(), functools.partial(bf6_fetch_batch, get_sessionmaker())
+            )
+        ),
     ]
     if "bf1" in settings.games:
         if settings.bf1_match_tracking:

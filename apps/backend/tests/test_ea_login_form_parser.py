@@ -20,8 +20,19 @@ from app.domain.ea.login.form_parser import (
     get_email_method_masked_destination,
     has_privacy_accept_checkbox,
     looks_like_login_form,
+    page_diagnostic,
     parse_set_cookie_pair,
 )
+
+_SEND_CODE_PAGE = """
+<html><head><title>Two Factor Log In</title></head><body>
+<p>We'll send a verification code to <b>76*****@qq.com</b>.</p><button>Send Code</button>
+<form id="tfa" method="post" action="/p/juno/dynamicchallenge/sendCode?execution=e1s3">
+    <input type="hidden" name="_eventId" value="submit">
+    <input type="hidden" name="codeType" value="EMAIL">
+</form>
+</body></html>
+"""
 
 _EMAIL_PAGE = """
 <html><body>
@@ -203,3 +214,19 @@ def test_parse_set_cookie_pair_ignores_expired():
 def test_looks_like_login_form_matches_login_form_id():
     assert looks_like_login_form(_PASSWORD_PAGE) is True
     assert looks_like_login_form(_REDIRECT_PAGE) is False
+
+
+def test_send_code_page_methods_from_code_type_field():
+    assert extract_available_auth_methods(_SEND_CODE_PAGE) == ["EMAIL"]
+
+
+def test_send_code_page_masked_destination_from_text():
+    assert get_email_method_masked_destination(_SEND_CODE_PAGE) == "76*****@qq.com"
+
+
+def test_page_diagnostic_lists_form_fields_without_values():
+    diag = page_diagnostic(_PASSWORD_PAGE.replace("<html>", "<html><title>Login</title>"))
+    assert "login-form@/login[" in diag
+    assert "email:hidden" in diag
+    assert "password:password" in diag
+    assert "user@example.com" not in diag

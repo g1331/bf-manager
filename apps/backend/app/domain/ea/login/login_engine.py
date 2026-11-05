@@ -49,9 +49,13 @@ from app.domain.ea.login.form_parser import (
     extract_page_error,
     extract_redirect_url,
     get_email_method_masked_destination,
+    has_code_type_radios,
+    has_one_time_code_input,
     has_privacy_accept_checkbox,
+    is_send_code_challenge,
     page_diagnostic,
     parse_set_cookie_pair,
+    send_code_form_payload,
 )
 
 # EA 登录流程的起始 URL：sparta-companion-web 是 BF1 战地伴侣使用的 OAuth client。
@@ -238,7 +242,7 @@ class EALoginEngine:
         分类顺序：
         1. 密码输入框还在 → 有错误提示时按凭据被拒分流（凭据过期 / 风控 / 密码错误），
            没有提示则视为表单结构变化
-        2. 2FA radio 列表非空 → 进入 2FA 流程
+        2. 2FA 方式非空（选择页的 radio，或只有「Send Code」的发送页）→ 进入 2FA 流程
         3. ``window.location=`` 重定向 → 跳过去拿 cookies，``next_step="done"``
         4. 还有 page error 文本 → 按关键词分流（兜底捕捉 EA 不带 password 输入但
            直接渲染了错误信息的新版页面）
@@ -323,8 +327,7 @@ class EALoginEngine:
             method=self._selected_method,
         )
 
-        tree = lxml_html.fromstring(resp_text)
-        if tree.xpath('//input[@name="oneTimeCode"]'):
+        if has_one_time_code_input(resp_text):
             page_err = extract_page_error(resp_text) or "验证码错误或已过期"
             raise Invalid2FACodeError(page_err, stage="2fa_submit")
 
@@ -421,26 +424,34 @@ class EALoginEngine:
         return resp, resp_text
 
     async def _request_code(self, session: aiohttp.ClientSession, method: str) -> str:
-        masked = (
-            get_email_method_masked_destination(self._post_password_html)
-            if method == "EMAIL"
-            else ""
+        """让 EA 发送验证码，返回脱敏后的目标邮箱（非邮件方式为空串）。
+
+        选择页用登录表单、发送页用实际的发送表单的字段打底（带上隐藏字段），再覆盖
+        方式与提交事件；只有选择页才带 ``maskedDestination``。EA 收下请求后应当
+        进入验证码输入页，否则把页面诊断文本（含错误提示）带进异常。
+        """
+        page = self._post_password_html
+        masked = get_email_method_masked_destination(page) if method == "EMAIL" else ""
+        overrides = {"codeType": method, "_codeType": method, "_eventId": "submit"}
+        if has_code_type_radios(page):
+            overrides["maskedDestination"] = masked
+            payload = build_form_payload(page, overrides) | overrides
+        else:
+            payload = send_code_form_payload(page, overrides) | overrides
+        resp, resp_text = await self._post(
+            session, self._post_password_url, payload, stage="2fa_request"
         )
-        payload = {
-            "codeType": method,
-            "maskedDestination": masked,
-            "_codeType": method,
-            "_eventId": "submit",
-        }
-        resp, _ = await self._post(session, self._post_password_url, payload, stage="2fa_request")
         self._log(
             "request_2fa_code",
             http_status=resp.status,
             method=method,
             has_masked_destination=bool(masked),
+            form_keys=sorted(payload.keys()),
         )
         if resp.status != 200:
             raise UpstreamError(f"EA 拒绝请求 {method} 验证码", stage="2fa_request")
+        if not has_one_time_code_input(resp_text):
+            raise FormStructureChangedError(page_diagnostic(resp_text), stage="2fa_request")
         self._request_code_url = str(resp.url)
         return masked
 
@@ -574,6 +585,7 @@ def _looks_like_2fa_or_redirect(text: str) -> bool:
     """识别邮箱页提交后已经进入下一阶段的情形。"""
     return (
         "_codeType" in text
+        or is_send_code_challenge(text)
         or "window.location=" in text.replace(" ", "")
         or 'id="readAccept"' in text
         or '<input type="password"' in text

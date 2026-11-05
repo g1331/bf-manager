@@ -95,6 +95,31 @@ _TWO_FA_MULTI_PAGE = """
 </body></html>
 """
 
+# 2026-11 起的 2FA 发送页：没有方式选择，只有「Send Code」按钮。
+_SEND_CODE_PAGE = """
+<html><head><title>Two Factor Log In</title></head><body>
+<a href="#">Back</a>
+<h1>Verify your identity</h1>
+<p>We'll send a verification code to 76*****@qq.com.</p>
+<form id="tfa-login" method="post"
+      action="/p/juno/dynamicchallenge/sendCode?execution=e1s3">
+    <input type="hidden" name="_eventId" value="submit">
+    <input type="hidden" name="verification" value="">
+    <button type="submit">Send Code</button>
+</form>
+</body></html>
+"""
+
+# 请求验证码后的输入页。
+_CODE_ENTRY_PAGE = """
+<html><body>
+<form id="login-form" method="post">
+    <input type="text" name="oneTimeCode" value="">
+    <input type="hidden" name="_eventId" value="submit">
+</form>
+</body></html>
+"""
+
 # 引擎完全不认识的页（无 password / 无 2FA / 无 redirect / 无错误文本）。
 _UNKNOWN_PAGE = """
 <html><body>
@@ -139,6 +164,7 @@ class _FakeSession:
     def __init__(self, script: list[str]) -> None:
         self._script = script
         self._idx = 0
+        self.posts: list[dict] = []
 
     def _next(self) -> _FakeResponse:
         html = self._script[self._idx]
@@ -149,6 +175,7 @@ class _FakeSession:
         return self._next()
 
     async def post(self, url, data=None):
+        self.posts.append(dict(data or {}))
         return self._next()
 
     async def close(self) -> None:
@@ -156,6 +183,10 @@ class _FakeSession:
 
 
 def _engine_with_script(script: list[str]) -> EALoginEngine:
+    return _engine_and_session(script)[0]
+
+
+def _engine_and_session(script: list[str]) -> tuple[EALoginEngine, _FakeSession]:
     engine = EALoginEngine(task_id="t-test", email="user@example.com", password="pw")
     session = _FakeSession(script)
 
@@ -163,7 +194,7 @@ def _engine_with_script(script: list[str]) -> EALoginEngine:
         return session
 
     engine._ensure_session = _fake_ensure_session  # type: ignore[method-assign]
-    return engine
+    return engine, session
 
 
 @pytest.mark.asyncio
@@ -249,11 +280,48 @@ async def test_juno_risk_page_raises_risk_blocked():
 @pytest.mark.asyncio
 async def test_juno_single_2fa_method_enters_need_code():
     """juno 单页：密码正确且单一 2FA 方式 → 自动请求验证码，next_step=need_code。"""
-    # GET start → POST(email+password) 得到 2FA 页 → POST(request_code) 回任意页。
-    engine = _engine_with_script([_JUNO_START_PAGE, _TWO_FA_SINGLE_PAGE, _TWO_FA_SINGLE_PAGE])
+    # GET start → POST(email+password) 得到 2FA 页 → POST(request_code) 得到验证码输入页。
+    engine, session = _engine_and_session([_JUNO_START_PAGE, _TWO_FA_SINGLE_PAGE, _CODE_ENTRY_PAGE])
     outcome = await engine.start()
     assert outcome.next_step == "need_code"
     assert outcome.selected_method == "EMAIL"
+    assert outcome.masked_destination == "a***@e***"
+    assert session.posts[-1]["maskedDestination"] == "a***@e***"
+
+
+@pytest.mark.asyncio
+async def test_send_code_page_requests_email_code():
+    """「Send Code」发送页：按邮件验证码处理，带上页面隐藏字段请求发送，进入 need_code。"""
+    engine, session = _engine_and_session([_JUNO_START_PAGE, _SEND_CODE_PAGE, _CODE_ENTRY_PAGE])
+    outcome = await engine.start()
+    assert outcome.next_step == "need_code"
+    assert outcome.available_methods == ["EMAIL"]
+    assert outcome.masked_destination == "76*****@qq.com"
+    assert session.posts[-1] == {
+        "_eventId": "submit",
+        "verification": "",
+        "codeType": "EMAIL",
+        "_codeType": "EMAIL",
+    }
+
+
+@pytest.mark.asyncio
+async def test_send_code_page_without_path_marker_recognized_by_title():
+    """表单路径不带 sendCode 时，靠「Two Factor Log In」标题认出发送页。"""
+    page = _SEND_CODE_PAGE.replace("dynamicchallenge/sendCode", "login")
+    engine = _engine_with_script([_JUNO_START_PAGE, page, _CODE_ENTRY_PAGE])
+    outcome = await engine.start()
+    assert outcome.next_step == "need_code"
+
+
+@pytest.mark.asyncio
+async def test_request_code_without_code_input_raises_form_changed():
+    """请求验证码后没进验证码输入页 → FormStructureChangedError，带页面诊断。"""
+    engine = _engine_with_script([_JUNO_START_PAGE, _SEND_CODE_PAGE, _SEND_CODE_PAGE])
+    with pytest.raises(FormStructureChangedError) as exc:
+        await engine.start()
+    assert exc.value.stage == "2fa_request"
+    assert "Verify your identity" in exc.value.snippet
 
 
 @pytest.mark.asyncio

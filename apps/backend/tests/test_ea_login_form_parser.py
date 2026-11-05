@@ -20,8 +20,20 @@ from app.domain.ea.login.form_parser import (
     get_email_method_masked_destination,
     has_privacy_accept_checkbox,
     looks_like_login_form,
+    page_diagnostic,
     parse_set_cookie_pair,
+    send_code_form_payload,
 )
+
+_SEND_CODE_PAGE = """
+<html><head><title>Two Factor Log In</title></head><body>
+<p>We'll send a verification code to <b>76*****@qq.com</b>.</p><button>Send Code</button>
+<form id="tfa" method="post" action="/p/juno/dynamicchallenge/sendCode?execution=e1s3">
+    <input type="hidden" name="_eventId" value="submit">
+    <input type="hidden" name="codeType" value="EMAIL">
+</form>
+</body></html>
+"""
 
 _EMAIL_PAGE = """
 <html><body>
@@ -203,3 +215,78 @@ def test_parse_set_cookie_pair_ignores_expired():
 def test_looks_like_login_form_matches_login_form_id():
     assert looks_like_login_form(_PASSWORD_PAGE) is True
     assert looks_like_login_form(_REDIRECT_PAGE) is False
+
+
+def test_send_code_page_methods_from_code_type_field():
+    assert extract_available_auth_methods(_SEND_CODE_PAGE) == ["EMAIL"]
+
+
+def test_send_code_page_masked_destination_from_text():
+    assert get_email_method_masked_destination(_SEND_CODE_PAGE) == "76*****@qq.com"
+
+
+def test_page_diagnostic_lists_form_fields_without_values():
+    diag = page_diagnostic(_PASSWORD_PAGE.replace("<html>", "<html><title>Login</title>"))
+    assert "login-form@/login[" in diag
+    assert "email:hidden" in diag
+    assert "password:password" in diag
+    assert "user@example.com" not in diag
+
+
+def test_two_factor_title_redirect_page_is_not_send_code():
+    page = """
+    <html><head><title>Two Factor Log In</title></head><body>
+    <script>window.location="https://signin.ea.com/p/web2/redirect?code=abc";</script>
+    <form><button>Send Code</button></form>
+    </body></html>
+    """
+    assert extract_available_auth_methods(page) == []
+
+
+def test_two_factor_title_code_entry_page_is_not_send_code():
+    page = """
+    <html><head><title>Two Factor Log In</title></head><body>
+    <form action="/p/juno/dynamicchallenge/sendCode">
+        <input type="text" name="oneTimeCode" value="">
+        <button>Send new code</button>
+    </form>
+    </body></html>
+    """
+    assert extract_available_auth_methods(page) == []
+
+
+def test_send_code_payload_uses_send_form_not_first_form():
+    page = """
+    <html><body>
+    <form id="login-form"><input name="wrong" value="x"></form>
+    <form action="/p/juno/dynamicchallenge/sendCode">
+        <input type="hidden" name="csrf" value="needed-token">
+    </form>
+    </body></html>
+    """
+    assert send_code_form_payload(page, {"codeType": "EMAIL"}) == {"csrf": "needed-token"}
+
+
+def test_send_code_form_found_by_button_when_marker_only_in_script():
+    page = """
+    <html><head><title>Verify</title></head><body>
+    <form id="back"><input name="_eventId" value="back"><button>Back</button></form>
+    <form id="send"><input name="token" value="t"><button> Send Code </button></form>
+    <script>var next = "/p/juno/dynamicchallenge/sendCode";</script>
+    </body></html>
+    """
+    assert send_code_form_payload(page, {}) == {"token": "t"}
+
+
+def test_page_diagnostic_drops_action_authority_query_and_fragment():
+    page = """
+    <html><body>
+    <form action="https://u:p@signin.ea.com/login?execution=e1#access_token=plain-token">
+        <input name="_eventId" value="secret">
+    </form>
+    </body></html>
+    """
+    diag = page_diagnostic(page)
+    assert "-@/login[_eventId:text]" in diag
+    for leaked in ("plain-token", "execution", "u:p", "signin.ea.com", "secret"):
+        assert leaked not in diag

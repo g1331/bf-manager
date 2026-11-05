@@ -13,12 +13,25 @@ from __future__ import annotations
 
 import re
 from collections.abc import Iterable
+from urllib.parse import urlsplit
 
 from lxml import html as lxml_html
 
 # EA 登录链路里出现 ``window.location="..."`` 的中间页用此正则提取跳转目标。
 # 注意：必须先把 HTML 中的空白去掉再匹配，因为 EA 模板偶尔会在引号附近插入空格。
 _REDIRECT_RE = re.compile(r'window\.location="([^"]+)"')
+
+# 2026-11 起 EA 的二次验证发送页（只有「Send Code」按钮）的表单路径。
+_SEND_CODE_MARKER = "dynamicchallenge/sendCode"
+
+# 发送页里「Send Code」提交按钮（button 文本或 submit input 的 value，忽略大小写）。
+_SEND_BUTTON_XPATH = (
+    './/button[contains(translate(normalize-space(.),"SEND","send"),"send")]'
+    '|.//input[@type="submit" and contains(translate(@value,"SEND","send"),"send")]'
+)
+
+# 发送页正文「We'll send a verification code to 76*****@qq.com.」里的脱敏邮箱。
+_MASKED_EMAIL_RE = re.compile(r"([^\s@]*\*[^\s@]*@[^\s]+)")
 
 # Set-Cookie 头里提取 ``key=value`` 的兜底正则，仅在 aiohttp ``CookieJar`` 解析失败时使用。
 _SET_COOKIE_KV_RE = re.compile(r"(?P<key>[A-Za-z0-9_]+)=(?P<value>[^;]+)")
@@ -66,9 +79,21 @@ def build_form_payload(
     forms = tree.xpath(f'//form[@id="{form_id}"]') or tree.xpath("//form")
     if not forms:
         return values.copy()
+    return _form_payload(forms[0], values)
 
+
+def send_code_form_payload(html_text: str, values: dict[str, str]) -> dict[str, str]:
+    """用「Send Code」发送页里实际的发送表单构造 payload，规则同 :func:`build_form_payload`。
+
+    找不到发送表单时返回 ``values`` 的浅拷贝。
+    """
+    form = _find_send_code_form(lxml_html.fromstring(html_text), html_text)
+    return values.copy() if form is None else _form_payload(form, values)
+
+
+def _form_payload(form: lxml_html.HtmlElement, values: dict[str, str]) -> dict[str, str]:
     payload: dict[str, str] = {}
-    for element in forms[0].xpath(".//input[@name]"):
+    for element in form.xpath(".//input[@name]"):
         name = element.get("name")
         if not name:
             continue
@@ -84,8 +109,14 @@ def build_form_payload(
 def extract_available_auth_methods(html_text: str) -> list[str]:
     """从密码页响应里提取 EA 提供的全部 2FA 方式标识。
 
-    EA 用一组 ``<input type="radio" name="_codeType">`` 表达可选方式，常见取值为
-    ``EMAIL`` / ``APP`` / ``SMS``，按页面出现顺序返回。
+    EA 有两种 2FA 页：
+
+    - 选择页：一组 ``<input type="radio" name="_codeType">``，常见取值为
+      ``EMAIL`` / ``APP`` / ``SMS``，按页面出现顺序返回；
+    - 发送页（2026-11 起）：只有「Verify your identity ... Send Code」一个按钮，
+      页面里带 ``dynamicchallenge/sendCode``，没有 radio。方式取自 ``codeType`` /
+      ``_codeType`` 字段的非空值，都没有时按邮件验证码处理（页面文案就是
+      「We'll send a verification code to <邮箱>」）。
 
     Returns:
         方式标识列表；非 2FA 页面返回空列表。
@@ -97,7 +128,59 @@ def extract_available_auth_methods(html_text: str) -> list[str]:
         value = radio.get("value")
         if value:
             methods.append(value)
-    return methods
+    if methods:
+        return methods
+    form = _find_send_code_form(tree, html_text)
+    if form is None:
+        return []
+    for raw in form.xpath('.//input[@name="codeType" or @name="_codeType"]/@value'):
+        value = raw.strip()
+        if value and value not in methods:
+            methods.append(value)
+    return methods or ["EMAIL"]
+
+
+def is_send_code_challenge(html_text: str) -> bool:
+    """判断是否为 EA 的「Send Code」二次验证发送页（无方式选择）。"""
+    return _find_send_code_form(lxml_html.fromstring(html_text), html_text) is not None
+
+
+def _find_send_code_form(
+    tree: lxml_html.HtmlElement, html_text: str
+) -> lxml_html.HtmlElement | None:
+    """定位发送页里提交「发送验证码」的那个 form。
+
+    - 页面有密码框、验证码输入框或 ``window.location`` 跳转时不是发送页；
+    - 优先取 action 含 ``dynamicchallenge/sendCode`` 的 form；
+    - 否则页面需带该路径或标题含「Two Factor」，再取含「Send」提交按钮的 form。
+    """
+    if tree.xpath('//input[@type="password" or @name="oneTimeCode"]'):
+        return None
+    if extract_redirect_url(html_text):
+        return None
+    forms = tree.xpath("//form")
+    for form in forms:
+        if _SEND_CODE_MARKER in (form.get("action") or ""):
+            return form
+    title = " ".join(tree.xpath("//title//text()")).lower()
+    if _SEND_CODE_MARKER not in html_text and "two factor" not in title:
+        return None
+    for form in forms:
+        if form.xpath(_SEND_BUTTON_XPATH):
+            return form
+    return None
+
+
+def has_code_type_radios(html_text: str) -> bool:
+    """判断 2FA 页是否为旧版的方式选择页（``_codeType`` radio）。"""
+    tree = lxml_html.fromstring(html_text)
+    return bool(tree.xpath('//input[@type="radio" and @name="_codeType"]'))
+
+
+def has_one_time_code_input(html_text: str) -> bool:
+    """判断当前页面是否为验证码输入页。"""
+    tree = lxml_html.fromstring(html_text)
+    return bool(tree.xpath('//input[@name="oneTimeCode"]'))
 
 
 def has_privacy_accept_checkbox(html_text: str) -> bool:
@@ -114,20 +197,25 @@ def has_privacy_accept_checkbox(html_text: str) -> bool:
 def get_email_method_masked_destination(html_text: str) -> str:
     """EMAIL 验证方式下提取脱敏后的目标邮箱（如 ``a***@b***``）。
 
-    EA 把脱敏字符串编码进 radio 的 ``id`` 属性后缀（``codeType-EMAIL:abc***@def``），
-    取 ``id`` 最后一个 ``:`` 之后的部分；不存在时返回空串。
+    选择页把脱敏字符串编码进 radio 的 ``id`` 属性后缀（``codeType-EMAIL:abc***@def``），
+    取 ``id`` 最后一个 ``:`` 之后的部分；发送页没有 radio，退到 ``maskedDestination``
+    字段，再退到正文里带 ``*`` 的邮箱。都不存在时返回空串。
 
     Returns:
         脱敏后的目标字符串，可直接展示给前端；禁止落日志。
     """
     tree = lxml_html.fromstring(html_text)
     nodes = tree.xpath('//input[@type="radio" and @name="_codeType" and @value="EMAIL"]')
-    if not nodes:
-        return ""
-    raw_id = nodes[0].get("id") or ""
-    if ":" not in raw_id:
-        return ""
-    return raw_id.rsplit(":", 1)[-1]
+    if nodes:
+        raw_id = nodes[0].get("id") or ""
+        return raw_id.rsplit(":", 1)[-1] if ":" in raw_id else ""
+    hidden = "".join(tree.xpath('//input[@name="maskedDestination"]/@value')).strip()
+    if hidden:
+        return hidden
+    for node in tree.xpath("//script|//style"):
+        node.drop_tree()
+    match = _MASKED_EMAIL_RE.search(" ".join(tree.itertext()))
+    return match.group(1).rstrip(".") if match else ""
 
 
 def extract_page_error(html_text: str) -> str | None:
@@ -179,15 +267,18 @@ def extract_page_error(html_text: str) -> str | None:
 
 
 def page_diagnostic(html_text: str, *, limit: int = 300) -> str:
-    """把 EA 返回页面压成一行诊断文本：标题 + 可见正文。
+    """把 EA 返回页面压成一行诊断文本：标题 + 可见正文 + 表单骨架。
 
     只取元素文本、不取 ``value`` 属性，回填在输入框里的邮箱 / 密码不会进入结果；
-    脚本、样式、国家区号下拉与离线错误模板整段丢弃。用于 ``FormStructureChangedError`` 的 snippet。
+    脚本、样式、国家区号下拉与离线错误模板整段丢弃。表单骨架只列 action 路径和
+    input 的 ``name:type``，改版时能直接看出新页面要提交哪些字段。用于
+    ``FormStructureChangedError`` 的 snippet。
     """
     try:
         tree = lxml_html.fromstring(html_text)
     except (ValueError, lxml_html.etree.ParserError):
         return ""
+    outline = _form_outline(tree)
     for node in tree.xpath(
         "//script|//style|//noscript|//select"
         '|//*[contains(@class,"region-select")]|//*[starts-with(@id,"offline-")]'
@@ -196,7 +287,24 @@ def page_diagnostic(html_text: str, *, limit: int = 300) -> str:
     title = " ".join("".join(tree.xpath("//title//text()")).split())
     body = tree.find("body")
     text = " ".join((body if body is not None else tree).text_content().split())
-    return f"[{title}] {text}"[:limit]
+    head = f"[{title}] {text}"
+    if not outline:
+        return head[:limit]
+    tail = f" | forms: {outline}"[: limit // 2]
+    return head[: limit - len(tail)] + tail
+
+
+def _form_outline(tree: lxml_html.HtmlElement) -> str:
+    """列出页面所有 form 的 action 路径与 input ``name:type``（不含任何 value）。"""
+    parts: list[str] = []
+    for form in tree.xpath("//form"):
+        action = urlsplit(form.get("action") or "").path
+        inputs = ",".join(
+            f"{el.get('name')}:{(el.get('type') or 'text').lower()}"
+            for el in form.xpath(".//input[@name]")
+        )
+        parts.append(f"{form.get('id') or '-'}@{action or '-'}[{inputs}]")
+    return " ".join(parts)
 
 
 def extract_redirect_url(html_text: str) -> str | None:
@@ -257,7 +365,12 @@ __all__ = [
     "extract_page_error",
     "extract_redirect_url",
     "get_email_method_masked_destination",
+    "has_code_type_radios",
+    "has_one_time_code_input",
     "has_privacy_accept_checkbox",
+    "is_send_code_challenge",
     "looks_like_login_form",
+    "page_diagnostic",
     "parse_set_cookie_pair",
+    "send_code_form_payload",
 ]

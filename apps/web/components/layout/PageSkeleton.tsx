@@ -92,8 +92,11 @@ export function ServerDetailSkeleton() {
   );
 }
 
-/** 玩家详情页整页骨架：生涯横幅（头像 + 昵称）+ 统计面板网格 + 分区块。 */
-export function PlayerDetailSkeleton() {
+/**
+ * 玩家详情页整页骨架：生涯横幅（头像 + 昵称）+ 统计面板网格 + 分区块。
+ * 载入贴士是 BF1 的内容，别的游戏传 tip={false}。
+ */
+export function PlayerDetailSkeleton({ tip = true }: { tip?: boolean }) {
   return (
     <div className="relative min-h-screen w-full overflow-hidden text-white">
       <div className="relative z-10 max-w-[1600px] px-3 py-4 sm:px-10 sm:py-8">
@@ -103,7 +106,7 @@ export function PlayerDetailSkeleton() {
           {/* 战绩要等几秒，正是游戏里看载入贴士的时候 */}
           <div className="absolute inset-x-0 bottom-0 p-4 sm:p-8">
             <div className="text-[11px] tracking-[0.25em] text-white/40">正在查询战绩…</div>
-            <TipLine variant="bare" className="mt-1 max-w-3xl" />
+            {tip ? <TipLine variant="bare" className="mt-1 max-w-3xl" /> : null}
           </div>
         </div>
         <Skeleton className="mt-6 h-12 w-full" />

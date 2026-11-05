@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useReducedMotion } from "framer-motion";
+import { isBf6Path } from "@/lib/nav";
 
 /**
  * BF1 大厅式氛围底层：战场场景图铺底 + 中性压暗 + 径向暗角 + 胶片颗粒。
@@ -12,18 +14,29 @@ import { useReducedMotion } from "framer-motion";
  * 固定铺满视口并强压暗，以保证上层信息密集内容的可读性。
  *
  * 多张战场图缓慢交叉淡入轮换，呼应游戏大厅的动态氛围；系统开启「减弱动效」时
- * 只渲染首图、不轮换。
+ * 只渲染首图、不轮换。图集按当前路径选：/bf6 下用 BF6 的地图，其余用 BF1。
+ * 放在应用外壳里按路径判断，路由级骨架（还没进 BF6 布局）也能拿到对的那套图。
  */
 
-// 轮换图集（排除带 BATTLEFIELD 1 字样的 general-5 / general-6）
-const IMAGES = [
-  "/bf1/backgrounds/general/general-2.jpg",
-  "/bf1/backgrounds/general/general-1.jpg",
-  "/bf1/backgrounds/general/general-4.jpg",
-  "/bf1/backgrounds/general/general-8.jpg",
-  "/bf1/backgrounds/general/general-3.jpg",
-  "/bf1/backgrounds/general/general-7.jpg",
-];
+const SCENES = {
+  // 排除带 BATTLEFIELD 1 字样的 general-5 / general-6
+  bf1: [
+    "/bf1/backgrounds/general/general-2.jpg",
+    "/bf1/backgrounds/general/general-1.jpg",
+    "/bf1/backgrounds/general/general-4.jpg",
+    "/bf1/backgrounds/general/general-8.jpg",
+    "/bf1/backgrounds/general/general-3.jpg",
+    "/bf1/backgrounds/general/general-7.jpg",
+  ],
+  bf6: [
+    "/bf6/maps/mpfirestorm.webp",
+    "/bf6/maps/mpbadlands.webp",
+    "/bf6/maps/mpabbasid.webp",
+    "/bf6/maps/mpbattery.webp",
+    "/bf6/maps/mpoutskirts.webp",
+    "/bf6/maps/mpaftermath.webp",
+  ],
+};
 
 const SWITCH_INTERVAL_MS = 12_000;
 
@@ -31,31 +44,12 @@ const FILM_GRAIN =
   "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E\")";
 
 export function AmbientBackground() {
-  const reduceMotion = useReducedMotion();
-  const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    if (reduceMotion) return;
-    const timer = setInterval(() => {
-      setIndex((i) => (i + 1) % IMAGES.length);
-    }, SWITCH_INTERVAL_MS);
-    return () => clearInterval(timer);
-  }, [reduceMotion]);
-
-  const slides = reduceMotion ? IMAGES.slice(0, 1) : IMAGES;
+  const scene = isBf6Path(usePathname()) ? "bf6" : "bf1";
 
   return (
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
-      {/* 战场实景：多图叠放，仅当前图淡入，其余淡出，形成缓慢轮换 */}
-      {slides.map((src, i) => (
-        <img
-          key={src}
-          src={src}
-          alt=""
-          className="absolute inset-0 h-full w-full scale-105 object-cover object-center blur-[1.5px] transition-opacity duration-[2000ms] ease-in-out"
-          style={{ opacity: i === index ? 0.55 : 0 }}
-        />
-      ))}
+      {/* 换游戏时整组重挂，从这套图的第一张开始轮换 */}
+      <Slides key={scene} images={SCENES[scene]} />
       {/* 中性压暗：参考 BFUI 让战场实景清晰透出，仅上浅下深做轻压保证主内容区文字对比 */}
       <div
         className="absolute inset-0"
@@ -79,4 +73,30 @@ export function AmbientBackground() {
       />
     </div>
   );
+}
+
+/** 战场实景：多图叠放，仅当前图淡入，其余淡出，形成缓慢轮换 */
+function Slides({ images }: { images: string[] }) {
+  const reduceMotion = useReducedMotion();
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    if (reduceMotion) return;
+    const timer = setInterval(() => {
+      setIndex((i) => (i + 1) % images.length);
+    }, SWITCH_INTERVAL_MS);
+    return () => clearInterval(timer);
+  }, [reduceMotion, images.length]);
+
+  const slides = reduceMotion ? images.slice(0, 1) : images;
+
+  return slides.map((src, i) => (
+    <img
+      key={src}
+      src={src}
+      alt=""
+      className="absolute inset-0 h-full w-full scale-105 object-cover object-center blur-[1.5px] transition-opacity duration-[2000ms] ease-in-out"
+      style={{ opacity: i === index ? 0.55 : 0 }}
+    />
+  ));
 }

@@ -36,7 +36,7 @@ export default function Bf6PlayerPage() {
   const statsQ = useQuery({ ...bf6Queries.stats(id), enabled: valid });
 
   if (!valid) return <DetailNote text="无效的玩家 ID" />;
-  if (statsQ.isLoading) return <PlayerDetailSkeleton />;
+  if (statsQ.isLoading) return <PlayerDetailSkeleton tip={false} />;
   if (!statsQ.data) {
     return (
       <DetailError

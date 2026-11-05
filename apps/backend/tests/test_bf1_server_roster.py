@@ -20,6 +20,7 @@ from app.services.bf1.server_roster_service import (
     encode_event,
     extract_rosters,
     tally_playtime,
+    tally_visits,
 )
 from sqlalchemy import func, select
 
@@ -231,3 +232,71 @@ async def test_leaderboard_ranks_by_team_time(
     ]
     assert board.items[0].name == "p201"
     assert board.items[0].joins == 1 and board.items[0].days == 1
+
+
+def test_tally_visits_joins_days_and_restarts() -> None:
+    d1, d2 = date(2026, 10, 25), date(2026, 10, 26)
+    base = int(datetime(2026, 10, 25, tzinfo=UTC).timestamp())
+    nxt = base + 86400
+
+    def ev(*items: tuple[int, int]) -> str:
+        return "".join(encode_event(sec, st) for sec, st in items)
+
+    rows = [
+        (d1, 1, ev((3600, TEAM1), (7200, LEFT), (8000, QUEUE), (8100, LEFT), (80000, TEAM2))),
+        # 跨天第 0 秒延续；600 秒服重启：旧实例离开、新实例同一秒进入，不算断开
+        (d2, 1, ev((0, TEAM2), (600, LEFT))),
+        (d2, 2, ev((600, TEAM1), (900, LEFT), (2000, SPECTATOR))),
+    ]
+    assert tally_visits(rows) == [
+        {"start": base + 3600, "end": base + 7200, "seated": True},
+        {"start": base + 8000, "end": base + 8100, "seated": False},
+        {"start": base + 80000, "end": nxt + 900, "seated": True},
+        {"start": nxt + 2000, "end": None, "seated": False},
+    ]
+    assert tally_visits([]) == []
+
+
+async def test_find_visits_by_name_or_pid(test_session, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(spc, "datetime", _Clock)
+    monkeypatch.setattr(spc, "roster_tracker", RosterTracker())
+    start = datetime.now(UTC).replace(second=0, microsecond=0) - timedelta(hours=1)
+    t = [int((start + timedelta(minutes=i)).timestamp()) for i in range(5)]
+    a, b, c = 101, 1010, 202
+    await _round(test_session, start, {a: TEAM1, c: TEAM2})
+    await _round(test_session, start + timedelta(minutes=1), {a: TEAM1, b: QUEUE, c: TEAM2})
+    await _round(test_session, start + timedelta(minutes=2), {b: TEAM2, c: TEAM2})
+    await _round(test_session, start + timedelta(minutes=3), {a: SPECTATOR, b: TEAM2, c: TEAM2})
+    _Clock.current = start + timedelta(minutes=4)
+
+    def view(res) -> list[tuple]:
+        return [
+            (p.persona_id, p.name, [(v.start, v.end, v.seated) for v in p.visits])
+            for p in res.players
+        ]
+
+    # 名字片段不分大小写：完全对上的排前面，其次是开头对上的；时段从新到旧
+    res = await spc.find_visits(test_session, 1, " P101 ")
+    assert view(res) == [
+        (a, "p101", [(t[3], None, False), (t[0], t[2], True)]),
+        (b, "p1010", [(t[1], None, True)]),
+    ]
+    assert res.more is False
+    # PID 完全对上排第一，名字里含这串数字的排后面
+    found = await spc.find_visits(test_session, 1, "101")
+    assert [p.persona_id for p in found.players] == [a, b]
+    found = await spc.find_visits(test_session, 1, "1010")
+    assert [p.persona_id for p in found.players] == [b]
+    assert (await spc.find_visits(test_session, 1, "zzz")).players == []
+    # LIKE 的通配符按字面匹配
+    assert (await spc.find_visits(test_session, 1, "p_0")).players == []
+    monkeypatch.setattr(spc, "VISIT_PLAYERS", 1)
+    res = await spc.find_visits(test_session, 1, "p")
+    assert len(res.players) == 1 and res.more is True
+
+
+async def test_visits_route_validates_query(client) -> None:
+    res = await client.get("/api/v1/bf1/servers/1/visits", params={"q": "a"})
+    assert res.status_code == 422
+    res = await client.get("/api/v1/bf1/servers/1/visits", params={"q": "nobody"})
+    assert res.status_code == 200 and res.json() == {"players": [], "more": False}

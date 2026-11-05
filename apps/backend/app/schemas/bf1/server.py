@@ -178,6 +178,30 @@ class ServerLeaderboard(BaseModel):
     items: list[ServerLeaderboardEntry] = []
 
 
+class ServerVisit(BaseModel):
+    """某人在这台服的一段在服时间，unix 秒；end 为空表示到最近一轮还在服"""
+
+    start: int
+    end: int | None = None
+    # 这一段进过两队；为假时只排了队或在观战
+    seated: bool
+
+
+class ServerVisitPlayer(BaseModel):
+    persona_id: int
+    name: str | None = None
+    # 按开始时间从新到旧
+    visits: list[ServerVisit]
+
+
+class ServerVisits(BaseModel):
+    """按名字或 PID 在某服名单里找到的人及其在服时段（名单保留 7 天）"""
+
+    players: list[ServerVisitPlayer]
+    # 对上的人超过上限，只列了最像的几个
+    more: bool = False
+
+
 class ServerMapStat(BaseModel):
     """某张地图（按地图 + 模式区分）在统计窗口内的累计情况，last_seen 为 unix 秒"""
 

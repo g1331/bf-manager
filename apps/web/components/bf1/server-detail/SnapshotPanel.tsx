@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { Search } from "lucide-react";
+import { Search, UserSearch, X } from "lucide-react";
 import { Bf1Panel } from "@/components/bf1/visual/Bf1Panel";
 import { SectionHeading } from "@/components/layout/SectionHeading";
 import type { RosterChange, RosterPlayer, RosterSlot, ServerRosterPoint } from "@/lib/api/bf1";
@@ -71,6 +71,9 @@ export function SnapshotPanel({
   const [jumpTo, setJumpTo] = useState<number | null>(null);
   const [changedOnly, setChangedOnly] = useState(true);
   const [selected, setSelected] = useState<number | null>(null);
+  // 找人：提交的关键词与点开某段时要在名单里高亮的人
+  const [who, setWho] = useState<string | null>(null);
+  const [highlight, setHighlight] = useState<number | null>(null);
   const rosterRef = useRef<HTMLDivElement>(null);
 
   // 手机端名单排在时刻列表下面，点了时刻要把名单滚进视野，不然看不出有变化
@@ -81,6 +84,13 @@ export function SnapshotPanel({
         rosterRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
       );
     }
+  };
+
+  // 跳到某人某段在服的进出时刻：列表从那一刻往前翻，选中那一刻
+  const jump = (ts: number, pid: number) => {
+    setJumpTo(ts + 1);
+    setHighlight(pid);
+    pick(ts);
   };
 
   const list = useInfiniteQuery({
@@ -105,70 +115,92 @@ export function SnapshotPanel({
 
       <div className="mt-4 grid grid-cols-1 gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
         <aside className="flex min-h-0 flex-col">
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <input
-              type="datetime-local"
-              aria-label="跳到某个时间"
-              value={jumpTo ? toLocalInput(jumpTo) : ""}
-              onChange={(e) => {
-                const t = Date.parse(e.target.value);
-                setJumpTo(Number.isNaN(t) ? null : Math.floor(t / 1000) + 60);
-                setSelected(null);
-              }}
-              className="h-11 min-w-0 flex-1 rounded-sm border border-white/15 bg-white/5 px-2 text-white/85 [color-scheme:dark] lg:h-8"
-            />
-            <button
-              type="button"
-              onClick={() => {
-                setJumpTo(null);
-                setSelected(null);
-              }}
-              className="compact-action h-11 rounded-sm border border-white/15 px-3 text-[13px] text-white/70 hover:bg-white/10 lg:h-8 lg:px-2.5 lg:text-xs"
-            >
-              最新
-            </button>
-          </div>
-          <label className="mt-2 flex min-h-11 items-center gap-2 text-[13px] text-white/60 lg:min-h-0 lg:text-xs">
-            <input
-              type="checkbox"
-              checked={changedOnly}
-              onChange={(e) => setChangedOnly(e.target.checked)}
-              className="accent-amber-400"
-            />
-            只看有人进出的时刻
-          </label>
+          <FindPlayer
+            key={who ?? ""}
+            value={who}
+            onSubmit={(q) => {
+              setWho(q);
+              if (!q) setHighlight(null);
+            }}
+          />
+          {who ? (
+            <VisitResults gameId={gameId} q={who} highlight={highlight} onJump={jump} />
+          ) : (
+            <>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                <input
+                  type="datetime-local"
+                  aria-label="跳到某个时间"
+                  value={jumpTo ? toLocalInput(jumpTo) : ""}
+                  onChange={(e) => {
+                    const t = Date.parse(e.target.value);
+                    setJumpTo(Number.isNaN(t) ? null : Math.floor(t / 1000) + 60);
+                    setSelected(null);
+                    setHighlight(null);
+                  }}
+                  className="h-11 min-w-0 flex-1 rounded-sm border border-white/15 bg-white/5 px-2 text-white/85 [color-scheme:dark] lg:h-8"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setJumpTo(null);
+                    setSelected(null);
+                    setHighlight(null);
+                  }}
+                  className="compact-action h-11 rounded-sm border border-white/15 px-3 text-[13px] text-white/70 hover:bg-white/10 lg:h-8 lg:px-2.5 lg:text-xs"
+                >
+                  最新
+                </button>
+              </div>
+              <label className="mt-2 flex min-h-11 items-center gap-2 text-[13px] text-white/60 lg:min-h-0 lg:text-xs">
+                <input
+                  type="checkbox"
+                  checked={changedOnly}
+                  onChange={(e) => setChangedOnly(e.target.checked)}
+                  className="accent-amber-400"
+                />
+                只看有人进出的时刻
+              </label>
 
-          <ol className="mt-3 max-h-[45dvh] space-y-1.5 overflow-y-auto pr-1 lg:max-h-[640px]">
-            {shown.map((p) => (
-              <SnapshotItem
-                key={p.ts}
-                point={p}
-                mapInfo={mapInfo}
-                active={p.ts === active?.ts}
-                onClick={() => pick(p.ts)}
-              />
-            ))}
-            {!list.isLoading && shown.length === 0 ? (
-              <li className="py-8 text-center text-xs text-white/40">
-                {list.hasNextPage ? "这段时间没有记录，可以继续往前加载" : "暂无快照"}
-              </li>
-            ) : null}
-          </ol>
-          {list.hasNextPage ? (
-            <button
-              type="button"
-              disabled={list.isFetchingNextPage}
-              onClick={() => list.fetchNextPage()}
-              className="compact-action mt-2 h-11 rounded-sm border border-white/15 text-[13px] text-white/70 hover:bg-white/10 disabled:opacity-50 lg:h-8 lg:text-xs"
-            >
-              {list.isFetchingNextPage ? "加载中…" : "加载更早的"}
-            </button>
-          ) : null}
+              <ol className="mt-3 max-h-[45dvh] space-y-1.5 overflow-y-auto pr-1 lg:max-h-[640px]">
+                {shown.map((p) => (
+                  <SnapshotItem
+                    key={p.ts}
+                    point={p}
+                    mapInfo={mapInfo}
+                    active={p.ts === active?.ts}
+                    onClick={() => pick(p.ts)}
+                  />
+                ))}
+                {!list.isLoading && shown.length === 0 ? (
+                  <li className="py-8 text-center text-xs text-white/40">
+                    {list.hasNextPage ? "这段时间没有记录，可以继续往前加载" : "暂无快照"}
+                  </li>
+                ) : null}
+              </ol>
+              {list.hasNextPage ? (
+                <button
+                  type="button"
+                  disabled={list.isFetchingNextPage}
+                  onClick={() => list.fetchNextPage()}
+                  className="compact-action mt-2 h-11 rounded-sm border border-white/15 text-[13px] text-white/70 hover:bg-white/10 disabled:opacity-50 lg:h-8 lg:text-xs"
+                >
+                  {list.isFetchingNextPage ? "加载中…" : "加载更早的"}
+                </button>
+              ) : null}
+            </>
+          )}
         </aside>
 
         {active ? (
           <div ref={rosterRef} className="scroll-mt-28 lg:scroll-mt-0">
-            <SnapshotRoster gameId={gameId} game={game} point={active} mapInfo={mapInfo} />
+            <SnapshotRoster
+              gameId={gameId}
+              game={game}
+              point={active}
+              mapInfo={mapInfo}
+              highlight={highlight}
+            />
           </div>
         ) : (
           <div className="flex min-h-[240px] items-center justify-center text-sm text-white/40">
@@ -230,11 +262,13 @@ function SnapshotRoster({
   game,
   point,
   mapInfo,
+  highlight,
 }: {
   gameId: number;
   game: string;
   point: ServerRosterPoint;
   mapInfo: MapInfo;
+  highlight: number | null;
 }) {
   const [keyword, setKeyword] = useState("");
   const snap = useQuery({
@@ -259,14 +293,16 @@ function SnapshotRoster({
       by[p.slot].push(p);
     }
     for (const list of Object.values(by)) {
+      // 找人跳过来时要找的那个人排在本队第一行，不然退出的人会落到表尾
       list.sort(
         (a, b) =>
+          Number(b.persona_id === highlight) - Number(a.persona_id === highlight) ||
           CHANGE_ORDER[a.change ?? "none"] - CHANGE_ORDER[b.change ?? "none"] ||
           (a.name ?? "").localeCompare(b.name ?? ""),
       );
     }
     return by;
-  }, [snap.data, keyword]);
+  }, [snap.data, keyword, highlight]);
   // 进入数含新排队的人，他们在下方排队区，单独标出来免得和两队人数对不上
   const queued = snap.data?.roster.filter(
     (p) => p.slot === "queue" && p.change === "joined",
@@ -325,22 +361,34 @@ function SnapshotRoster({
               faction={snap.data?.team1_faction}
               players={groups.team1}
               game={game}
+              highlight={highlight}
             />
             <RosterTable
               title={snap.data?.team2_faction ?? "队伍 2"}
               faction={snap.data?.team2_faction}
               players={groups.team2}
               game={game}
+              highlight={highlight}
               className="lg:border-l lg:border-white/15 lg:pl-8"
             />
           </div>
           {groups.queue.length > 0 || groups.spectator.length > 0 ? (
             <div className="mt-6 grid grid-cols-1 gap-x-8 gap-y-6 border-t border-white/10 pt-4 lg:grid-cols-2">
               {groups.queue.length > 0 ? (
-                <RosterTable title="排队中" players={groups.queue} game={game} />
+                <RosterTable
+                  title="排队中"
+                  players={groups.queue}
+                  game={game}
+                  highlight={highlight}
+                />
               ) : null}
               {groups.spectator.length > 0 ? (
-                <RosterTable title="旁观者" players={groups.spectator} game={game} />
+                <RosterTable
+                  title="旁观者"
+                  players={groups.spectator}
+                  game={game}
+                  highlight={highlight}
+                />
               ) : null}
             </div>
           ) : null}
@@ -364,12 +412,14 @@ function RosterTable({
   faction,
   players,
   game,
+  highlight,
   className,
 }: {
   title: string;
   faction?: string | null;
   players: RosterPlayer[];
   game: string;
+  highlight?: number | null;
   className?: string;
 }) {
   const present = players.filter((p) => p.change !== "left").length;
@@ -400,6 +450,8 @@ function RosterTable({
                 className={cn(
                   "border-b border-white/[0.06] last:border-0",
                   p.change ? ROW_STYLE[p.change] : undefined,
+                  p.persona_id === highlight &&
+                    "bg-amber-400/15 text-white outline outline-1 -outline-offset-1 outline-amber-400/70",
                 )}
               >
                 <td className="w-8 py-[5px] pr-1 text-right text-[11px] text-white/35">{i + 1}</td>
@@ -434,6 +486,167 @@ function RosterTable({
           </tbody>
         </table>
       )}
+    </div>
+  );
+}
+
+/** 时长：不到 1 分钟、N 分钟、H 小时 M 分 */
+function formatSpan(seconds: number): string {
+  const min = Math.round(seconds / 60);
+  if (min < 1) return "不到 1 分钟";
+  if (min < 60) return `${min} 分钟`;
+  return `${Math.floor(min / 60)} 小时${min % 60 ? ` ${min % 60} 分` : ""}`;
+}
+
+function formatMinute(ts: number, withDate: boolean): string {
+  return new Date(ts * 1000).toLocaleString("zh-CN", {
+    ...(withDate ? { month: "2-digit", day: "2-digit" } : {}),
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+/** 找人输入框：回车提交名字片段或 PID；有结果时右侧给个清除按钮回到时刻列表 */
+function FindPlayer({
+  value,
+  onSubmit,
+}: {
+  value: string | null;
+  onSubmit: (q: string | null) => void;
+}) {
+  const [text, setText] = useState(value ?? "");
+  return (
+    <form
+      role="search"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const q = text.trim();
+        onSubmit(q.length >= 2 ? q : null);
+      }}
+      className={cn(
+        "flex h-11 items-center gap-1.5 rounded-sm border bg-white/5 pl-3 text-[13px] text-white/70 lg:h-8 lg:pl-2 lg:text-xs",
+        value ? "border-amber-400/50" : "border-white/15",
+      )}
+    >
+      <UserSearch className="size-3.5 shrink-0 text-white/40" />
+      <input
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        enterKeyHint="search"
+        aria-label="找人"
+        placeholder="找人：名字 / PID，回车"
+        className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-white/35"
+      />
+      {value ? (
+        <button
+          type="button"
+          aria-label="回到时刻列表"
+          onClick={() => onSubmit(null)}
+          className="compact-action flex h-full w-10 shrink-0 items-center justify-center text-white/60 hover:text-white lg:w-8"
+        >
+          <X className="size-3.5" />
+        </button>
+      ) : null}
+    </form>
+  );
+}
+
+/** 找人结果：每个人的每段在服时间，点一段跳到进服那一刻，点「离开」跳到离开那一刻 */
+function VisitResults({
+  gameId,
+  q,
+  highlight,
+  onJump,
+}: {
+  gameId: number;
+  q: string;
+  highlight: number | null;
+  onJump: (ts: number, pid: number) => void;
+}) {
+  const res = useQuery({ ...bf1Queries.serverVisits(gameId, q), staleTime: 60_000 });
+  const players = res.data?.players ?? [];
+  const [picked, setPicked] = useState<number | null>(null);
+  return (
+    <div className="mt-3 max-h-[45dvh] space-y-4 overflow-y-auto pr-1 lg:max-h-[700px]">
+      {res.isLoading ? (
+        <div className="py-8 text-center text-xs text-white/40">查找中…</div>
+      ) : res.isError ? (
+        <div className="py-8 text-center text-xs text-white/40">查找失败，请稍后重试</div>
+      ) : players.length === 0 ? (
+        <div className="py-8 text-center text-xs text-white/40">7 天内这台服没有对得上的人</div>
+      ) : null}
+      {players.map((p) => (
+        <section key={p.persona_id}>
+          <div className="mb-1.5 flex items-baseline justify-between gap-2">
+            <span
+              className={cn(
+                "min-w-0 truncate text-sm font-semibold",
+                p.persona_id === highlight ? "text-amber-300" : "text-white",
+              )}
+            >
+              {p.name ?? p.persona_id}
+            </span>
+            <span className="shrink-0 text-[11px] text-white/40 tabular-nums">
+              {p.visits.length} 次 · PID {p.persona_id}
+            </span>
+          </div>
+          <ol className="space-y-1">
+            {p.visits.map((v) => {
+              const end = v.end ?? Math.floor(Date.now() / 1000);
+              const sameDay =
+                new Date(v.start * 1000).toDateString() === new Date(end * 1000).toDateString();
+              const active = picked === v.start && p.persona_id === highlight;
+              return (
+                <li
+                  key={v.start}
+                  className={cn(
+                    "flex items-stretch overflow-hidden rounded-sm border",
+                    active
+                      ? "border-amber-400/60 bg-amber-400/10"
+                      : "border-white/10 bg-white/[0.03]",
+                  )}
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPicked(v.start);
+                      onJump(v.start, p.persona_id);
+                    }}
+                    className="compact-action min-h-11 min-w-0 flex-1 px-3 py-1.5 text-left hover:bg-white/[0.07] lg:min-h-0"
+                  >
+                    <div className="text-xs text-white/80 tabular-nums">
+                      {formatMinute(v.start, true)} –{" "}
+                      {v.end ? formatMinute(v.end, !sameDay) : "现在"}
+                    </div>
+                    <div className="mt-0.5 flex gap-2 text-[11px] text-white/45">
+                      <span>{formatSpan(end - v.start)}</span>
+                      {v.end ? null : <span className="text-emerald-300">在服</span>}
+                      {v.seated ? null : <span>只排队 / 观战</span>}
+                    </div>
+                  </button>
+                  {v.end ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPicked(v.start);
+                        onJump(v.end!, p.persona_id);
+                      }}
+                      className="compact-action shrink-0 border-l border-white/10 px-2.5 text-[11px] text-white/50 hover:bg-white/[0.07] hover:text-white"
+                    >
+                      离开时
+                    </button>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+      ))}
+      {res.data?.more ? (
+        <p className="text-[11px] text-white/40">
+          对上的人较多，只列了最像的几个，名字可以再写完整些。
+        </p>
+      ) : null}
     </div>
   );
 }

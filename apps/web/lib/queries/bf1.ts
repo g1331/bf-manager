@@ -47,6 +47,7 @@ export const bf1Keys = {
   serverSnapshots: (gameId: number, jumpTo: number | null) =>
     ["bf1-server-snapshots", gameId, jumpTo] as const,
   serverSnapshot: (gameId: number, ts: number) => ["bf1-server-snapshot", gameId, ts] as const,
+  serverVisits: (gameId: number, q: string) => ["bf1-server-visits", gameId, q] as const,
   serverRounds: (gameId: number, filter: RoundsFilter = {}) =>
     ["bf1-server-rounds", gameId, filter] as const,
   serverRoundDays: (gameId: number, tz: string, player: string | null) =>
@@ -159,6 +160,11 @@ export const bf1Queries = {
     queryOptions({
       queryKey: bf1Keys.serverSnapshot(gameId, ts),
       queryFn: ({ signal }) => bf1Api.getServerSnapshot(gameId, ts, { signal }),
+    }),
+  serverVisits: (gameId: number, q: string) =>
+    queryOptions({
+      queryKey: bf1Keys.serverVisits(gameId, q),
+      queryFn: ({ signal }) => bf1Api.getServerVisits(gameId, q, { signal }),
     }),
   /** filter.until 是这一天的结束（不含），翻页时由 next_before 接着往前 */
   serverRounds: (gameId: number, filter: RoundsFilter = {}) =>

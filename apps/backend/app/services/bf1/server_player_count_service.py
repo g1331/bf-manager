@@ -29,6 +29,7 @@ from app.domain.games.bf1.maps import (
 )
 from app.models.bf1.game_instance import Bf1GameInstance
 from app.models.bf1.server_player_count import Bf1ServerPlayerCount
+from app.models.bf1.server_roster import Bf1PlayerName, Bf1ServerPlayerDay
 from app.models.server import Server
 from app.schemas.bf1.server import (
     RosterPlayer,
@@ -40,6 +41,9 @@ from app.schemas.bf1.server import (
     ServerRosterPoint,
     ServerRosterSnapshot,
     ServerSummary,
+    ServerVisit,
+    ServerVisitPlayer,
+    ServerVisits,
 )
 from app.services.bf1.rsp_list_service import store_lists
 from app.services.bf1.server_roster_service import (
@@ -48,6 +52,7 @@ from app.services.bf1.server_roster_service import (
     read_names,
     read_playtime,
     read_roster,
+    tally_visits,
 )
 from app.services.bf1.server_roster_service import tracker as roster_tracker
 from app.services.bf1.server_service import BF1ServerService
@@ -356,6 +361,81 @@ async def get_leaderboard(
             for pid, t in top
         ],
     )
+
+
+# 找人时最多列几个人、每人最多几段
+VISIT_PLAYERS = 10
+VISITS_PER_PLAYER = 50
+
+
+async def find_visits(db: AsyncSession, game_id: int, q: str) -> ServerVisits:
+    """在某服（重启前后的实例合在一起）保留期内的名单里，按名字片段（不分大小写）或 PID 找人，
+    列出各自每一段在服时间。完全对上的排前面，其次是名字开头对上的，同档按最近一次进服排。"""
+    q = q.strip()
+    game_ids = await server_game_ids(db, game_id)
+    since = (datetime.now(UTC) - RETENTION).date()
+    here = (
+        select(Bf1ServerPlayerDay.pid)
+        .where(Bf1ServerPlayerDay.game_id.in_(game_ids), Bf1ServerPlayerDay.day >= since)
+        .distinct()
+    )
+    match = func.lower(Bf1PlayerName.name).contains(q.lower(), autoescape=True)
+    pid_q = int(q) if q.isascii() and q.isdigit() and int(q) < 2**63 else None
+    if pid_q is not None:
+        match |= Bf1PlayerName.pid == pid_q
+    found = (
+        (
+            await db.execute(
+                select(Bf1PlayerName.pid, Bf1PlayerName.name).where(
+                    Bf1PlayerName.pid.in_(here), match
+                )
+            )
+        )
+        .tuples()
+        .all()
+    )
+
+    def rank(name: str, pid: int) -> int:
+        low = name.lower()
+        return 0 if pid == pid_q or low == q.lower() else 1 if low.startswith(q.lower()) else 2
+
+    found = sorted(found, key=lambda r: (rank(r[1], r[0]), len(r[1]), r[1]))
+    top = dict(found[:VISIT_PLAYERS])
+    rows = (
+        await db.execute(
+            select(
+                Bf1ServerPlayerDay.pid,
+                Bf1ServerPlayerDay.day,
+                Bf1ServerPlayerDay.game_id,
+                Bf1ServerPlayerDay.events,
+            ).where(
+                Bf1ServerPlayerDay.game_id.in_(game_ids),
+                Bf1ServerPlayerDay.day >= since,
+                Bf1ServerPlayerDay.pid.in_(list(top)),
+            )
+        )
+    ).tuples()
+    by_pid: dict[int, list[tuple[Any, int, str]]] = {}
+    for pid, day, gid, events in rows:
+        by_pid.setdefault(pid, []).append((day, gid, events))
+    players = []
+    for pid, name in top.items():
+        visits = tally_visits(sorted(by_pid.get(pid, []), key=lambda r: r[0]))
+        visits.reverse()
+        players.append(
+            ServerVisitPlayer(
+                persona_id=pid,
+                name=name,
+                visits=[ServerVisit(**v) for v in visits[:VISITS_PER_PLAYER]],
+            )
+        )
+    players.sort(
+        key=lambda p: (
+            rank(p.name or "", p.persona_id),
+            -(p.visits[0].start if p.visits else 0),
+        )
+    )
+    return ServerVisits(players=players, more=len(found) > VISIT_PLAYERS)
 
 
 # 相邻点间隔超过它说明中间服务器空了（空服不采样），断档前的点只算 60 秒；

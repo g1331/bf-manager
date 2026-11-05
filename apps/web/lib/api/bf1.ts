@@ -399,6 +399,19 @@ export interface ServerRosterPage {
   next_before: number | null;
 }
 
+/** 某人在这台服的一段在服时间（unix 秒）；end 为空表示还在服，seated 为假时只排了队或在观战 */
+export interface ServerVisit {
+  start: number;
+  end: number | null;
+  seated: boolean;
+}
+
+export interface ServerVisits {
+  players: { persona_id: number; name: string | null; visits: ServerVisit[] }[];
+  /** 对上的人超过上限，只列了最像的几个 */
+  more: boolean;
+}
+
 export type RosterSlot = "team1" | "team2" | "queue" | "spectator";
 export type RosterChange = "joined" | "left" | "seated" | "switched";
 
@@ -995,6 +1008,9 @@ export const bf1Api = {
     ),
   getServerSnapshot: (gameId: number, ts: number, opts?: RequestOpts) =>
     api.get<ServerRosterSnapshot>(`/bf1/servers/${gameId}/snapshots/${ts}`, opts),
+  /** 快照找人：名字片段或 PID，至少 2 个字 */
+  getServerVisits: (gameId: number, q: string, opts?: RequestOpts) =>
+    api.get<ServerVisits>(`/bf1/servers/${gameId}/visits?q=${encodeURIComponent(q)}`, opts),
 
   getServerRounds: (gameId: number, query: ServerRoundsQuery = {}, opts?: RequestOpts) =>
     api.get<RoundPage>(`/bf1/servers/${gameId}/rounds${queryString(query)}`, opts),

@@ -314,6 +314,32 @@ async def test_send_code_page_without_path_marker_recognized_by_title():
     assert outcome.next_step == "need_code"
 
 
+# 线上抓到的发送页骨架：otcForm 无 action、只有两个隐藏字段，按钮在表单外。
+_OTC_FORM_PAGE = """
+<html><head><title>Two Factor Log In</title></head><body>
+<a href="#">Back</a>
+<h1>Verify your identity</h1>
+<p>We'll send a verification code to 76*****@qq.com.</p>
+<form id="otcForm" method="post">
+    <input type="hidden" name="codeType" value="EMAIL">
+    <input type="hidden" name="_eventId" value="submit">
+</form>
+<a href="#" id="btnSendCode">Send Code</a>
+</body></html>
+"""
+
+
+@pytest.mark.asyncio
+async def test_otc_form_page_requests_email_code():
+    """线上的 otcForm 发送页：认出 2FA，从 otcForm 取字段请求邮件验证码。"""
+    engine, session = _engine_and_session([_JUNO_START_PAGE, _OTC_FORM_PAGE, _CODE_ENTRY_PAGE])
+    outcome = await engine.start()
+    assert outcome.next_step == "need_code"
+    assert outcome.available_methods == ["EMAIL"]
+    assert outcome.masked_destination == "76*****@qq.com"
+    assert session.posts[-1] == {"codeType": "EMAIL", "_codeType": "EMAIL", "_eventId": "submit"}
+
+
 @pytest.mark.asyncio
 async def test_request_code_without_code_input_raises_form_changed():
     """请求验证码后没进验证码输入页 → FormStructureChangedError，带页面诊断。"""

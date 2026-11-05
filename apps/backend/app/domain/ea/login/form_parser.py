@@ -24,9 +24,11 @@ _REDIRECT_RE = re.compile(r'window\.location="([^"]+)"')
 # 2026-11 起 EA 的二次验证发送页（只有「Send Code」按钮）的表单路径。
 _SEND_CODE_MARKER = "dynamicchallenge/sendCode"
 
-# 发送页里「Send Code」提交按钮（button 文本或 submit input 的 value，忽略大小写）。
-_SEND_BUTTON_XPATH = (
-    './/button[contains(translate(normalize-space(.),"SEND","send"),"send")]'
+# 发送页里的发送表单：带 ``codeType`` 字段（EA 实际页面是 ``otcForm``，「Send Code」
+# 按钮在表单外），或表单内有「Send」提交按钮（忽略大小写）。
+_SEND_FORM_XPATH = (
+    './/input[@name="codeType"]'
+    '|.//button[contains(translate(normalize-space(.),"SEND","send"),"send")]'
     '|.//input[@type="submit" and contains(translate(@value,"SEND","send"),"send")]'
 )
 
@@ -152,7 +154,8 @@ def _find_send_code_form(
 
     - 页面有密码框、验证码输入框或 ``window.location`` 跳转时不是发送页；
     - 优先取 action 含 ``dynamicchallenge/sendCode`` 的 form；
-    - 否则页面需带该路径或标题含「Two Factor」，再取含「Send」提交按钮的 form。
+    - 否则页面需带该路径或标题含「Two Factor」，再取带 ``codeType`` 字段或「Send」
+      提交按钮的 form。
     """
     if tree.xpath('//input[@type="password" or @name="oneTimeCode"]'):
         return None
@@ -166,7 +169,7 @@ def _find_send_code_form(
     if _SEND_CODE_MARKER not in html_text and "two factor" not in title:
         return None
     for form in forms:
-        if form.xpath(_SEND_BUTTON_XPATH):
+        if form.xpath(_SEND_FORM_XPATH):
             return form
     return None
 

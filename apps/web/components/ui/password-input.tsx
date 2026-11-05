@@ -28,7 +28,6 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
           onClick={() => setVisible((v) => !v)}
           disabled={disabled}
           aria-label={visible ? "隐藏密码" : "显示密码"}
-          aria-pressed={visible}
           title={visible ? "隐藏密码" : "显示密码"}
           className="text-muted-foreground hover:text-foreground focus-visible:ring-ring absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-md focus-visible:ring-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
         >

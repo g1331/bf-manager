@@ -266,7 +266,9 @@ export function CareerCompare({ items }: { items: Compare[] }) {
           <dd className="text-[14px] leading-tight font-semibold text-white">{x.fmt(x.value)}</dd>
           <dd className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[10.5px] text-white/40">
             生涯 {x.fmt(x.career)}
-            {x.after != null ? <CareerShift before={x.career} after={x.after} /> : null}
+            {x.after != null ? (
+              <CareerShift label={x.label} before={x.career} after={x.after} />
+            ) : null}
           </dd>
         </div>
       ))}
@@ -275,7 +277,7 @@ export function CareerCompare({ items }: { items: Compare[] }) {
 }
 
 /** 这一局让生涯值变了多少（相对变化），和首页「较 24 小时前」一个样式 */
-function CareerShift({ before, after }: { before: number; after: number }) {
+function CareerShift({ label, before, after }: { label: string; before: number; after: number }) {
   if (before <= 0) return null;
   const change = (after / before - 1) * 100;
   if (Math.abs(change) < 0.005) return <span className="text-white/35">持平</span>;
@@ -285,6 +287,7 @@ function CareerShift({ before, after }: { before: number; after: number }) {
   return (
     <InfoHint
       content="这一局让生涯值变化的幅度"
+      label={`${label}：生涯值${up ? "上升" : "下降"} ${size}%`}
       className={cn(
         "flex items-center gap-0.5 font-semibold",
         up ? "text-emerald-400" : "text-rose-400",

@@ -18,6 +18,8 @@ interface Props {
   children: ReactNode;
   className?: string;
   side?: "top" | "right" | "bottom" | "left";
+  /** 触发器的可访问名称；触发器文字本身说不清指的是什么时传 */
+  label?: string;
 }
 
 /**
@@ -27,7 +29,7 @@ interface Props {
  * 触发器和气泡上的点击不往外冒泡：它们常放在可点开的表格行里，
  * 而 React 合成事件会穿过 Portal 冒到行上。
  */
-export function InfoHint({ content, children, className, side = "top" }: Props) {
+export function InfoHint({ content, children, className, side = "top", label }: Props) {
   const [open, setOpen] = useState(false);
   const timer = useRef<number | undefined>(undefined);
   // 悬停打开后再点一下，是想把气泡留住而不是关掉
@@ -65,6 +67,7 @@ export function InfoHint({ content, children, className, side = "top" }: Props) 
       <Popover.Trigger asChild>
         <button
           type="button"
+          aria-label={label}
           onPointerEnter={onEnter}
           onPointerLeave={onLeave}
           onClick={(e) => {
@@ -84,7 +87,10 @@ export function InfoHint({ content, children, className, side = "top" }: Props) 
           side={side}
           sideOffset={6}
           collisionPadding={12}
+          // 打开和关闭都不挪焦点：焦点从不进气泡，关闭时也就不该被拉回触发器，
+          // 否则鼠标移开自动关闭时会把用户正在输入的框的焦点抢走
           onOpenAutoFocus={(e) => e.preventDefault()}
+          onCloseAutoFocus={(e) => e.preventDefault()}
           onPointerEnter={onEnter}
           onPointerLeave={onLeave}
           onClick={(e) => e.stopPropagation()}

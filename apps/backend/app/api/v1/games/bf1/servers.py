@@ -6,7 +6,7 @@ from fastapi import APIRouter, Query
 
 from app.api.deps import DbDep
 from app.api.rate_limit import rate_limit
-from app.schemas.bf1.rounds import RoundPage
+from app.schemas.bf1.rounds import TZ_DESCRIPTION, RoundPage, ServerRoundDays
 from app.schemas.bf1.server import (
     ServerDetail,
     ServerFilterOptions,
@@ -19,7 +19,7 @@ from app.schemas.bf1.server import (
     ServerRosterSnapshot,
 )
 from app.services.bf1.blaze_service import get_server_players
-from app.services.bf1.round_service import list_server_rounds
+from app.services.bf1.round_service import list_server_rounds, server_round_days
 from app.services.bf1.rsp_list_service import remember_detail_lists
 from app.services.bf1.server_filters import server_filter_options
 from app.services.bf1.server_player_count_service import (
@@ -157,7 +157,24 @@ async def get_server_rounds(
     before: int | None = Query(
         None, description="只取结束时间在这个 unix 秒之前的对局，传上一页的 next_before"
     ),
+    since: int | None = Query(None, description="只取结束时间不早于这个 unix 秒的对局"),
+    player: int | None = Query(None, description="只取这个 personaId 打过的对局"),
     limit: int = Query(30, ge=1, le=100),
 ) -> RoundPage:
     # 对局由生涯差分算出，服重启前后的实例合在一起，保留 90 天
-    return await list_server_rounds(db, game_id, before=before, limit=limit)
+    return await list_server_rounds(
+        db, game_id, before=before, since=since, player=player, limit=limit
+    )
+
+
+@router.get("/{game_id}/rounds/days", dependencies=[_read], response_model=ServerRoundDays)
+async def get_server_round_days(
+    game_id: int,
+    db: DbDep,
+    tz: int = Query(480, ge=-720, le=840, description=TZ_DESCRIPTION),
+    player: str | None = Query(
+        None, min_length=1, max_length=64, description="玩家名字（不分大小写）或 personaId"
+    ),
+) -> ServerRoundDays:
+    # 对局日历：每天的局数；名字和 PID 都对不上时 404
+    return await server_round_days(db, game_id, tz=tz, player=player)

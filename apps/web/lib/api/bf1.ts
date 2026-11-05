@@ -583,6 +583,46 @@ export interface PlayerRoundPage {
   next_before: number | null;
 }
 
+/** 对局日历的一天；day 为请求时区下的 YYYY-MM-DD，wins/kills 只有玩家日历才有 */
+export interface RoundDay {
+  day: string;
+  rounds: number;
+  wins: number | null;
+  kills: number | null;
+}
+
+export interface ServerRoundDays {
+  days: RoundDay[];
+  /** 按玩家筛选时，名字或 PID 对应到的人 */
+  player: { persona_id: number; name: string | null } | null;
+}
+
+export interface PlayerRoundServer {
+  server_game_id: number;
+  server_name: string | null;
+  rounds: number;
+}
+
+export interface PlayerRoundDays {
+  days: RoundDay[];
+  servers: PlayerRoundServer[];
+}
+
+/** 服务器对局列表的筛选：结束时间在 [since, before) 内、某人打过的 */
+export type ServerRoundsQuery = {
+  before?: number | null;
+  since?: number | null;
+  player?: number | null;
+};
+
+/** 玩家对局列表的筛选：before 是对局 id 游标，since/until 是结束时间，server 是某台服的 gameId */
+export type PlayerRoundsQuery = {
+  before?: number | null;
+  since?: number | null;
+  until?: number | null;
+  server?: number | null;
+};
+
 /** 私服近 N 天在某张地图（地图 + 模式）上的累计情况，last_seen 为 unix 秒 */
 export interface ServerMapStat {
   map_name: string;
@@ -862,6 +902,14 @@ export interface Campaign {
   operations: { name: string; image_url: string | null }[];
 }
 
+/** 跳过空值拼查询串，没有参数时返回空串 */
+function queryString(query: Record<string, string | number | null | undefined>): string {
+  const params = new URLSearchParams();
+  for (const [k, v] of Object.entries(query)) if (v != null && v !== "") params.set(k, String(v));
+  const s = params.toString();
+  return s ? `?${s}` : "";
+}
+
 export const bf1Api = {
   searchPlayers: (name: string, opts?: RequestOpts) =>
     api.get<PersonaSearchResult>(`/bf1/players/search?name=${encodeURIComponent(name)}`, opts),
@@ -948,13 +996,20 @@ export const bf1Api = {
   getServerSnapshot: (gameId: number, ts: number, opts?: RequestOpts) =>
     api.get<ServerRosterSnapshot>(`/bf1/servers/${gameId}/snapshots/${ts}`, opts),
 
-  getServerRounds: (gameId: number, before?: number | null, opts?: RequestOpts) =>
-    api.get<RoundPage>(`/bf1/servers/${gameId}/rounds${before ? `?before=${before}` : ""}`, opts),
+  getServerRounds: (gameId: number, query: ServerRoundsQuery = {}, opts?: RequestOpts) =>
+    api.get<RoundPage>(`/bf1/servers/${gameId}/rounds${queryString(query)}`, opts),
+  getServerRoundDays: (gameId: number, tz: number, player?: string | null, opts?: RequestOpts) =>
+    api.get<ServerRoundDays>(
+      `/bf1/servers/${gameId}/rounds/days${queryString({ tz, player })}`,
+      opts,
+    ),
   getRound: (roundId: number, opts?: RequestOpts) =>
     api.get<RoundDetail>(`/bf1/rounds/${roundId}`, opts),
-  getPlayerRounds: (personaId: number, before?: number | null, opts?: RequestOpts) =>
-    api.get<PlayerRoundPage>(
-      `/bf1/stats/${personaId}/rounds${before ? `?before=${before}` : ""}`,
+  getPlayerRounds: (personaId: number, query: PlayerRoundsQuery = {}, opts?: RequestOpts) =>
+    api.get<PlayerRoundPage>(`/bf1/stats/${personaId}/rounds${queryString(query)}`, opts),
+  getPlayerRoundDays: (personaId: number, tz: number, server?: number | null, opts?: RequestOpts) =>
+    api.get<PlayerRoundDays>(
+      `/bf1/stats/${personaId}/rounds/days${queryString({ tz, server })}`,
       opts,
     ),
 

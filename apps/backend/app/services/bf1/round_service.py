@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from collections import Counter
 from collections.abc import Callable
 from datetime import UTC, date, datetime, timedelta
 from typing import Any, Literal
@@ -25,6 +26,7 @@ from sqlalchemy import (
     bindparam,
     cast,
     delete,
+    func,
     select,
     tuple_,
     update,
@@ -85,18 +87,24 @@ from app.domain.games.bf1.round_stats import (
 )
 from app.models.bf1.game_instance import Bf1GameInstance
 from app.models.bf1.rounds import Bf1CareerSnapshot, Bf1PlayerRoundDay, Bf1Round
+from app.models.bf1.server_roster import Bf1PlayerName
 from app.schemas.bf1.rounds import (
     PlayerRound,
+    PlayerRoundDays,
     PlayerRoundPage,
+    PlayerRoundServer,
     RoundCareer,
+    RoundDay,
     RoundDetail,
     RoundPage,
     RoundPlayer,
+    RoundPlayerRef,
     RoundRibbon,
     RoundScoreParts,
     RoundStar,
     RoundSummary,
     RoundWeapon,
+    ServerRoundDays,
 )
 from app.schemas.bf1.server import ServerSummary
 from app.services.bf1.blaze_service import fetch_stats
@@ -606,14 +614,67 @@ def _player(
     )
 
 
+def _local_day(ts: int, tz: int) -> date:
+    """unix 秒在偏移 tz 分钟（东正西负）的时区里是哪一天"""
+    return datetime.fromtimestamp(ts + tz * 60, UTC).date()
+
+
+async def resolve_player(db: AsyncSession, q: str) -> RoundPlayerRef:
+    """名字（不分大小写，同名取最近出现的）或 PID 对应的玩家，只查名单里见过的名字。"""
+    q = q.strip()
+    if q:
+        row = (
+            await db.execute(
+                select(Bf1PlayerName.pid, Bf1PlayerName.name)
+                .where(func.lower(Bf1PlayerName.name) == func.lower(q))
+                .order_by(Bf1PlayerName.seen_at.desc())
+                .limit(1)
+            )
+        ).first()
+        if row is not None:
+            return RoundPlayerRef(persona_id=row[0], name=row[1])
+        if q.isascii() and q.isdigit() and 0 < int(q) < 2**63:
+            pid = int(q)
+            return RoundPlayerRef(persona_id=pid, name=(await read_names(db, [pid])).get(pid))
+    raise NotFoundError(resource=f"玩家 {q}")
+
+
+async def _player_entries(
+    db: AsyncSession, pid: int, since: int | None = None, until: int | None = None
+) -> list[Entry]:
+    """某人的对局条目；给了时间范围就只读可能落在 [since, until) 里的那几天（条目按结束时的 UTC 日期存）"""
+    query = select(Bf1PlayerRoundDay.data).where(Bf1PlayerRoundDay.pid == pid)
+    if since is not None:
+        query = query.where(Bf1PlayerRoundDay.day >= _day(since))
+    if until is not None:
+        query = query.where(Bf1PlayerRoundDay.day <= _day(until - 1))
+    return [e for data in await db.scalars(query) for e in decode_entries(data)]
+
+
 async def list_server_rounds(
-    db: AsyncSession, game_id: int, *, before: int | None = None, limit: int = 30
+    db: AsyncSession,
+    game_id: int,
+    *,
+    before: int | None = None,
+    since: int | None = None,
+    player: int | None = None,
+    limit: int = 30,
 ) -> RoundPage:
-    """某服（重启前后的实例合在一起）结束时间在 before 之前的对局，按结束时间倒序。"""
+    """某服（重启前后的实例合在一起）结束时间在 [since, before) 内的对局，按结束时间倒序。
+
+    player 给了就只列这个人打过的局。
+    """
     game_ids = await server_game_ids(db, game_id)
     cond: ColumnElement[bool] = Bf1Round.game_id.in_(game_ids)
     if before is not None:
         cond &= Bf1Round.ended_at < _dt(before)
+    if since is not None:
+        cond &= Bf1Round.ended_at >= _dt(since)
+    if player is not None:
+        ids = {e.round_id for e in await _player_entries(db, player, since, before)}
+        if not ids:
+            return RoundPage(items=[])
+        cond &= Bf1Round.id.in_(ids)
     rows = list(
         await db.scalars(
             select(Bf1Round).where(cond).order_by(Bf1Round.ended_at.desc()).limit(limit + 1)
@@ -624,6 +685,25 @@ async def list_server_rounds(
     servers = await _servers(db, {r.game_id for r in rows})
     items = [_summary(r, servers) for r in rows]
     return RoundPage(items=items, next_before=items[-1].ended_at if more and items else None)
+
+
+async def server_round_days(
+    db: AsyncSession, game_id: int, *, tz: int, player: str | None = None
+) -> ServerRoundDays:
+    """某服每天（按 tz 划分）的对局数，给日历用；player 是名字或 PID，给了就只数这个人打过的局。"""
+    ref = await resolve_player(db, player) if player is not None else None
+    cond: ColumnElement[bool] = Bf1Round.game_id.in_(await server_game_ids(db, game_id))
+    if ref is not None:
+        ids = {e.round_id for e in await _player_entries(db, ref.persona_id)}
+        if not ids:
+            return ServerRoundDays(days=[], player=ref)
+        cond &= Bf1Round.id.in_(ids)
+    counts = Counter(
+        _local_day(_ts(t), tz) for t in await db.scalars(select(Bf1Round.ended_at).where(cond))
+    )
+    return ServerRoundDays(
+        days=[RoundDay(day=d, rounds=n) for d, n in sorted(counts.items())], player=ref
+    )
 
 
 async def get_round(db: AsyncSession, round_id: int) -> RoundDetail:
@@ -656,18 +736,32 @@ async def get_round(db: AsyncSession, round_id: int) -> RoundDetail:
 
 
 async def list_player_rounds(
-    db: AsyncSession, persona_id: int, *, before: int | None = None, limit: int = 20
+    db: AsyncSession,
+    persona_id: int,
+    *,
+    before: int | None = None,
+    since: int | None = None,
+    until: int | None = None,
+    server: int | None = None,
+    limit: int = 20,
 ) -> PlayerRoundPage:
-    """某玩家的对局，按对局 id（即结束先后）倒序；before 为上一页最后一局的 id。"""
-    rows = await db.execute(
-        select(Bf1PlayerRoundDay.data).where(Bf1PlayerRoundDay.pid == persona_id)
-    )
-    entries = sorted(
-        (e for (data,) in rows.tuples() for e in decode_entries(data)),
-        key=lambda e: -e.round_id,
-    )
+    """某玩家的对局，按对局 id（即结束先后）倒序；before 为上一页最后一局的 id。
+
+    since / until 限定结束时间在 [since, until) 内，server 是某台服的任一 gameId（重启前后算同一台）。
+    """
+    entries = sorted(await _player_entries(db, persona_id, since, until), key=lambda e: -e.round_id)
     if before is not None:
         entries = [e for e in entries if e.round_id < before]
+    if entries and (since is not None or until is not None or server is not None):
+        cond: ColumnElement[bool] = Bf1Round.id.in_([e.round_id for e in entries])
+        if since is not None:
+            cond &= Bf1Round.ended_at >= _dt(since)
+        if until is not None:
+            cond &= Bf1Round.ended_at < _dt(until)
+        if server is not None:
+            cond &= Bf1Round.game_id.in_(await server_game_ids(db, server))
+        keep = set(await db.scalars(select(Bf1Round.id).where(cond)))
+        entries = [e for e in entries if e.round_id in keep]
     page, more = entries[:limit], len(entries) > limit
     rounds = {
         r.id: r
@@ -685,6 +779,53 @@ async def list_player_rounds(
         if e.round_id in rounds
     ]
     return PlayerRoundPage(items=items, next_before=page[-1].round_id if more and page else None)
+
+
+async def player_round_days(
+    db: AsyncSession, persona_id: int, *, tz: int, server: int | None = None
+) -> PlayerRoundDays:
+    """某玩家每天（按 tz 划分）的局数、胜场和击杀，以及打过的服；server 只筛日历，不筛服务器列表。"""
+    entries = await _player_entries(db, persona_id)
+    if not entries:
+        return PlayerRoundDays(days=[], servers=[])
+    rounds: dict[int, tuple[int, datetime]] = {
+        rid: (gid, ended)
+        for rid, gid, ended in (
+            await db.execute(
+                select(Bf1Round.id, Bf1Round.game_id, Bf1Round.ended_at).where(
+                    Bf1Round.id.in_([e.round_id for e in entries])
+                )
+            )
+        ).tuples()
+    }
+    servers = await _servers(db, {gid for gid, _ in rounds.values()})
+    by_server: dict[int, list[Any]] = {}  # 现在的 gameId → [服名, 局数]
+    for gid, _ in rounds.values():
+        name, current = servers.get(gid, (None, gid))
+        slot = by_server.setdefault(current, [None, 0])
+        # 服改过名时以现在这个实例的名字为准
+        if slot[0] is None or gid == current:
+            slot[0] = name or slot[0]
+        slot[1] += 1
+    only = set(await server_game_ids(db, server)) if server is not None else None
+    days: dict[date, list[int]] = {}  # 日期 → [局数, 胜场, 击杀]
+    for e in entries:
+        if e.round_id not in rounds:
+            continue
+        gid, ended = rounds[e.round_id]
+        if only is not None and gid not in only:
+            continue
+        d = days.setdefault(_local_day(_ts(ended), tz), [0, 0, 0])
+        d[0] += 1
+        d[1] += 1 if e.status == FINISHED and e.stats.get(WINS) else 0
+        d[2] += e.stats.get(KILLS, 0)
+    return PlayerRoundDays(
+        days=[RoundDay(day=d, rounds=n, wins=w, kills=k) for d, (n, w, k) in sorted(days.items())],
+        servers=[
+            PlayerRoundServer(server_game_id=gid, server_name=name, rounds=n)
+            for gid, (name, n) in sorted(by_server.items(), key=lambda x: (-x[1][1], x[0]))
+        ],
+    )
 
 
 async def save_tracker_state(*, tracker: MatchTracker | None = None) -> None:

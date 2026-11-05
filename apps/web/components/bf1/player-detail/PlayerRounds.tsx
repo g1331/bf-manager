@@ -205,7 +205,11 @@ function RoundCard({
       />
     ) : (
       <Tooltip content="阵营未知">
-        <span className={cn("flex items-center justify-center text-white/25", className)}>
+        <span
+          role="img"
+          aria-label="阵营未知"
+          className={cn("flex items-center justify-center text-white/25", className)}
+        >
           <Flag className="size-5" />
         </span>
       </Tooltip>

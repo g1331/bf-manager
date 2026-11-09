@@ -10,7 +10,7 @@ from app.api.rate_limit import rate_limit
 from app.domain.games.bf6.resolver import normalize_name
 from app.schemas.bf6.matches import Bf6MatchList
 from app.schemas.bf6.player import Bf6PlatformParam, Bf6PlayerStats, Bf6ResolvedPlayer
-from app.services.bf6 import match_service, player_service
+from app.services.bf6 import match_service, player_service, presentation
 
 router = APIRouter()
 
@@ -34,7 +34,9 @@ async def resolve_player(
 async def get_player_stats(nucleus_id: int, session_factory: SessionFactoryDep) -> Bf6PlayerStats:
     if nucleus_id <= 0:
         raise ValidationError("nucleus_id 无效")
-    return await player_service.get_player_stats(session_factory, nucleus_id)
+    return presentation.player_stats(
+        await player_service.get_player_stats(session_factory, nucleus_id)
+    )
 
 
 @router.get("/{nucleus_id}/matches", dependencies=[_read], response_model=Bf6MatchList)
@@ -42,4 +44,4 @@ async def list_match_estimates(nucleus_id: int, session_factory: SessionFactoryD
     """最近的对局估算。只读已记下的数据，不向 EA 请求；有人查过战绩后才开始记录。"""
     if nucleus_id <= 0:
         raise ValidationError("nucleus_id 无效")
-    return await match_service.list_estimates(session_factory, nucleus_id)
+    return presentation.matches(await match_service.list_estimates(session_factory, nucleus_id))

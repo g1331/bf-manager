@@ -148,6 +148,66 @@ async def _estimates(session_factory) -> int:
         return await db.scalar(select(func.count()).select_from(Bf6MatchEstimate)) or 0
 
 
+@pytest.mark.parametrize("kit", ["assault", "new_kit", None])
+async def test_matches_endpoint_enriches_historical_payload(client, session_factory, kit) -> None:
+    delta = diff(BASE, ONE_CQ_WIN)
+    assert delta is not None
+    payload = delta.model_dump(mode="json")
+    payload.update(
+        kit=kit,
+        weapons=[
+            {"id": "mg_l110", "kills": 10, "time_seconds": 100},
+            {"id": "new_weapon", "kills": 5, "time_seconds": 50},
+        ],
+        vehicles=[
+            {"id": "air_panthera", "kills": 3, "time_seconds": 60},
+            {"id": "air_uh06", "kills": 2, "time_seconds": 40},
+        ],
+    )
+    # 已有数据库中的 payload 只有 ID 和数值，没有图鉴字段。
+    for section in ("weapons", "vehicles", "modes", "maps"):
+        for item in payload[section]:
+            item.pop("name", None)
+            item.pop("image", None)
+    async with session_factory() as db:
+        row = Bf6MatchEstimate(
+            nucleus_id=NID,
+            started_after=T0,
+            observed_at=T0 + timedelta(minutes=10),
+            matches=1,
+            payload=payload,
+        )
+        db.add(row)
+        await db.commit()
+        row_id = row.id
+    client._transport.app.dependency_overrides[get_session_factory] = lambda: session_factory
+    resp = await client.get(f"/api/v1/bf6/players/{NID}/matches")
+    assert resp.status_code == 200, resp.text
+    [match] = resp.json()["matches"]
+    assert match["kit"] == kit
+    assert match["kit_name"] == ("突击兵" if kit == "assault" else None)
+    expected = {
+        "weapons": ("L110", "/bf6/weapons/mg_l110.webp"),
+        "vehicles": ("Panthera KHT", "/bf6/vehicles/air_panthera.webp"),
+        "modes": ("征服", "/bf6/mode-art/cq.webp"),
+        "maps": ("帝国之州", "/bf6/maps/mpaftermath.webp"),
+    }
+    for section, (name, image) in expected.items():
+        assert (match[section][0]["name"], match[section][0]["image"]) == (name, image)
+    assert match["weapons"][1] == {
+        "id": "new_weapon",
+        "name": None,
+        "image": None,
+        "kills": 5,
+        "time_seconds": 50,
+    }
+    assert match["vehicles"][1]["name"] == "UH-06"
+    assert match["vehicles"][1]["image"] is None
+    async with session_factory() as db:
+        saved = await db.get(Bf6MatchEstimate, row_id)
+        assert saved is not None and saved.payload == payload
+
+
 async def test_record_starts_on_view_and_diffs_later(session_factory) -> None:
     # 后台复查不会替没人看过的玩家开始记录
     await match_service.record(session_factory, NID, BASE, T0, viewed=False)

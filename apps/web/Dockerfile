@@ -24,6 +24,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/web ./apps/web
+COPY apps/backend/app/domain/games/bf6/catalog.json ./apps/backend/app/domain/games/bf6/catalog.json
 
 ARG NEXT_PUBLIC_DEFAULT_GAME=bf1
 # next.config.ts 的 rewrites() 在构建阶段被调用一次，结果会被烘焙到

@@ -205,7 +205,7 @@ jobs:
           } >> "${GITHUB_OUTPUT}"
 
       - name: Install git-cliff
-        uses: taiki-e/install-action@v2.87.32
+        uses: taiki-e/install-action@v2.90.2
         with:
           tool: git-cliff
 

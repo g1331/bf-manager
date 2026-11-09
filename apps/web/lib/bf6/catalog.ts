@@ -2,7 +2,18 @@
  * BF6 图鉴：把统计里的内部 ID（mg_l110、veh 的 air_panthera、lvl 的 mpaftermath……）翻成名称和图片。
  * 图片都托管在 public/bf6，图鉴里没有的条目回落到 ID 本身，不会空白。
  */
-import { GADGETS, MAPS, MODES, VEHICLES, WEAPONS } from "./catalog-data";
+import {
+  GADGETS,
+  KITS,
+  MAPS,
+  MODES,
+  VEHICLES,
+  VEHICLE_TYPES,
+  WEAPONS,
+  WEAPON_CATEGORIES,
+} from "./catalog-data";
+
+export { KITS, WEAPON_CATEGORIES } from "./catalog-data";
 
 export interface Bf6CatalogItem {
   name: string;
@@ -30,17 +41,6 @@ const BASE = "/bf6";
 
 /* ------------------------------ 武器 ------------------------------ */
 
-export const WEAPON_CATEGORIES = {
-  ar: { zh: "突击步枪", en: "Assault Rifle" },
-  crb: { zh: "卡宾枪", en: "Carbine" },
-  smg: { zh: "冲锋枪", en: "SMG / PDW" },
-  mg: { zh: "机枪", en: "LMG" },
-  snp: { zh: "狙击步枪", en: "Sniper" },
-  dmr: { zh: "精准射手步枪", en: "DMR" },
-  sg: { zh: "霰弹枪", en: "Shotgun" },
-  pst: { zh: "手枪", en: "Pistol" },
-} as const;
-
 export type WeaponCategory = keyof typeof WEAPON_CATEGORIES;
 
 export function weaponCategory(id: string): WeaponCategory | null {
@@ -60,14 +60,6 @@ export function weaponInfo(id: string) {
 }
 
 /* ------------------------------ 载具 ------------------------------ */
-
-const VEHICLE_TYPES: Record<string, string> = {
-  "Air Combat": "空中作战",
-  "Air Transport": "空中运输",
-  "Ground Combat": "地面作战",
-  "Ground Transport": "地面运输",
-  "Naval Combat": "海上作战",
-};
 
 /** 载具筛选分组：按 ID 前缀分空中 / 地面（含水面），图鉴里有水面分类的单独列出 */
 export type VehicleGroup = "air" | "ground" | "naval";
@@ -114,13 +106,6 @@ export function gadgetInfo(id: string) {
 }
 
 /* ------------------------------ 兵种 ------------------------------ */
-
-export const KITS: Record<string, { zh: string; en: string }> = {
-  assault: { zh: "突击兵", en: "Assault" },
-  engineer: { zh: "工程兵", en: "Engineer" },
-  support: { zh: "支援兵", en: "Support" },
-  recon: { zh: "侦察兵", en: "Recon" },
-};
 
 export function kitInfo(id: string) {
   const kit = KITS[id];

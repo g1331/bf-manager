@@ -81,8 +81,14 @@ export interface Bf6RedsecStats {
   win_rate: number | null;
 }
 
-export interface Bf6WeaponStats {
+export interface Bf6NamedItem {
   id: string;
+  name: string | null;
+  /** 站内相对路径，未知条目或没有图片时为 null */
+  image: string | null;
+}
+
+export interface Bf6WeaponStats extends Bf6NamedItem {
   kills: number | null;
   damage: number | null;
   shots_fired: number | null;
@@ -96,8 +102,7 @@ export interface Bf6WeaponStats {
   kpm: number | null;
 }
 
-export interface Bf6VehicleStats {
-  id: string;
+export interface Bf6VehicleStats extends Bf6NamedItem {
   kills: number | null;
   damage: number | null;
   time_seconds: number | null;
@@ -106,8 +111,7 @@ export interface Bf6VehicleStats {
   kpm: number | null;
 }
 
-export interface Bf6GadgetStats {
-  id: string;
+export interface Bf6GadgetStats extends Bf6NamedItem {
   uses: number | null;
   kills: number | null;
   damage: number | null;
@@ -116,8 +120,7 @@ export interface Bf6GadgetStats {
   vehicles_destroyed: number | null;
 }
 
-export interface Bf6KitStats {
-  id: string;
+export interface Bf6KitStats extends Bf6NamedItem {
   kills: number | null;
   deaths: number | null;
   score: number | null;
@@ -127,8 +130,7 @@ export interface Bf6KitStats {
   kd: number | null;
 }
 
-export interface Bf6ModeStats {
-  id: string;
+export interface Bf6ModeStats extends Bf6NamedItem {
   kills: number | null;
   matches: number | null;
   wins: number | null;
@@ -138,8 +140,7 @@ export interface Bf6ModeStats {
   win_rate: number | null;
 }
 
-export interface Bf6MapStats {
-  id: string;
+export interface Bf6MapStats extends Bf6NamedItem {
   matches: number | null;
   wins: number | null;
   losses: number | null;
@@ -168,15 +169,13 @@ export interface Bf6PlayerStats {
 }
 
 /** 对局估算里某个模式或地图打了几场 */
-export interface Bf6MatchSplit {
-  id: string;
+export interface Bf6MatchSplit extends Bf6NamedItem {
   matches: number;
   wins: number;
   losses: number;
 }
 
-export interface Bf6MatchItem {
-  id: string;
+export interface Bf6MatchItem extends Bf6NamedItem {
   kills: number;
   time_seconds: number;
 }
@@ -207,6 +206,7 @@ export interface Bf6MatchEstimate {
   headshots: number;
   xp: number;
   kit: string | null;
+  kit_name: string | null;
   weapons: Bf6MatchItem[];
   vehicles: Bf6MatchItem[];
   kd: number | null;

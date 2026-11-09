@@ -363,6 +363,70 @@ async def test_stats_endpoint_hides_credential_problems(
     assert memory_cache == {}
 
 
+async def test_stats_catalog_metadata_on_fresh_and_cached_responses(
+    api, monkeypatch: pytest.MonkeyPatch, memory_cache: dict[str, Any]
+) -> None:
+    expected = {
+        "weapons": ("mg_l110", "L110", "/bf6/weapons/mg_l110.webp"),
+        "weapon_categories": ("mg", "机枪", None),
+        "vehicles": ("air_uh06", "UH-06", None),
+        "vehicle_categories": ("sur", "地面载具", None),
+        "gadgets": ("c4", "C-4 炸药", "/bf6/gadgets/c4.webp"),
+        "kits": ("assault", "突击兵", "/bf6/classes/assault-wide.webp"),
+        "modes": ("op", "Operations", "/bf6/modes/op.svg"),
+        "maps": ("mpaftermath", "帝国之州", "/bf6/maps/mpaftermath.webp"),
+    }
+    values = {
+        "kw_wp_mg_l110": 10,
+        "kw_wp_mg": 10,
+        "kw_wp_new_weapon": 5,
+        "kw_veh_air_uh06": 2,
+        "kw_veh_sur": 3,
+        "kw_gad_c4": 4,
+        "tp_kit_assault": 100,
+        "matches_gm_op": 1,
+        "matches_lvlmpaftermath": 1,
+    }
+    calls = 0
+
+    async def session_jwt(_sf, *, renew: bool = False) -> str:
+        return "token"
+
+    async def get_stats(token: str, ids: list[int]) -> list[PlayerStats]:
+        nonlocal calls
+        calls += 1
+        rows = tuple(
+            DimensionedStat(name, value, (Dimension("global", "global"),))
+            for name, value in values.items()
+        )
+        return [
+            PlayerStats(
+                Player(nucleus_id=ids[0], platform=7),
+                (CategoryStats("glacier_mp", dimensioned_stats=rows),),
+            )
+        ]
+
+    monkeypatch.setattr(credential_service, "get_session_jwt", session_jwt)
+    monkeypatch.setattr(bf6, "get_stats", get_stats)
+    for _ in range(2):
+        resp = await api.get("/api/v1/bf6/players/42/stats")
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        for section, (item_id, name, image) in expected.items():
+            item = next(row for row in body[section] if row["id"] == item_id)
+            assert (item["name"], item["image"]) == (name, image)
+        unknown = next(row for row in body["weapons"] if row["id"] == "new_weapon")
+        assert unknown["name"] is None and unknown["image"] is None
+        assert unknown["kills"] == 5
+        # 模拟上线前写入的缓存，没有展示字段也能补全。
+        for cached in memory_cache.values():
+            for section in expected:
+                for item in cached.get(section, []):
+                    item.pop("name", None)
+                    item.pop("image", None)
+    assert calls == 1
+
+
 async def test_resolve_endpoint_and_negative_cache(
     api, monkeypatch: pytest.MonkeyPatch, memory_cache: dict[str, Any]
 ) -> None:

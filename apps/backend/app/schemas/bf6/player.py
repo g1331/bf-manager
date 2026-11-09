@@ -11,6 +11,8 @@ from typing import Literal
 
 from pydantic import BaseModel
 
+from app.schemas.bf6.catalog import Bf6NamedItem
+
 Bf6PlatformParam = Literal["ea", "psn", "xbox", "steam", "epic"]
 
 
@@ -97,9 +99,7 @@ class Bf6RedsecStats(BaseModel):
     win_rate: float | None = None
 
 
-class Bf6WeaponStats(BaseModel):
-    # 内部 ID，如 mg_l110；中文名表到位前前端直接显示
-    id: str
+class Bf6WeaponStats(Bf6NamedItem):
     kills: int | None = None
     damage: int | None = None
     shots_fired: int | None = None
@@ -113,8 +113,7 @@ class Bf6WeaponStats(BaseModel):
     kpm: float | None = None
 
 
-class Bf6VehicleStats(BaseModel):
-    id: str
+class Bf6VehicleStats(Bf6NamedItem):
     kills: int | None = None
     damage: int | None = None
     time_seconds: int | None = None
@@ -123,9 +122,8 @@ class Bf6VehicleStats(BaseModel):
     kpm: float | None = None
 
 
-class Bf6GadgetStats(BaseModel):
+class Bf6GadgetStats(Bf6NamedItem):
     # 统计名里 _gad_ 之后的部分：c4、rl_ungui、gren_frag……
-    id: str
     uses: int | None = None
     kills: int | None = None
     damage: int | None = None
@@ -134,8 +132,7 @@ class Bf6GadgetStats(BaseModel):
     vehicles_destroyed: int | None = None
 
 
-class Bf6KitStats(BaseModel):
-    id: str
+class Bf6KitStats(Bf6NamedItem):
     kills: int | None = None
     deaths: int | None = None
     score: int | None = None
@@ -145,8 +142,7 @@ class Bf6KitStats(BaseModel):
     kd: float | None = None
 
 
-class Bf6ModeStats(BaseModel):
-    id: str
+class Bf6ModeStats(Bf6NamedItem):
     kills: int | None = None
     matches: int | None = None
     wins: int | None = None
@@ -156,9 +152,8 @@ class Bf6ModeStats(BaseModel):
     win_rate: float | None = None
 
 
-class Bf6MapStats(BaseModel):
+class Bf6MapStats(Bf6NamedItem):
     # 统计名里 lvl 之后的部分：mpaftermath（多人地图）、ftpgranite（大逃杀）……
-    id: str
     matches: int | None = None
     wins: int | None = None
     losses: int | None = None

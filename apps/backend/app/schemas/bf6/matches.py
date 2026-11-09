@@ -10,20 +10,20 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
+from app.schemas.bf6.catalog import Bf6NamedItem
 
-class Bf6MatchSplit(BaseModel):
+
+class Bf6MatchSplit(Bf6NamedItem):
     """这段里某个模式或地图打了几场、赢输各几场。"""
 
-    id: str
     matches: int
     wins: int
     losses: int
 
 
-class Bf6MatchItem(BaseModel):
+class Bf6MatchItem(Bf6NamedItem):
     """这段里用过的武器或载具。"""
 
-    id: str
     kills: int
     time_seconds: int
 
@@ -57,6 +57,7 @@ class Bf6MatchDelta(BaseModel):
 
 class Bf6MatchEstimate(Bf6MatchDelta):
     id: int
+    kit_name: str | None = None
     # 这段的对局在 started_after 之后结束，observed_at 时读到
     started_after: datetime
     observed_at: datetime

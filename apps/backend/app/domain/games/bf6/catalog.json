@@ -264,16 +264,23 @@
     "cq": { "zh": "征服", "en": "Conquest", "icon": true, "art": true },
     "dom": { "zh": "抢攻", "en": "Domination", "icon": true, "art": true },
     "esc": { "zh": "升级", "en": "Escalation", "icon": true, "art": true },
-    "gntgauntlet": { "zh": "试炼场", "en": "Gauntlet", "icon": true },
+    "gntgauntlet": {
+      "zh": "试炼场",
+      "en": "Gauntlet",
+      "icon": true,
+      "art_fallback": "granite"
+    },
     "graniteDuo": {
       "zh": "大逃杀 · 双人",
       "en": "Battle Royale Duo",
-      "icon": true
+      "icon": true,
+      "art_fallback": "granite"
     },
     "graniteSolo": {
       "zh": "大逃杀 · 单人",
       "en": "Battle Royale Solo",
-      "icon": true
+      "icon": true,
+      "art_fallback": "granite"
     },
     "koth": {
       "zh": "山丘之王",
@@ -287,7 +294,8 @@
     "rr_solo": {
       "zh": "快速大逃杀 · 单人",
       "en": "Rapid Royale Solo",
-      "icon": true
+      "icon": true,
+      "art_fallback": "granite"
     },
     "rush": { "zh": "突袭", "en": "Rush", "icon": true, "art": true },
     "sabotage": { "zh": "破坏", "en": "Sabotage", "icon": true },

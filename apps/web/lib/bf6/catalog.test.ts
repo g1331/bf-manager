@@ -38,6 +38,10 @@ describe("BF6 图鉴", () => {
     expect(modeInfo("strike").name).toBe("打击点");
     expect(modeInfo("rr_solo").art).toBe("/bf6/mode-art/granite.webp");
     expect(modeInfo("graniteSolo").art).toBe("/bf6/mode-art/granite.webp");
+    expect(modeInfo("graniteDuo").art).toBe("/bf6/mode-art/granite.webp");
+    expect(modeInfo("gntgauntlet").art).toBe("/bf6/mode-art/granite.webp");
+    expect(modeInfo("carrier").art).toBeNull();
+    expect(modeInfo("carrier").icon).toBe("/bf6/modes/carrier.svg");
   });
 
   it("标了有图的条目都能在 public/bf6 找到文件", () => {

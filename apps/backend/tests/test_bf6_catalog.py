@@ -15,8 +15,10 @@ from app.services.bf6.stats_normalizer import VEHICLE_CATEGORIES, WEAPON_CATEGOR
         ("weapons", "unknown", (None, None)),
         ("vehicles", "air_uh06", ("UH-06", None)),
         ("gadgets", "c4", ("C-4 炸药", "/bf6/gadgets/c4.webp")),
-        ("modes", "op", ("Operations", "/bf6/modes/op.svg")),
+        ("modes", "op", ("Operations", None)),
         ("modes", "cq", ("征服", "/bf6/mode-art/cq.webp")),
+        ("modes", "graniteDuo", ("大逃杀 · 双人", "/bf6/mode-art/granite.webp")),
+        ("modes", "carrier", ("航母突击", None)),
         ("kits", "assault", ("突击兵", "/bf6/classes/assault-wide.webp")),
     ],
 )
@@ -39,3 +41,9 @@ def test_catalog_images_exist_in_web() -> None:
             if image is not None:
                 assert image.startswith("/bf6/")
                 assert (public / image.lstrip("/")).is_file(), image
+
+
+def test_mode_images_are_always_artwork() -> None:
+    for item_id in catalog._catalog["modes"]:
+        _, image = catalog.metadata("modes", item_id)
+        assert image is None or image.startswith("/bf6/mode-art/"), item_id

@@ -25,8 +25,8 @@ class CatalogItem(BaseModel):
     zh: str | None = None
     en: str | None = None
     img: bool = False
-    icon: bool = False
     art: bool = False
+    art_fallback: str | None = None
 
 
 # vehicle_types 是网页用于细分载具的标签，其余分区都是按 ID 查询的条目。
@@ -47,8 +47,7 @@ def metadata(section: Section, item_id: str) -> tuple[str | None, str | None]:
     elif section == "kits":
         image = f"/bf6/classes/{item_id}-wide.webp"
     elif section == "modes":
-        if item.art:
-            image = f"/bf6/mode-art/{item_id}.webp"
-        elif item.icon:
-            image = f"/bf6/modes/{item_id}.svg"
+        art = item_id if item.art else item.art_fallback
+        if art:
+            image = f"/bf6/mode-art/{art}.webp"
     return name, image

@@ -35,6 +35,7 @@ export interface Bf6ModeInfo {
   en: string;
   icon?: boolean;
   art?: boolean;
+  art_fallback?: string;
 }
 
 const BASE = "/bf6";
@@ -144,11 +145,9 @@ export const MODE_GROUPS = [
   },
 ] as const;
 
-const REDSEC_MODES = new Set<string>(MODE_GROUPS[2].ids);
-
 export function modeInfo(id: string) {
   const item = MODES[id];
-  const art = item?.art ? id : REDSEC_MODES.has(id) ? "granite" : null;
+  const art = item?.art ? id : (item?.art_fallback ?? null);
   return {
     /** 有官方中文名时为中文，否则为英文 */
     name: item?.zh ?? item?.en ?? id,

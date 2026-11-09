@@ -373,7 +373,7 @@ async def test_stats_catalog_metadata_on_fresh_and_cached_responses(
         "vehicle_categories": ("sur", "地面载具", None),
         "gadgets": ("c4", "C-4 炸药", "/bf6/gadgets/c4.webp"),
         "kits": ("assault", "突击兵", "/bf6/classes/assault-wide.webp"),
-        "modes": ("op", "Operations", "/bf6/modes/op.svg"),
+        "modes": ("op", "Operations", None),
         "maps": ("mpaftermath", "帝国之州", "/bf6/maps/mpaftermath.webp"),
     }
     values = {
